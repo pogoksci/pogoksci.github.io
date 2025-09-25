@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CAS Data Importer</title>
+</head>
+<body>
+    <h1>CAS 물질 정보 가져오기</h1>
+    <input type="text" id="casInput" placeholder="CAS RN (예: 50-00-0)">
+    <button onclick="importData()">데이터 가져오기 및 저장</button>
+    <p id="statusMessage"></p>
+
+    <script>
+        // ⚠️ 실제 Supabase URL과 Key로 대체해야 합니다.
+        const SUPABASE_URL = "https://muprmzkvrjacqatqxayf.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11cHJtemt2cmphY3FhdHF4YXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4MDM4MjgsImV4cCI6MjA3NDM3OTgyOH0.a4gUjlp9reaO28kxdLrh5dF0IUscXWgtXbB7PY4wWsk";
+        const FUNCTION_NAME = "cas-importer"; 
+
+        async function importData() {
+            const casRn = document.getElementById('casInput').value.trim();
+            const statusElement = document.getElementById('statusMessage');
+            
+            if (!casRn) {
+                statusElement.textContent = "CAS RN을 입력해주세요.";
+                return;
+            }
+            
+            statusElement.textContent = `CAS RN ${casRn} 정보 처리 중...`;
+
+            try {
+                // 1. Supabase Edge Function 호출
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    // Edge Function이 배열을 받도록 데이터 구조를 맞춥니다.
+                    body: JSON.stringify({ casRns: [casRn] }), 
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    const finalStatus = result[0];
+                    if (finalStatus.status === 'success') {
+                         statusElement.textContent = `✅ 성공! 물질 ID ${finalStatus.id}로 저장되었습니다.`;
+                    } else {
+                         statusElement.textContent = `❌ 오류 발생: ${finalStatus.message}`;
+                    }
+                } else {
+                    statusElement.textContent = `❌ 함수 호출 실패: ${result.error || response.statusText}`;
+                }
+
+            } catch (error) {
+                statusElement.textContent = `❌ 네트워크 오류: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
