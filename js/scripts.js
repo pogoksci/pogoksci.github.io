@@ -11,7 +11,7 @@ const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`;
 // 🔑 버튼 그룹의 선택 값을 저장할 전역 변수
 let selectedClassification = null; // 🔑 새로운 전역 변수 추가
 let selectedState = null;
-let selectedUnit = 'g'; 
+let selectedUnit = null; 
 let selectedConcentrationUnit = null;
 let selectedManufacturer = null; // ⚠️ manufacture도 전역 변수여야 합니다.
 
