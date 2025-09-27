@@ -1,3 +1,49 @@
+/**
+ * 지정된 URL에서 HTML 내용을 가져와 특정 요소에 삽입하는 함수
+ * @param {string} url - 불러올 HTML 파일 경로
+ * @param {string} targetElementId - 내용을 삽입할 대상 요소의 ID
+ */
+function includeHTML(url, targetElementId) {
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                // HTTP 상태 코드가 200 (OK)이 아닌 경우 오류 처리
+                throw new Error(`Failed to load ${url}: ${response.status} ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(htmlContent => {
+            const targetElement = document.getElementById(targetElementId);
+            if (targetElement) {
+                // 불러온 HTML 내용을 대상 요소에 삽입
+                targetElement.innerHTML = htmlContent;
+
+                // (선택 사항) form-input.html에 포함된 스크립트 실행 (필요하다면)
+                // 현재는 <form> 요소 안에 스크립트가 없으므로 생략 가능
+            } else {
+                console.error(`Target element not found: #${targetElementId}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error during HTML include:', error);
+            // 사용자에게 오류 메시지 표시 (선택 사항)
+            document.getElementById('statusMessage').textContent = `페이지 로드 오류: ${url}`;
+        });
+}
+
+// 📌 페이지가 완전히 로드된 후 HTML 파일들을 불러와 삽입
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. form-input.html을 #form-container에 로드
+    // form-input.html이 'pages' 폴더에 있다고 가정
+    includeHTML('pages/form-input.html', 'form-container'); 
+    
+    // 2. navbar.html을 #navbar-container에 로드
+    includeHTML('pages/navbar.html', 'navbar-container');
+    
+    // 이 시점에서 기존 scripts.js의 나머지 초기화 로직을 실행하거나 
+    // 로드 완료 후 실행되도록 조정할 수 있습니다.
+});
+
 const statusMessage = document.getElementById('statusMessage');
 const photoInput = document.getElementById('file_select');
 const cameraInput = document.getElementById('camera_capture');
@@ -178,20 +224,3 @@ async function importData() {
         statusMessage.style.color = 'red';
     }
 }
-
-function includeHTML(url, targetElementId) {
-    fetch(url)
-        .then(response => response.text())
-        .then(data => {
-            document.getElementById(targetElementId).innerHTML = data;
-        })
-        .catch(error => {
-            console.error('HTML 파일을 로드하는 데 실패했습니다:', error);
-        });
-}
-
-// 페이지 로드 시 실행
-window.onload = function() {
-    includeHTML('pages/form-input.html', 'form-container');
-    includeHTML('pages/navbar.html', 'navbar-container');
-};
