@@ -1,0 +1,69 @@
+/* CSS 스타일 유지 */
+body { font-family: Arial, sans-serif; margin: 0 auto; padding: 20px; max-width: 600px; background-color: #f4f4f9; padding-bottom: 60px; }
+.form-group { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #fff; }
+label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+input[type="text"], input[type="number"], input[type="date"], select {
+    width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
+}
+select { appearance: none; background-color: #fff; cursor: pointer; }
+.radio-group label, .checkbox-group label { margin-right: 15px; font-weight: normal; }
+.photo-actions input { display: none; }
+.photo-actions label {
+    display: inline-block; background-color: #007bff; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: normal;
+}
+button { 
+    background-color: #00a0b2; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%;
+}
+
+.button-group {
+    display: grid; /* Grid 레이아웃 사용 */
+    gap: 8px; /* 버튼 사이 간격 */
+    margin-top: 5px;
+}
+
+/* 상태 버튼 그룹: 한 줄에 5개 */
+#state_buttons {
+    grid-template-columns: repeat(auto-fit, minmax(calc(20% - 7px), 1fr)); /* 5개씩 배치 (간격 고려) */
+    /* minmax(calc(100% / 5 - (5-1)*gap/5), 1fr) */
+}
+/* 단위 버튼 그룹: 한 줄에 6개 */
+#unit_buttons {
+    grid-template-columns: repeat(auto-fit, minmax(calc(16.66% - 7px), 1fr)); /* 6개씩 배치 (간격 고려) */
+    /* minmax(calc(100% / 6 - (6-1)*gap/6), 1fr) */
+}
+
+.button-group button {
+    background-color: white; /* 기본 배경색 흰색 */
+    color: #333; /* 기본 글자색 */
+    border: 1px solid #ddd; /* 얇은 테두리 */
+    padding: 8px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: center;
+    transition: all 0.2s ease; /* 부드러운 전환 효과 */
+    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+    overflow: hidden; /* 넘치는 텍스트 숨김 */
+    text-overflow: ellipsis; /* 넘치는 텍스트 ... 처리 */
+}
+
+.button-group button:hover {
+    background-color: #f0f0f0; /* 호버 시 약간 밝게 */
+}
+
+.button-group button.active {
+    background-color: #00bcd4; /* 선택 시 청록색 (AppSheet 스타일) */
+    color: white; /* 선택 시 글자색 흰색 */
+    border-color: #00a0b2; /* 선택 시 테두리 색 변경 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* 선택 시 그림자 */
+}
+
+
+/* 고정 하단 메뉴 (목록 화면 스타일을 따르지만, 여기서는 고정 버튼만 표시) */
+.navbar {
+    position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 55px; background-color: #00bcd4; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); z-index: 1000;
+}
+.nav-item {
+    flex-grow: 1; text-align: center; color: white; text-decoration: none; padding: 8px 0; font-size: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.nav-icon { font-size: 18px; margin-bottom: 2px; }
