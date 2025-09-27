@@ -31,6 +31,15 @@ button {
     grid-template-columns: repeat(auto-fit, minmax(calc(16.66% - 7px), 1fr)); /* 6개씩 배치 (간격 고려) */
     /* minmax(calc(100% / 6 - (6-1)*gap/6), 1fr) */
 }
+/* 농도 단위 버튼 그룹: 한 줄에 3개 배치 */
+#concentration_unit_buttons {
+    /* 3개의 동일 너비 열(1fr)을 강제로 지정하여 1줄에 모두 표시되도록 합니다. */
+    grid-template-columns: repeat(3, 1fr); 
+}
+#manufacturer_buttons {
+    /* 6개의 동일 너비 열을 강제로 지정합니다. */
+    grid-template-columns: repeat(6, 1fr); 
+}
 
 .button-group button {
     background-color: white; /* 기본 배경색 흰색 */
