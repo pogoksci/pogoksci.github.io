@@ -9,7 +9,6 @@ const FUNCTION_NAME = "casimport";
 const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`;
 
 // 🔑 버튼 그룹의 선택 값을 저장할 전역 변수
-let selectedManufacturer = null; 
 let selectedClassification = null; // 🔑 새로운 전역 변수 추가
 let selectedState = null;
 let selectedUnit = 'g'; 
@@ -82,9 +81,9 @@ function initializeFormListeners() {
     photoInput = document.getElementById('file_select');
     cameraInput = document.getElementById('camera_capture');
     photoPreview = document.getElementById('photo_preview');
-    const manufacturerButtonsGroup = document.getElementById('manufacturer_buttons');
-    const otherManufacturerGroup = document.getElementById('other_manufacturer_group');
-    const manufacturerOtherInput = document.getElementById('manufacturer_other');
+    manufacturerButtonsGroup = document.getElementById('manufacturer_buttons');
+    otherManufacturerGroup = document.getElementById('other_manufacturer_group');
+    manufacturerOtherInput = document.getElementById('manufacturer_other');
     
     // --- 버튼 그룹 설정 실행 ---
     setupButtonGroup('state_buttons');
