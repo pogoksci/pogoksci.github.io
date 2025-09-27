@@ -42,6 +42,7 @@ function includeHTML(url, targetElementId, callback) {
         .then(htmlContent => {
             const targetElement = document.getElementById(targetElementId);
             if (targetElement) {
+                // 불러온 HTML 내용을 대상 요소에 삽입
                 targetElement.innerHTML = htmlContent;
 
                 // HTML 삽입 완료 후, 콜백 함수를 실행하여 동적 요소를 초기화
@@ -54,6 +55,11 @@ function includeHTML(url, targetElementId, callback) {
         })
         .catch(error => {
             console.error('Error during HTML include:', error);
+            // 오류 메시지 표시 (statusMessage가 로드되어 있다고 가정)
+            const msgElement = document.getElementById('statusMessage');
+            if (msgElement) {
+                msgElement.textContent = `페이지 로드 오류: ${url}`;
+            }
         });
 }
 

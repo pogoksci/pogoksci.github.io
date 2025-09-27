@@ -72,10 +72,29 @@
         </div>
     </div>
 
-    <div class="form-group">
-        <label for="manufacturer">제조원</label>
-        <input type="text" id="manufacturer" name="manufacturer" placeholder="제조사명">
+<div class="form-group">
+    <label>제조원</label>
+    <div class="button-group" id="manufacturer_buttons">
+        <button type="button" data-value="대정">대정</button>
+        <button type="button" data-value="덕산">덕산</button>
+        <button type="button" data-value="동성">동성</button>
+        <button type="button" data-value="삼전">삼전</button>
+        <button type="button" data-value="한양">한양</button>
+        <button type="button" data-value="태진">태진</button>
+        
+        <button type="button" data-value="OCI">OCI</button>
+        <button type="button" data-value="JUNSEI">JUNSEI</button>
+        <button type="button" data-value="MERCK">MERCK</button>
+        <button type="button" data-value="Sigma-Aldrich">Sigma-Aldrich</button>
+        <button type="button" data-value="생물나라">생물나라</button>
+        <button type="button" data-value="기타">기타</button>
     </div>
+</div>
+
+<div class="form-group" id="other_manufacturer_group" style="display: none;">
+    <label for="manufacturer_other">제조원 직접 입력</label>
+    <input type="text" id="manufacturer_other" placeholder="제조사 또는 구입처를 입력하세요">
+</div>
 
     <div class="form-group">
         <label for="purchase_date">제조일 또는 구입일</label>
