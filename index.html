@@ -55,6 +55,7 @@ HTML
         <div class="photo-actions">
             <input type="file" id="file_select" accept="image/*">
             <label for="file_select">파일 선택</label>
+            
             <input type="file" id="camera_capture" accept="image/*" capture="environment">
             <label for="camera_capture">사진 촬영</label>
         </div>
@@ -94,17 +95,17 @@ HTML
 
     <div class="form-group">
         <label>상태</label>
-        <div class="radio-group">
-            <input type="radio" id="state_liquid" name="state" value="액체"><label for="state_liquid">액체</label>
-            <input type="radio" id="state_solution" name="state" value="수용액"><label for="state_solution">수용액</label>
-            <input type="radio" id="state_powder" name="state" value="파우더"><label for="state_powder">파우더</label>
-            <input type="radio" id="state_chunk" name="state" value="조각"><label for="state_chunk">조각</label>
-            <input type="radio" id="state_bead" name="state" value="비드"><label for="state_bead">비드</label>
-            <input type="radio" id="state_pellet" name="state" value="펠렛"><label for="state_pellet">펠렛</label>
-            <input type="radio" id="state_ribbon" name="state" value="리본"><label for="state_ribbon">리본</label>
-            <input type="radio" id="state_rod" name="state" value="막대"><label for="state_rod">막대</label>
-            <input type="radio" id="state_bulk" name="state" value="벌크"><label for="state_bulk">벌크</label>
-            <input type="radio" id="state_gas" name="state" value="기체"><label for="state_gas">기체</label>
+        <div class="button-group" id="state_buttons">
+            <button type="button" data-value="액체">액체</button>
+            <button type="button" data-value="수용액">수용액</button>
+            <button type="button" data-value="파우더">파우더</button>
+            <button type="button" data-value="조각">조각</button>
+            <button type="button" data-value="비드">비드</button>
+            <button type="button" data-value="펠렛">펠렛</button>
+            <button type="button" data-value="리본">리본</button>
+            <button type="button" data-value="막대">막대</button>
+            <button type="button" data-value="벌크">벌크</button>
+            <button type="button" data-value="기체">기체</button>
         </div>
     </div>
 
@@ -115,13 +116,13 @@ HTML
     
     <div class="form-group">
         <label>단위</label>
-        <div class="radio-group">
-            <input type="radio" id="unit_g" name="unit" value="g" checked><label for="unit_g">g</label>
-            <input type="radio" id="unit_mL" name="unit" value="mL"><label for="unit_mL">mL</label>
-            <input type="radio" id="unit_ea" name="unit" value="개"><label for="unit_ea">개</label>
-            <input type="radio" id="unit_chunk" name="unit" value="조각"><label for="unit_chunk">조각</label>
-            <input type="radio" id="unit_sheet" name="unit" value="장"><label for="unit_sheet">장</label>
-            <input type="radio" id="unit_set" name="unit" value="세트"><label for="unit_set">세트</label>
+        <div class="button-group" id="unit_buttons">
+            <button type="button" data-value="g">g</button>
+            <button type="button" data-value="mL">mL</button>
+            <button type="button" data-value="개">개</button>
+            <button type="button" data-value="조각">조각</button>
+            <button type="button" data-value="장">장</button>
+            <button type="button" data-value="세트">세트</button>
         </div>
     </div>
 
@@ -178,6 +179,47 @@ HTML
         const cameraInput = document.getElementById('camera_capture');
         const photoPreview = document.getElementById('photo_preview');
 
+        // 선택된 버튼의 값을 저장할 전역 변수
+        let selectedState = null;
+        let selectedUnit = 'g'; // 기본값 'g'
+
+        // --- 버튼 그룹 핸들러 함수 ---
+        function setupButtonGroup(groupId, initialValue = null) {
+            const group = document.getElementById(groupId);
+            group.addEventListener('click', (event) => {
+                if (event.target.tagName === 'BUTTON') {
+                    // 이전에 활성화된 버튼의 스타일 제거
+                    group.querySelectorAll('.active').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    // 현재 클릭된 버튼 활성화
+                    event.target.classList.add('active');
+
+                    // 해당 그룹의 값 업데이트
+                    const value = event.target.getAttribute('data-value');
+                    if (groupId === 'state_buttons') {
+                        selectedState = value;
+                    } else if (groupId === 'unit_buttons') {
+                        selectedUnit = value;
+                    }
+                }
+            });
+
+            // 초기값 설정
+            if (initialValue) {
+                const initialButton = group.querySelector(`button[data-value="${initialValue}"]`);
+                if (initialButton) {
+                    initialButton.classList.add('active');
+                }
+            }
+        }
+
+        // 페이지 로드 후 버튼 그룹 설정 실행
+        document.addEventListener('DOMContentLoaded', () => {
+            setupButtonGroup('state_buttons');
+            setupButtonGroup('unit_buttons', 'g'); // 단위의 기본값은 'g'로 설정
+        });
+
         // 사진 파일 미리보기 핸들러
         function handlePhotoChange(event) {
             const file = event.target.files[0];
@@ -207,6 +249,9 @@ HTML
             const casRn = document.getElementById('cas_rn').value.trim();
             const purchaseVolume = document.getElementById('purchase_volume').value;
             
+            const state = selectedState; 
+            const unit = selectedUnit; 
+
             if (!casRn) {
                 statusMessage.textContent = 'CAS 번호를 입력해 주세요.';
                 statusMessage.style.color = 'red';
@@ -242,11 +287,10 @@ HTML
                     concentration_value: parseFloat(document.getElementById('concentration_value').value) || null,
                     concentration_unit: document.getElementById('concentration_unit').value || null,
                     purchase_volume: parseFloat(purchaseVolume) || 0,
-                    unit: document.querySelector('input[name="unit"]:checked')?.value || null,
-                    
+                    unit: unit,
                     manufacturer: document.getElementById('manufacturer').value.trim() || null,
                     purchase_date: document.getElementById('purchase_date').value || null,
-                    state: document.querySelector('input[name="state"]:checked')?.value || null,
+                    state: state,
                     classification: document.getElementById('classification').value || null,
                     photo_base64: photoBase64, // Base64 인코딩된 사진 데이터
                     // location, current_amount 등은 Edge Function에서 처리될 수 있음
