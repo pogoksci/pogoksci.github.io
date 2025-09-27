@@ -1,58 +1,293 @@
+HTML
+
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CAS Data Importer</title>
-</head>
-<body>
-    <h1>CAS 물질 정보 가져오기</h1>
-    <input type="text" id="casInput" placeholder="CAS RN (예: 50-00-0)">
-    <button onclick="importData()">데이터 가져오기 및 저장</button>
-    <p id="statusMessage"></p>
-
+    <title>시약병 재고 등록 | CAS Importer</title>
     <script>
-        // ⚠️ 실제 Supabase URL과 Key로 대체해야 합니다.
+        // ⚠️ 이 변수들은 전역(Global) 스코프를 가지며, 페이지 로드 시 가장 먼저 정의됩니다.
         const SUPABASE_URL = "https://muprmzkvrjacqatqxayf.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11cHJtemt2cmphY3FhdHF4YXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4MDM4MjgsImV4cCI6MjA3NDM3OTgyOH0.a4gUjlp9reaO28kxdLrh5dF0IUscXWgtXbB7PY4wWsk";
         const FUNCTION_NAME = "casimport"; 
+        
+        // Edge Function의 전체 URL을 구성하여 전역으로 사용
+        const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`;
+    </script>    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        /* CSS 스타일 유지 */
+        body { font-family: Arial, sans-serif; margin: 0 auto; padding: 20px; max-width: 600px; background-color: #f4f4f9; padding-bottom: 60px; }
+        .form-group { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #fff; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        input[type="text"], input[type="number"], input[type="date"], select {
+            width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
+        }
+        select { appearance: none; background-color: #fff; cursor: pointer; }
+        .radio-group label, .checkbox-group label { margin-right: 15px; font-weight: normal; }
+        .photo-actions input { display: none; }
+        .photo-actions label {
+            display: inline-block; background-color: #007bff; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: normal;
+        }
+        button { 
+            background-color: #00a0b2; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%;
+        }
+        /* 고정 하단 메뉴 (목록 화면 스타일을 따르지만, 여기서는 고정 버튼만 표시) */
+        .navbar {
+            position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 55px; background-color: #00bcd4; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); z-index: 1000;
+        }
+        .nav-item {
+            flex-grow: 1; text-align: center; color: white; text-decoration: none; padding: 8px 0; font-size: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .nav-icon { font-size: 18px; margin-bottom: 2px; }
+    </style>
+</head>
+<body>
 
+    <h1>시약병 재고 정보 입력</h1>
+
+    <div class="form-group">
+        <label for="cas_rn">CAS</label>
+        <input type="text" id="cas_rn" placeholder="CAS Registry Number (예: 7647-01-0)" required>
+    </div>
+    
+    <div class="form-group">
+        <label>제품사진</label>
+        <div class="photo-actions">
+            <input type="file" id="file_select" accept="image/*">
+            <label for="file_select">파일 선택</label>
+            <input type="file" id="camera_capture" accept="image/*" capture="environment">
+            <label for="camera_capture">사진 촬영</label>
+        </div>
+        <img id="photo_preview" style="max-width: 100%; margin-top: 10px; display: none;" alt="제품 사진 미리보기">
+    </div>
+
+    <div class="form-group">
+        <label for="classification">구분</label>
+        <select id="classification" name="classification" required>
+            <option value="" disabled selected>분류를 선택하세요</option>
+            <option value="강산">강산</option>
+            <option value="약산">약산</option>
+            <option value="강염기">강염기</option>
+            <option value="약염기">약염기</option>
+            <option value="알코올">알코올</option>
+            <option value="석유류">석유류</option>
+            <option value="유기화합물">유기화합물</option>
+            <option value="산화염">산화염</option>
+            <option value="수산화염">수산화염</option>
+            <option value="염화염">염화염</option>
+            <option value="질산염">질산염</option>
+            <option value="탄산염">탄산염</option>
+            <option value="황산염">황산염</option>
+            <option value="황화염">황화염</option>
+            <option value="무기화합물">무기화합물</option>
+            <option value="금속">금속</option>
+            <option value="지시약">지시약</option>
+            <option value="세계류">세계류</option>
+            <option value="식품류">식품류</option>
+            <option value="천연오일">천연오일</option>
+            <option value="비누재료">비누재료</option>
+            <option value="화장품재료">화장품재료</option>
+            <option value="생명과학">생명과학</option>
+            <option value="기타">기타</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>상태</label>
+        <div class="radio-group">
+            <input type="radio" id="state_liquid" name="state" value="액체"><label for="state_liquid">액체</label>
+            <input type="radio" id="state_solution" name="state" value="수용액"><label for="state_solution">수용액</label>
+            <input type="radio" id="state_powder" name="state" value="파우더"><label for="state_powder">파우더</label>
+            <input type="radio" id="state_chunk" name="state" value="조각"><label for="state_chunk">조각</label>
+            <input type="radio" id="state_bead" name="state" value="비드"><label for="state_bead">비드</label>
+            <input type="radio" id="state_pellet" name="state" value="펠렛"><label for="state_pellet">펠렛</label>
+            <input type="radio" id="state_ribbon" name="state" value="리본"><label for="state_ribbon">리본</label>
+            <input type="radio" id="state_rod" name="state" value="막대"><label for="state_rod">막대</label>
+            <input type="radio" id="state_bulk" name="state" value="벌크"><label for="state_bulk">벌크</label>
+            <input type="radio" id="state_gas" name="state" value="기체"><label for="state_gas">기체</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="purchase_volume">구입용량 (숫자)</label>
+        <input type="number" id="purchase_volume" placeholder="구입 용량" min="0" step="any" required>
+    </div>
+    
+    <div class="form-group">
+        <label>단위</label>
+        <div class="radio-group">
+            <input type="radio" id="unit_g" name="unit" value="g" checked><label for="unit_g">g</label>
+            <input type="radio" id="unit_mL" name="unit" value="mL"><label for="unit_mL">mL</label>
+            <input type="radio" id="unit_ea" name="unit" value="개"><label for="unit_ea">개</label>
+            <input type="radio" id="unit_chunk" name="unit" value="조각"><label for="unit_chunk">조각</label>
+            <input type="radio" id="unit_sheet" name="unit" value="장"><label for="unit_sheet">장</label>
+            <input type="radio" id="unit_set" name="unit" value="세트"><label for="unit_set">세트</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="concentration_value">농도 (숫자)</label>
+        <input type="number" id="concentration_value" placeholder="농도 값 (예: 98, 1.0)" min="0" step="any">
+    </div>
+
+    <div class="form-group">
+        <label for="concentration_unit">농도 단위</label>
+        <select id="concentration_unit" name="concentration_unit">
+            <option value="" disabled selected>단위 선택</option>
+            <option value="%">%</option>
+            <option value="M">M (몰 농도)</option>
+            <option value="N">N (노르말 농도)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="manufacturer">제조원</label>
+        <input type="text" id="manufacturer" placeholder="제조사명">
+    </div>
+
+    <div class="form-group">
+        <label for="purchase_date">제조일 또는 구입일</label>
+        <input type="date" id="purchase_date">
+    </div>
+    <button onclick="importData()">재고 정보 DB에 저장</button>
+    <p id="statusMessage" style="margin-top: 15px;"></p>
+
+
+    <div class="navbar">
+        <a href="#" class="nav-item active">
+            <span class="nav-icon">🧪</span>
+            <span>약품관리</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">📈</span>
+            <span>사용량 등록</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">🗑️</span>
+            <span>폐수 등록</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">📦</span>
+            <span>키트</span>
+        </a>
+    </div>
+
+    <script>
+        const statusMessage = document.getElementById('statusMessage');
+        const photoInput = document.getElementById('file_select');
+        const cameraInput = document.getElementById('camera_capture');
+        const photoPreview = document.getElementById('photo_preview');
+
+        // 사진 파일 미리보기 핸들러
+        function handlePhotoChange(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    photoPreview.src = e.target.result;
+                    photoPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                photoPreview.style.display = 'none';
+            }
+        }
+
+        photoInput.addEventListener('change', handlePhotoChange);
+        cameraInput.addEventListener('change', handlePhotoChange);
+
+        /**
+         * 폼 데이터를 수집하여 Edge Function으로 전송합니다.
+         */
         async function importData() {
-            const casRn = document.getElementById('casInput').value.trim();
-            const statusElement = document.getElementById('statusMessage');
+            statusMessage.textContent = '데이터를 처리 중입니다... 잠시만 기다려 주세요.';
+            statusMessage.style.color = 'blue';
+
+            // 1. 폼 데이터 수집 및 유효성 검사
+            const casRn = document.getElementById('cas_rn').value.trim();
+            const purchaseVolume = document.getElementById('purchase_volume').value;
             
             if (!casRn) {
-                statusElement.textContent = "CAS RN을 입력해주세요.";
+                statusMessage.textContent = 'CAS 번호를 입력해 주세요.';
+                statusMessage.style.color = 'red';
                 return;
             }
-            
-            statusElement.textContent = `CAS RN ${casRn} 정보 처리 중...`;
 
+            // 2. 사진 파일 처리 (Base64 인코딩)
+            let photoBase64 = null;
+            const file = photoInput.files[0] || cameraInput.files[0];
+            
+            if (file) {
+                // 사진 파일을 Base64로 변환하여 JSON 본문에 포함 (비동기 처리)
+                photoBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        // Data URL에서 Base64 부분만 추출
+                        const base64String = reader.result;
+                        if (typeof base64String === 'string') {
+                            resolve(base64String.split(',')[1]); 
+                        } else {
+                            resolve(null);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // 3. 서버로 전송할 최종 Inventory 데이터 구성
+            const inventoryData = {
+                casRns: [casRn], // Edge Function의 Substance 조회 구조를 위해 배열로 보냄
+                inventoryDetails: {
+                    // Number 필드는 parseFloat, string 필드는 trim()
+                    concentration_value: parseFloat(document.getElementById('concentration_value').value) || null,
+                    concentration_unit: document.getElementById('concentration_unit').value || null,
+                    purchase_volume: parseFloat(purchaseVolume) || 0,
+                    unit: document.querySelector('input[name="unit"]:checked')?.value || null,
+                    
+                    manufacturer: document.getElementById('manufacturer').value.trim() || null,
+                    purchase_date: document.getElementById('purchase_date').value || null,
+                    state: document.querySelector('input[name="state"]:checked')?.value || null,
+                    classification: document.getElementById('classification').value || null,
+                    photo_base64: photoBase64, // Base64 인코딩된 사진 데이터
+                    // location, current_amount 등은 Edge Function에서 처리될 수 있음
+                }
+            };
+            
             try {
-                // 1. Supabase Edge Function 호출
-                const response = await fetch(`${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`, {
+                // 4. Supabase Edge Function 호출 (Anon Key를 사용하여 인증)
+                const response = await fetch(EDGE_FUNCTION_URL, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
                         'Content-Type': 'application/json',
+                        // 🚨 Edge Function 호출 권한을 부여하는 ANON_KEY 사용
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 
                     },
-                    // Edge Function이 배열을 받도록 데이터 구조를 맞춥니다.
-                    body: JSON.stringify({ casRns: [casRn] }), 
+                    body: JSON.stringify(inventoryData)
                 });
 
-                const result = await response.json();
+                const data = await response.json();
 
-                if (response.ok) {
-                    const finalStatus = result[0];
-                    if (finalStatus.status === 'success') {
-                         statusElement.textContent = `✅ 성공! 물질 ID ${finalStatus.id}로 저장되었습니다.`;
-                    } else {
-                         statusElement.textContent = `❌ 오류 발생: ${finalStatus.message}`;
-                    }
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
+                }
+                
+                // 5. 성공 응답 처리
+                const result = data[0];
+                let msg = '';
+                
+                if (result.isNewSubstance) {
+                    msg = `✅ 신규 물질(${casRn}) 정보 및 시약병(${result.inventoryId}) 등록 완료!`;
                 } else {
-                    statusElement.textContent = `❌ 함수 호출 실패: ${result.error || response.statusText}`;
+                    msg = `✅ 기존 물질(${casRn})에 새 시약병(${result.inventoryId}) 등록 완료!`;
                 }
 
+                statusMessage.textContent = msg;
+                statusMessage.style.color = 'green';
+
             } catch (error) {
-                statusElement.textContent = `❌ 네트워크 오류: ${error.message}`;
+                console.error("데이터 전송 중 오류 발생:", error);
+                statusMessage.textContent = `❌ 오류: 데이터 처리 실패. 콘솔을 확인하세요.`;
+                statusMessage.style.color = 'red';
             }
         }
     </script>
