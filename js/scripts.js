@@ -9,19 +9,21 @@ const FUNCTION_NAME = "casimport";
 const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`;
 
 // 🔑 버튼 그룹의 선택 값을 저장할 전역 변수
+let selectedManufacturer = null; 
+let selectedClassification = null; // 🔑 새로운 전역 변수 추가
 let selectedState = null;
 let selectedUnit = 'g'; 
-
-let selectedConcentrationUnit = null; 
+let selectedConcentrationUnit = null;
+let selectedManufacturer = null; // ⚠️ manufacture도 전역 변수여야 합니다.
 
 // 전역에서 접근해야 하는 HTML 요소들 (초기값은 null)
 let statusMessage = null;
 let photoInput = null;
 let cameraInput = null;
 let photoPreview = null;
-//let manufacturerButtonsGroup = null;
-//let otherManufacturerGroup = null;
-//let manufacturerOtherInput = null;
+let manufacturerButtonsGroup = null;
+let otherManufacturerGroup = null;
+let manufacturerOtherInput = null;
 
 
 // =================================================================
@@ -299,13 +301,13 @@ async function importData() {
 // =================================================================
 
 window.addEventListener('DOMContentLoaded', () => {
-    // ⚠️ index.html이 HTML 조각을 로드하는 구조라고 가정합니다.
-    
-    // index.html이 이미 전체 폼을 가지고 있다면, 바로 초기화 리스너를 호출합니다.
-    // HTML 조각을 사용하지 않고 폼이 index.html에 직접 있다면, 바로 initializeFormListeners를 호출합니다.
+    // 1. form-input.html 로드: 완료 후 フォーム初期化 함수(initializeFormListeners)를 콜백으로 실행
+    // ⚠️ index.html에 <div id="form-container"></div> 가 있어야 합니다.
     includeHTML('pages/form-input.html', 'form-container', initializeFormListeners); 
+    
+    // 2. navbar.html 로드
     includeHTML('pages/navbar.html', 'navbar-container'); 
     
-    // 현재 코드에서는 includeHTML 사용이 생략되었으므로, 폼이 HTML에 직접 있다고 가정하고 초기화 로직을 실행합니다.
-    //initializeFormListeners();
+    // ❌ 경고: 여기에 있는 initializeFormListeners() 호출은 삭제되어야 합니다.
+    // initializeFormListeners(); 
 });

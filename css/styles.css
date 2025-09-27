@@ -21,6 +21,11 @@ button {
     margin-top: 5px;
 }
 
+/* 구분 버튼 그룹: 한 줄에 5개 배치 */
+#classification_buttons {
+    /* 5개의 동일 너비 열(1fr)을 강제로 지정합니다. */
+    grid-template-columns: repeat(5, 1fr); 
+}
 /* 상태 버튼 그룹: 한 줄에 5개 */
 #state_buttons {
     grid-template-columns: repeat(auto-fit, minmax(calc(20% - 7px), 1fr)); /* 5개씩 배치 (간격 고려) */
