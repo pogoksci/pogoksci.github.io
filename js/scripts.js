@@ -178,3 +178,20 @@ async function importData() {
         statusMessage.style.color = 'red';
     }
 }
+
+function includeHTML(url, targetElementId) {
+    fetch(url)
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById(targetElementId).innerHTML = data;
+        })
+        .catch(error => {
+            console.error('HTML 파일을 로드하는 데 실패했습니다:', error);
+        });
+}
+
+// 페이지 로드 시 실행
+window.onload = function() {
+    includeHTML('pages/form-input.html', 'form-container');
+    includeHTML('pages/navbar.html', 'navbar-container');
+};
