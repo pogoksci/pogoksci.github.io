@@ -11,7 +11,7 @@ const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`;
 // 🔑 버튼 그룹의 선택 값을 저장할 전역 변수
 let selectedState = null;
 let selectedUnit = 'g'; 
-let selectedManufacturer = null;
+
 let selectedConcentrationUnit = null; 
 
 // 전역에서 접근해야 하는 HTML 요소들 (초기값은 null)
@@ -19,9 +19,9 @@ let statusMessage = null;
 let photoInput = null;
 let cameraInput = null;
 let photoPreview = null;
-let manufacturerButtonsGroup = null;
-let otherManufacturerGroup = null;
-let manufacturerOtherInput = null;
+//let manufacturerButtonsGroup = null;
+//let otherManufacturerGroup = null;
+//let manufacturerOtherInput = null;
 
 
 // =================================================================
@@ -75,13 +75,14 @@ function initializeFormListeners() {
     console.log("폼 요소 초기화 시작...");
 
     // 📌 전역 변수 재할당: 동적으로 로드된 요소를 찾습니다.
+    let selectedManufacturer = null;
     statusMessage = document.getElementById('statusMessage');
     photoInput = document.getElementById('file_select');
     cameraInput = document.getElementById('camera_capture');
     photoPreview = document.getElementById('photo_preview');
-    manufacturerButtonsGroup = document.getElementById('manufacturer_buttons');
-    otherManufacturerGroup = document.getElementById('other_manufacturer_group');
-    manufacturerOtherInput = document.getElementById('manufacturer_other');
+    const manufacturerButtonsGroup = document.getElementById('manufacturer_buttons');
+    const otherManufacturerGroup = document.getElementById('other_manufacturer_group');
+    const manufacturerOtherInput = document.getElementById('manufacturer_other');
     
     // --- 버튼 그룹 설정 실행 ---
     setupButtonGroup('state_buttons');
@@ -302,7 +303,9 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // index.html이 이미 전체 폼을 가지고 있다면, 바로 초기화 리스너를 호출합니다.
     // HTML 조각을 사용하지 않고 폼이 index.html에 직접 있다면, 바로 initializeFormListeners를 호출합니다.
+    includeHTML('pages/form-input.html', 'form-container', initializeFormListeners); 
+    includeHTML('pages/navbar.html', 'navbar-container'); 
     
     // 현재 코드에서는 includeHTML 사용이 생략되었으므로, 폼이 HTML에 직접 있다고 가정하고 초기화 로직을 실행합니다.
-    initializeFormListeners();
+    //initializeFormListeners();
 });
