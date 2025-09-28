@@ -120,14 +120,11 @@ button {
     bottom: 55px; /* Navbar 바로 위 */
     left: 10px; /* 왼쪽에서 조금 띄움 */
     width: 250px; /* 팝업 너비 */
-    background-color: #333; /* 윈도우 11 시작 메뉴와 유사한 어두운 배경 */
+    background-color: #555; /* 윈도우 11 시작 메뉴와 유사한 어두운 배경 */
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     z-index: 1010; /* Navbar보다 위에 표시 */
     padding: 10px;
-    
-    /* 윈도우 11 스타일: 메뉴와 사용자 영역 분리 */
-    display: flex; 
     flex-direction: column;
 }
 .start-menu-popup.visible {
