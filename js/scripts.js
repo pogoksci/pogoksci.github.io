@@ -73,32 +73,6 @@ function initializeFormListeners() {
     manufacturerButtonsGroup = document.getElementById('manufacturer_buttons');
     otherManufacturerGroup = document.getElementById('other_manufacturer_group');
     manufacturerOtherInput = document.getElementById('manufacturer_other');
-    
-    // 🔑 startButton 요소를 찾습니다. (navbar.html은 이 시점에서 이미 로드되어 있어야 합니다.)
-    const startButton = document.querySelector('.start-button'); 
-    const startMenu = document.getElementById('start-menu');
-    
-    if (startButton && startMenu) {
-        // 1. startButton에 클릭 이벤트 연결
-        startButton.addEventListener('click', (event) => {
-            event.preventDefault(); // 기본 링크 동작 방지
-            event.stopPropagation(); // 팝업 외부 닫힘 이벤트로 전파되는 것 방지
-            
-            startMenu.classList.toggle('visible'); // 메뉴 토글
-        });
-
-        // 2. 팝업 외부 닫힘 이벤트 로직 (window에 연결)
-        window.addEventListener('click', (event) => {
-            // 팝업이 열려 있고 (visible 클래스가 있고) 
-            // 클릭된 요소가 팝업 내부도 아니고, 버튼 자체도 아니라면 닫기
-            if (startMenu.classList.contains('visible') && 
-                !startMenu.contains(event.target) &&
-                !startButton.contains(event.target)) {
-                
-                startMenu.classList.remove('visible');
-            }
-        });
-    }
 
     // --- 버튼 그룹 설정 실행 ---
     setupButtonGroup('classification_buttons'); 
@@ -283,15 +257,43 @@ async function importData() {
     }
 }
 
+function setupNavbarListeners() {
+    // 🔑 이 시점에는 navbar.html이 로드되었음이 보장됩니다.
+    const startMenu = document.getElementById('start-menu');
+    const startButton = document.querySelector('.start-button'); 
+    
+    if (!startMenu || !startButton) {
+        console.error("Navbar elements not found after loading!");
+        return;
+    }
 
-// =================================================================
-// 6. 페이지 진입점 (최종 실행 시작)
-// =================================================================
+    // 1. startButton에 클릭 이벤트 연결
+    startButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation(); // 팝업 외부 닫힘 이벤트로 전파 차단
+        
+        startMenu.classList.toggle('visible'); // 메뉴 토글
+    });
 
+    // 2. 팝업 외부 닫힘 이벤트 로직 (window에 연결)
+    // 이 로직은 setupNavbarListeners가 호출될 때 단 한 번만 실행되어야 합니다.
+    // 주의: window.addEventListener('click')은 DOMContentLoaded 안이 아닌 전역에 연결합니다.
+    window.addEventListener('click', (event) => {
+        // 팝업이 열려 있고, 클릭된 요소가 팝업 내부도 아니고 버튼도 아니라면 닫기
+        if (startMenu.classList.contains('visible') && 
+            !startMenu.contains(event.target) &&
+            !startButton.contains(event.target)) {
+            
+            startMenu.classList.remove('visible');
+        }
+    });
+}
+
+// scripts.js 파일 맨 아래 (페이지 진입점)
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. form-input.html 로드: 완료 후 initializeFormListeners 콜백으로 실행
+    // 1. form-input.html 로드
     includeHTML('pages/form-input.html', 'form-container', initializeFormListeners); 
     
-    // 2. navbar.html 로드
-    includeHTML('pages/navbar.html', 'navbar-container'); 
+    // 2. navbar.html 로드: 로드 후 setupNavbarListeners를 콜백으로 실행합니다.
+    includeHTML('pages/navbar.html', 'navbar-container', setupNavbarListeners); 
 });
