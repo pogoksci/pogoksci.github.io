@@ -270,33 +270,25 @@ window.addEventListener('DOMContentLoaded', () => {
     includeHTML('pages/navbar.html', 'navbar-container'); 
 });
 
-
-/**
- * 윈도우 시작 메뉴 팝업을 열고 닫는 함수
- */
-function toggleStartMenu(event) {
-    // 이벤트가 폼 제출을 유발하지 않도록 막습니다.
-    if (event) {
-        event.preventDefault(); 
-    }
-    
-    const startMenu = document.getElementById('start-menu');
-    if (startMenu) {
-        startMenu.classList.toggle('visible');
-    }
-}
-
-// 팝업이 열려 있을 때, 팝업 바깥을 클릭하면 팝업이 닫히도록 설정
+// ❌ 기존 window.addEventListener('click', ...) 로직 대체
 window.addEventListener('click', (event) => {
     const startMenu = document.getElementById('start-menu');
-    const startButton = document.querySelector('.start-button'); // 버튼을 다시 찾습니다.
+    const startButton = document.querySelector('.start-button'); 
     
-    if (startMenu && startMenu.classList.contains('visible')) {
-        // 팝업 내부나 시작 버튼을 클릭한 경우가 아니면 팝업을 닫습니다.
-        if (event.target !== startMenu && !startMenu.contains(event.target) && 
-            event.target !== startButton && !startButton.contains(event.target)) {
+    if (!startMenu) return; // 팝업 요소가 없으면 실행 중단
+
+    // 1. 시작 버튼을 클릭한 경우: 팝업 상태를 반전(토글)
+    if (startButton && startButton.contains(event.target)) {
+        startMenu.classList.toggle('visible');
+        // 팝업이 열렸거나 닫혔으므로 함수 종료
+        return; 
+    }
+
+    // 2. 팝업이 열려 있는 상태에서 팝업 바깥을 클릭한 경우: 팝업 닫기
+    if (startMenu.classList.contains('visible')) {
+        // 클릭된 요소가 팝업 내부 요소가 아닌 경우에만 팝업을 닫습니다.
+        if (!startMenu.contains(event.target)) {
             startMenu.classList.remove('visible');
         }
     }
 });
-// 참고: toggleStartMenu 함수는 navbar.html의 버튼 onclick="toggleStartMenu(event)"에서 호출됩니다.
