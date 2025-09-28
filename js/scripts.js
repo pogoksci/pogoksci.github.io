@@ -2,25 +2,24 @@
 // 0. 전역 변수 및 설정
 // =================================================================
 
-// 🚨 Supabase 및 Edge Function 설정 (index.html <head>에서 정의되었거나 여기에 포함되어야 합니다)
+// 🚨 Supabase 및 Edge Function 설정
 const SUPABASE_URL = "https://muprmzkvrjacqatqxayf.supabase.co"; 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11cHJtemt2cmphY3FhdHF4YXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4MDM4MjgsImV4cCI6MjA3NDM3OTgyOH0.a4gUjlp9reaO28kxdLrh5dF0IUscXWgtXbB7PY4wWsk";
 const FUNCTION_NAME = "casimport"; 
 const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`;
-//const EDGE_FUNCTION_URL = 'https://muprmzkvrjacqatqxayf.functions.supabase.co/casimport'; 
 
 // 🔑 버튼 그룹의 선택 값을 저장할 전역 변수
-let selectedClassification = null; // 🔑 새로운 전역 변수 추가
+let selectedClassification = null; 
 let selectedState = null;
 let selectedUnit = null; 
 let selectedConcentrationUnit = null;
-let selectedManufacturer = null; // ⚠️ manufacture도 전역 변수여야 합니다.
+let selectedManufacturer = null; 
 
-// 전역에서 접근해야 하는 HTML 요소들 (초기값은 null)
+// 전역에서 접근해야 하는 HTML 요소들 (Storage 관련 요소는 제거)
 let statusMessage = null;
-let photoInput = null;
-let cameraInput = null;
-let photoPreview = null;
+// let photoInput = null; // ❌ 삭제: DOM 요소 접근 필요 없음
+// let cameraInput = null; // ❌ 삭제
+// let photoPreview = null; // ❌ 삭제
 let manufacturerButtonsGroup = null;
 let otherManufacturerGroup = null;
 let manufacturerOtherInput = null;
@@ -29,10 +28,6 @@ let manufacturerOtherInput = null;
 // =================================================================
 // 1. HTML 조각 파일 로더 함수
 // =================================================================
-
-/**
- * 지정된 URL에서 HTML 내용을 가져와 특정 요소에 삽입 후 콜백 함수를 실행합니다.
- */
 function includeHTML(url, targetElementId, callback) {
     fetch(url)
         .then(response => {
@@ -44,10 +39,8 @@ function includeHTML(url, targetElementId, callback) {
         .then(htmlContent => {
             const targetElement = document.getElementById(targetElementId);
             if (targetElement) {
-                // 불러온 HTML 내용을 대상 요소에 삽입
                 targetElement.innerHTML = htmlContent;
 
-                // HTML 삽입 완료 후, 콜백 함수를 실행하여 동적 요소를 초기화
                 if (callback) {
                     callback();
                 }
@@ -57,7 +50,6 @@ function includeHTML(url, targetElementId, callback) {
         })
         .catch(error => {
             console.error('Error during HTML include:', error);
-            // 오류 메시지 표시 (statusMessage가 로드되어 있다고 가정)
             const msgElement = document.getElementById('statusMessage');
             if (msgElement) {
                 msgElement.textContent = `페이지 로드 오류: ${url}`;
@@ -70,17 +62,14 @@ function includeHTML(url, targetElementId, callback) {
 // 2. 폼 요소 초기화 로직 (콜백 함수)
 // =================================================================
 
-/**
- * form-input.html 내부의 동적으로 삽입된 요소들에 이벤트 리스너를 연결하고 전역 변수를 재설정합니다.
- */
 function initializeFormListeners() {
     console.log("폼 요소 초기화 시작...");
 
-    // 📌 전역 변수 재할당: 동적으로 로드된 요소를 찾습니다.
+    // 📌 전역 변수 재할당: DOM 요소 찾기
     statusMessage = document.getElementById('statusMessage');
-    photoInput = document.getElementById('file_select');
-    cameraInput = document.getElementById('camera_capture');
-    photoPreview = document.getElementById('photo_preview');
+    // photoInput = document.getElementById('file_select'); // ❌ 삭제
+    // cameraInput = document.getElementById('camera_capture'); // ❌ 삭제
+    // photoPreview = document.getElementById('photo_preview'); // ❌ 삭제
     manufacturerButtonsGroup = document.getElementById('manufacturer_buttons');
     otherManufacturerGroup = document.getElementById('other_manufacturer_group');
     manufacturerOtherInput = document.getElementById('manufacturer_other');
@@ -92,9 +81,9 @@ function initializeFormListeners() {
     setupButtonGroup('concentration_unit_buttons'); 
     setupButtonGroup('manufacturer_buttons'); 
 
-    // --- 사진 파일 이벤트 리스너 설정 ---
-    if (photoInput) photoInput.addEventListener('change', handlePhotoChange);
-    if (cameraInput) cameraInput.addEventListener('change', handlePhotoChange);
+    // --- 사진 파일 이벤트 리스너 설정 (삭제) ---
+    // if (photoInput) photoInput.addEventListener('change', handlePhotoChange); // ❌ 삭제
+    // if (cameraInput) cameraInput.addEventListener('change', handlePhotoChange); // ❌ 삭제
     
     // --- '기타' 제조사 입력란 표시 이벤트 리스너 설정 ---
     if (manufacturerButtonsGroup) {
@@ -118,9 +107,8 @@ function initializeFormListeners() {
 
 
 // =================================================================
-// 3. 버튼 그룹 핸들러 함수
+// 3. 버튼 그룹 핸들러 함수 (유지)
 // =================================================================
-
 function setupButtonGroup(groupId, initialValue = null) {
     const group = document.getElementById(groupId);
     if (!group) return; 
@@ -128,13 +116,11 @@ function setupButtonGroup(groupId, initialValue = null) {
     group.addEventListener('click', (event) => {
         const targetButton = event.target.closest('button');
         if (targetButton) {
-            // 스타일 변경
             group.querySelectorAll('.active').forEach(btn => {
                 btn.classList.remove('active');
             });
             targetButton.classList.add('active');
 
-            // 전역 변수 값 업데이트
             const value = targetButton.getAttribute('data-value');
             if (groupId === 'state_buttons') {
                 selectedState = value;
@@ -150,7 +136,6 @@ function setupButtonGroup(groupId, initialValue = null) {
         }
     });
 
-    // 초기값 설정
     if (initialValue) {
         const initialButton = group.querySelector(`button[data-value="${initialValue}"]`);
         if (initialButton) {
@@ -161,33 +146,17 @@ function setupButtonGroup(groupId, initialValue = null) {
 
 
 // =================================================================
-// 4. 사진 파일 미리보기 핸들러
+// 4. 사진 파일 미리보기 핸들러 (삭제됨)
 // =================================================================
 
-function handlePhotoChange(event) {
-    // photoPreview가 재할당되었는지 확인
-    if (!photoPreview) return; 
-    
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            photoPreview.src = e.target.result;
-            photoPreview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    } else {
-        photoPreview.style.display = 'none';
-    }
-}
+/* ❌ handlePhotoChange 함수 정의 전체 삭제 */
 
 
 // =================================================================
-// 5. 폼 제출 처리 함수
+// 5. 폼 제출 처리 함수 (Storage 로직 제거)
 // =================================================================
 
 async function importData() {
-    // 🔑 폼 기본 제출 동작 방지 (페이지 리로드 방지)
     if (event) {
         event.preventDefault(); 
     }
@@ -205,7 +174,7 @@ async function importData() {
     const manufacturerSelect = selectedManufacturer; 
     const manufacturerOther = manufacturerOtherInput ? manufacturerOtherInput.value.trim() : ''; 
     const purchaseDate = document.getElementById('purchase_date').value;
-    const classification = document.getElementById('classification').value;
+    const classification = selectedClassification; // ❌ 수정: selectedClassification 사용
     
     const state = selectedState; 
     const unit = selectedUnit; 
@@ -228,27 +197,9 @@ async function importData() {
         finalManufacturer = manufacturerSelect;
     }
 
-    // 3. 사진 파일 처리 (Base64 인코딩)
-    let photoBase64 = null;
-    let photoMimeType = null; // 🔑 MIME 타입을 저장할 변수 추가
-    const file = photoInput.files[0] || cameraInput.files[0];
+    // 3. 사진 파일 처리 로직 (완전 삭제)
+    // photoBase64 및 photoMimeType은 이 로직에서 생성되지 않습니다.
     
-    if (file) {
-        photoMimeType = file.type; // 🔑 파일의 MIME 타입 (예: image/jpeg) 저장
-        photoBase64 = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result;
-                if (typeof base64String === 'string') {
-                    resolve(base64String.split(',')[1]); 
-                } else {
-                    resolve(null);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
     // 4. 서버로 전송할 최종 Inventory 데이터 구성
     const inventoryData = {
         casRns: [casRn], 
@@ -257,15 +208,14 @@ async function importData() {
             concentration_unit: concentrationUnit || null,
             purchase_volume: isNaN(purchaseVolume) ? 0 : purchaseVolume,
             current_amount: isNaN(purchaseVolume) ? 0 : purchaseVolume,
-            unit: unit,                      
-            state: state,                    
+            unit: unit,                      
+            state: state,                    
             manufacturer: finalManufacturer,
             purchase_date: purchaseDate || null,
             classification: classification || null,
+            // ❌ photo_base64 및 photo_mime_type 필드 제거
             photo_base64: null,
-            // photo_base64: photoBase64,
             photo_mime_type: null,
-            //photo_mime_type: photoMimeType,
             location: 'Initial Check-in',
         }
     };
@@ -287,7 +237,7 @@ async function importData() {
             throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
         }
         
-        // 6. 성공 응답 처리
+        // 6. 성공 응답 처리 (유지)
         const result = data[0];
         let msg = '';
         
@@ -313,13 +263,9 @@ async function importData() {
 // =================================================================
 
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. form-input.html 로드: 완료 후 フォーム初期化 함수(initializeFormListeners)를 콜백으로 실행
-    // ⚠️ index.html에 <div id="form-container"></div> 가 있어야 합니다.
+    // 1. form-input.html 로드: 완료 후 initializeFormListeners 콜백으로 실행
     includeHTML('pages/form-input.html', 'form-container', initializeFormListeners); 
     
     // 2. navbar.html 로드
     includeHTML('pages/navbar.html', 'navbar-container'); 
-    
-    // ❌ 경고: 여기에 있는 initializeFormListeners() 호출은 삭제되어야 합니다.
-    // initializeFormListeners(); 
 });
