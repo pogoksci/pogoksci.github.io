@@ -6,7 +6,8 @@
 const SUPABASE_URL = "https://muprmzkvrjacqatqxayf.supabase.co"; 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11cHJtemt2cmphY3FhdHF4YXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4MDM4MjgsImV4cCI6MjA3NDM3OTgyOH0.a4gUjlp9reaO28kxdLrh5dF0IUscXWgtXbB7PY4wWsk";
 const FUNCTION_NAME = "casimport"; 
-const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`;
+// const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`;
+const EDGE_FUNCTION_URL = 'https://muprmzkvrjacqatqxayf.functions.supabase.co/casimport'; 
 
 // 🔑 버튼 그룹의 선택 값을 저장할 전역 변수
 let selectedClassification = null; // 🔑 새로운 전역 변수 추가
@@ -222,9 +223,11 @@ async function importData() {
 
     // 3. 사진 파일 처리 (Base64 인코딩)
     let photoBase64 = null;
+    let photoMimeType = null; // 🔑 MIME 타입을 저장할 변수 추가
     const file = photoInput.files[0] || cameraInput.files[0];
     
     if (file) {
+        photoMimeType = file.type; // 🔑 파일의 MIME 타입 (예: image/jpeg) 저장
         photoBase64 = await new Promise((resolve) => {
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -253,6 +256,7 @@ async function importData() {
             purchase_date: purchaseDate || null,
             classification: classification || null,
             photo_base64: photoBase64,
+            photo_mime_type: photoMimeType,
             location: 'Initial Check-in',
         }
     };
