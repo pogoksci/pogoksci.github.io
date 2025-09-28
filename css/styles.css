@@ -110,7 +110,7 @@ button {
 .nav-item {
     flex-grow: 1;
     text-align: center;
-    color: #fff; /* 글자색을 어둡게 유지 */
+    color: #444; /* 글자색을 어둡게 유지 */
     text-decoration: none;
     padding: 8px 0;
     font-size: 10px;
@@ -239,4 +239,45 @@ button {
     background-color: #00bcd4; /* 선택 시 청록색 */
     color: white; 
     border-color: #00a0b2; 
+}
+
+/* --- 1. 보관장 목록 뷰 스타일 --- */
+.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* 카드 사이 간격 */
+    padding: 0 15px;
+}
+
+/* --- 2. Cabinet 카드 스타일 --- */
+.cabinet-card {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    overflow: hidden; /* 이미지 경계를 깔끔하게 처리 */
+    cursor: pointer;
+    width: 100%;
+}
+.card-image-placeholder {
+    width: 100%;
+    height: 150px; /* 이미지 높이 */
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #555;
+    /* 🔑 이미지 대체 텍스트와 스타일 */
+    line-height: 150px;
+    text-align: center;
+}
+.card-info {
+    padding: 10px 15px;
+}
+.card-info h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
 }

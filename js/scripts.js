@@ -546,3 +546,134 @@ window.addEventListener('DOMContentLoaded', () => {
     // 2. navbar.html 로드: 완료 후 navbar 이벤트 설정을 콜백으로 실행
     includeHTML('pages/navbar.html', 'navbar-container', setupNavbarListeners); 
 });
+
+// =================================================================
+// 8. 보관장 등록 폼 로드 함수
+// =================================================================
+
+/**
+ * 플로팅 액션 버튼(FAB) 클릭 시 새 캐비닛 등록 폼을 로드합니다.
+ */
+function showNewCabinetForm() {
+    console.log("새 캐비닛 등록 폼 로드 시작...");
+    const formContainer = document.getElementById('form-container');
+    
+    // (선택 사항) 현재 목록 뷰를 숨기는 로직이 필요할 수 있습니다.
+    // 현재는 includeHTML이 form-container 전체를 덮어쓰므로 별도 숨김 로직 불필요.
+
+    // 🔑 새로운 HTML 조각 파일 로드
+    // 캐비닛 등록 폼이 들어있는 pages/cabinet-register-form.html 파일을 로드합니다.
+    includeHTML('pages/cabinet-register-form.html', 'form-container', setupCabinetRegisterForm);
+}
+
+/**
+ * 새 캐비닛 등록 폼 로드 후 실행될 콜백 함수 (추후 구현)
+ */
+function setupCabinetRegisterForm() {
+    console.log("새 캐비닛 등록 폼 로드 완료.");
+    // 여기에 폼 유효성 검사, 이벤트 리스너 연결 등의 로직을 추가합니다.
+}
+function setupLocationList() {
+    // 🔑 이 함수는 location-list.html 로드 후 실행되며, 데이터를 fetch하여 렌더링을 시작합니다.
+    console.log("약품 보관장 목록 페이지 로드 완료. 데이터 로드 시작.");
+    
+    // fetchCabinetListAndRender 함수를 호출하여 데이터 조회 및 렌더링을 시작합니다.
+    fetchCabinetListAndRender(); 
+}
+
+/**
+ * Edge Function에 GET 요청을 보내 Cabinet 목록을 조회하고 렌더링합니다.
+ */
+async function fetchCabinetListAndRender() {
+    // 🔑 이 함수는 이미 includeHTML('pages/location-list.html', ...)의 콜백에서 실행되어야 합니다.
+    const listContainer = document.getElementById('cabinet-list-container');
+    const statusMsg = document.getElementById('status-message-list');
+    
+    if (statusMsg) {
+        statusMsg.textContent = '등록된 보관장소를 불러오는 중...';
+        statusMsg.style.color = 'blue';
+    }
+
+    try {
+        // Edge Function의 GET 엔드포인트 호출 (Area 및 Cabinet 데이터 요청)
+        const response = await fetch(EDGE_FUNCTION_URL, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || '보관장 목록 데이터 조회 실패');
+        }
+        
+        // 전역 변수 업데이트 (혹시 form-input 페이지에서 로드되지 않았을 경우를 대비)
+        allAreas = data.areas || [];
+        const cabinets = data.cabinets || []; // Cabinet 데이터 획득
+        
+        // 렌더링 로직
+        if (cabinets.length === 0) {
+            if (listContainer) {
+                // 데이터가 없을 때 사용자에게 등록을 유도하는 메시지 출력
+                listContainer.innerHTML = `
+                    <div style="text-align: center; padding: 50px 20px; color: #888;">
+                        <h4>등록된 보관장소가 없습니다.</h4>
+                        <p style="margin-top: 15px;">**+ 버튼**을 눌러 첫 번째 보관장을 등록해 주세요.</p>
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        // 목록 렌더링 함수 호출
+        renderCabinetCards(cabinets, listContainer);
+        
+        // 상태 메시지 업데이트
+        if (statusMsg) {
+            statusMsg.textContent = `✅ 보관장 목록 ${cabinets.length}개 로드 완료`;
+            statusMsg.style.color = 'green';
+        }
+
+    } catch (error) {
+        console.error("보관장 목록 로드 중 오류 발생:", error);
+        if (statusMsg) {
+            statusMsg.textContent = `❌ 보관장 목록 로드 오류: ${error.message}`;
+            statusMsg.style.color = 'red';
+        }
+    }
+}
+
+/**
+ * 목록 데이터를 기반으로 화면에 카드 UI를 생성하는 함수
+ * (추가로 이 함수도 scripts.js에 정의되어야 합니다.)
+ */
+function renderCabinetCards(cabinets, container) {
+    container.innerHTML = ''; // 기존 내용 지우기
+    
+    cabinets.forEach(cabinet => {
+        // Area ID를 사용해 Area 이름 조회
+        const areaName = allAreas.find(a => a.id === cabinet.area_id)?.name || '알 수 없음';
+        
+        const card = document.createElement('div');
+        card.className = 'cabinet-card'; // CSS에서 정의된 카드 스타일
+        card.setAttribute('data-cabinet-id', cabinet.id);
+        
+        // 카드 HTML 구조 (사용자가 원하는 화면처럼 이미지와 제목을 포함)
+        card.innerHTML = `
+            <div class="card-image-placeholder">
+                [${cabinet.name} 사진]
+            </div>
+            <div class="card-info">
+                <h3>${cabinet.name}</h3>
+                <p class="area-name">${areaName}</p>
+                <p class="area-name">(${cabinet.shelf_height}층, ${cabinet.storage_columns}열)</p>
+            </div>
+        `;
+        
+        card.addEventListener('click', () => {
+            alert(`Cabinet ID ${cabinet.id} (${cabinet.name}) 클릭됨. 상세 정보 페이지로 이동할 예정입니다.`);
+        });
+        
+        container.appendChild(card);
+    });
+}
