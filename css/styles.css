@@ -99,18 +99,46 @@ button {
 
 /* 고정 하단 메뉴 (목록 화면 스타일을 따르지만, 여기서는 고정 버튼만 표시) */
 .navbar {
-    position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 55px; background-color: #00bcd4; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); z-index: 1000;
+    position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 55px; 
+    /* 🔑 기존 청록색 배경(#00bcd4) 제거. 투명하거나 흰색 기반으로 변경 */
+    background-color: rgba(255, 255, 255, 0.9); /* 밝은 투명 배경으로 유지 */
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    z-index: 1000;
+    backdrop-filter: blur(8px); /* 유리 효과 유지 */
 }
+
 .nav-item {
-    flex-grow: 1; text-align: center; color: white; text-decoration: none; padding: 8px 0; font-size: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex-grow: 1;
+    text-align: center;
+    color: #444; /* 글자색을 어둡게 유지 */
+    text-decoration: none;
+    padding: 8px 0;
+    font-size: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* 🔑 기본 상태는 투명한 배경 */
+    background-color: transparent; 
+    transition: background-color 0.2s;
 }
 .nav-icon { font-size: 18px; margin-bottom: 2px; }
+/* 🔑 선택된 항목(active)에만 색상을 부여 */
+.nav-item.active {
+    background-color: #00bcd4; /* 청록색 배경 활성화 */
+    color: white; /* 선택된 탭의 글자색은 흰색 */
+}
+
 /* --- 1. 시작 버튼 스타일 (Navbar 내) --- */
 .nav-item.start-button {
     /* Menu 버튼을 다른 탭들과 구분되도록 하거나 강조할 수 있습니다. */
     background-color: #007bff; /* 파란색 계열로 강조 */
     flex-grow: 0; /* 너비가 늘어나지 않도록 고정 */
     width: 60px; /* 고정된 너비 */
+}
+/* 🔑 Menu 버튼 (start-button)은 활성화 상태에서만 배경색을 갖도록 */
+.nav-item.start-button.active {
+    background-color: #007bff; /* 파란색 계열로 강조 (선택 시) */
 }
 /* --- 2. 윈도우 시작 메뉴 팝업 스타일 --- */
 .start-menu-popup {
@@ -165,4 +193,50 @@ button {
 .user-id {
     font-weight: bold;
     color: white;
+}
+
+/* css/styles.css 파일에 추가 */
+
+/* --- 1. 6단계 위치 필드 컨테이너 스타일 --- */
+.form-group-location {
+    margin-bottom: 25px;
+    padding: 15px;
+    border: 2px solid #00bcd4; /* 위치 설정 영역 시각적 강조 */
+    border-radius: 8px;
+    background-color: #f8f8ff; /* 배경색 살짝 다르게 */
+}
+.form-group-location h3 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #00a0b2;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+.location-step label {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #555;
+}
+
+/* --- 2. 동적 생성 버튼 스타일 (버튼 그룹 공통 스타일 재사용) --- */
+
+/* 위치 버튼 그룹 (일반 버튼과 구분) */
+/* 버튼 개수가 적을 때 너비를 유연하게 조정하도록 합니다. */
+#location_door_vertical_group,
+#location_door_horizontal_group,
+#location_internal_shelf_group,
+#location_storage_column_group {
+    display: grid;
+    /* 버튼 3개까지는 한 줄에 깔끔하게 배치되도록 열 설정을 유연하게 */
+    grid-template-columns: repeat(auto-fit, minmax(calc(20% - 6px), 1fr)); 
+    gap: 6px;
+    margin-top: 5px;
+}
+
+/* 선택된 위치 버튼 스타일 (기존 .button-group button.active 스타일 재사용) */
+.button-group button.active {
+    background-color: #00bcd4; /* 선택 시 청록색 */
+    color: white; 
+    border-color: #00a0b2; 
 }

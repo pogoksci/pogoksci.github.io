@@ -1,0 +1,62 @@
+<form id="cabinet-creation-form" onsubmit="createCabinet(event); return false;" style="padding: 20px;">
+    <h2>캐비닛 등록</h2>
+
+    <div class="form-group">
+        <label>1. 시약장이 위치한 장소 *</label>
+        <div class="button-group" id="area_creation_buttons">
+            <button type="button" data-value="준비실">준비실</button>
+            <button type="button" data-value="제1과학실">제1과학실</button>
+            <button type="button" data-value="제2과학실">제2과학실</button>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label for="cabinet_name">2. 보관장 이름 및 번호 *</label>
+        <input type="text" id="cabinet_name" placeholder="예: 약품보관장1, 냉장고" required>
+    </div>
+
+    <div class="form-group">
+        <label>3. 전체적인 도어 개폐 범위 *</label>
+        <div class="button-group" id="door_range_buttons">
+            <button type="button" data-value="상층하도어">상층하도어</button>
+            <button type="button" data-value="단일도어_상하">단일 도어</button>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>4. 전체적인 도어 분리 형태 *</label>
+        <div class="button-group" id="door_split_buttons">
+            <button type="button" data-value="단일도어">단일 도어</button>
+            <button type="button" data-value="좌우분리">좌우분리</button>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>5. 도어 1개를 열었을 때 보이는 수납장의 수 (층수) *</label>
+        <div class="button-group" id="shelf_height_buttons">
+            <button type="button" data-value="6">6층</button>
+            <button type="button" data-value="5">5층</button>
+            <button type="button" data-value="4">4층</button>
+            <button type="button" data-value="3">3층</button>
+            <button type="button" data-value="2">2층</button>
+            <button type="button" data-value="1">1층</button>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>6. 수납장의 열 수 (보관열) *</label>
+        <div class="button-group" id="storage_columns_buttons">
+            <button type="button" data-value="1">1열</button>
+            <button type="button" data-value="2">2열</button>
+            <button type="button" data-value="3">3열</button>
+            <button type="button" data-value="4">4열</button>
+            <button type="button" data-value="5">5열</button>
+            <button type="button" data-value="6">6열</button>
+        </div>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+        <button type="button" onclick="cancelForm()" style="width: 48%; background-color: #ccc; color: #333;">취소</button>
+        <button type="submit" style="width: 48%; background-color: #00bcd4; color: white;">보관장 등록</button>
+    </div>
+</form>

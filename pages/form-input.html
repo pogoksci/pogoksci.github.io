@@ -87,35 +87,81 @@
         </div>
     </div>
 
-<div class="form-group">
-    <label>제조원</label>
-    <div class="button-group" id="manufacturer_buttons">
-        <button type="button" data-value="대정">대정</button>
-        <button type="button" data-value="덕산">덕산</button>
-        <button type="button" data-value="동성">동성</button>
-        <button type="button" data-value="삼전">삼전</button>
-        <button type="button" data-value="한양">한양</button>
-        <button type="button" data-value="태진">태진</button>
-        
-        <button type="button" data-value="OCI">OCI</button>
-        <button type="button" data-value="JUNSEI">JUNSEI</button>
-        <button type="button" data-value="MERCK">MERCK</button>
-        <button type="button" data-value="Sigma-Aldrich">Sigma-Aldrich</button>
-        <button type="button" data-value="생물나라">생물나라</button>
-        <button type="button" data-value="기타">기타</button>
+    <div class="form-group">
+        <label>제조원</label>
+        <div class="button-group" id="manufacturer_buttons">
+            <button type="button" data-value="대정">대정</button>
+            <button type="button" data-value="덕산">덕산</button>
+            <button type="button" data-value="동성">동성</button>
+            <button type="button" data-value="삼전">삼전</button>
+            <button type="button" data-value="한양">한양</button>
+            <button type="button" data-value="태진">태진</button>
+            
+            <button type="button" data-value="OCI">OCI</button>
+            <button type="button" data-value="JUNSEI">JUNSEI</button>
+            <button type="button" data-value="MERCK">MERCK</button>
+            <button type="button" data-value="Sigma-Aldrich">Sigma-Aldrich</button>
+            <button type="button" data-value="생물나라">생물나라</button>
+            <button type="button" data-value="기타">기타</button>
+        </div>
     </div>
-</div>
 
-<div class="form-group" id="other_manufacturer_group" style="display: none;">
-    <label for="manufacturer_other">제조원 직접 입력</label>
-    <input type="text" id="manufacturer_other" placeholder="제조사 또는 구입처를 입력하세요">
-</div>
+    <div class="form-group" id="other_manufacturer_group" style="display: none;">
+        <label for="manufacturer_other">제조원 직접 입력</label>
+        <input type="text" id="manufacturer_other" placeholder="제조사 또는 구입처를 입력하세요">
+    </div>
 
     <div class="form-group">
         <label for="purchase_date">제조일 또는 구입일</label>
         <input type="date" id="purchase_date" name="purchase_date">
     </div>
     
+    <div class="form-group-location">
+        <h3>보관 위치 설정 (6단계)</h3>
+        
+        <div class="location-step">
+            <label>1. 약품실 *</label>
+            <select id="location_area_select" name="location_area_select" required>
+                <option value="" disabled selected>약품실 로드 중...</option>
+            </select>
+        </div>
+
+        <div class="location-step">
+            <label>2. 수납함 *</label>
+            <select id="location_cabinet_select" name="location_cabinet_select" required disabled>
+                <option value="" disabled selected>약품실 선택 후 활성화</option>
+            </select>
+        </div>
+
+        <div class="location-step">
+            <label>3. 수납위치_도어_상중하 *</label>
+            <div class="button-group" id="location_door_vertical_group">
+                <span style="color:#888;">수납함 선택 후 표시됩니다.</span>
+            </div>
+        </div>
+
+        <div class="location-step">
+            <label>4. 수납위치_도어_좌우 *</label>
+            <div class="button-group" id="location_door_horizontal_group">
+                <span style="color:#888;">수납함 선택 후 표시됩니다.</span>
+            </div>
+        </div>
+
+        <div class="location-step">
+            <label>5. 수납위치_도어내부_단 *</label>
+            <div class="button-group" id="location_internal_shelf_group">
+                <span style="color:#888;">수납함 선택 후 표시됩니다.</span>
+            </div>
+        </div>
+        
+        <div class="location-step">
+            <label>6. 수납위치_도어내부_보관열 *</label>
+            <div class="button-group" id="location_storage_column_group">
+                <span style="color:#888;">수납함 선택 후 표시됩니다.</span>
+            </div>
+        </div>
+    </div>
+
     <button type="submit">재고 정보 DB에 저장</button> 
     <p id="statusMessage" style="margin-top: 15px;"></p>
 </form>
