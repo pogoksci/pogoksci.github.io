@@ -264,7 +264,8 @@ async function importData() {
             classification: classification || null,
             photo_base64: null,
             // photo_base64: photoBase64,
-            photo_mime_type: photoMimeType,
+            photo_mime_type: null,
+            //photo_mime_type: photoMimeType,
             location: 'Initial Check-in',
         }
     };
