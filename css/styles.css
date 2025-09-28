@@ -110,7 +110,7 @@ button {
 .nav-item {
     flex-grow: 1;
     text-align: center;
-    color: #444; /* 글자색을 어둡게 유지 */
+    color: #fff; /* 글자색을 어둡게 유지 */
     text-decoration: none;
     padding: 8px 0;
     font-size: 10px;
@@ -132,13 +132,13 @@ button {
 /* --- 1. 시작 버튼 스타일 (Navbar 내) --- */
 .nav-item.start-button {
     /* Menu 버튼을 다른 탭들과 구분되도록 하거나 강조할 수 있습니다. */
-    background-color: #007bff; /* 파란색 계열로 강조 */
+    background-color: #307690; /* 파란색 계열로 강조 */
     flex-grow: 0; /* 너비가 늘어나지 않도록 고정 */
     width: 60px; /* 고정된 너비 */
 }
 /* 🔑 Menu 버튼 (start-button)은 활성화 상태에서만 배경색을 갖도록 */
 .nav-item.start-button.active {
-    background-color: #007bff; /* 파란색 계열로 강조 (선택 시) */
+    background-color: #307690; /* 파란색 계열로 강조 (선택 시) */
 }
 /* --- 2. 윈도우 시작 메뉴 팝업 스타일 --- */
 .start-menu-popup {
