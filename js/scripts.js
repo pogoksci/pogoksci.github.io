@@ -88,7 +88,7 @@ function initializeFormListeners() {
     // --- 버튼 그룹 설정 실행 ---
     setupButtonGroup('classification_buttons'); 
     setupButtonGroup('state_buttons');
-    setupButtonGroup('unit_buttons', 'g');
+    setupButtonGroup('unit_buttons');
     setupButtonGroup('concentration_unit_buttons'); 
     setupButtonGroup('manufacturer_buttons'); 
 
@@ -257,7 +257,8 @@ async function importData() {
             manufacturer: finalManufacturer,
             purchase_date: purchaseDate || null,
             classification: classification || null,
-            photo_base64: photoBase64,
+            photo_base64: null,
+            // photo_base64: photoBase64,
             photo_mime_type: photoMimeType,
             location: 'Initial Check-in',
         }
