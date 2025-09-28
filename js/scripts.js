@@ -340,7 +340,11 @@ function setupButtonGroup(groupId, initialValue = null) {
     group.addEventListener('click', (event) => {
         const targetButton = event.target.closest('button');
         if (targetButton) {
-            // ... (스타일 변경 로직 유지) ...
+            // 스타일 변경
+            group.querySelectorAll('.active').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            targetButton.classList.add('active');
             
             // 전역 변수 값 업데이트
             const value = targetButton.getAttribute('data-value');
