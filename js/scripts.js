@@ -6,8 +6,8 @@
 const SUPABASE_URL = "https://muprmzkvrjacqatqxayf.supabase.co"; 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11cHJtemt2cmphY3FhdHF4YXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4MDM4MjgsImV4cCI6MjA3NDM3OTgyOH0.a4gUjlp9reaO28kxdLrh5dF0IUscXWgtXbB7PY4wWsk";
 const FUNCTION_NAME = "casimport"; 
-// const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`;
-const EDGE_FUNCTION_URL = 'https://muprmzkvrjacqatqxayf.functions.supabase.co/casimport'; 
+const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`;
+//const EDGE_FUNCTION_URL = 'https://muprmzkvrjacqatqxayf.functions.supabase.co/casimport'; 
 
 // 🔑 버튼 그룹의 선택 값을 저장할 전역 변수
 let selectedClassification = null; // 🔑 새로운 전역 변수 추가
@@ -187,6 +187,11 @@ function handlePhotoChange(event) {
 // =================================================================
 
 async function importData() {
+    // 🔑 폼 기본 제출 동작 방지 (페이지 리로드 방지)
+    if (event) {
+        event.preventDefault(); 
+    }
+
     if (!statusMessage) return; 
     
     statusMessage.textContent = '데이터를 처리 중입니다... 잠시만 기다려 주세요.';
