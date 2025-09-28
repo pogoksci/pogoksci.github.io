@@ -382,7 +382,27 @@ function setupNavbarListeners() {
         startMenu.classList.toggle('visible'); // 메뉴 토글
     });
 
-    // 2. 팝업 외부 닫힘 이벤트 로직 (Window에 연결)
+    // 🔑 2. 메뉴 항목(menu-item)에 클릭 이벤트 연결 로직 추가
+    const menuItems = startMenu.querySelectorAll('.menu-item');
+
+    menuItems.forEach(item => {
+        item.addEventListener('click', (event) => {
+            event.preventDefault(); // 기본 링크 동작 방지
+            startMenu.classList.remove('visible'); // 팝업 닫기
+            
+            const itemText = event.target.textContent.trim();
+
+            if (itemText === '약품 보관장 설정') {
+                // 🚨 '약품 보관장 설정' 링크 클릭 시, 보관장 목록 페이지를 로드합니다.
+                // pages/location-list.html 파일이 있다고 가정하고 로드합니다.
+                includeHTML('pages/location-list.html', 'form-container', setupLocationList); 
+            }
+            // Add logic for other menu items here (e.g., 교구/물품 설정)
+
+        });
+    });
+
+    // 3. 팝업 외부 닫힘 이벤트 로직 (Window에 연결)
     // 이 로직은 navbar HTML이 로드된 후에 단 한 번만 연결되어야 합니다.
     window.addEventListener('click', (event) => {
         // 팝업이 열려 있고, 클릭된 요소가 팝업 내부도 아니고 버튼도 아니라면 닫기
@@ -396,6 +416,11 @@ function setupNavbarListeners() {
     });
 }
 
+// 3. 새로운 콜백 함수 정의: 목록 로드 후 실행될 로직
+function setupLocationList() {
+    // 여기에 약품 보관장 목록이 로드된 후 필요한 JS 코드를 추가합니다.
+    console.log("약품 보관장 목록 페이지 로드 완료.");
+}
 
 // =================================================================
 // 5. 폼 제출 처리 함수 (Storage 로직 제거)
