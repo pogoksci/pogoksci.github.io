@@ -584,6 +584,7 @@ function setupCabinetRegisterForm() {
     console.log("새 캐비닛 등록 폼 로드 완료.");
     // 📌 전역 변수 재할당: 동적으로 로드된 요소를 찾습니다.
     const form = document.getElementById('cabinet-creation-form');
+    
     otherAreaInput = document.getElementById('other_area_input'); 
     otherCabinetInput = document.getElementById('other_cabinet_input');
 
@@ -596,8 +597,8 @@ function setupCabinetRegisterForm() {
     setupButtonGroup('storage_columns_buttons');
     
     // --- 2. '기타' 입력란 조건부 표시 로직 연결 ---
-    attachOtherInputLogic('location_type_buttons', 'other_area_group', 'otherAreaInput');
-    attachOtherInputLogic('cabinet_name_buttons', 'other_cabinet_group', 'otherCabinetInput');
+    attachOtherInputLogic('location_type_buttons', 'other_area_group', 'other_area_input'); 
+    attachOtherInputLogic('cabinet_name_buttons', 'other_cabinet_group', 'other_cabinet_input');
 
     // --- 3. 폼 제출 이벤트 연결 ---
     form.addEventListener('submit', createCabinet);
