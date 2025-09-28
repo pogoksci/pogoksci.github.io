@@ -77,7 +77,6 @@ function initializeFormListeners() {
     console.log("폼 요소 초기화 시작...");
 
     // 📌 전역 변수 재할당: 동적으로 로드된 요소를 찾습니다.
-    let selectedManufacturer = null;
     statusMessage = document.getElementById('statusMessage');
     photoInput = document.getElementById('file_select');
     cameraInput = document.getElementById('camera_capture');
