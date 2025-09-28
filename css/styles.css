@@ -105,3 +105,67 @@ button {
     flex-grow: 1; text-align: center; color: white; text-decoration: none; padding: 8px 0; font-size: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
 .nav-icon { font-size: 18px; margin-bottom: 2px; }
+/* --- 1. 시작 버튼 스타일 (Navbar 내) --- */
+.nav-item.start-button {
+    /* Menu 버튼을 다른 탭들과 구분되도록 하거나 강조할 수 있습니다. */
+    background-color: #007bff; /* 파란색 계열로 강조 */
+    flex-grow: 0; /* 너비가 늘어나지 않도록 고정 */
+    width: 60px; /* 고정된 너비 */
+}
+/* --- 2. 윈도우 시작 메뉴 팝업 스타일 --- */
+.start-menu-popup {
+    /* 초기 상태: 숨김 */
+    display: none; 
+    position: fixed;
+    bottom: 55px; /* Navbar 바로 위 */
+    left: 10px; /* 왼쪽에서 조금 띄움 */
+    width: 250px; /* 팝업 너비 */
+    background-color: #333; /* 윈도우 11 시작 메뉴와 유사한 어두운 배경 */
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 1010; /* Navbar보다 위에 표시 */
+    padding: 10px;
+    
+    /* 윈도우 11 스타일: 메뉴와 사용자 영역 분리 */
+    display: flex; 
+    flex-direction: column;
+}
+.start-menu-popup.visible {
+    display: flex; /* JavaScript로 visible 클래스 추가 시 보이게 됨 */
+}
+/* --- 3. 메뉴 리스트 및 아이템 스타일 --- */
+.menu-list {
+    flex-grow: 1; /* 메뉴 목록이 남은 공간을 채움 */
+    padding-bottom: 10px;
+}
+.menu-item {
+    display: block;
+    padding: 10px;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.1s;
+    font-size: 14px;
+}
+.menu-item:hover {
+    background-color: #555;
+}
+/* --- 4. 사용자 ID 영역 (맨 아래) --- */
+.menu-footer {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin-top: 10px;
+    border-top: 1px solid #555; /* 구분선 */
+    background-color: #444;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.user-icon {
+    font-size: 20px;
+    margin-right: 10px;
+}
+.user-id {
+    font-weight: bold;
+    color: white;
+}
