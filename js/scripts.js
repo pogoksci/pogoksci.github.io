@@ -270,23 +270,22 @@ window.addEventListener('DOMContentLoaded', () => {
     includeHTML('pages/navbar.html', 'navbar-container'); 
 });
 
-// ❌ 기존 window.addEventListener('click', ...) 로직 대체
 window.addEventListener('click', (event) => {
     const startMenu = document.getElementById('start-menu');
-    const startButton = document.querySelector('.start-button'); 
+    const startButton = document.querySelector('.start-button');
     
-    if (!startMenu) return; // 팝업 요소가 없으면 실행 중단
+    if (!startMenu) return; 
 
-    // 1. 시작 버튼을 클릭한 경우: 팝업 상태를 반전(토글)
+    // 1. 시작 버튼을 클릭한 경우: 팝업 상태를 토글
     if (startButton && startButton.contains(event.target)) {
+        event.stopPropagation(); // 🔑 이벤트가 window까지 전파되는 것을 즉시 차단
         startMenu.classList.toggle('visible');
-        // 팝업이 열렸거나 닫혔으므로 함수 종료
-        return; 
+        return; // 토글 후 함수 종료
     }
 
     // 2. 팝업이 열려 있는 상태에서 팝업 바깥을 클릭한 경우: 팝업 닫기
     if (startMenu.classList.contains('visible')) {
-        // 클릭된 요소가 팝업 내부 요소가 아닌 경우에만 팝업을 닫습니다.
+        // 팝업 내부의 어떤 요소를 클릭한 경우가 아니라면 팝업을 닫습니다.
         if (!startMenu.contains(event.target)) {
             startMenu.classList.remove('visible');
         }
