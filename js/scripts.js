@@ -20,6 +20,17 @@ let allAreas = []; // Area 데이터 전체 저장
 let allCabinets = []; // Cabinet 데이터 전체 저장
 let selectedAreaId = null; 
 let selectedCabinetId = null;
+// 🔑 캐비닛 등록 폼 전용 선택 값
+let selectedAreaCreation = null; 
+let selectedCabinetName = null; 
+let selectedDoorVerticalSplit = null;
+let selectedDoorHorizontalSplit = null;
+let selectedShelfHeight = null;
+let selectedStorageColumns = null;
+
+// 🔑 기타 입력란 DOM 요소 (초기화는 initializeCabinetForm 안에서 수행)
+let otherAreaInput = null; 
+let otherCabinetInput = null;
 
 // 6단계 위치 선택 값을 저장할 객체 (Inventory DB에 저장될 최종 값)
 let locationSelections = {
@@ -556,7 +567,7 @@ window.addEventListener('DOMContentLoaded', () => {
  */
 function showNewCabinetForm() {
     console.log("새 캐비닛 등록 폼 로드 시작...");
-    const formContainer = document.getElementById('form-container');
+    //const formContainer = document.getElementById('form-container');
     
     // (선택 사항) 현재 목록 뷰를 숨기는 로직이 필요할 수 있습니다.
     // 현재는 includeHTML이 form-container 전체를 덮어쓰므로 별도 숨김 로직 불필요.
@@ -571,14 +582,91 @@ function showNewCabinetForm() {
  */
 function setupCabinetRegisterForm() {
     console.log("새 캐비닛 등록 폼 로드 완료.");
-    // 여기에 폼 유효성 검사, 이벤트 리스너 연결 등의 로직을 추가합니다.
+    // 📌 전역 변수 재할당: 동적으로 로드된 요소를 찾습니다.
+    const form = document.getElementById('cabinet-creation-form');
+    otherAreaInput = document.getElementById('other_area_input'); 
+    otherCabinetInput = document.getElementById('other_cabinet_input');
+
+    // --- 1. 모든 버튼 그룹 초기화 (버튼이 안 눌리는 문제 해결 핵심) ---
+    setupButtonGroup('location_type_buttons');
+    setupButtonGroup('cabinet_name_buttons');
+    setupButtonGroup('door_vertical_split_buttons');
+    setupButtonGroup('door_horizontal_split_buttons');
+    setupButtonGroup('shelf_height_buttons');
+    setupButtonGroup('storage_columns_buttons');
+    
+    // --- 2. '기타' 입력란 조건부 표시 로직 연결 ---
+    attachOtherInputLogic('location_type_buttons', 'other_area_group', 'otherAreaInput');
+    attachOtherInputLogic('cabinet_name_buttons', 'other_cabinet_group', 'otherCabinetInput');
+
+    // --- 3. 폼 제출 이벤트 연결 ---
+    form.addEventListener('submit', createCabinet);
 }
+
+// --- 4. 폼 제출 함수 ---
+async function createCabinet(event) {
+    event.preventDefault();
+    console.log("보관장 등록 시도...");
+    
+    // 1. 데이터 수집 및 유효성 검사
+    const areaName = selectedAreaCreation === '기타' ? otherAreaInput.value.trim() : selectedAreaCreation;
+    const cabinetName = selectedCabinetName === '기타' ? otherCabinetInput.value.trim() : selectedCabinetName;
+
+    // 2. 누락 필드 확인 (필수 필드 선택 여부)
+    if (!areaName || !cabinetName || !selectedDoorVerticalSplit || !selectedShelfHeight || !selectedStorageColumns || !selectedDoorHorizontalSplit) {
+        alert("모든 필수 필드(*)를 선택/입력해 주세요.");
+        return;
+    }
+
+    // 3. 서버 전송 데이터 구성
+    const cabinetData = {
+        area_name: areaName,
+        cabinet_name: cabinetName,
+        door_vertical_count: parseInt(selectedDoorVerticalSplit, 10),
+        door_horizontal_count: selectedDoorHorizontalSplit.includes('좌우') ? 2 : 1, // 좌우분리도어면 2, 단일도어면 1로 가정
+        shelf_height: parseInt(selectedShelfHeight, 10),
+        storage_columns: parseInt(selectedStorageColumns, 10),
+        // (사진 기능은 나중에 추가)
+    };
+    
+    // 4. Edge Function에 새로운 API 엔드포인트 호출 로직 추가 예정
+    // (현재는 casimport만 있으므로 새로운 함수 배포가 필요함)
+
+    console.log("서버로 전송할 캐비닛 데이터:", cabinetData);
+    alert("등록 성공 (서버 전송 로직은 다음 단계에서 구현 예정)");
+    
+    // 5. 등록 후 목록 페이지로 복귀
+    // loadLocationListPage(); // 목록 로드 함수 호출 (추후 구현)
+}
+
 function setupLocationList() {
     // 🔑 이 함수는 location-list.html 로드 후 실행되며, 데이터를 fetch하여 렌더링을 시작합니다.
     console.log("약품 보관장 목록 페이지 로드 완료. 데이터 로드 시작.");
     
     // fetchCabinetListAndRender 함수를 호출하여 데이터 조회 및 렌더링을 시작합니다.
     fetchCabinetListAndRender(); 
+}
+
+function attachOtherInputLogic(buttonGroupId, otherGroupId, targetInputId) {
+    const group = document.getElementById(buttonGroupId);
+    const otherGroup = document.getElementById(otherGroupId);
+    const otherInput = document.getElementById(targetInputId);
+    
+    if (!group || !otherGroup || !otherInput) return;
+
+    group.addEventListener('click', (event) => {
+        if (event.target.tagName === 'BUTTON') {
+            const value = event.target.getAttribute('data-value');
+            if (value === '기타') {
+                otherGroup.style.display = 'block';
+                otherInput.setAttribute('required', 'required');
+            } else {
+                otherGroup.style.display = 'none';
+                otherInput.removeAttribute('required');
+                otherInput.value = '';
+            }
+        }
+    });
 }
 
 /**

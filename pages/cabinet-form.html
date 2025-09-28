@@ -3,48 +3,66 @@
 
     <div class="form-group">
         <label>1. 시약장이 위치한 장소 *</label>
-        <div class="button-group" id="area_creation_buttons">
-            <button type="button" data-value="준비실">준비실</button>
-            <button type="button" data-value="제1과학실">제1과학실</button>
-            <button type="button" data-value="제2과학실">제2과학실</button>
+        <div class="button-group" id="location_type_buttons">
+            <button type="button" data-value="과학준비실">과학준비실</button>
+            <button type="button" data-value="과학교과실1">과학교과실1</button>
+            <button type="button" data-value="과학교과실2">과학교과실2</button>
+            <button type="button" data-value="기타">기타</button>
         </div>
+    </div>
+    <div class="form-group other-input-group" id="other_area_group" style="display: none;">
+        <input type="text" id="other_area_input" placeholder="장소명을 직접 입력하세요">
     </div>
     
     <div class="form-group">
-        <label for="cabinet_name">2. 보관장 이름 및 번호 *</label>
-        <input type="text" id="cabinet_name" placeholder="예: 약품보관장1, 냉장고" required>
+        <label>2. 보관장 이름 및 번호 *</label>
+        <div class="button-group" id="cabinet_name_buttons">
+            <button type="button" data-value="약품보관장1">약품보관장1</button>
+            <button type="button" data-value="약품보관장2">약품보관장2</button>
+            <button type="button" data-value="식품보관장">식품보관장</button>
+            <button type="button" data-value="냉장고">냉장고</button>
+            <button type="button" data-value="인화성물질1">인화성물질1</button>
+            <button type="button" data-value="폐수보관장1">폐수보관장1</button>
+            <button type="button" data-value="폐수보관장2">폐수보관장2</button>
+            <button type="button" data-value="기타">기타</button>
+        </div>
+    </div>
+    <div class="form-group other-input-group" id="other_cabinet_group" style="display: none;">
+        <input type="text" id="other_cabinet_input" placeholder="보관장 이름을 직접 입력하세요">
     </div>
 
+
     <div class="form-group">
-        <label>3. 전체적인 도어 개폐 범위 *</label>
-        <div class="button-group" id="door_range_buttons">
-            <button type="button" data-value="상층하도어">상층하도어</button>
-            <button type="button" data-value="단일도어_상하">단일 도어</button>
+        <label>3. 도어 상하분리 형태 *</label>
+        <div class="button-group" id="door_vertical_split_buttons">
+            <button type="button" data-value="상중하도어">상중하도어</button>
+            <button type="button" data-value="상하도어">상하도어</button>
+            <button type="button" data-value="단일도어">단일도어(상하분리없음)</button>
         </div>
     </div>
 
     <div class="form-group">
-        <label>4. 전체적인 도어 분리 형태 *</label>
-        <div class="button-group" id="door_split_buttons">
-            <button type="button" data-value="단일도어">단일 도어</button>
-            <button type="button" data-value="좌우분리">좌우분리</button>
+        <label>4. 도어 좌우분리 형태 *</label>
+        <div class="button-group" id="door_horizontal_split_buttons">
+            <button type="button" data-value="좌우분리도어">좌우분리도어</button>
+            <button type="button" data-value="단일도어">단일도어</button>
         </div>
     </div>
 
     <div class="form-group">
-        <label>5. 도어 1개를 열었을 때 보이는 수납장의 수 (층수) *</label>
+        <label>5. 도어 1개를 열었을 때 보이는 수납 층 형태 *</label>
         <div class="button-group" id="shelf_height_buttons">
-            <button type="button" data-value="6">6층</button>
-            <button type="button" data-value="5">5층</button>
-            <button type="button" data-value="4">4층</button>
-            <button type="button" data-value="3">3층</button>
-            <button type="button" data-value="2">2층</button>
             <button type="button" data-value="1">1층</button>
+            <button type="button" data-value="2">2층</button>
+            <button type="button" data-value="3">3층</button>
+            <button type="button" data-value="4">4층</button>
+            <button type="button" data-value="5">5층</button>
+            <button type="button" data-value="6">6층</button>
         </div>
     </div>
 
     <div class="form-group">
-        <label>6. 수납장의 열 수 (보관열) *</label>
+        <label>6. 도어 1개를 열었을 때 보이는 수납 열 형태 *</label>
         <div class="button-group" id="storage_columns_buttons">
             <button type="button" data-value="1">1열</button>
             <button type="button" data-value="2">2열</button>
@@ -55,8 +73,8 @@
         </div>
     </div>
     
-    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-        <button type="button" onclick="cancelForm()" style="width: 48%; background-color: #ccc; color: #333;">취소</button>
+    <div style="display: flex; justify-content: center; margin-top: 20px;">
+        <button type="button" onclick="cancelForm()" style="width: 48%; background-color: #ccc; color: #333; margin-right: 10px;">취소</button>
         <button type="submit" style="width: 48%; background-color: #00bcd4; color: white;">보관장 등록</button>
     </div>
 </form>
