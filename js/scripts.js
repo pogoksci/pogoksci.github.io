@@ -87,6 +87,7 @@ function initializeFormListeners() {
     manufacturerOtherInput = document.getElementById('manufacturer_other');
     
     // --- 버튼 그룹 설정 실행 ---
+    setupButtonGroup('classification_buttons'); 
     setupButtonGroup('state_buttons');
     setupButtonGroup('unit_buttons', 'g');
     setupButtonGroup('concentration_unit_buttons'); 
@@ -144,6 +145,8 @@ function setupButtonGroup(groupId, initialValue = null) {
                 selectedConcentrationUnit = value;
             } else if (groupId === 'manufacturer_buttons') {
                 selectedManufacturer = value;
+            } else if (groupId === 'classification_buttons') {
+                selectedClassification = value;
             }
         }
     });
