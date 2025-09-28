@@ -28,7 +28,7 @@ let selectedDoorHorizontalSplit = null;
 let selectedShelfHeight = null;
 let selectedStorageColumns = null;
 
-// 🔑 기타 입력란 DOM 요소 (초기화는 initializeCabinetForm 안에서 수행)
+// 🔑 기타 입력란 DOM 요소 (초기화는 setupCabinetRegisterForm 안에서 수행)
 let otherAreaInput = null; 
 let otherCabinetInput = null;
 
@@ -340,14 +340,12 @@ function setupButtonGroup(groupId, initialValue = null) {
     group.addEventListener('click', (event) => {
         const targetButton = event.target.closest('button');
         if (targetButton) {
-            // 스타일 변경
-            group.querySelectorAll('.active').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            targetButton.classList.add('active');
-
+            // ... (스타일 변경 로직 유지) ...
+            
             // 전역 변수 값 업데이트
             const value = targetButton.getAttribute('data-value');
+
+            // 🔑 기존 5개 그룹 처리
             if (groupId === 'state_buttons') {
                 selectedState = value;
             } else if (groupId === 'unit_buttons') {
@@ -358,6 +356,21 @@ function setupButtonGroup(groupId, initialValue = null) {
                 selectedManufacturer = value;
             } else if (groupId === 'classification_buttons') {
                 selectedClassification = value;
+            } 
+            
+            // 🔑 새로운 6개 그룹 처리 로직 추가
+            else if (groupId === 'location_type_buttons') {
+                selectedAreaCreation = value;
+            } else if (groupId === 'cabinet_name_buttons') {
+                selectedCabinetName = value;
+            } else if (groupId === 'door_vertical_split_buttons') {
+                selectedDoorVerticalSplit = value;
+            } else if (groupId === 'door_horizontal_split_buttons') {
+                selectedDoorHorizontalSplit = value;
+            } else if (groupId === 'shelf_height_buttons') {
+                selectedShelfHeight = value;
+            } else if (groupId === 'storage_columns_buttons') {
+                selectedStorageColumns = value;
             }
         }
     });
@@ -567,6 +580,8 @@ window.addEventListener('DOMContentLoaded', () => {
  */
 function showNewCabinetForm() {
     console.log("새 캐비닛 등록 폼 로드 시작...");
+
+    setFabVisibility(false);
     //const formContainer = document.getElementById('form-container');
     
     // (선택 사항) 현재 목록 뷰를 숨기는 로직이 필요할 수 있습니다.
@@ -582,6 +597,9 @@ function showNewCabinetForm() {
  */
 function setupCabinetRegisterForm() {
     console.log("새 캐비닛 등록 폼 로드 완료.");
+
+    setFabVisibility(false); 
+
     // 📌 전역 변수 재할당: 동적으로 로드된 요소를 찾습니다.
     const form = document.getElementById('cabinet-creation-form');
     
@@ -609,7 +627,14 @@ async function createCabinet(event) {
     event.preventDefault();
     console.log("보관장 등록 시도...");
     
+    // ⚠️ DOM 요소가 null인지 확인하여 안전하게 접근
+    if (!otherAreaInput || !otherCabinetInput) {
+        alert("시스템 오류: 입력 필드 초기화 실패. 페이지를 새로고침하세요.");
+        return;
+    }
+
     // 1. 데이터 수집 및 유효성 검사
+    // '기타'를 선택했을 때, 해당 입력 필드(otherAreaInput)의 .value를 사용합니다.
     const areaName = selectedAreaCreation === '기타' ? otherAreaInput.value.trim() : selectedAreaCreation;
     const cabinetName = selectedCabinetName === '기타' ? otherCabinetInput.value.trim() : selectedCabinetName;
 
@@ -623,21 +648,59 @@ async function createCabinet(event) {
     const cabinetData = {
         area_name: areaName,
         cabinet_name: cabinetName,
+        // Number 변환 시 실패를 막기 위해 parseInt를 사용합니다.
         door_vertical_count: parseInt(selectedDoorVerticalSplit, 10),
-        door_horizontal_count: selectedDoorHorizontalSplit.includes('좌우') ? 2 : 1, // 좌우분리도어면 2, 단일도어면 1로 가정
+        // 좌우분리도어면 2, 단일도어면 1로 가정
+        door_horizontal_count: selectedDoorHorizontalSplit.includes('좌우') ? 2 : 1, 
         shelf_height: parseInt(selectedShelfHeight, 10),
         storage_columns: parseInt(selectedStorageColumns, 10),
-        // (사진 기능은 나중에 추가)
     };
     
-    // 4. Edge Function에 새로운 API 엔드포인트 호출 로직 추가 예정
-    // (현재는 casimport만 있으므로 새로운 함수 배포가 필요함)
+    // 4. Edge Function에 새로운 API 엔드포인트 호출 로직
+    const CABINET_REG_URL = `${SUPABASE_URL}/functions/v1/cabinet-register`; 
 
-    console.log("서버로 전송할 캐비닛 데이터:", cabinetData);
-    alert("등록 성공 (서버 전송 로직은 다음 단계에서 구현 예정)");
+    try {
+        const response = await fetch(CABINET_REG_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify(cabinetData)
+        });
+
+        const data = await response.json();
+
+        // 🚨 서버에서 오류가 났거나 HTTP 상태 코드가 200이 아닐 경우
+        if (!response.ok || data.error) {
+             throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
+        }
+        
+        // 5. 등록 성공 후 목록 페이지로 복귀
+        
+        // 서버에서 반환한 Cabinet 이름을 사용 (서버에서 newCabinetData를 반환했다고 가정)
+        const newCabinetName = data.cabinetName || cabinetName; 
+        
+        console.log("✅ 보관장 등록 성공:", data);
+        alert(`보관장 ${newCabinetName}이(가) 성공적으로 등록되었습니다.`);
+        
+        loadLocationListPage(); // 🔑 화면 전환 및 목록 새로고침
+
+    } catch (error) {
+        console.error("보관장 등록 중 오류 발생:", error.message);
+        alert(`❌ 등록 실패: ${error.message}`);
+    }
+}
+
+function loadLocationListPage() {
+    console.log("목록 페이지로 복귀 및 데이터 새로고침 시작.");
     
-    // 5. 등록 후 목록 페이지로 복귀
-    // loadLocationListPage(); // 목록 로드 함수 호출 (추후 구현)
+    // 1. FAB 버튼 다시 보이게 함 (목록 화면에 필요)
+    setFabVisibility(true); 
+    
+    // 2. location-list.html HTML 조각 파일을 다시 로드
+    // 이 로딩이 완료되면 fetchCabinetListAndRender 함수가 실행됩니다.
+    includeHTML('pages/location-list.html', 'form-container', setupLocationList); 
 }
 
 function setupLocationList() {
@@ -765,4 +828,15 @@ function renderCabinetCards(cabinets, container) {
         
         container.appendChild(card);
     });
+}
+
+function setFabVisibility(visible) {
+    const fab = document.querySelector('.fab');
+    if (fab) {
+        if (visible) {
+            fab.style.display = 'block'; // 보이게 함
+        } else {
+            fab.style.display = 'none'; // 숨김
+        }
+    }
 }
