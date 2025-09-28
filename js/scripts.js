@@ -563,7 +563,7 @@ function showNewCabinetForm() {
 
     // 🔑 새로운 HTML 조각 파일 로드
     // 캐비닛 등록 폼이 들어있는 pages/cabinet-register-form.html 파일을 로드합니다.
-    includeHTML('pages/cabinet-register-form.html', 'form-container', setupCabinetRegisterForm);
+    includeHTML('pages/cabinet-form.html', 'form-container', setupCabinetRegisterForm);
 }
 
 /**
