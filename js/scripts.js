@@ -630,37 +630,43 @@ function setupCabinetRegisterForm() {
 async function createCabinet(event) {
     event.preventDefault();
     console.log("보관장 등록 시도...");
-    
-    // ⚠️ DOM 요소가 null인지 확인하여 안전하게 접근
-    if (!otherAreaInput || !otherCabinetInput) {
-        alert("시스템 오류: 입력 필드 초기화 실패. 페이지를 새로고침하세요.");
-        return;
-    }
 
-    // 1. 데이터 수집 및 유효성 검사
-    // '기타'를 선택했을 때, 해당 입력 필드(otherAreaInput)의 .value를 사용합니다.
-    const areaName = selectedAreaCreation === '기타' ? otherAreaInput.value.trim() : selectedAreaCreation;
-    const cabinetName = selectedCabinetName === '기타' ? otherCabinetInput.value.trim() : selectedCabinetName;
+    // 1. DOM 요소에서 입력 값 안전하게 가져오기
+    // 🔑 '기타' 입력란이 null이거나 값이 비어있는 경우를 방지합니다.
+    const otherAreaValue = otherAreaInput ? otherAreaInput.value.trim() : '';
+    const otherCabinetValue = otherCabinetInput ? otherCabinetInput.value.trim() : '';
 
-    // 2. 누락 필드 확인 (필수 필드 선택 여부)
+    // 2. 최종 이름 결정 및 유효성 검사
+    // selectedAreaCreation이 '기타'일 경우 otherAreaValue를 사용하고, 값이 없으면 null로 설정합니다.
+    const areaName = selectedAreaCreation === '기타' 
+        ? (otherAreaValue || null) 
+        : selectedAreaCreation;
+        
+    const cabinetName = selectedCabinetName === '기타' 
+        ? (otherCabinetValue || null) 
+        : selectedCabinetName;
+
+
+    // 3. 누락 필드 확인 (필수 필드)
+    // areaName과 cabinetName은 DB 삽입 시 NOT NULL이므로 null이 아니어야 합니다.
     if (!areaName || !cabinetName || !selectedDoorVerticalSplit || !selectedShelfHeight || !selectedStorageColumns || !selectedDoorHorizontalSplit) {
-        alert("모든 필수 필드(*)를 선택/입력해 주세요.");
+        alert("모든 필수 필드(*)를 선택/입력해 주세요. (기타 선택 시 입력란 확인)");
         return;
     }
 
-    // 3. 서버 전송 데이터 구성
+    // 4. 서버 전송 데이터 구성
     const cabinetData = {
-        area_name: areaName,
+        area_name: areaName, 
         cabinet_name: cabinetName,
-        // Number 변환 시 실패를 막기 위해 parseInt를 사용합니다.
+        
+        // Number 변환
         door_vertical_count: parseInt(selectedDoorVerticalSplit, 10),
-        // 좌우분리도어면 2, 단일도어면 1로 가정
-        door_horizontal_count: selectedDoorHorizontalSplit.includes('좌우') ? 2 : 1, 
+        door_horizontal_count: selectedDoorHorizontalSplit.includes('좌우') ? 2 : 1,
         shelf_height: parseInt(selectedShelfHeight, 10),
         storage_columns: parseInt(selectedStorageColumns, 10),
     };
     
-    // 4. Edge Function에 새로운 API 엔드포인트 호출 로직
+    // 5. Edge Function 호출 및 데이터 저장 (이전 로직 유지)
     const CABINET_REG_URL = `${SUPABASE_URL}/functions/v1/cabinet-register`; 
 
     try {
@@ -675,21 +681,16 @@ async function createCabinet(event) {
 
         const data = await response.json();
 
-        // 🚨 서버에서 오류가 났거나 HTTP 상태 코드가 200이 아닐 경우
         if (!response.ok || data.error) {
              throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
         }
         
-        // 5. 등록 성공 후 목록 페이지로 복귀
-        
-        // 서버에서 반환한 Cabinet 이름을 사용 (서버에서 newCabinetData를 반환했다고 가정)
+        // 6. 등록 성공 후 목록 페이지로 복귀
         const newCabinetName = data.cabinetName || cabinetName; 
+        alert(`✅ 보관장 "${newCabinetName}"이(가) 성공적으로 등록되었습니다.`);
         
-        console.log("✅ 보관장 등록 성공:", data);
-        alert(`보관장 ${newCabinetName}이(가) 성공적으로 등록되었습니다.`);
+        loadLocationListPage(); // 화면 전환
         
-        loadLocationListPage(); // 🔑 화면 전환 및 목록 새로고침
-
     } catch (error) {
         console.error("보관장 등록 중 오류 발생:", error.message);
         alert(`❌ 등록 실패: ${error.message}`);
