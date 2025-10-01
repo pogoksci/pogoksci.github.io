@@ -646,13 +646,15 @@ async function createCabinet(event) {
         ? (otherCabinetValue.length > 0 ? otherCabinetValue : null) 
         : (selectedCabinetName || null);
 
-
-
-    // 3. 누락 필드 확인 (필수 필드)
-    // areaName과 cabinetName은 DB 삽입 시 NOT NULL이므로 null이 아니어야 합니다.
-    if (!areaName || !cabinetName || !selectedDoorVerticalSplit || !selectedShelfHeight || !selectedStorageColumns || !selectedDoorHorizontalSplit) {
-        alert("모든 필수 필드(*)를 선택/입력해 주세요. (기타 선택 후 입력란 비어있음)");
-        return;
+    // 3. 필수 필드 검사 (Null 값에 대한 명시적 검사)
+    if (areaName === null || cabinetName === null || 
+        selectedDoorVerticalSplit === null || 
+        selectedShelfHeight === null || 
+        selectedStorageColumns === null || 
+        selectedDoorHorizontalSplit === null) 
+    {
+        alert("모든 필수 필드(*)를 선택/입력해 주세요.");
+        return; // 🚨 유효성 검사 실패 시 함수를 즉시 종료
     }
 
     // 4. 서버 전송 데이터 구성
