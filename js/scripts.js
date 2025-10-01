@@ -631,23 +631,26 @@ async function createCabinet(event) {
     event.preventDefault();
     console.log("보관장 등록 시도...");
 
-    // 1. DOM 요소에서 입력 값 안전하게 가져오기
-    // 🔑 '기타' 입력란이 null이거나 값이 비어있는 경우를 방지합니다.
+    // 1. DOM 요소에서 입력 값 안전하게 가져오기 (null 방어)
     const otherAreaValue = otherAreaInput ? otherAreaInput.value.trim() : '';
     const otherCabinetValue = otherCabinetInput ? otherCabinetInput.value.trim() : '';
 
     // 2. 최종 이름 결정 및 유효성 검사
-    // selectedAreaCreation이 '기타'일 경우 otherAreaValue를 사용하고, 값이 없으면 null로 설정합니다.
-    const areaName = selectedAreaCreation === '기타' 
-        ? (otherAreaValue.length > 0 ? otherAreaValue : null) 
-        : (selectedAreaCreation || null); // 🔑 null 체크 강화
-        
-    const cabinetName = selectedCabinetName === '기타' 
-        ? (otherCabinetValue.length > 0 ? otherCabinetValue : null) 
-        : (selectedCabinetName || null);
+    // 🔑 최종 값을 결정합니다. (유효성 검사 실패 시 빈 문자열 ''을 사용)
+    // *주의: 서버에 null이 아닌 빈 문자열을 전송하여 서버 측의 null 처리 로직을 피합니다.*
 
-    // 3. 필수 필드 검사 (Null 값에 대한 명시적 검사)
-    if (areaName === null || cabinetName === null || 
+    const areaName = selectedAreaCreation === '기타' 
+        ? otherAreaValue.trim() 
+        : (selectedAreaCreation || ''); // 버튼 미선택 시 빈 문자열 ''
+
+    const cabinetName = selectedCabinetName === '기타' 
+        ? otherCabinetValue.trim() 
+        : (selectedCabinetName || ''); // 버튼 미선택 시 빈 문자열 ''
+
+
+    // 3. 누락 필드 검사 (Null이 아닌, 빈 문자열 '' 여부 검사)
+    // 🔑 필수 필드 중 하나라도 빈 문자열이라면 오류 메시지 출력
+    if (areaName === '' || cabinetName === '' || 
         selectedDoorVerticalSplit === null || 
         selectedShelfHeight === null || 
         selectedStorageColumns === null || 
@@ -657,9 +660,9 @@ async function createCabinet(event) {
         return; // 🚨 유효성 검사 실패 시 함수를 즉시 종료
     }
 
-    // 4. 서버 전송 데이터 구성
+    // 4. 서버 전송 데이터 구성 (유효성 검사 통과 후)
     const cabinetData = {
-        area_name: areaName, 
+        area_name: areaName, // 🔑 areaName은 이제 빈 문자열이 아닌 유효한 문자열
         cabinet_name: cabinetName,
         
         // Number 변환
