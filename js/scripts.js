@@ -632,9 +632,8 @@ async function createCabinet(event) {
     console.log("보관장 등록 시도...");
 
     // 1. DOM 요소에서 입력 값 안전하게 가져오기 (null 방어)
-    const otherAreaValue = otherAreaInput ? otherAreaInput.value.trim() : '';
-    const otherCabinetValue = otherCabinetInput ? otherCabinetInput.value.trim() : '';
-
+    const otherAreaValue = (otherAreaInput && otherAreaInput.value) ? otherAreaInput.value.trim() : '';
+    const otherCabinetValue = (otherCabinetInput && otherCabinetInput.value) ? otherCabinetInput.value.trim() : '';
     // 2. 최종 이름 결정 및 유효성 검사
     // 🔑 최종 값을 결정합니다. (유효성 검사 실패 시 빈 문자열 ''을 사용)
     // *주의: 서버에 null이 아닌 빈 문자열을 전송하여 서버 측의 null 처리 로직을 피합니다.*
