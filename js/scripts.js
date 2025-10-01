@@ -628,12 +628,12 @@ function setupCabinetRegisterForm() {
 
 // --- 4. 폼 제출 함수 ---
 async function createCabinet(event) {
-    // 폼 제출 시 페이지 새로고침 방지
-    //if (event) {
+    // 폼 제출 시 페이지 새로고침 방지 (event가 null이 아닌지 확인)
+    if (event) {
         event.preventDefault();
-    //}
-    /*
-    // ⚠️ DOM 요소가 initializeCabinetForm에서 재할당되었는지 확인합니다.
+    }
+    
+    // ⚠️ DOM 요소 초기화 오류를 대비한 안전 체크
     if (!statusMessage || !otherAreaInput || !otherCabinetInput) {
         alert("시스템 오류: 폼 초기화가 완료되지 않았습니다. 페이지를 새로고침하세요.");
         return;
@@ -641,22 +641,13 @@ async function createCabinet(event) {
     
     statusMessage.textContent = '보관장 등록을 시도 중...';
     statusMessage.style.color = 'blue';
-    */
-    // 1. DOM 요소 접근 및 최종 이름 결정
-    // 🔑 옵셔널 체이닝과 Nullish Coalescing을 사용하여 널 안전성(Null Safety) 확보
-    const otherAreaValue = otherAreaInput?.value?.trim() ?? '';
-    const otherCabinetValue = otherCabinetInput?.value?.trim() ?? '';
-    
-    // 🔑 전역 변수에서 버튼 선택 값 가져오기
-    const areaName = selectedAreaCreation === '기타' 
-        ? (otherAreaValue || null) 
-        : (selectedAreaCreation || null); 
-        
-    const cabinetName = selectedCabinetName === '기타' 
-        ? (otherCabinetValue || null) 
-        : (selectedCabinetName || null);
 
-    // 🔑 숫자 변환 및 기본값 설정 (parseInt는 NaN을 방지하지 않으므로, 값을 먼저 확인합니다.)
+    // 1. DOM 요소 접근 및 최종 이름 결정
+    // 🔑 옵셔널 체이닝을 사용하여 널 안전성 확보
+    const otherAreaValue = otherAreaInput?.value?.trim() ?? '';
+    const otherCabinetValue = otherCabinetInput?.value?.trim() ?? ''; 
+
+    // 2. 🔑 숫자 변환 및 기본값 설정 (객체 정의 이전에 모두 완료)
     const doorVerticalCountValue = selectedDoorVerticalSplit 
         ? parseInt(selectedDoorVerticalSplit, 10) 
         : 1; // 기본값 1
@@ -666,33 +657,47 @@ async function createCabinet(event) {
     const storageColumnValue = selectedStorageColumns 
         ? parseInt(selectedStorageColumns, 10) 
         : 1; // 기본값 1
+        
+    // '좌우분리도어' 여부 확인 후 1 또는 2로 결정
     const doorHorizontalCountValue = selectedDoorHorizontalSplit && selectedDoorHorizontalSplit.includes('좌우') ? 2 : 1;
     
-    
-    // 3. 누락 필드 검사 (Null 값에 대한 명시적 검사)
+    // 3. 최종 이름 결정 및 유효성 검사
+    // 버튼 미선택 시 null로 처리하여 유효성 검사에서 걸리도록 유도
+    const areaName = selectedAreaCreation === '기타' 
+        ? (otherAreaValue || null) 
+        : (selectedAreaCreation || null); 
+        
+    const cabinetName = selectedCabinetName === '기타' 
+        ? (otherCabinetValue || null) 
+        : (selectedCabinetName || null);
+
+
+    // 4. 누락 필드 검사 (필수 6단계 + 이름 유효성)
     if (areaName === null || cabinetName === null || 
         selectedDoorVerticalSplit === null || 
         selectedShelfHeight === null || 
         selectedStorageColumns === null || 
         selectedDoorHorizontalSplit === null) 
     {
-        alert("모든 필수 필드(*)를 선택/입력해 주세요.");
-        return; // 🚨 유효성 검사 실패 시 함수를 즉시 종료
+        alert("모든 필수 필드(*)를 선택/입력해 주세요. (기타 입력란 포함)");
+        statusMessage.textContent = '등록 실패: 필수 필드 누락.';
+        statusMessage.style.color = 'red';
+        return; // 유효성 검사 실패 시 즉시 종료
     }
 
-    // 3. 서버 전송 데이터 구성 (cabinet-register Edge Function이 기대하는 구조)
+    // 5. 서버 전송 데이터 구성 (문법 오류 수정 완료)
     const cabinetData = {
         area_name: areaName, 
         cabinet_name: cabinetName,
         
-        // Number 변환된 값 사용
+        // Number 변환된 로컬 변수 사용
         door_vertical_count: doorVerticalCountValue,
         door_horizontal_count: doorHorizontalCountValue,
         shelf_height: shelfHeightValue,
         storage_columns: storageColumnValue,
     };
     
-    // 4. Edge Function 호출 및 데이터 저장
+    // 6. Edge Function 호출 및 데이터 저장
     const CABINET_REG_URL = `${SUPABASE_URL}/functions/v1/cabinet-register`; 
 
     try {
@@ -712,7 +717,7 @@ async function createCabinet(event) {
              throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
         }
         
-        // 5. 등록 성공 후 목록 페이지로 복귀
+        // 7. 등록 성공 후 목록 페이지로 복귀
         const newCabinetName = data.cabinetName || cabinetName; 
         
         console.log("✅ 보관장 등록 성공:", data);
