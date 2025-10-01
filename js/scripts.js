@@ -628,48 +628,69 @@ function setupCabinetRegisterForm() {
 
 // --- 4. 폼 제출 함수 ---
 async function createCabinet(event) {
-    event.preventDefault();
-    console.log("보관장 등록 시도...");
+    // 폼 제출 시 페이지 새로고침 방지
+    if (event) {
+        event.preventDefault();
+    }
+    
+    // ⚠️ DOM 요소가 initializeCabinetForm에서 재할당되었는지 확인합니다.
+    if (!statusMessage || !otherAreaInput || !otherCabinetInput) {
+        alert("시스템 오류: 폼 초기화가 완료되지 않았습니다. 페이지를 새로고침하세요.");
+        return;
+    }
+    
+    statusMessage.textContent = '보관장 등록을 시도 중...';
+    statusMessage.style.color = 'blue';
 
-    // 1. DOM 요소에서 입력 값 안전하게 가져오기
-    // 🔑 옵셔널 체이닝 (?.)을 사용하여 otherAreaInput이 null이어도 충돌 없이 빈 문자열 ''을 반환
-    const otherAreaValue = otherAreaInput?.value?.trim() ?? ''; 
-    const otherCabinetValue = otherCabinetInput?.value?.trim() ?? ''; 
-
-    // 2. 최종 이름 결정 및 유효성 검사
+    // 1. DOM 요소 접근 및 최종 이름 결정
+    // 🔑 옵셔널 체이닝과 Nullish Coalescing을 사용하여 널 안전성(Null Safety) 확보
+    const otherAreaValue = otherAreaInput?.value?.trim() ?? '';
+    const otherCabinetValue = otherCabinetInput?.value?.trim() ?? '';
+    
+    // 🔑 전역 변수에서 버튼 선택 값 가져오기
     const areaName = selectedAreaCreation === '기타' 
-        ? otherAreaValue 
-        : (selectedAreaCreation || ''); 
+        ? (otherAreaValue || null) 
+        : (selectedAreaCreation || null); 
         
     const cabinetName = selectedCabinetName === '기타' 
-        ? otherCabinetValue
-        : (selectedCabinetName || '');
+        ? (otherCabinetValue || null) 
+        : (selectedCabinetName || null);
 
-    // 3. 누락 필드 검사 (Null이 아닌, 빈 문자열 '' 여부 검사)
-    // 🔑 필수 필드 중 하나라도 빈 문자열이라면 오류 메시지 출력
-    if (areaName === '' || cabinetName === '' || 
-        selectedDoorVerticalSplit === null || 
-        selectedShelfHeight === null || 
-        selectedStorageColumns === null || 
-        selectedDoorHorizontalSplit === null) 
+    // 🔑 숫자 변환 및 기본값 설정 (parseInt는 NaN을 방지하지 않으므로, 값을 먼저 확인합니다.)
+    const doorVerticalCountValue = selectedDoorVerticalSplit 
+        ? parseInt(selectedDoorVerticalSplit, 10) 
+        : 1; // 기본값 1
+    const shelfHeightValue = selectedShelfHeight 
+        ? parseInt(selectedShelfHeight, 10) 
+        : 3; // 기본값 3
+    const storageColumnValue = selectedStorageColumns 
+        ? parseInt(selectedStorageColumns, 10) 
+        : 1; // 기본값 1
+    const doorHorizontalCountValue = selectedDoorHorizontalSplit && selectedDoorHorizontalSplit.includes('좌우') ? 2 : 1;
+    
+    
+    // 2. 누락 필드 확인 (필수 6단계 + 이름 유효성 검사)
+    if (!areaName || !cabinetName || selectedDoorVerticalSplit === null || selectedShelfHeight === null || selectedStorageColumns === null || selectedDoorHorizontalSplit === null) 
     {
         alert("모든 필수 필드(*)를 선택/입력해 주세요.");
-        return; // 🚨 유효성 검사 실패 시 함수를 즉시 종료
+        statusMessage.textContent = '등록 실패: 필수 필드 누락.';
+        statusMessage.style.color = 'red';
+        return; 
     }
 
-    // 4. 서버 전송 데이터 구성 (유효성 검사 통과 후)
+    // 3. 서버 전송 데이터 구성 (cabinet-register Edge Function이 기대하는 구조)
     const cabinetData = {
-        area_name: areaName, // 🔑 areaName은 이제 빈 문자열이 아닌 유효한 문자열
+        area_name: areaName, 
         cabinet_name: cabinetName,
         
-        // Number 변환
-        door_vertical_count: parseInt(selectedDoorVerticalSplit, 10),
-        door_horizontal_count: selectedDoorHorizontalSplit.includes('좌우') ? 2 : 1,
-        shelf_height: parseInt(selectedShelfHeight, 10),
-        storage_columns: parseInt(selectedStorageColumns, 10),
+        // Number 변환된 값 사용
+        door_vertical_count: doorVerticalCountValue,
+        door_horizontal_count: doorHorizontalCountValue,
+        shelf_height: shelfHeightValue,
+        storage_columns: storageColumnValue,
     };
     
-    // 5. Edge Function 호출 및 데이터 저장 (이전 로직 유지)
+    // 4. Edge Function 호출 및 데이터 저장
     const CABINET_REG_URL = `${SUPABASE_URL}/functions/v1/cabinet-register`; 
 
     try {
@@ -684,19 +705,24 @@ async function createCabinet(event) {
 
         const data = await response.json();
 
+        // 서버에서 오류가 났거나 HTTP 상태 코드가 200이 아닐 경우
         if (!response.ok || data.error) {
              throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
         }
         
-        // 6. 등록 성공 후 목록 페이지로 복귀
+        // 5. 등록 성공 후 목록 페이지로 복귀
         const newCabinetName = data.cabinetName || cabinetName; 
+        
+        console.log("✅ 보관장 등록 성공:", data);
         alert(`✅ 보관장 "${newCabinetName}"이(가) 성공적으로 등록되었습니다.`);
         
-        loadLocationListPage(); // 화면 전환
-        
+        loadLocationListPage(); // 화면 전환 및 목록 새로고침
+
     } catch (error) {
         console.error("보관장 등록 중 오류 발생:", error.message);
         alert(`❌ 등록 실패: ${error.message}`);
+        statusMessage.textContent = `❌ 등록 실패: ${error.message.substring(0, 50)}...`;
+        statusMessage.style.color = 'red';
     }
 }
 
