@@ -639,18 +639,19 @@ async function createCabinet(event) {
     // 2. 최종 이름 결정 및 유효성 검사
     // selectedAreaCreation이 '기타'일 경우 otherAreaValue를 사용하고, 값이 없으면 null로 설정합니다.
     const areaName = selectedAreaCreation === '기타' 
-        ? (otherAreaValue || null) 
-        : (selectedAreaCreation || null); // 🔑 버튼을 안 눌렀을 경우를 명시적으로 null 처리
+        ? (otherAreaValue.length > 0 ? otherAreaValue : null) 
+        : (selectedAreaCreation || null); // 🔑 null 체크 강화
         
     const cabinetName = selectedCabinetName === '기타' 
-        ? (otherCabinetValue || null) 
-        : selectedCabinetName;
+        ? (otherCabinetValue.length > 0 ? otherCabinetValue : null) 
+        : (selectedCabinetName || null);
+
 
 
     // 3. 누락 필드 확인 (필수 필드)
     // areaName과 cabinetName은 DB 삽입 시 NOT NULL이므로 null이 아니어야 합니다.
-    if (areaName === null || cabinetName === null || selectedDoorVerticalSplit === null || selectedShelfHeight === null || selectedStorageColumns === null || selectedDoorHorizontalSplit === null) {
-        alert("모든 필수 필드(*)를 선택해 주세요.");
+    if (!areaName || !cabinetName || !selectedDoorVerticalSplit || !selectedShelfHeight || !selectedStorageColumns || !selectedDoorHorizontalSplit) {
+        alert("모든 필수 필드(*)를 선택/입력해 주세요. (기타 선택 후 입력란 비어있음)");
         return;
     }
 
