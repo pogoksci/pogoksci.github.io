@@ -631,21 +631,19 @@ async function createCabinet(event) {
     event.preventDefault();
     console.log("보관장 등록 시도...");
 
-    // 1. DOM 요소에서 입력 값 안전하게 가져오기 (null 방어)
-    const otherAreaValue = (otherAreaInput && otherAreaInput.value) ? otherAreaInput.value.trim() : '';
-    const otherCabinetValue = (otherCabinetInput && otherCabinetInput.value) ? otherCabinetInput.value.trim() : '';
+    // 1. DOM 요소에서 입력 값 안전하게 가져오기
+    // 🔑 옵셔널 체이닝 (?.)을 사용하여 otherAreaInput이 null이어도 충돌 없이 빈 문자열 ''을 반환
+    const otherAreaValue = otherAreaInput?.value?.trim() ?? ''; 
+    const otherCabinetValue = otherCabinetInput?.value?.trim() ?? ''; 
+
     // 2. 최종 이름 결정 및 유효성 검사
-    // 🔑 최종 값을 결정합니다. (유효성 검사 실패 시 빈 문자열 ''을 사용)
-    // *주의: 서버에 null이 아닌 빈 문자열을 전송하여 서버 측의 null 처리 로직을 피합니다.*
-
     const areaName = selectedAreaCreation === '기타' 
-        ? otherAreaValue.trim() 
-        : (selectedAreaCreation || ''); // 버튼 미선택 시 빈 문자열 ''
-
+        ? otherAreaValue 
+        : (selectedAreaCreation || ''); 
+        
     const cabinetName = selectedCabinetName === '기타' 
-        ? otherCabinetValue.trim() 
-        : (selectedCabinetName || ''); // 버튼 미선택 시 빈 문자열 ''
-
+        ? otherCabinetValue
+        : (selectedCabinetName || '');
 
     // 3. 누락 필드 검사 (Null이 아닌, 빈 문자열 '' 여부 검사)
     // 🔑 필수 필드 중 하나라도 빈 문자열이라면 오류 메시지 출력
