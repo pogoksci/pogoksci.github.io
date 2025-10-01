@@ -629,10 +629,10 @@ function setupCabinetRegisterForm() {
 // --- 4. 폼 제출 함수 ---
 async function createCabinet(event) {
     // 폼 제출 시 페이지 새로고침 방지
-    if (event) {
+    //if (event) {
         event.preventDefault();
-    }
-    
+    //}
+    /*
     // ⚠️ DOM 요소가 initializeCabinetForm에서 재할당되었는지 확인합니다.
     if (!statusMessage || !otherAreaInput || !otherCabinetInput) {
         alert("시스템 오류: 폼 초기화가 완료되지 않았습니다. 페이지를 새로고침하세요.");
@@ -641,7 +641,7 @@ async function createCabinet(event) {
     
     statusMessage.textContent = '보관장 등록을 시도 중...';
     statusMessage.style.color = 'blue';
-
+    */
     // 1. DOM 요소 접근 및 최종 이름 결정
     // 🔑 옵셔널 체이닝과 Nullish Coalescing을 사용하여 널 안전성(Null Safety) 확보
     const otherAreaValue = otherAreaInput?.value?.trim() ?? '';
@@ -669,13 +669,15 @@ async function createCabinet(event) {
     const doorHorizontalCountValue = selectedDoorHorizontalSplit && selectedDoorHorizontalSplit.includes('좌우') ? 2 : 1;
     
     
-    // 2. 누락 필드 확인 (필수 6단계 + 이름 유효성 검사)
-    if (!areaName || !cabinetName || selectedDoorVerticalSplit === null || selectedShelfHeight === null || selectedStorageColumns === null || selectedDoorHorizontalSplit === null) 
+    // 3. 누락 필드 검사 (Null 값에 대한 명시적 검사)
+    if (areaName === null || cabinetName === null || 
+        selectedDoorVerticalSplit === null || 
+        selectedShelfHeight === null || 
+        selectedStorageColumns === null || 
+        selectedDoorHorizontalSplit === null) 
     {
         alert("모든 필수 필드(*)를 선택/입력해 주세요.");
-        statusMessage.textContent = '등록 실패: 필수 필드 누락.';
-        statusMessage.style.color = 'red';
-        return; 
+        return; // 🚨 유효성 검사 실패 시 함수를 즉시 종료
     }
 
     // 3. 서버 전송 데이터 구성 (cabinet-register Edge Function이 기대하는 구조)
