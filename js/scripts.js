@@ -603,7 +603,7 @@ function setupCabinetRegisterForm() {
     setFabVisibility(false);
 
     // 📌 전역 변수 재할당: 동적으로 로드된 요소를 찾습니다.
-    const form = document.getElementById('cabinet-creation-form');
+    //const form = document.getElementById('cabinet-creation-form');
 
     otherAreaInput = document.getElementById('other_area_input');
     otherCabinetInput = document.getElementById('other_cabinet_input');
@@ -629,7 +629,6 @@ async function createCabinet(event) {
     // ❗ [디버깅 코드 추가] 함수가 호출된 시간과 호출 스택을 확인합니다.
     console.log(`createCabinet 함수 호출됨 - 시간: ${new Date().toLocaleTimeString()}`);
     console.trace("호출 스택:"); // 어떤 함수가 이 함수를 불렀는지 추적
-    debugger; // 개발자 도구가 열려있으면 여기서 코드 실행이 멈춥니다.
 
     if (event) {
         event.preventDefault();
@@ -725,21 +724,6 @@ async function createCabinet(event) {
     }
 }
 
-
-function loadLocationListPage() {
-    console.log("목록 페이지로 복귀 및 데이터 새로고침 시작.");
-
-    setFabVisibility(true);
-
-    includeHTML('pages/location-list.html', 'form-container', setupLocationList);
-}
-
-function setupLocationList() {
-    console.log("약품 보관장 목록 페이지 로드 완료. 데이터 로드 시작.");
-
-    fetchCabinetListAndRender();
-}
-
 function attachOtherInputLogic(buttonGroupId, otherGroupId, targetInputId) {
     const group = document.getElementById(buttonGroupId);
     const otherGroup = document.getElementById(otherGroupId);
@@ -762,76 +746,89 @@ function attachOtherInputLogic(buttonGroupId, otherGroupId, targetInputId) {
     });
 }
 
+function loadLocationListPage() {
+    console.log("목록 페이지로 복귀 및 데이터 새로고침 시작.");
+    setFabVisibility(true);
+    includeHTML('pages/location-list.html', 'form-container', fetchCabinetListAndRender);
+}
+
+function setupLocationList() {
+    // 이제 이 함수는 직접 불리지 않고, fetchCabinetListAndRender가 직접 콜백으로 사용됩니다.
+    // 혼란을 방지하기 위해 내용을 비워두거나, fetchCabinetListAndRender를 호출하도록 유지할 수 있습니다.
+    console.log("약품 보관장 목록 페이지 로드 완료. 데이터 로드 시작.");
+    fetchCabinetListAndRender();
+}
+
 /**
  * Edge Function에 GET 요청을 보내 Cabinet 목록을 조회하고 렌더링합니다.
  */
 async function fetchCabinetListAndRender() {
     const listContainer = document.getElementById('cabinet-list-container');
     const statusMsg = document.getElementById('status-message-list');
+    
+    if (!listContainer || !statusMsg) return;
 
-    if (statusMsg) {
-        statusMsg.textContent = '등록된 보관장소를 불러오는 중...';
-        statusMsg.style.color = 'blue';
-    }
+    statusMsg.textContent = '등록된 보관장소를 불러오는 중...';
+    statusMsg.style.color = 'blue';
 
     try {
+        // GET 요청은 casimport 함수를 그대로 사용합니다.
         const response = await fetch(EDGE_FUNCTION_URL, {
             method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-            }
+            headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         });
-
+        
         const data = await response.json();
-
+        
         if (!response.ok) {
             throw new Error(data.error || '보관장 목록 데이터 조회 실패');
         }
-
+        
         allAreas = data.areas || [];
         const cabinets = data.cabinets || [];
-
+        
         if (cabinets.length === 0) {
-            if (listContainer) {
-                listContainer.innerHTML = `
-                    <div style="text-align: center; padding: 50px 20px; color: #888;">
-                        <h4>등록된 보관장소가 없습니다.</h4>
-                        <p style="margin-top: 15px;">**+ 버튼**을 눌러 첫 번째 보관장을 등록해 주세요.</p>
-                    </div>
-                `;
-            }
+            listContainer.innerHTML = `<div style="text-align: center; padding: 50px 20px; color: #888;"><h4>등록된 보관장소가 없습니다.</h4><p style="margin-top: 15px;">**+ 버튼**을 눌러 첫 번째 보관장을 등록해 주세요.</p></div>`;
             return;
         }
 
         renderCabinetCards(cabinets, listContainer);
-
-        if (statusMsg) {
-            statusMsg.textContent = `✅ 보관장 목록 ${cabinets.length}개 로드 완료`;
-            statusMsg.style.color = 'green';
-        }
+        statusMsg.textContent = `✅ 보관장 목록 ${cabinets.length}개 로드 완료`;
+        statusMsg.style.color = 'green';
 
     } catch (error) {
         console.error("보관장 목록 로드 중 오류 발생:", error);
-        if (statusMsg) {
-            statusMsg.textContent = `❌ 보관장 목록 로드 오류: ${error.message}`;
-            statusMsg.style.color = 'red';
-        }
+        statusMsg.textContent = `❌ 보관장 목록 로드 오류: ${error.message}`;
+        statusMsg.style.color = 'red';
     }
+
+    // ⬇️ [수정] 한 번만 등록되도록 이벤트 리스너를 새로고침 로직 안에 배치합니다.
+    // 기존 리스너가 있다면 제거하고 새로 추가하여 중복을 방지합니다.
+    const newContainer = listContainer.cloneNode(true);
+    listContainer.parentNode.replaceChild(newContainer, listContainer);
+
+    newContainer.addEventListener('click', (event) => {
+        if (event.target.classList.contains('delete-btn')) {
+            const cabinetId = event.target.dataset.id;
+            handleDeleteCabinet(cabinetId);
+        }
+    });
 }
 
 /**
  * 목록 데이터를 기반으로 화면에 카드 UI를 생성하는 함수
  */
 function renderCabinetCards(cabinets, container) {
-    container.innerHTML = '';
-
+    container.innerHTML = ''; 
+    
     cabinets.forEach(cabinet => {
         const areaName = allAreas.find(a => a.id === cabinet.area_id)?.name || '알 수 없음';
-
+        
         const card = document.createElement('div');
         card.className = 'cabinet-card';
         card.setAttribute('data-cabinet-id', cabinet.id);
-
+        
+        // ⬇️ [수정] 삭제 버튼을 포함한 HTML 구조로 변경
         card.innerHTML = `
             <div class="card-image-placeholder">
                 [${cabinet.name} 사진]
@@ -841,14 +838,50 @@ function renderCabinetCards(cabinets, container) {
                 <p class="area-name">${areaName}</p>
                 <p class="area-name">(${cabinet.shelf_height}층, ${cabinet.storage_columns}열)</p>
             </div>
+            <div class="card-actions">
+                <button class="delete-btn" data-id="${cabinet.id}">삭제</button>
+            </div>
         `;
-
-        card.addEventListener('click', () => {
-            alert(`Cabinet ID ${cabinet.id} (${cabinet.name}) 클릭됨. 상세 정보 페이지로 이동할 예정입니다.`);
-        });
-
+        
         container.appendChild(card);
     });
+}
+
+/**
+ * ⬇️ [새로운 함수 추가] 캐비닛 삭제를 처리하는 함수
+ */
+async function handleDeleteCabinet(cabinetId) {
+    if (!confirm(`정말로 이 보관장을 삭제하시겠습니까?\nID: ${cabinetId}`)) {
+        return;
+    }
+
+    // cabinet-register 함수 URL 정의
+    const CABINET_REG_URL = `${SUPABASE_URL}/functions/v1/cabinet-register`;
+
+    try {
+        const response = await fetch(`${CABINET_REG_URL}?id=${cabinetId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            }
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || '삭제에 실패했습니다.');
+        }
+
+        const cardToRemove = document.querySelector(`.cabinet-card[data-cabinet-id="${cabinetId}"]`);
+        if (cardToRemove) {
+            cardToRemove.remove();
+        }
+        alert('성공적으로 삭제되었습니다.');
+
+    } catch (error) {
+        console.error('삭제 처리 중 오류 발생:', error);
+        alert(`삭제 실패: ${error.message}`);
+    }
 }
 
 function setFabVisibility(visible) {
@@ -861,3 +894,4 @@ function setFabVisibility(visible) {
         }
     }
 }
+
