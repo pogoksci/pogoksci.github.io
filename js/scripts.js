@@ -33,20 +33,17 @@ let otherAreaInput = null;
 let otherCabinetInput = null;
 
 // 6단계 위치 선택 값을 저장할 객체 (Inventory DB에 저장될 최종 값)
-let locationSelections = {
+const locationSelections = {
     cabinet_id: null,
     door_vertical: null,
     door_horizontal: null,
     internal_shelf_level: null,
-    storage_column: null,
+    storage_columns: null, // ❗ [수정 1/4] storage_column -> storage_columns
     location_area: null 
 };
 
 // 전역에서 접근해야 하는 HTML 요소들 (초기값은 null)
 let statusMessage = null;
-//let photoInput = null; 
-//let cameraInput = null; 
-//let photoPreview = null; 
 let manufacturerButtonsGroup = null;
 let otherManufacturerGroup = null;
 let manufacturerOtherInput = null;
@@ -92,7 +89,6 @@ function initializeFormListeners() {
     console.log("폼 요소 초기화 시작...");
 
     // 📌 전역 변수 재할당: 동적으로 로드된 요소를 찾습니다.
-    // (index.html 본체에 있는 요소도 포함하여 여기서 모두 다시 찾습니다.)
     statusMessage = document.getElementById('statusMessage'); 
     
     // form-input.html 조각 안에 있는 요소들
@@ -258,7 +254,6 @@ function handleCabinetSelect(cabinetIdStr, cabinetInfo) {
     );
 
     // 3. 5단계 (도어당 선반 층수) 버튼 생성
-    // (shelf_height: 3층이면 3개의 버튼 생성)
     generateLocationButtons(
         'location_internal_shelf_group', 
         cabinetInfo.shelf_height, 
@@ -267,11 +262,10 @@ function handleCabinetSelect(cabinetIdStr, cabinetInfo) {
     );
 
     // 4. 6단계 (도어 내부 보관 열 수) 버튼 생성
-    // (storage_columns: 6열이면 6개의 버튼 생성)
     generateLocationButtons(
         'location_storage_column_group', 
         cabinetInfo.storage_columns, 
-        'storage_column',
+        'storage_columns', // ❗ [수정 2/4] 'storage_column' -> 'storage_columns'
         (i) => `${i}열`
     );
 }
@@ -284,7 +278,7 @@ function clearLocationSteps() {
     locationSelections.door_vertical = null;
     locationSelections.door_horizontal = null;
     locationSelections.internal_shelf_level = null;
-    locationSelections.storage_column = null;
+    locationSelections.storage_columns = null; // ❗ [수정 3/4] storage_column -> storage_columns
     
     // UI 초기화
     const containerIds = [
@@ -312,7 +306,7 @@ function generateLocationButtons(containerId, count, dataKey, nameFormatter) {
         const value = i + 1; // 1부터 시작 (1, 2, 3...)
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'btn-location'; // CSS는 styles.css에서 정의해야 함
+        button.className = 'btn-location';
         button.setAttribute('data-value', value);
         button.textContent = nameFormatter(value);
         
@@ -422,7 +416,6 @@ function setupNavbarListeners() {
 
             if (itemText === '약품 보관장 설정') {
                 // 🚨 '약품 보관장 설정' 링크 클릭 시, 보관장 목록 페이지를 로드합니다.
-                // pages/location-list.html 파일이 있다고 가정하고 로드합니다.
                 includeHTML('pages/location-list.html', 'form-container', setupLocationList); 
             }
             // Add logic for other menu items here (e.g., 교구/물품 설정)
@@ -431,8 +424,7 @@ function setupNavbarListeners() {
     });
 
     // 3. 팝업 외부 닫힘 이벤트 로직 (Window에 연결)
-    // 이 로직은 navbar HTML이 로드된 후에 단 한 번만 연결되어야 합니다.
-    window.addEventListener('click', (event) => {
+    globalThis.addEventListener('click', (event) => {
         // 팝업이 열려 있고, 클릭된 요소가 팝업 내부도 아니고 버튼도 아니라면 닫기
         if (startMenu.classList.contains('visible')) {
             if (!startMenu.contains(event.target) &&
@@ -444,16 +436,11 @@ function setupNavbarListeners() {
     });
 }
 
-// 3. 새로운 콜백 함수 정의: 목록 로드 후 실행될 로직
-function setupLocationList() {
-    // 여기에 약품 보관장 목록이 로드된 후 필요한 JS 코드를 추가합니다.
-    console.log("약품 보관장 목록 페이지 로드 완료.");
-}
-
 // =================================================================
 // 5. 폼 제출 처리 함수 (Storage 로직 제거)
 // =================================================================
 
+// deno-lint-ignore no-unused-vars
 async function importData() {
     if (event) {
         event.preventDefault(); 
@@ -514,14 +501,14 @@ async function importData() {
             door_vertical: locationSelections.door_vertical,
             door_horizontal: locationSelections.door_horizontal,
             internal_shelf_level: locationSelections.internal_shelf_level,
-            storage_column: locationSelections.storage_column,
+            storage_columns: locationSelections.storage_columns, // ❗ [수정 4/4] storage_column -> storage_columns
 
             // Storage 로직 제거에 따른 null 명시
             photo_base64: null, 
             photo_mime_type: null,
             photo_storage_url: null,
             
-            location: 'Initial Check-in', // ⚠️ 보관장소는 이 다음 단계에서 수정할 예정
+            location: 'Initial Check-in',
         }
     };
     
@@ -567,7 +554,7 @@ async function importData() {
 // 6. 페이지 진입점 (최종 실행 시작)
 // =================================================================
 
-window.addEventListener('DOMContentLoaded', () => {
+globalThis.addEventListener('DOMContentLoaded', () => {
     // 1. form-input.html 로드: 완료 후 initializeFormListeners 콜백으로 실행
     includeHTML('pages/form-input.html', 'form-container', initializeFormListeners); 
     
@@ -582,22 +569,19 @@ window.addEventListener('DOMContentLoaded', () => {
 /**
  * 플로팅 액션 버튼(FAB) 클릭 시 새 캐비닛 등록 폼을 로드합니다.
  */
+
+// deno-lint-ignore no-unused-vars
 function showNewCabinetForm() {
     console.log("새 캐비닛 등록 폼 로드 시작...");
 
     setFabVisibility(false);
-    //const formContainer = document.getElementById('form-container');
-    
-    // (선택 사항) 현재 목록 뷰를 숨기는 로직이 필요할 수 있습니다.
-    // 현재는 includeHTML이 form-container 전체를 덮어쓰므로 별도 숨김 로직 불필요.
 
-    // 🔑 새로운 HTML 조각 파일 로드
-    // 캐비닛 등록 폼이 들어있는 pages/cabinet-register-form.html 파일을 로드합니다.
+    // 새로운 HTML 조각 파일 로드
     includeHTML('pages/cabinet-form.html', 'form-container', setupCabinetRegisterForm);
 }
 
 /**
- * 새 캐비닛 등록 폼 로드 후 실행될 콜백 함수 (추후 구현)
+ * 새 캐비닛 등록 폼 로드 후 실행될 콜백 함수
  */
 function setupCabinetRegisterForm() {
     console.log("새 캐비닛 등록 폼 로드 완료.");
@@ -610,7 +594,7 @@ function setupCabinetRegisterForm() {
     otherAreaInput = document.getElementById('other_area_input'); 
     otherCabinetInput = document.getElementById('other_cabinet_input');
 
-    // --- 1. 모든 버튼 그룹 초기화 (버튼이 안 눌리는 문제 해결 핵심) ---
+    // --- 1. 모든 버튼 그룹 초기화 ---
     setupButtonGroup('location_type_buttons');
     setupButtonGroup('cabinet_name_buttons');
     setupButtonGroup('door_vertical_split_buttons');
@@ -628,12 +612,10 @@ function setupCabinetRegisterForm() {
 
 // --- 4. 폼 제출 함수 ---
 async function createCabinet(event) {
-    // 폼 제출 시 페이지 새로고침 방지 (event가 null이 아닌지 확인)
     if (event) {
         event.preventDefault();
     }
     
-    // ⚠️ DOM 요소 초기화 오류를 대비한 안전 체크
     if (!statusMessage || !otherAreaInput || !otherCabinetInput) {
         alert("시스템 오류: 폼 초기화가 완료되지 않았습니다. 페이지를 새로고침하세요.");
         return;
@@ -643,26 +625,23 @@ async function createCabinet(event) {
     statusMessage.style.color = 'blue';
 
     // 1. DOM 요소 접근 및 최종 이름 결정
-    // 🔑 옵셔널 체이닝을 사용하여 널 안전성 확보
     const otherAreaValue = otherAreaInput?.value?.trim() ?? '';
     const otherCabinetValue = otherCabinetInput?.value?.trim() ?? ''; 
 
-    // 2. 🔑 숫자 변환 및 기본값 설정 (객체 정의 이전에 모두 완료)
+    // 2. 숫자 변환 및 기본값 설정
     const doorVerticalCountValue = selectedDoorVerticalSplit 
         ? parseInt(selectedDoorVerticalSplit, 10) 
-        : 1; // 기본값 1
+        : 1;
     const shelfHeightValue = selectedShelfHeight 
         ? parseInt(selectedShelfHeight, 10) 
-        : 3; // 기본값 3
-    const storageColumnValue = selectedStorageColumns 
+        : 3;
+    const storageColumnsValue = selectedStorageColumns // 변수 이름도 통일성 있게 수정
         ? parseInt(selectedStorageColumns, 10) 
-        : 1; // 기본값 1
+        : 1;
         
-    // '좌우분리도어' 여부 확인 후 1 또는 2로 결정
     const doorHorizontalCountValue = selectedDoorHorizontalSplit && selectedDoorHorizontalSplit.includes('좌우') ? 2 : 1;
     
     // 3. 최종 이름 결정 및 유효성 검사
-    // 버튼 미선택 시 null로 처리하여 유효성 검사에서 걸리도록 유도
     const areaName = selectedAreaCreation === '기타' 
         ? (otherAreaValue || null) 
         : (selectedAreaCreation || null); 
@@ -672,7 +651,7 @@ async function createCabinet(event) {
         : (selectedCabinetName || null);
 
 
-    // 4. 누락 필드 검사 (필수 6단계 + 이름 유효성)
+    // 4. 누락 필드 검사
     if (areaName === null || cabinetName === null || 
         selectedDoorVerticalSplit === null || 
         selectedShelfHeight === null || 
@@ -682,19 +661,17 @@ async function createCabinet(event) {
         alert("모든 필수 필드(*)를 선택/입력해 주세요. (기타 입력란 포함)");
         statusMessage.textContent = '등록 실패: 필수 필드 누락.';
         statusMessage.style.color = 'red';
-        return; // 유효성 검사 실패 시 즉시 종료
+        return;
     }
 
-    // 5. 서버 전송 데이터 구성 (문법 오류 수정 완료)
+    // 5. 서버 전송 데이터 구성
     const cabinetData = {
         area_name: areaName, 
         cabinet_name: cabinetName,
-        
-        // Number 변환된 로컬 변수 사용
         door_vertical_count: doorVerticalCountValue,
         door_horizontal_count: doorHorizontalCountValue,
         shelf_height: shelfHeightValue,
-        storage_columns: storageColumnValue,
+        storage_columns: storageColumnsValue, // 서버와 맞춤
     };
     
     // 6. Edge Function 호출 및 데이터 저장
@@ -712,7 +689,6 @@ async function createCabinet(event) {
 
         const data = await response.json();
 
-        // 서버에서 오류가 났거나 HTTP 상태 코드가 200이 아닐 경우
         if (!response.ok || data.error) {
              throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
         }
@@ -723,7 +699,7 @@ async function createCabinet(event) {
         console.log("✅ 보관장 등록 성공:", data);
         alert(`✅ 보관장 "${newCabinetName}"이(가) 성공적으로 등록되었습니다.`);
         
-        loadLocationListPage(); // 화면 전환 및 목록 새로고침
+        loadLocationListPage();
 
     } catch (error) {
         console.error("보관장 등록 중 오류 발생:", error.message);
@@ -736,19 +712,14 @@ async function createCabinet(event) {
 function loadLocationListPage() {
     console.log("목록 페이지로 복귀 및 데이터 새로고침 시작.");
     
-    // 1. FAB 버튼 다시 보이게 함 (목록 화면에 필요)
     setFabVisibility(true); 
     
-    // 2. location-list.html HTML 조각 파일을 다시 로드
-    // 이 로딩이 완료되면 fetchCabinetListAndRender 함수가 실행됩니다.
     includeHTML('pages/location-list.html', 'form-container', setupLocationList); 
 }
 
 function setupLocationList() {
-    // 🔑 이 함수는 location-list.html 로드 후 실행되며, 데이터를 fetch하여 렌더링을 시작합니다.
     console.log("약품 보관장 목록 페이지 로드 완료. 데이터 로드 시작.");
     
-    // fetchCabinetListAndRender 함수를 호출하여 데이터 조회 및 렌더링을 시작합니다.
     fetchCabinetListAndRender(); 
 }
 
@@ -778,7 +749,6 @@ function attachOtherInputLogic(buttonGroupId, otherGroupId, targetInputId) {
  * Edge Function에 GET 요청을 보내 Cabinet 목록을 조회하고 렌더링합니다.
  */
 async function fetchCabinetListAndRender() {
-    // 🔑 이 함수는 이미 includeHTML('pages/location-list.html', ...)의 콜백에서 실행되어야 합니다.
     const listContainer = document.getElementById('cabinet-list-container');
     const statusMsg = document.getElementById('status-message-list');
     
@@ -788,7 +758,6 @@ async function fetchCabinetListAndRender() {
     }
 
     try {
-        // Edge Function의 GET 엔드포인트 호출 (Area 및 Cabinet 데이터 요청)
         const response = await fetch(EDGE_FUNCTION_URL, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
@@ -800,14 +769,11 @@ async function fetchCabinetListAndRender() {
             throw new Error(data.error || '보관장 목록 데이터 조회 실패');
         }
         
-        // 전역 변수 업데이트 (혹시 form-input 페이지에서 로드되지 않았을 경우를 대비)
         allAreas = data.areas || [];
-        const cabinets = data.cabinets || []; // Cabinet 데이터 획득
+        const cabinets = data.cabinets || [];
         
-        // 렌더링 로직
         if (cabinets.length === 0) {
             if (listContainer) {
-                // 데이터가 없을 때 사용자에게 등록을 유도하는 메시지 출력
                 listContainer.innerHTML = `
                     <div style="text-align: center; padding: 50px 20px; color: #888;">
                         <h4>등록된 보관장소가 없습니다.</h4>
@@ -818,10 +784,8 @@ async function fetchCabinetListAndRender() {
             return;
         }
 
-        // 목록 렌더링 함수 호출
         renderCabinetCards(cabinets, listContainer);
         
-        // 상태 메시지 업데이트
         if (statusMsg) {
             statusMsg.textContent = `✅ 보관장 목록 ${cabinets.length}개 로드 완료`;
             statusMsg.style.color = 'green';
@@ -838,20 +802,17 @@ async function fetchCabinetListAndRender() {
 
 /**
  * 목록 데이터를 기반으로 화면에 카드 UI를 생성하는 함수
- * (추가로 이 함수도 scripts.js에 정의되어야 합니다.)
  */
 function renderCabinetCards(cabinets, container) {
-    container.innerHTML = ''; // 기존 내용 지우기
+    container.innerHTML = ''; 
     
     cabinets.forEach(cabinet => {
-        // Area ID를 사용해 Area 이름 조회
         const areaName = allAreas.find(a => a.id === cabinet.area_id)?.name || '알 수 없음';
         
         const card = document.createElement('div');
-        card.className = 'cabinet-card'; // CSS에서 정의된 카드 스타일
+        card.className = 'cabinet-card';
         card.setAttribute('data-cabinet-id', cabinet.id);
         
-        // 카드 HTML 구조 (사용자가 원하는 화면처럼 이미지와 제목을 포함)
         card.innerHTML = `
             <div class="card-image-placeholder">
                 [${cabinet.name} 사진]
@@ -875,9 +836,9 @@ function setFabVisibility(visible) {
     const fab = document.querySelector('.fab');
     if (fab) {
         if (visible) {
-            fab.style.display = 'block'; // 보이게 함
+            fab.style.display = 'block';
         } else {
-            fab.style.display = 'none'; // 숨김
+            fab.style.display = 'none';
         }
     }
 }
