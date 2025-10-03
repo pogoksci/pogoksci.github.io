@@ -275,7 +275,7 @@ function handleCabinetSelect(cabinetIdStr, cabinetInfo) {
         'location_internal_shelf_group', 
         cabinetInfo.shelf_height, 
         'internal_shelf_level',
-        (value) => `${value}층` // 기존 방식 유지
+        (value) => `${value}단` // 기존 방식 유지
     );
 
     // 4. 6단계 (도어 내부 보관 열 수) 버튼 생성
