@@ -824,15 +824,25 @@ async function fetchCabinetListAndRender() {
  */
 function renderCabinetCards(cabinets, container) {
     container.innerHTML = ''; 
-    
+
     cabinets.forEach(cabinet => {
         const areaName = allAreas.find(a => a.id === cabinet.area_id)?.name || '알 수 없음';
+        
+        // ⬇️ [새로운 코드] 숫자 코드를 텍스트 설명으로 변환합니다.
+        let verticalDoorText = '단일도어';
+        if (cabinet.door_vertical_count === 3) {
+            verticalDoorText = '상중하도어';
+        } else if (cabinet.door_vertical_count === 2) {
+            verticalDoorText = '상하도어';
+        }
+
+        const horizontalDoorText = cabinet.door_horizontal_count === 2 ? '좌우분리도어' : '단일도어';
         
         const card = document.createElement('div');
         card.className = 'cabinet-card';
         card.setAttribute('data-cabinet-id', cabinet.id);
         
-        // ⬇️ [수정] 삭제 버튼을 포함한 HTML 구조로 변경
+        // ⬇️ [수정됨] 새로운 정보를 포함하도록 card.innerHTML을 업데이트합니다.
         card.innerHTML = `
             <div class="card-image-placeholder">
                 [${cabinet.name} 사진]
@@ -840,7 +850,8 @@ function renderCabinetCards(cabinets, container) {
             <div class="card-info">
                 <h3>${cabinet.name}</h3>
                 <p class="area-name">${areaName}</p>
-                <p class="area-name">(${cabinet.shelf_height}층, ${cabinet.storage_columns}열)</p>
+                <p class="cabinet-specs">${verticalDoorText}, ${horizontalDoorText}</p>
+                <p class="cabinet-specs">(${cabinet.shelf_height}단, ${cabinet.storage_columns}열)</p>
             </div>
             <div class="card-actions">
                 <button class="delete-btn" data-id="${cabinet.id}">삭제</button>
