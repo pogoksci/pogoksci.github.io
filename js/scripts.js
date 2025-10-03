@@ -128,14 +128,14 @@ function initializeFormListeners() {
     console.log("폼 요소 초기화 완료.");
 
     // 폼 컨테이너에 통합 이벤트 리스너를 추가합니다.
-    console.log("TRACE: initializeFormListeners 실행됨. 통합 submit 리스너를 설정합니다.");
     const formContainer = document.getElementById('form-container');
     if (formContainer) {
         formContainer.addEventListener('submit', (event) => {
-            // 제출 이벤트가 발생한 요소가 'cabinet-creation-form'이 맞는지 확인
+            // 제출 이벤트가 발생한 요소의 id에 따라 적절한 함수를 호출
             if (event.target && event.target.id === 'cabinet-creation-form') {
-                // 맞을 경우에만 createCabinet 함수를 호출
                 createCabinet(event);
+            } else if (event.target && event.target.id === 'inventory-form') {
+                importData(event);
             }
         });
     }
@@ -344,59 +344,57 @@ function generateLocationButtons(containerId, count, dataKey, nameFormatter) {
 // =================================================================
 function setupButtonGroup(groupId, initialValue = null) {
     const group = document.getElementById(groupId);
-    if (!group) return;
+    if (!group) return; 
+
+    // 전역 변수 업데이트를 위한 헬퍼 함수
+    const updateGlobalVariable = (variableName, value) => {
+        switch (variableName) {
+            case 'classification_buttons': selectedClassification = value; break;
+            case 'state_buttons': selectedState = value; break;
+            case 'unit_buttons': selectedUnit = value; break;
+            case 'concentration_unit_buttons': selectedConcentrationUnit = value; break;
+            case 'manufacturer_buttons': selectedManufacturer = value; break;
+            case 'location_type_buttons': selectedAreaCreation = value; break;
+            case 'cabinet_name_buttons': selectedCabinetName = value; break;
+            case 'door_vertical_split_buttons': selectedDoorVerticalSplit = value; break;
+            case 'door_horizontal_split_buttons': selectedDoorHorizontalSplit = value; break;
+            case 'shelf_height_buttons': selectedShelfHeight = value; break;
+            case 'storage_columns_buttons': selectedStorageColumns = value; break;
+        }
+    };
 
     group.addEventListener('click', (event) => {
         const targetButton = event.target.closest('button');
         if (targetButton) {
-            // 스타일 변경
+            const value = targetButton.getAttribute('data-value');
+            const isActive = targetButton.classList.contains('active');
+
+            // 먼저 그룹 내 모든 버튼의 'active' 상태를 해제합니다.
             group.querySelectorAll('.active').forEach(btn => {
                 btn.classList.remove('active');
             });
-            targetButton.classList.add('active');
 
-            // 전역 변수 값 업데이트
-            const value = targetButton.getAttribute('data-value');
-
-            // 🔑 기존 5개 그룹 처리
-            if (groupId === 'state_buttons') {
-                selectedState = value;
-            } else if (groupId === 'unit_buttons') {
-                selectedUnit = value;
-            } else if (groupId === 'concentration_unit_buttons') {
-                selectedConcentrationUnit = value;
-            } else if (groupId === 'manufacturer_buttons') {
-                selectedManufacturer = value;
-            } else if (groupId === 'classification_buttons') {
-                selectedClassification = value;
-            }
-
-            // 🔑 새로운 6개 그룹 처리 로직 추가
-            else if (groupId === 'location_type_buttons') {
-                selectedAreaCreation = value;
-            } else if (groupId === 'cabinet_name_buttons') {
-                selectedCabinetName = value;
-            } else if (groupId === 'door_vertical_split_buttons') {
-                selectedDoorVerticalSplit = value;
-            } else if (groupId === 'door_horizontal_split_buttons') {
-                selectedDoorHorizontalSplit = value;
-            } else if (groupId === 'shelf_height_buttons') {
-                selectedShelfHeight = value;
-            } else if (groupId === 'storage_columns_buttons') {
-                selectedStorageColumns = value;
+            if (isActive) {
+                // 만약 클릭한 버튼이 이미 활성화 상태였다면, 선택을 취소합니다.
+                // (active 클래스는 위에서 이미 제거되었으므로 변수 값만 null로 바꿉니다.)
+                updateGlobalVariable(groupId, null);
+            } else {
+                // 만약 비활성화 상태였다면, 해당 버튼을 활성화하고 변수 값을 업데이트합니다.
+                targetButton.classList.add('active');
+                updateGlobalVariable(groupId, value);
             }
         }
     });
 
-    // 초기값 설정
+    // 초기값 설정 (기존과 동일)
     if (initialValue) {
         const initialButton = group.querySelector(`button[data-value="${initialValue}"]`);
         if (initialButton) {
             initialButton.classList.add('active');
+            updateGlobalVariable(groupId, initialValue); // 초기값 설정 시 변수도 업데이트
         }
     }
 }
-
 
 // =================================================================
 // 4. Navbar 이벤트 리스너 설정 (토글 및 외부 닫힘)
@@ -456,84 +454,82 @@ function setupNavbarListeners() {
 // =================================================================
 
 // deno-lint-ignore no-unused-vars
-async function importData() {
+async function importData(event) {
     if (event) {
-        event.preventDefault();
+        event.preventDefault(); 
     }
 
-    if (!statusMessage) return;
-
-    statusMessage.textContent = '데이터를 처리 중입니다... 잠시만 기다려 주세요.';
-    statusMessage.style.color = 'blue';
-
-    // 1. 폼 데이터 수집 및 유효성 검사
+    const submitButton = document.getElementById('inventory-submit-button');
+    if (!statusMessage || !submitButton) {
+        console.error("Status message or submit button not found!");
+        return; 
+    }
+    
+    // 1. CAS 번호 유효성 검사
     const casRn = document.getElementById('cas_rn').value.trim();
-    const purchaseVolumeStr = document.getElementById('purchase_volume').value;
-    const concentrationValueStr = document.getElementById('concentration_value').value;
-    const concentrationUnit = selectedConcentrationUnit;
-    const manufacturerSelect = selectedManufacturer;
-    const manufacturerOther = manufacturerOtherInput ? manufacturerOtherInput.value.trim() : '';
-    const purchaseDate = document.getElementById('purchase_date').value;
-    const classification = selectedClassification;
-
-    const state = selectedState;
-    const unit = selectedUnit;
-
     if (!casRn) {
         statusMessage.textContent = 'CAS 번호를 입력해 주세요.';
         statusMessage.style.color = 'red';
         return;
     }
-
-    // 2. 숫자 변환 및 NaN 처리
+    
+    // 2. 나머지 (선택 사항) 데이터 수집
+    const purchaseVolumeStr = document.getElementById('purchase_volume').value;
+    const concentrationValueStr = document.getElementById('concentration_value').value;
+    const manufacturerOther = manufacturerOtherInput ? manufacturerOtherInput.value.trim() : ''; 
+    const purchaseDate = document.getElementById('purchase_date').value;
+    
     const purchaseVolume = parseFloat(purchaseVolumeStr);
     const concentrationValue = parseFloat(concentrationValueStr);
 
-    // 제조원 최종 결정
     let finalManufacturer = null;
-    if (manufacturerSelect === '기타') {
-        finalManufacturer = manufacturerOther || '기타 (미입력)';
+    if (selectedManufacturer === '기타') {
+        finalManufacturer = manufacturerOther || null; // 기타 선택 후 미입력 시 null
     } else {
-        finalManufacturer = manufacturerSelect;
+        finalManufacturer = selectedManufacturer;
     }
 
-    // 3. 서버로 전송할 최종 Inventory 데이터 구성
+    // 3. 서버로 전송할 최종 데이터 구성
     const inventoryData = {
-        casRns: [casRn],
+        casRns: [casRn], 
         inventoryDetails: {
             concentration_value: isNaN(concentrationValue) ? null : concentrationValue,
-            concentration_unit: concentrationUnit || null,
-            purchase_volume: isNaN(purchaseVolume) ? 0 : purchaseVolume,
-            current_amount: isNaN(purchaseVolume) ? 0 : purchaseVolume,
-            unit: unit,
-            state: state,
+            concentration_unit: selectedConcentrationUnit || null,
+            purchase_volume: isNaN(purchaseVolume) ? null : purchaseVolume,
+            current_amount: isNaN(purchaseVolume) ? null : purchaseVolume,
+            unit: selectedUnit || null,
+            state: selectedState || null,
             manufacturer: finalManufacturer,
             purchase_date: purchaseDate || null,
-            classification: classification || null,
-
+            classification: selectedClassification || null,
+            
             cabinet_id: locationSelections.cabinet_id,
             location_area: locationSelections.location_area,
             door_vertical: locationSelections.door_vertical,
             door_horizontal: locationSelections.door_horizontal,
             internal_shelf_level: locationSelections.internal_shelf_level,
             storage_columns: locationSelections.storage_columns,
-
-            // Storage 로직 제거에 따른 null 명시
-            photo_base64: null,
+            
+            photo_base64: null, 
             photo_mime_type: null,
             photo_storage_url: null,
-
             location: 'Initial Check-in',
         }
     };
-
+    
     try {
-        // 5. Supabase Edge Function 호출
+        // 버튼 비활성화 및 상태 메시지 업데이트
+        submitButton.disabled = true;
+        submitButton.textContent = '저장 중...';
+        statusMessage.textContent = '데이터를 처리 중입니다... 잠시만 기다려 주세요.';
+        statusMessage.style.color = 'blue';
+
+        // 4. Supabase Edge Function 호출
         const response = await fetch(EDGE_FUNCTION_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 
             },
             body: JSON.stringify(inventoryData)
         });
@@ -543,27 +539,33 @@ async function importData() {
         if (!response.ok) {
             throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
         }
-
-        // 6. 성공 응답 처리
+        
+        // 5. 성공 응답 처리
         const result = data[0];
         let msg = '';
-
         if (result.isNewSubstance) {
             msg = `✅ 신규 물질(${casRn}) 정보 및 시약병(${result.inventoryId}) 등록 완료!`;
         } else {
             msg = `✅ 기존 물질(${casRn})에 새 시약병(${result.inventoryId}) 등록 완료!`;
         }
-
         statusMessage.textContent = msg;
         statusMessage.style.color = 'green';
+        
+        // 성공 후 폼 초기화 (선택 사항)
+        document.getElementById('inventory-form').reset();
+        // 버튼 그룹의 'active' 클래스 제거 등 추가 초기화 로직이 필요할 수 있습니다.
+
 
     } catch (error) {
         console.error("데이터 전송 중 오류 발생:", error);
-        statusMessage.textContent = `❌ 오류: 데이터 처리 실패. 콘솔을 확인하세요. (${error.message})`;
+        statusMessage.textContent = `❌ 오류: 데이터 처리 실패. (${error.message})`;
         statusMessage.style.color = 'red';
+    } finally {
+        // 버튼 다시 활성화
+        submitButton.disabled = false;
+        submitButton.textContent = '재고 정보 DB에 저장';
     }
 }
-
 
 // =================================================================
 // 6. 페이지 진입점 (최종 실행 시작)

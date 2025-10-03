@@ -1,8 +1,8 @@
-<form id="inventory-form" onsubmit="importData(event); return false;">
+<form id="inventory-form">
     <h1>시약병 재고 정보 입력</h1>
 
     <div class="form-group">
-        <label for="cas_rn">CAS</label>
+        <label for="cas_rn">CAS *</label>
         <input type="text" id="cas_rn" name="cas_rn" placeholder="CAS Registry Number (예: 7647-01-0)" required>
     </div>
 
@@ -13,23 +13,19 @@
             <button type="button" data-value="약산">약산</button>
             <button type="button" data-value="강염기">강염기</button>
             <button type="button" data-value="약염기">약염기</button>
-
             <button type="button" data-value="알코올">알코올</button>
             <button type="button" data-value="오일류">오일류</button>
             <button type="button" data-value="유기화합물">유기화합물</button>
             <button type="button" data-value="지시약">지시약</button>
-
             <button type="button" data-value="금속류">금속류</button>
             <button type="button" data-value="산화염">산화염</button>
             <button type="button" data-value="수산화염">수산화염</button>
             <button type="button" data-value="염화염">염화염</button>
             <button type="button" data-value="질산염">질산염</button>
-
             <button type="button" data-value="탄산염">탄산염</button>
             <button type="button" data-value="황산염">황산염</button>
             <button type="button" data-value="황화염">황화염</button>
             <button type="button" data-value="무기화합물">무기화합물</button>
-
             <button type="button" data-value="세제류">세제류</button>
             <button type="button" data-value="비누/화장품재료">비누/화장품재료</button>
             <button type="button" data-value="식품류">식품류</button>
@@ -52,12 +48,11 @@
             <button type="button" data-value="벌크">벌크</button>
             <button type="button" data-value="기체">기체</button>
         </div>
-        <input type="hidden" id="state_value" name="state" required> 
     </div>
 
     <div class="form-group">
         <label for="purchase_volume">구입용량 (숫자)</label>
-        <input type="number" id="purchase_volume" name="purchase_volume" placeholder="구입 용량" min="0" step="any" required>
+        <input type="number" id="purchase_volume" name="purchase_volume" placeholder="구입 용량" min="0" step="any">
     </div>
     
     <div class="form-group">
@@ -70,7 +65,6 @@
             <button type="button" data-value="장">장</button>
             <button type="button" data-value="세트">세트</button>
         </div>
-        <input type="hidden" id="unit_value" name="unit" required>
     </div>
 
     <div class="form-group">
@@ -96,7 +90,6 @@
             <button type="button" data-value="삼전">삼전</button>
             <button type="button" data-value="한양">한양</button>
             <button type="button" data-value="태진">태진</button>
-            
             <button type="button" data-value="OCI">OCI</button>
             <button type="button" data-value="JUNSEI">JUNSEI</button>
             <button type="button" data-value="MERCK">MERCK</button>
@@ -117,47 +110,51 @@
     </div>
     
     <div class="form-group-location">
-        <h3>보관 위치 설정 (6단계)</h3>
+        <h3>보관 위치 설정</h3>
         
-    <div class="location-step">
-        <label>1. 약품실</label> <select id="location_area_select" name="location_area_select"> <option value="" selected>-- 선택 안 함 --</option>
-        </select>
-    </div>
-
-    <div class="location-step">
-        <label>2. 수납함</label> <select id="location_cabinet_select" name="location_cabinet_select" disabled> <option value="" selected>-- 선택 안 함 --</option>
-        </select>
-    </div>
+        <div class="location-step">
+            <label>1. 약품실</label>
+            <select id="location_area_select" name="location_area_select">
+                <option value="" selected>-- 선택 안 함 --</option>
+            </select>
+        </div>
 
         <div class="location-step">
-            <label>3. 수납위치_도어_상중하 *</label>
+            <label>2. 수납함</label>
+            <select id="location_cabinet_select" name="location_cabinet_select" disabled>
+                <option value="" selected>-- 선택 안 함 --</option>
+            </select>
+        </div>
+
+        <div class="location-step">
+            <label>3. 수납위치_도어_상중하</label>
             <div class="button-group" id="location_door_vertical_group">
                 <span style="color:#888;">수납함 선택 후 표시됩니다.</span>
             </div>
         </div>
 
         <div class="location-step">
-            <label>4. 수납위치_도어_좌우 *</label>
+            <label>4. 수납위치_도어_좌우</label>
             <div class="button-group" id="location_door_horizontal_group">
                 <span style="color:#888;">수납함 선택 후 표시됩니다.</span>
             </div>
         </div>
 
         <div class="location-step">
-            <label>5. 수납위치_도어내부_단 *</label>
+            <label>5. 수납위치_도어내부_단</label>
             <div class="button-group" id="location_internal_shelf_group">
                 <span style="color:#888;">수납함 선택 후 표시됩니다.</span>
             </div>
         </div>
         
         <div class="location-step">
-            <label>6. 수납위치_도어내부_보관열 *</label>
+            <label>6. 수납위치_도어내부_보관열</label>
             <div class="button-group" id="location_storage_column_group">
                 <span style="color:#888;">수납함 선택 후 표시됩니다.</span>
             </div>
         </div>
     </div>
 
-    <button type="submit">재고 정보 DB에 저장</button> 
+    <button type="submit" id="inventory-submit-button">재고 정보 DB에 저장</button> 
     <p id="statusMessage" style="margin-top: 15px;"></p>
 </form>
