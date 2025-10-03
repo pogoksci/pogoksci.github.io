@@ -119,19 +119,15 @@
     <div class="form-group-location">
         <h3>보관 위치 설정 (6단계)</h3>
         
-        <div class="location-step">
-            <label>1. 약품실 *</label>
-            <select id="location_area_select" name="location_area_select" required>
-                <option value="" disabled selected>약품실 로드 중...</option>
-            </select>
-        </div>
+    <div class="location-step">
+        <label>1. 약품실</label> <select id="location_area_select" name="location_area_select"> <option value="" selected>-- 선택 안 함 --</option>
+        </select>
+    </div>
 
-        <div class="location-step">
-            <label>2. 수납함 *</label>
-            <select id="location_cabinet_select" name="location_cabinet_select" required disabled>
-                <option value="" disabled selected>약품실 선택 후 활성화</option>
-            </select>
-        </div>
+    <div class="location-step">
+        <label>2. 수납함</label> <select id="location_cabinet_select" name="location_cabinet_select" disabled> <option value="" selected>-- 선택 안 함 --</option>
+        </select>
+    </div>
 
         <div class="location-step">
             <label>3. 수납위치_도어_상중하 *</label>

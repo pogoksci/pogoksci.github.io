@@ -18,7 +18,6 @@ let selectedManufacturer = null;
 // 🔑 수납위치 관련 전역 변수
 let allAreas = []; // Area 데이터 전체 저장
 let allCabinets = []; // Cabinet 데이터 전체 저장
-let selectedAreaId = null;
 let selectedCabinetId = null;
 // 🔑 캐비닛 등록 폼 전용 선택 값
 let selectedAreaCreation = null;
@@ -87,6 +86,9 @@ function includeHTML(url, targetElementId, callback) {
 
 function initializeFormListeners() {
     console.log("폼 요소 초기화 시작...");
+
+    // ⬇️ [새로운 코드 추가] '+' 버튼(FAB)을 숨깁니다.
+    setFabVisibility(false);
 
     // 📌 전역 변수 재할당: 동적으로 로드된 요소를 찾습니다.
     statusMessage = document.getElementById('statusMessage');
@@ -184,7 +186,8 @@ function populateAreaSelect(areas) {
     const areaSelect = document.getElementById('location_area_select');
     if (!areaSelect) return;
 
-    areaSelect.innerHTML = '<option value="" disabled selected>약품실 선택</option>';
+    // ⬇️ [수정됨] '선택 안 함'을 기본 옵션으로 변경 (disabled 제거)
+    areaSelect.innerHTML = '<option value="" selected>-- 선택 안 함 --</option>';
     areas.forEach(area => {
         const option = document.createElement('option');
         option.value = area.id;
@@ -192,7 +195,6 @@ function populateAreaSelect(areas) {
         areaSelect.appendChild(option);
     });
 
-    // 이벤트 리스너 연결
     areaSelect.addEventListener('change', (event) => {
         handleAreaSelect(event.target.value);
     });
@@ -202,40 +204,36 @@ function populateAreaSelect(areas) {
  * 2단계: 수납함(Cabinet) 드롭다운 업데이트 및 3~6단계 초기화
  */
 function handleAreaSelect(areaIdStr) {
-    // 1. 선택 값 초기화 및 저장
-    selectedAreaId = parseInt(areaIdStr, 10);
-    locationSelections.location_area = allAreas.find(a => a.id === selectedAreaId)?.name || null;
+    const areaId = areaIdStr ? parseInt(areaIdStr, 10) : null;
+    locationSelections.location_area = areaId ? (allAreas.find(a => a.id === areaId)?.name || null) : null;
     selectedCabinetId = null;
-
-    // 2. 수납함 드롭다운 업데이트
+    
     const cabinetSelect = document.getElementById('location_cabinet_select');
     if (!cabinetSelect) return;
-
-    cabinetSelect.innerHTML = '<option value="" disabled selected>수납함 선택</option>';
-    cabinetSelect.disabled = false; // 활성화
-
-    if (selectedAreaId) {
-        const filteredCabinets = allCabinets.filter(c => c.area_id === selectedAreaId);
+    
+    // ⬇️ [수정됨] '선택 안 함'을 기본 옵션으로 변경 (disabled 제거)
+    cabinetSelect.innerHTML = '<option value="" selected>-- 선택 안 함 --</option>';
+    cabinetSelect.disabled = !areaId; // 약품실을 선택해야만 수납함 드롭다운 활성화
+    
+    if (areaId) {
+        const filteredCabinets = allCabinets.filter(c => c.area_id === areaId);
         filteredCabinets.forEach(cabinet => {
             const option = document.createElement('option');
             option.value = cabinet.id;
-            // Cabinet 속성 전체를 data-info 속성에 저장하여 3~6단계 로직에 활용
-            option.setAttribute('data-cabinet-info', JSON.stringify(cabinet));
+            option.setAttribute('data-cabinet-info', JSON.stringify(cabinet)); 
             option.textContent = cabinet.name;
             cabinetSelect.appendChild(option);
         });
     }
 
-    // 3. 이벤트 리스너 연결 (새로 연결해야 함)
     cabinetSelect.onchange = (event) => {
-        // 선택된 option의 data-cabinet-info 속성에서 Cabinet 객체 전체를 가져옵니다.
         const selectedOption = event.target.options[event.target.selectedIndex];
-        const cabinetInfo = JSON.parse(selectedOption.getAttribute('data-cabinet-info'));
-
+        // 사용자가 '-- 선택 안 함 --'을 다시 고를 경우 cabinetInfo가 null이 되도록 처리
+        const cabinetInfo = selectedOption.value ? JSON.parse(selectedOption.getAttribute('data-cabinet-info')) : null;
+        
         handleCabinetSelect(event.target.value, cabinetInfo);
     };
-
-    // 4. 3~6단계 UI 초기화
+    
     clearLocationSteps();
 }
 
