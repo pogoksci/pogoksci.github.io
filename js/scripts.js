@@ -456,15 +456,15 @@ function setupNavbarListeners() {
 // deno-lint-ignore no-unused-vars
 async function importData(event) {
     if (event) {
-        event.preventDefault(); 
+        event.preventDefault();
     }
 
     const submitButton = document.getElementById('inventory-submit-button');
     if (!statusMessage || !submitButton) {
         console.error("Status message or submit button not found!");
-        return; 
+        return;
     }
-    
+
     // 1. CAS 번호 유효성 검사
     const casRn = document.getElementById('cas_rn').value.trim();
     if (!casRn) {
@@ -472,26 +472,28 @@ async function importData(event) {
         statusMessage.style.color = 'red';
         return;
     }
-    
+
     // 2. 나머지 (선택 사항) 데이터 수집
     const purchaseVolumeStr = document.getElementById('purchase_volume').value;
     const concentrationValueStr = document.getElementById('concentration_value').value;
-    const manufacturerOther = manufacturerOtherInput ? manufacturerOtherInput.value.trim() : ''; 
+    const manufacturerOther = manufacturerOtherInput ? manufacturerOtherInput.value.trim() : '';
     const purchaseDate = document.getElementById('purchase_date').value;
-    
+
     const purchaseVolume = parseFloat(purchaseVolumeStr);
     const concentrationValue = parseFloat(concentrationValueStr);
 
     let finalManufacturer = null;
     if (selectedManufacturer === '기타') {
-        finalManufacturer = manufacturerOther || null; // 기타 선택 후 미입력 시 null
+        finalManufacturer = manufacturerOther || null;
     } else {
         finalManufacturer = selectedManufacturer;
     }
 
+    const finalClassification = selectedClassification || '미분류';
+
     // 3. 서버로 전송할 최종 데이터 구성
     const inventoryData = {
-        casRns: [casRn], 
+        casRns: [casRn],
         inventoryDetails: {
             concentration_value: isNaN(concentrationValue) ? null : concentrationValue,
             concentration_unit: selectedConcentrationUnit || null,
@@ -501,27 +503,24 @@ async function importData(event) {
             state: selectedState || null,
             manufacturer: finalManufacturer,
             purchase_date: purchaseDate || null,
-            classification: selectedClassification || null,
-            
+            classification: finalClassification,
             cabinet_id: locationSelections.cabinet_id,
             location_area: locationSelections.location_area,
             door_vertical: locationSelections.door_vertical,
             door_horizontal: locationSelections.door_horizontal,
             internal_shelf_level: locationSelections.internal_shelf_level,
             storage_columns: locationSelections.storage_columns,
-            
-            photo_base64: null, 
+            photo_base64: null,
             photo_mime_type: null,
             photo_storage_url: null,
             location: 'Initial Check-in',
         }
     };
-    
+
     try {
-        // 버튼 비활성화 및 상태 메시지 업데이트
         submitButton.disabled = true;
         submitButton.textContent = '저장 중...';
-        statusMessage.textContent = '데이터를 처리 중입니다... 잠시만 기다려 주세요.';
+        statusMessage.textContent = '데이터를 처리 중입니다...';
         statusMessage.style.color = 'blue';
 
         // 4. Supabase Edge Function 호출
@@ -529,7 +528,7 @@ async function importData(event) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
             },
             body: JSON.stringify(inventoryData)
         });
@@ -539,29 +538,30 @@ async function importData(event) {
         if (!response.ok) {
             throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
         }
-        
-        // 5. 성공 응답 처리
+
+        // ⬇️ [수정됨] 5. 성공 응답을 팝업으로 표시
         const result = data[0];
         let msg = '';
         if (result.isNewSubstance) {
-            msg = `✅ 신규 물질(${casRn}) 정보 및 시약병(${result.inventoryId}) 등록 완료!`;
+            msg = `✅ 신규 물질(${casRn}) 정보 및 시약병 등록 완료!`;
         } else {
-            msg = `✅ 기존 물질(${casRn})에 새 시약병(${result.inventoryId}) 등록 완료!`;
+            msg = `✅ 기존 물질(${casRn})에 새 시약병 등록 완료!`;
         }
-        statusMessage.textContent = msg;
-        statusMessage.style.color = 'green';
-        
-        // 성공 후 폼 초기화 (선택 사항)
-        document.getElementById('inventory-form').reset();
-        // 버튼 그룹의 'active' 클래스 제거 등 추가 초기화 로직이 필요할 수 있습니다.
+        alert(msg); // 팝업으로 메시지 표시
+        statusMessage.textContent = ''; // 기존 상태 메시지는 지움
 
+        document.getElementById('inventory-form').reset();
+        document.querySelectorAll('.button-group .active').forEach(button => {
+            button.classList.remove('active');
+        });
 
     } catch (error) {
         console.error("데이터 전송 중 오류 발생:", error);
-        statusMessage.textContent = `❌ 오류: 데이터 처리 실패. (${error.message})`;
-        statusMessage.style.color = 'red';
+        // ⬇️ [수정됨] 오류 메시지를 팝업으로 표시
+        alert(`❌ 오류: 데이터 처리 실패.\n\n(${error.message})`);
+        statusMessage.textContent = ''; // 기존 상태 메시지는 지움
+
     } finally {
-        // 버튼 다시 활성화
         submitButton.disabled = false;
         submitButton.textContent = '재고 정보 DB에 저장';
     }
