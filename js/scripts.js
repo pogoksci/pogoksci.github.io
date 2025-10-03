@@ -612,6 +612,11 @@ function setupCabinetRegisterForm() {
 
 // --- 4. 폼 제출 함수 ---
 async function createCabinet(event) {
+    // ❗ [디버깅 코드 추가] 함수가 호출된 시간과 호출 스택을 확인합니다.
+    console.log(`createCabinet 함수 호출됨 - 시간: ${new Date().toLocaleTimeString()}`);
+    console.trace("호출 스택:"); // 어떤 함수가 이 함수를 불렀는지 추적
+    debugger; // 개발자 도구가 열려있으면 여기서 코드 실행이 멈춥니다.
+    
     if (event) {
         event.preventDefault();
     }
