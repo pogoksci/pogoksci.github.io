@@ -126,6 +126,7 @@ function initializeFormListeners() {
     console.log("폼 요소 초기화 완료.");
 
     // 폼 컨테이너에 통합 이벤트 리스너를 추가합니다.
+    console.log("TRACE: initializeFormListeners 실행됨. 통합 submit 리스너를 설정합니다.");
     const formContainer = document.getElementById('form-container');
     if (formContainer) {
         formContainer.addEventListener('submit', (event) => {
@@ -596,6 +597,7 @@ function showNewCabinetForm() {
  * 새 캐비닛 등록 폼 로드 후 실행될 콜백 함수
  */
 function setupCabinetRegisterForm() {
+    console.log("TRACE: setupCabinetRegisterForm 실행됨 (이 함수 안에는 submit 리스너가 없어야 정상)");
     console.log("새 캐비닛 등록 폼 로드 완료.");
 
     setFabVisibility(false);
