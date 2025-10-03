@@ -7,6 +7,22 @@
     </div>
 
     <div class="form-group">
+        <label>시약병 사진</label>
+        <div class="photo-container">
+            <div id="photo-preview" class="photo-preview-box">
+                <span>사진 없음</span>
+            </div>
+            <div class="photo-buttons">
+                <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+                <button type="button" id="camera-btn">카메라로 촬영</button>
+                
+                <input type="file" id="photo-input" accept="image/*" style="display: none;">
+                <button type="button" id="photo-btn">파일에서 선택</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
         <label>구분</label>
         <div class="button-group" id="classification_buttons">
             <button type="button" data-value="강산">강산</button>

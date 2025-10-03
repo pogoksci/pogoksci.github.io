@@ -47,6 +47,12 @@ let manufacturerButtonsGroup = null;
 let otherManufacturerGroup = null;
 let manufacturerOtherInput = null;
 
+// 사진 관련
+let photoInput = null;
+let cameraInput = null;
+let photoPreview = null;
+let selectedPhoto_320_Base64 = null; // 이미지 데이터를 Base64로 저장할 변수
+let selectedPhoto_160_Base64 = null; // 이미지 데이터를 Base64로 저장할 변수
 
 // =================================================================
 // 1. HTML 조각 파일 로더 함수
@@ -87,16 +93,58 @@ function includeHTML(url, targetElementId, callback) {
 function initializeFormListeners() {
     console.log("폼 요소 초기화 시작...");
 
-    // ⬇️ [새로운 코드 추가] '+' 버튼(FAB)을 숨깁니다.
+    // '+' 버튼(FAB) 숨기기
     setFabVisibility(false);
 
-    // 📌 전역 변수 재할당: 동적으로 로드된 요소를 찾습니다.
+    // 📌 전역 변수 재할당
     statusMessage = document.getElementById('statusMessage');
-
-    // form-input.html 조각 안에 있는 요소들
     manufacturerButtonsGroup = document.getElementById('manufacturer_buttons');
     otherManufacturerGroup = document.getElementById('other_manufacturer_group');
     manufacturerOtherInput = document.getElementById('manufacturer_other');
+
+    // ⬇️ [새로운 코드 추가] 사진 관련 요소 초기화
+    photoInput = document.getElementById('photo-input');
+    cameraInput = document.getElementById('camera-input');
+    photoPreview = document.getElementById('photo-preview');
+    const cameraBtn = document.getElementById('camera-btn');
+    const photoBtn = document.getElementById('photo-btn');
+
+    // 카메라 버튼 클릭 시 cameraInput(type=file)을 대신 클릭
+    if (cameraBtn && cameraInput) {
+        cameraBtn.addEventListener('click', () => cameraInput.click());
+    }
+    // 파일 선택 버튼 클릭 시 photoInput(type=file)을 대신 클릭
+    if (photoBtn && photoInput) {
+        photoBtn.addEventListener('click', () => photoInput.click());
+    }
+
+    // 파일이 선택되었을 때의 공통 처리 함수
+    const handleFileSelect = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            // 이미지를 리사이징하고, 완료되면 콜백 함수 실행
+            resizeImage(e.target.result, (resizedImages) => {
+                // 리사이징된 이미지 데이터를 전역 변수에 저장
+                selectedPhoto_320_Base64 = resizedImages.base64_320;
+                selectedPhoto_160_Base64 = resizedImages.base64_160;
+                // 큰 이미지를 미리보기로 표시
+                photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Photo preview">`;
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // 숨겨진 두 개의 input(type=file)에 이벤트 리스너 연결
+    if (photoInput) {
+        photoInput.addEventListener('change', handleFileSelect);
+    }
+    if (cameraInput) {
+        cameraInput.addEventListener('change', handleFileSelect);
+    }
+    // ⬆️ [새로운 코드 추가] 여기까지
 
     // --- 버튼 그룹 설정 실행 ---
     setupButtonGroup('classification_buttons');
@@ -127,11 +175,10 @@ function initializeFormListeners() {
 
     console.log("폼 요소 초기화 완료.");
 
-    // 폼 컨테이너에 통합 이벤트 리스너를 추가합니다.
+    // 폼 컨테이너에 통합 이벤트 리스너 추가 (기존과 동일)
     const formContainer = document.getElementById('form-container');
     if (formContainer) {
         formContainer.addEventListener('submit', (event) => {
-            // 제출 이벤트가 발생한 요소의 id에 따라 적절한 함수를 호출
             if (event.target && event.target.id === 'cabinet-creation-form') {
                 createCabinet(event);
             } else if (event.target && event.target.id === 'inventory-form') {
@@ -498,21 +545,25 @@ async function importData(event) {
             concentration_value: isNaN(concentrationValue) ? null : concentrationValue,
             concentration_unit: selectedConcentrationUnit || null,
             purchase_volume: isNaN(purchaseVolume) ? null : purchaseVolume,
-            current_amount: isNaN(purchaseVolume) ? null : purchaseVolume,
+            current_amount: isNaN(purchaseVolume) ? null : purchaseVolume, // current_amount는 purchase_volume과 동일하게 설정
             unit: selectedUnit || null,
             state: selectedState || null,
             manufacturer: finalManufacturer,
             purchase_date: purchaseDate || null,
             classification: finalClassification,
+            
+            // 보관 위치 정보 (선택 사항)
             cabinet_id: locationSelections.cabinet_id,
             location_area: locationSelections.location_area,
             door_vertical: locationSelections.door_vertical,
             door_horizontal: locationSelections.door_horizontal,
             internal_shelf_level: locationSelections.internal_shelf_level,
             storage_columns: locationSelections.storage_columns,
-            photo_base64: null,
-            photo_mime_type: null,
-            photo_storage_url: null,
+            
+            // ⬇️ [수정됨] 두 가지 사이즈의 이미지 Base64 데이터 추가
+            photo_320_base64: selectedPhoto_320_Base64,
+            photo_160_base64: selectedPhoto_160_Base64,
+            
             location: 'Initial Check-in',
         }
     };
@@ -551,6 +602,9 @@ async function importData(event) {
         statusMessage.textContent = ''; // 기존 상태 메시지는 지움
 
         document.getElementById('inventory-form').reset();
+        photoPreview.innerHTML = '<span>사진 없음</span>'; // 미리보기 초기화
+        selectedPhoto_320_Base64 = null; // 변수 초기화
+        selectedPhoto_160_Base64 = null; // 변수 초기화
         document.querySelectorAll('.button-group .active').forEach(button => {
             button.classList.remove('active');
         });
@@ -902,3 +956,57 @@ function setFabVisibility(visible) {
     }
 }
 
+function resizeAndEncode(img, width, height) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, width, height);
+    return canvas.toDataURL('image/png'); // PNG 포맷으로 변경
+}
+
+/**
+ * 이미지를 320px, 160px 두 가지 버전으로 리사이징하는 메인 함수
+ */
+function resizeImage(base64Str, callback) {
+    const img = new Image();
+    img.src = base64Str;
+    img.onload = () => {
+        // 원본 이미지 비율에 맞춰 320x320 박스 안에 들어갈 크기 계산
+        let width = img.width;
+        let height = img.height;
+        const max_size = 320;
+
+        if (width > height) {
+            if (width > max_size) {
+                height *= max_size / width;
+                width = max_size;
+            }
+        } else {
+            if (height > max_size) {
+                width *= max_size / height;
+                height = max_size;
+            }
+        }
+
+        // 리사이징된 이미지를 다시 캔버스에 그려서 320, 160 사이즈 생성
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(img, 0, 0, width, height);
+        
+        const finalImg = new Image();
+        finalImg.src = tempCanvas.toDataURL();
+        finalImg.onload = () => {
+            const resized_320 = resizeAndEncode(finalImg, 320, 320);
+            const resized_160 = resizeAndEncode(finalImg, 160, 160);
+            
+            // 두 가지 버전의 이미지 데이터를 콜백으로 전달
+            callback({
+                base64_320: resized_320,
+                base64_160: resized_160
+            });
+        };
+    };
+}

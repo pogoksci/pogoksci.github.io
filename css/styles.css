@@ -1,211 +1,157 @@
-/* CSS 스타일 유지 */
-body { font-family: Arial, sans-serif; margin: 0 auto; padding: 20px; max-width: 600px; background-color: #f4f4f9; padding-bottom: 60px; }
-.form-group { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #fff; }
-label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-input[type="text"], input[type="number"], input[type="date"], select {
-    width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
-}
-select { appearance: none; background-color: #fff; cursor: pointer; }
-.radio-group label, .checkbox-group label { margin-right: 15px; font-weight: normal; }
-.photo-actions input { display: none; }
-.photo-actions label {
-    display: inline-block; background-color: #007bff; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: normal;
-}
-button { 
-    background-color: #00a0b2; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%;
+/* =================================================================
+   기본 스타일 (Body, Form 등)
+================================================================= */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0 auto;
+    padding: 20px;
+    max-width: 600px;
+    background-color: #f4f4f9;
+    padding-bottom: 80px; /* 하단 Navbar 높이만큼 여백 추가 */
 }
 
+h1, h2, h3 {
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button[type="submit"] {
+    background-color: #00a0b2;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+
+/* =================================================================
+   버튼 그룹 (선택 버튼)
+================================================================= */
 .button-group {
-    display: grid; /* Grid 레이아웃 사용 */
-    gap: 8px; /* 버튼 사이 간격 */
+    display: flex;
+    flex-wrap: wrap; /* 버튼이 많아지면 다음 줄로 자동 줄바꿈 */
+    gap: 8px; /* 버튼 사이의 간격 */
     margin-top: 5px;
-}
-
-/* #classification_buttons CSS 대체 */
-#classification_buttons {
-    display: flex; /* Flexbox를 사용하여 줄바꿈을 제어 */
-    flex-wrap: wrap; /* 버튼이 다음 줄로 넘어갈 수 있도록 허용 */
-    gap: 8px; /* 버튼 사이 간격 유지 */
-    margin-top: 5px;
-}
-#classification_buttons button {
-    /* 기본적으로 5열 기준으로 너비 설정 */
-    width: calc(20% - 7px); 
-    flex-shrink: 0; /* 버튼이 줄어들지 않도록 설정 */
-}
-/* 🔑 1. 4개 후 줄바꿈 (4개째 버튼 이후 줄바꿈) */
-#classification_buttons button:nth-child(4) {
-    margin-right: auto; /* 남은 공간을 모두 차지하여 다음 버튼을 다음 줄로 밀어냅니다. */
-}
-/* 🔑 2. 8개 후 줄바꿈 (4 + 4 = 8개째 버튼 이후 줄바꿈) */
-#classification_buttons button:nth-child(8) {
-    margin-right: auto; 
-}
-/* 🔑 3. 13개 후 줄바꿈 (8 + 5 = 13개째 버튼 이후 줄바꿈) */
-#classification_buttons button:nth-child(13) {
-    margin-right: auto; 
-}
-/* 🔑 4. 18개 후 줄바꿈 (13 + 5 = 18개째 버튼 이후 줄바꿈) */
-#classification_buttons button:nth-child(18) {
-    margin-right: auto; 
-}
-
-/* 상태 버튼 그룹: 한 줄에 5개 */
-#state_buttons {
-    grid-template-columns: repeat(auto-fit, minmax(calc(20% - 7px), 1fr)); /* 5개씩 배치 (간격 고려) */
-    /* minmax(calc(100% / 5 - (5-1)*gap/5), 1fr) */
-}
-/* 단위 버튼 그룹: 한 줄에 6개 */
-#unit_buttons {
-    grid-template-columns: repeat(auto-fit, minmax(calc(16.66% - 7px), 1fr)); /* 6개씩 배치 (간격 고려) */
-    /* minmax(calc(100% / 6 - (6-1)*gap/6), 1fr) */
-}
-/* 농도 단위 버튼 그룹: 한 줄에 3개 배치 */
-#concentration_unit_buttons {
-    /* 3개의 동일 너비 열(1fr)을 강제로 지정하여 1줄에 모두 표시되도록 합니다. */
-    grid-template-columns: repeat(3, 1fr); 
-}
-#manufacturer_buttons {
-    /* 6개의 동일 너비 열을 강제로 지정합니다. */
-    grid-template-columns: repeat(6, 1fr); 
 }
 
 .button-group button {
-    background-color: white; /* 기본 배경색 흰색 */
-    color: #333; /* 기본 글자색 */
-    border: 1px solid #ddd; /* 얇은 테두리 */
+    flex-grow: 1; /* 가능한 공간을 채우도록 함 */
     padding: 8px 10px;
+    border: 1px solid #ddd;
+    background-color: white;
+    color: #333;
     border-radius: 5px;
     cursor: pointer;
     font-size: 14px;
     text-align: center;
-    transition: all 0.2s ease; /* 부드러운 전환 효과 */
-    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
-    overflow: hidden; /* 넘치는 텍스트 숨김 */
-    text-overflow: ellipsis; /* 넘치는 텍스트 ... 처리 */
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .button-group button:hover {
-    background-color: #f0f0f0; /* 호버 시 약간 밝게 */
+    background-color: #f0f0f0;
 }
 
 .button-group button.active {
-    background-color: #00bcd4; /* 선택 시 청록색 (AppSheet 스타일) */
-    color: white; /* 선택 시 글자색 흰색 */
-    border-color: #00a0b2; /* 선택 시 테두리 색 변경 */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* 선택 시 그림자 */
-}
-
-
-/* 고정 하단 메뉴 (목록 화면 스타일을 따르지만, 여기서는 고정 버튼만 표시) */
-.navbar {
-    position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 55px; 
-    /* 🔑 기존 청록색 배경(#00bcd4) 제거. 투명하거나 흰색 기반으로 변경 */
-    background-color: rgba(255, 255, 255, 0.9); /* 밝은 투명 배경으로 유지 */
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-    z-index: 1000;
-    backdrop-filter: blur(8px); /* 유리 효과 유지 */
-}
-
-.nav-item {
-    flex-grow: 1;
-    text-align: center;
-    color: #444; /* 글자색을 어둡게 유지 */
-    text-decoration: none;
-    padding: 8px 0;
-    font-size: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    /* 🔑 기본 상태는 투명한 배경 */
-    background-color: transparent; 
-    transition: background-color 0.2s;
-}
-.nav-icon { font-size: 18px; margin-bottom: 2px; }
-/* 🔑 선택된 항목(active)에만 색상을 부여 */
-.nav-item.active {
-    background-color: #00bcd4; /* 청록색 배경 활성화 */
-    color: white; /* 선택된 탭의 글자색은 흰색 */
-}
-
-/* --- 1. 시작 버튼 스타일 (Navbar 내) --- */
-.nav-item.start-button {
-    /* Menu 버튼을 다른 탭들과 구분되도록 하거나 강조할 수 있습니다. */
-    background-color: #307690; /* 파란색 계열로 강조 */
+    background-color: #00bcd4;
     color: white;
-    flex-grow: 0; /* 너비가 늘어나지 않도록 고정 */
-    width: 60px; /* 고정된 너비 */
+    border-color: #00a0b2;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
-/* 🔑 Menu 버튼 (start-button)은 활성화 상태에서만 배경색을 갖도록 */
-.nav-item.start-button.active {
-    background-color: #307690; /* 파란색 계열로 강조 (선택 시) */
+
+
+/* =================================================================
+   사진 등록 영역
+================================================================= */
+.photo-container {
+    display: flex;
+    flex-wrap: wrap; /* 화면이 좁으면 버튼이 아래로 내려가도록 */
+    align-items: center;
+    gap: 15px;
 }
-/* --- 2. 윈도우 시작 메뉴 팝업 스타일 --- */
-.start-menu-popup {
-    /* 초기 상태: 숨김 */
-    display: none; 
-    position: fixed;
-    bottom: 55px; /* Navbar 바로 위 */
-    left: 10px; /* 왼쪽에서 조금 띄움 */
-    width: 250px; /* 팝업 너비 */
-    background-color: #555; /* 윈도우 11 시작 메뉴와 유사한 어두운 배경 */
+
+.photo-preview-box {
+    width: 320px;
+    height: 320px;
+    border: 2px dashed #ccc;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    z-index: 1010; /* Navbar보다 위에 표시 */
-    padding: 10px;
-    flex-direction: column;
-}
-.start-menu-popup.visible {
-    display: flex; /* JavaScript로 visible 클래스 추가 시 보이게 됨 */
-}
-/* --- 3. 메뉴 리스트 및 아이템 스타일 --- */
-.menu-list {
-    flex-grow: 1; /* 메뉴 목록이 남은 공간을 채움 */
-    padding-bottom: 10px;
-}
-.menu-item {
-    display: block;
-    padding: 10px;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.1s;
-    font-size: 14px;
-}
-.menu-item:hover {
-    background-color: #555;
-}
-/* --- 4. 사용자 ID 영역 (맨 아래) --- */
-.menu-footer {
     display: flex;
+    justify-content: center;
     align-items: center;
-    padding: 10px;
-    margin-top: 10px;
-    border-top: 1px solid #555; /* 구분선 */
-    background-color: #444;
-    border-radius: 5px;
+    color: #888;
+    overflow: hidden;
+    flex-shrink: 0; /* 컨테이너 크기가 줄어들지 않도록 */
+}
+
+.photo-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.photo-buttons button {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
     cursor: pointer;
-}
-.user-icon {
-    font-size: 20px;
-    margin-right: 10px;
-}
-.user-id {
-    font-weight: bold;
-    color: white;
+    border-radius: 5px;
+    width: auto; /* 버튼 너비 자동 조정 */
 }
 
-/* css/styles.css 파일에 추가 */
 
-/* --- 1. 6단계 위치 필드 컨테이너 스타일 --- */
+/* =================================================================
+   보관 위치 설정 (6단계)
+================================================================= */
 .form-group-location {
     margin-bottom: 25px;
     padding: 15px;
-    border: 2px solid #00bcd4; /* 위치 설정 영역 시각적 강조 */
+    border: 2px solid #00bcd4;
     border-radius: 8px;
-    background-color: #f8f8ff; /* 배경색 살짝 다르게 */
+    background-color: #f8f8ff;
 }
+
 .form-group-location h3 {
     margin-top: 0;
     font-size: 16px;
@@ -214,93 +160,20 @@ button {
     padding-bottom: 5px;
     margin-bottom: 15px;
 }
+
+.location-step {
+    margin-bottom: 15px;
+}
+
 .location-step label {
-    margin-top: 10px;
     font-size: 14px;
     color: #555;
 }
 
-/* --- 2. 동적 생성 버튼 스타일 (버튼 그룹 공통 스타일 재사용) --- */
-
-/* 위치 버튼 그룹 (일반 버튼과 구분) */
-/* 버튼 개수가 적을 때 너비를 유연하게 조정하도록 합니다. */
-#location_door_vertical_group,
-#location_door_horizontal_group,
-#location_internal_shelf_group,
-#location_storage_column_group {
-    display: grid;
-    /* 버튼 3개까지는 한 줄에 깔끔하게 배치되도록 열 설정을 유연하게 */
-    grid-template-columns: repeat(auto-fit, minmax(calc(20% - 6px), 1fr)); 
-    gap: 6px;
-    margin-top: 5px;
-}
-
-/* 선택된 위치 버튼 스타일 (기존 .button-group button.active 스타일 재사용) */
-.button-group button.active {
-    background-color: #00bcd4; /* 선택 시 청록색 */
-    color: white; 
-    border-color: #00a0b2; 
-}
-
-/* --- 1. 보관장 목록 뷰 스타일 --- */
-.list-view {
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* 카드 사이 간격 */
-    padding: 0 15px;
-}
-
-/* --- 2. Cabinet 카드 스타일 --- */
-.cabinet-card {
-    display: flex;
-    flex-direction: column;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    overflow: hidden; /* 이미지 경계를 깔끔하게 처리 */
-    cursor: pointer;
-    width: 100%;
-}
-.card-image-placeholder {
-    width: 100%;
-    height: 150px; /* 이미지 높이 */
-    background-color: #f0f0f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    color: #555;
-    /* 🔑 이미지 대체 텍스트와 스타일 */
-    line-height: 150px;
-    text-align: center;
-}
-.card-info {
-    padding: 10px 15px;
-}
-.card-info h3 {
-    margin: 0;
-    font-size: 16px;
-    color: #333;
-}
-
-/* 위치 선택 버튼 그룹 (Flexbox 레이아웃 적용) */
-#location_door_vertical_group,
-#location_door_horizontal_group,
-#location_internal_shelf_group,
-#location_storage_column_group {
-    display: flex;
-    flex-wrap: wrap; /* 버튼이 많아지면 다음 줄로 자동 줄바꿈 */
-    gap: 10px; /* 버튼 사이의 간격 */
-}
-
-/* 위치 선택 버튼 개별 스타일 */
+/* 위치 선택 버튼 (btn-location) 스타일 */
 .btn-location {
-    /* 가로 6개 배치를 위한 계산 (100% / 6 = 16.66%) */
-    /* gap을 고려하여 약간의 여유를 줍니다. */
-    flex-basis: calc(16.66% - 12px);
-    flex-grow: 1; /* 공간이 남으면 버튼이 채움 */
-    
-    /* 기본 버튼 스타일 (기존과 동일하게 유지하거나 원하는 대로 수정) */
+    flex-basis: calc(16.66% - 10px); /* 가로 6개 배치를 위한 기본 너비 */
+    flex-grow: 1;
     padding: 10px;
     border: 1px solid #ccc;
     background-color: #f9f9f9;
@@ -316,7 +189,177 @@ button {
 }
 
 .btn-location.active {
-    background-color: #00bcd4; /* 활성화 시 색상 */
+    background-color: #00bcd4;
     color: white;
     border-color: #00bcd4;
+}
+
+
+/* =================================================================
+   보관장 목록 카드
+================================================================= */
+.cabinet-card {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 100%;
+}
+
+.card-image-placeholder {
+    width: 100%;
+    height: 150px;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #555;
+}
+
+.card-info {
+    padding: 15px;
+}
+
+.card-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+}
+
+.card-info .area-name {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.card-info .cabinet-specs {
+    margin: 0;
+    font-size: 12px;
+    color: #888;
+}
+
+.card-actions {
+    padding: 10px 15px;
+    background-color: #f9f9f9;
+    border-top: 1px solid #f0f0f0;
+    text-align: right;
+}
+
+.card-actions .delete-btn {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+
+/* =================================================================
+   하단 네비게이션 바 및 메뉴
+================================================================= */
+.navbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    height: 55px;
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+}
+
+.nav-item {
+    flex-grow: 1;
+    text-align: center;
+    color: #444;
+    text-decoration: none;
+    padding: 8px 0;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    transition: background-color 0.2s;
+}
+
+.nav-icon {
+    font-size: 18px;
+    margin-bottom: 2px;
+}
+
+.nav-item.active {
+    background-color: #00bcd4;
+    color: white;
+}
+
+.nav-item.start-button {
+    background-color: #307690;
+    color: white;
+    flex-grow: 0;
+    width: 60px;
+}
+
+.start-menu-popup {
+    display: none;
+    position: fixed;
+    bottom: 55px;
+    left: 10px;
+    width: 250px;
+    background-color: #333;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 1010;
+    padding: 10px;
+    flex-direction: column;
+}
+
+.start-menu-popup.visible {
+    display: flex;
+}
+
+.menu-list {
+    flex-grow: 1;
+    padding-bottom: 10px;
+}
+
+.menu-item {
+    display: block;
+    padding: 10px;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.1s;
+    font-size: 14px;
+}
+
+.menu-item:hover {
+    background-color: #555;
+}
+
+.menu-footer {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin-top: 10px;
+    border-top: 1px solid #555;
+    background-color: #444;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.user-icon {
+    font-size: 20px;
+    margin-right: 10px;
+}
+
+.user-id {
+    font-weight: bold;
+    color: white;
 }
