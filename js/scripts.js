@@ -630,23 +630,17 @@ function setupCabinetRegisterForm() {
 
 // --- 4. 폼 제출 함수 ---
 async function createCabinet(event) {
-    // ❗ [디버깅 코드 추가] 함수가 호출된 시간과 호출 스택을 확인합니다.
-    console.log(`createCabinet 함수 호출됨 - 시간: ${new Date().toLocaleTimeString()}`);
-    console.trace("호출 스택:"); // 어떤 함수가 이 함수를 불렀는지 추적
-
     if (event) {
         event.preventDefault();
     }
 
-    if (!statusMessage || !otherAreaInput || !otherCabinetInput) {
+    const submitButton = document.getElementById('cabinet-submit-button');
+    if (!submitButton || !statusMessage || !otherAreaInput || !otherCabinetInput) {
         alert("시스템 오류: 폼 초기화가 완료되지 않았습니다. 페이지를 새로고침하세요.");
         return;
     }
 
-    // ❗ 1. 등록 버튼 요소를 가져옵니다.
-    const submitButton = document.getElementById('cabinet-submit-button');
-
-    // 4. 누락 필드 검사
+    // 1. 최종 이름 결정 및 유효성 검사
     const areaName = selectedAreaCreation === '기타' ?
         (otherAreaInput?.value?.trim() || null) :
         (selectedAreaCreation || null);
@@ -661,20 +655,25 @@ async function createCabinet(event) {
         selectedStorageColumns === null ||
         selectedDoorHorizontalSplit === null) {
         alert("모든 필수 필드(*)를 선택/입력해 주세요. (기타 입력란 포함)");
-        statusMessage.textContent = '등록 실패: 필수 필드 누락.';
-        statusMessage.style.color = 'red';
         return;
     }
-    
+
     statusMessage.textContent = '보관장 등록을 시도 중...';
     statusMessage.style.color = 'blue';
 
-    // 5. 서버 전송 데이터 구성
-    const doorVerticalCountValue = selectedDoorVerticalSplit ? parseInt(selectedDoorVerticalSplit, 10) : 1;
-    const shelfHeightValue = selectedShelfHeight ? parseInt(selectedShelfHeight, 10) : 3;
-    const storageColumnsValue = selectedStorageColumns ? parseInt(selectedStorageColumns, 10) : 1;
-    const doorHorizontalCountValue = selectedDoorHorizontalSplit && selectedDoorHorizontalSplit.includes('좌우') ? 2 : 1;
+    // ⬇️ [수정됨] 2. 텍스트 값을 올바른 숫자로 변환하는 로직
+    let doorVerticalCountValue = 1; // 기본값
+    if (selectedDoorVerticalSplit === '상중하도어') {
+        doorVerticalCountValue = 3;
+    } else if (selectedDoorVerticalSplit === '상하도어') {
+        doorVerticalCountValue = 2;
+    }
 
+    const doorHorizontalCountValue = (selectedDoorHorizontalSplit === '좌우분리도어') ? 2 : 1;
+    const shelfHeightValue = parseInt(selectedShelfHeight, 10) || 3;
+    const storageColumnsValue = parseInt(selectedStorageColumns, 10) || 1;
+
+    // 3. 서버 전송 데이터 구성
     const cabinetData = {
         area_name: areaName,
         cabinet_name: cabinetName,
@@ -684,11 +683,9 @@ async function createCabinet(event) {
         storage_columns: storageColumnsValue,
     };
 
-    // 6. Edge Function 호출 및 데이터 저장
     const CABINET_REG_URL = `${SUPABASE_URL}/functions/v1/cabinet-register`;
 
     try {
-        // ❗ 2. 버튼을 즉시 비활성화하고 텍스트를 변경합니다.
         submitButton.disabled = true;
         submitButton.textContent = '등록 중...';
 
@@ -707,22 +704,17 @@ async function createCabinet(event) {
             throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
         }
 
-        // 7. 등록 성공 후 목록 페이지로 복귀
         const newCabinetName = data.cabinetName || cabinetName;
-
         console.log("✅ 보관장 등록 성공:", data);
         alert(`✅ 보관장 "${newCabinetName}"이(가) 성공적으로 등록되었습니다.`);
-
         loadLocationListPage();
 
     } catch (error) {
         console.error("보관장 등록 중 오류 발생:", error.message);
         alert(`❌ 등록 실패: ${error.message}`);
         statusMessage.textContent = `❌ 등록 실패: ${error.message.substring(0, 50)}...`;
-        statusMessage.style.color = 'red';
 
     } finally {
-        // ❗ 3. 작업이 성공하든 실패하든, 마지막에 항상 버튼을 다시 활성화합니다.
         submitButton.disabled = false;
         submitButton.textContent = '보관장 등록';
     }
