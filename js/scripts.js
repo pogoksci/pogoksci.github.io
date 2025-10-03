@@ -245,41 +245,45 @@ function handleAreaSelect(areaIdStr) {
 function handleCabinetSelect(cabinetIdStr, cabinetInfo) {
     selectedCabinetId = parseInt(cabinetIdStr, 10);
     locationSelections.cabinet_id = selectedCabinetId;
-
-    // 3~6단계 UI 초기화
+    
     clearLocationSteps();
     if (!selectedCabinetId) return;
 
-    // 1. 3단계 (상/중/하 도어 분할 수) 버튼 생성
+    // ⬇️ [수정됨] 1. 3단계 (상/중/하 도어 분할 수) 버튼 생성 로직
     generateLocationButtons(
-        'location_door_vertical_group',
-        cabinetInfo.door_vertical_count,
+        'location_door_vertical_group', 
+        cabinetInfo.door_vertical_count, 
         'door_vertical',
-        (i) => `${i}단 도어`
+        (value, count) => `${count - value + 1}층` // '3층, 2층, 1층' 순서로 표시
     );
-
-    // 2. 4단계 (좌/우 분할 수) 버튼 생성
+    
+    // ⬇️ [수정됨] 2. 4단계 (좌/우 분할 수) 버튼 생성 로직
     generateLocationButtons(
-        'location_door_horizontal_group',
-        cabinetInfo.door_horizontal_count,
+        'location_door_horizontal_group', 
+        cabinetInfo.door_horizontal_count, 
         'door_horizontal',
-        (i) => i === 1 ? '단일 문' : (i === 2 ? '좌/우' : `분할 ${i}개`)
+        (value, count) => {
+            if (count === 1) return '문';
+            if (value === 1) return '좌측문';
+            if (value === 2) return '우측문';
+            return `${value}번째 문`; // 예외 처리
+        }
     );
 
     // 3. 5단계 (도어당 선반 층수) 버튼 생성
     generateLocationButtons(
-        'location_internal_shelf_group',
-        cabinetInfo.shelf_height,
+        'location_internal_shelf_group', 
+        cabinetInfo.shelf_height, 
         'internal_shelf_level',
-        (i) => `${i}층`
+        (value) => `${value}층` // 기존 방식 유지
     );
 
     // 4. 6단계 (도어 내부 보관 열 수) 버튼 생성
     generateLocationButtons(
-        'location_storage_column_group',
-        cabinetInfo.storage_columns,
+        'location_storage_column_group', 
+        cabinetInfo.storage_columns, 
         'storage_columns',
-        (i) => `${i}열`
+        (value) => `${value}열` // 기존 방식 유지
     );
 }
 
@@ -321,7 +325,7 @@ function generateLocationButtons(containerId, count, dataKey, nameFormatter) {
         button.type = 'button';
         button.className = 'btn-location';
         button.setAttribute('data-value', value);
-        button.textContent = nameFormatter(value);
+        button.textContent = nameFormatter(value, count);
 
         // 이벤트 리스너 추가
         button.addEventListener('click', () => {
