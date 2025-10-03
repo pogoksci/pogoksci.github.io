@@ -124,6 +124,18 @@ function initializeFormListeners() {
     fetchLocationData();
 
     console.log("폼 요소 초기화 완료.");
+
+    // 폼 컨테이너에 통합 이벤트 리스너를 추가합니다.
+    const formContainer = document.getElementById('form-container');
+    if (formContainer) {
+        formContainer.addEventListener('submit', (event) => {
+            // 제출 이벤트가 발생한 요소가 'cabinet-creation-form'이 맞는지 확인
+            if (event.target && event.target.id === 'cabinet-creation-form') {
+                // 맞을 경우에만 createCabinet 함수를 호출
+                createCabinet(event);
+            }
+        });
+    }
 }
 
 // ------------------------------------------------------------------
@@ -607,7 +619,7 @@ function setupCabinetRegisterForm() {
     attachOtherInputLogic('cabinet_name_buttons', 'other_cabinet_group', 'other_cabinet_input');
 
     // --- 3. 폼 제출 이벤트 연결 ---
-    form.addEventListener('submit', createCabinet);
+    //form.addEventListener('submit', createCabinet);
 }
 
 // --- 4. 폼 제출 함수 ---
@@ -616,7 +628,7 @@ async function createCabinet(event) {
     console.log(`createCabinet 함수 호출됨 - 시간: ${new Date().toLocaleTimeString()}`);
     console.trace("호출 스택:"); // 어떤 함수가 이 함수를 불렀는지 추적
     debugger; // 개발자 도구가 열려있으면 여기서 코드 실행이 멈춥니다.
-    
+
     if (event) {
         event.preventDefault();
     }
