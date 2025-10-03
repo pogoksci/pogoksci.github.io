@@ -563,7 +563,7 @@ async function importData(event) {
 
     } finally {
         submitButton.disabled = false;
-        submitButton.textContent = '재고 정보 DB에 저장';
+        submitButton.textContent = '약품 입고 내역 저장';
     }
 }
 
