@@ -538,7 +538,6 @@ function setupNavbarListeners() {
 // 5. 폼 제출 처리 함수 (Storage 로직 제거)
 // =================================================================
 
-// deno-lint-ignore no-unused-vars
 async function importData(event) {
     if (event) {
         event.preventDefault();
