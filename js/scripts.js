@@ -1074,6 +1074,8 @@ function resizeToFit(img, targetSize) {
     canvas.width = targetSize;
     canvas.height = targetSize;
     const ctx = canvas.getContext('2d');
+    // 캔버스 배경을 투명하게 채웁니다.
+    ctx.clearRect(0, 0, targetSize, targetSize); 
 
     const aspectRatio = img.width / img.height;
     
