@@ -233,8 +233,8 @@ function populateAreaSelect(areas) {
     const areaSelect = document.getElementById('location_area_select');
     if (!areaSelect) return;
 
-    // ⬇️ [수정됨] '선택 안 함'을 기본 옵션으로 변경 (disabled 제거)
-    areaSelect.innerHTML = '<option value="" selected>-- 선택 안 함 --</option>';
+    // 초기 옵션 설정
+    areaSelect.innerHTML = '<option value="" class="placeholder" selected>-- 선택 안 함 --</option>';
     areas.forEach(area => {
         const option = document.createElement('option');
         option.value = area.id;
@@ -242,8 +242,23 @@ function populateAreaSelect(areas) {
         areaSelect.appendChild(option);
     });
 
+    // ⬇️ [새로운 코드 추가] 드롭다운 메뉴를 열고 닫을 때의 이벤트 처리
+    const placeholderOption = areaSelect.querySelector('.placeholder');
+
+    // 메뉴를 열 때(mousedown): '-- 선택 안 함 --' 숨기기
+    areaSelect.addEventListener('mousedown', () => {
+        placeholderOption.style.display = 'none';
+    });
+
+    // 선택을 변경했을 때(change): '-- 선택 안 함 --' 다시 표시
     areaSelect.addEventListener('change', (event) => {
         handleAreaSelect(event.target.value);
+        placeholderOption.style.display = 'block';
+    });
+    
+    // 포커스가 해제됐을 때(blur): '-- 선택 안 함 --' 다시 표시
+    areaSelect.addEventListener('blur', () => {
+        placeholderOption.style.display = 'block';
     });
 }
 
@@ -258,9 +273,9 @@ function handleAreaSelect(areaIdStr) {
     const cabinetSelect = document.getElementById('location_cabinet_select');
     if (!cabinetSelect) return;
     
-    // ⬇️ [수정됨] '선택 안 함'을 기본 옵션으로 변경 (disabled 제거)
-    cabinetSelect.innerHTML = '<option value="" selected>-- 선택 안 함 --</option>';
-    cabinetSelect.disabled = !areaId; // 약품실을 선택해야만 수납함 드롭다운 활성화
+    // '선택 안 함' 옵션에 클래스 추가
+    cabinetSelect.innerHTML = '<option value="" class="placeholder" selected>-- 선택 안 함 --</option>';
+    cabinetSelect.disabled = !areaId;
     
     if (areaId) {
         const filteredCabinets = allCabinets.filter(c => c.area_id === areaId);
@@ -273,12 +288,25 @@ function handleAreaSelect(areaIdStr) {
         });
     }
 
+    // ⬇️ [새로운 코드 추가] '수납함' 드롭다운에도 동일한 효과 적용
+    const placeholderOption = cabinetSelect.querySelector('.placeholder');
+
+    cabinetSelect.addEventListener('mousedown', () => {
+        if (placeholderOption) placeholderOption.style.display = 'none';
+    });
+    
+    cabinetSelect.addEventListener('blur', () => {
+        if (placeholderOption) placeholderOption.style.display = 'block';
+    });
+
     cabinetSelect.onchange = (event) => {
         const selectedOption = event.target.options[event.target.selectedIndex];
-        // 사용자가 '-- 선택 안 함 --'을 다시 고를 경우 cabinetInfo가 null이 되도록 처리
         const cabinetInfo = selectedOption.value ? JSON.parse(selectedOption.getAttribute('data-cabinet-info')) : null;
         
         handleCabinetSelect(event.target.value, cabinetInfo);
+        
+        // 선택 후에도 플레이스홀더가 다시 보이도록 처리
+        if (placeholderOption) placeholderOption.style.display = 'block';
     };
     
     clearLocationSteps();
