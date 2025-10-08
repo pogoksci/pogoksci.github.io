@@ -53,6 +53,7 @@ let cameraInput = null;
 let photoPreview = null;
 let selectedPhoto_320_Base64 = null; // 이미지 데이터를 Base64로 저장할 변수
 let selectedPhoto_160_Base64 = null; // 이미지 데이터를 Base64로 저장할 변수
+let cameraStream = null; // 카메라 스트림을 저장할 전역 변수
 
 // =================================================================
 // 1. HTML 조각 파일 로더 함수
@@ -102,30 +103,41 @@ function initializeFormListeners() {
     otherManufacturerGroup = document.getElementById('other_manufacturer_group');
     manufacturerOtherInput = document.getElementById('manufacturer_other');
 
-    // 사진 관련 요소 초기화
+    // ⬇️ [수정됨] 사진 및 카메라 모달 관련 요소 전체 초기화
     photoInput = document.getElementById('photo-input');
-    cameraInput = document.getElementById('camera-input');
+    cameraInput = document.getElementById('camera-input'); // 모바일 폴백용으로 유지
     photoPreview = document.getElementById('photo-preview');
     const cameraBtn = document.getElementById('camera-btn');
     const photoBtn = document.getElementById('photo-btn');
+    
+    // 모달 관련 요소
+    const captureBtn = document.getElementById('capture-btn');
+    const cancelCameraBtn = document.getElementById('cancel-camera-btn');
 
-    // 카메라 버튼 클릭 시 cameraInput(type=file)을 대신 클릭
-    if (cameraBtn && cameraInput) {
-        cameraBtn.addEventListener('click', () => cameraInput.click());
+    // '카메라로 촬영' 버튼 클릭 시 startCamera 함수 호출
+    if (cameraBtn) {
+        cameraBtn.addEventListener('click', startCamera);
     }
-    // 파일 선택 버튼 클릭 시 photoInput(type=file)을 대신 클릭
+    // '파일에서 선택' 버튼 클릭 시 photoInput을 클릭
     if (photoBtn && photoInput) {
         photoBtn.addEventListener('click', () => photoInput.click());
     }
-
-    // 파일이 선택되었을 때의 공통 처리 함수
+    // 모달의 '사진 찍기' 버튼 클릭 시 takePicture 함수 호출
+    if (captureBtn) {
+        captureBtn.addEventListener('click', takePicture);
+    }
+    // 모달의 '취소' 버튼 클릭 시 stopCamera 함수 호출
+    if (cancelCameraBtn) {
+        cancelCameraBtn.addEventListener('click', stopCamera);
+    }
+    
+    // 파일이 선택되었을 때의 공통 처리 함수 (기존과 동일)
     const handleFileSelect = (event) => {
         const file = event.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            // processImage 함수를 호출합니다.
             processImage(e.target.result, (resizedImages) => {
                 selectedPhoto_320_Base64 = resizedImages.base64_320;
                 selectedPhoto_160_Base64 = resizedImages.base64_160;
@@ -140,6 +152,7 @@ function initializeFormListeners() {
         photoInput.addEventListener('change', handleFileSelect);
     }
     if (cameraInput) {
+        // 이 부분은 모바일에서 '카메라로 촬영'이 실패했을 때의 폴백(fallback)으로 작동합니다.
         cameraInput.addEventListener('change', handleFileSelect);
     }
 
@@ -979,6 +992,78 @@ function setFabVisibility(visible) {
             fab.style.display = 'none';
         }
     }
+}
+
+/**
+ * 카메라를 시작하고 모달을 표시하는 함수
+ */
+async function startCamera() {
+    const cameraModal = document.getElementById('camera-modal');
+    const cameraView = document.getElementById('camera-view');
+
+    // 미디어 API 지원 여부 확인
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('お使いのブラウザではカメラ機能を利用できません。');
+        return;
+    }
+
+    try {
+        // 사용자에게 카메라 사용 권한 요청
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' }, // 후면 카메라 우선
+            audio: false 
+        });
+
+        // <video> 요소에 카메라 스트림 연결
+        cameraView.srcObject = cameraStream;
+        cameraModal.style.display = 'flex'; // 모달 보이기
+
+    } catch (err) {
+        console.error("카메라 접근 오류:", err);
+        alert("카메라를 시작할 수 없습니다. 카메라 접근 권한을 확인해주세요.");
+    }
+}
+
+/**
+ * 카메라 스트림을 중지하고 모달을 닫는 함수
+ */
+function stopCamera() {
+    const cameraModal = document.getElementById('camera-modal');
+    if (cameraStream) {
+        // 모든 비디오 트랙을 중지하여 카메라 끄기
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    cameraModal.style.display = 'none'; // 모달 숨기기
+}
+
+/**
+ * 비디오 화면을 캡처하여 처리하는 함수
+ */
+function takePicture() {
+    const cameraView = document.getElementById('camera-view');
+    const canvas = document.getElementById('photo-canvas');
+    
+    // 캔버스 크기를 비디오 크기에 맞춤
+    canvas.width = cameraView.videoWidth;
+    canvas.height = cameraView.videoHeight;
+    
+    // 캔버스에 현재 비디오 프레임 그리기
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(cameraView, 0, 0, canvas.width, canvas.height);
+    
+    // 캔버스에서 Base64 데이터 추출
+    const base64Str = canvas.toDataURL('image/png');
+
+    // 기존 리사이징 함수 호출
+    processImage(base64Str, (resizedImages) => {
+        selectedPhoto_320_Base64 = resizedImages.base64_320;
+        selectedPhoto_160_Base64 = resizedImages.base64_160;
+        photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Photo preview">`;
+    });
+
+    // 사진 찍은 후 카메라 끄고 모달 닫기
+    stopCamera();
 }
 
 /**

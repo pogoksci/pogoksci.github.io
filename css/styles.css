@@ -127,16 +127,19 @@ button:disabled {
 }
 
 .photo-preview-box {
-    width: 320px;
-    height: 320px;
-    border: 2px dashed #ccc;
+    width: 100%;                  /* 1. 일단 부모 요소의 전체 너비를 차지하도록 설정 */
+    max-width: 320px;             /* 2. 하지만 최대 너비는 320px를 넘지 않도록 제한 */
+    height: auto;                 /* 3. 높이는 자동으로 조절되도록 설정 */
+    aspect-ratio: 1 / 1;          /* 4. 가로세로 비율을 1:1 (정사각형)로 강제 */
+    
+    border: 2px dashed #ccc;      /* (기존 스타일 유지) */
     border-radius: 8px;
     display: flex;
     justify-content: center;
     align-items: center;
     color: #888;
     overflow: hidden;
-    flex-shrink: 0; /* 컨테이너 크기가 줄어들지 않도록 */
+    flex-shrink: 0;
 }
 
 .photo-preview-box img {
@@ -160,6 +163,43 @@ button:disabled {
     width: auto; /* 버튼 너비 자동 조정 */
 }
 
+/* =================================================================
+   카메라 모달 스타일
+================================================================= */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+#camera-view {
+    width: 100%;
+    max-width: 500px;
+    border-radius: 5px;
+    background-color: #000;
+}
+
+.modal-controls {
+    display: flex;
+    gap: 10px;
+}
 
 /* =================================================================
    보관 위치 설정 (6단계)

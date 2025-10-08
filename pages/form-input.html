@@ -13,11 +13,22 @@
                 <span>사진 없음</span>
             </div>
             <div class="photo-buttons">
-                <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
-                <button type="button" id="camera-btn">카메라로 촬영</button>
-                
                 <input type="file" id="photo-input" accept="image/*" style="display: none;">
                 <button type="button" id="photo-btn">파일에서 선택</button>
+
+                <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+                <button type="button" id="camera-btn">카메라로 촬영</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="camera-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <video id="camera-view" autoplay playsinline></video>
+            <canvas id="photo-canvas" style="display: none;"></canvas>
+            <div class="modal-controls">
+                <button type="button" id="capture-btn">사진 찍기</button>
+                <button type="button" id="cancel-camera-btn">취소</button>
             </div>
         </div>
     </div>
