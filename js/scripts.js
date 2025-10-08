@@ -102,7 +102,7 @@ function initializeFormListeners() {
     otherManufacturerGroup = document.getElementById('other_manufacturer_group');
     manufacturerOtherInput = document.getElementById('manufacturer_other');
 
-    // ⬇️ [새로운 코드 추가] 사진 관련 요소 초기화
+    // 사진 관련 요소 초기화
     photoInput = document.getElementById('photo-input');
     cameraInput = document.getElementById('camera-input');
     photoPreview = document.getElementById('photo-preview');
@@ -125,12 +125,10 @@ function initializeFormListeners() {
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            // 이미지를 리사이징하고, 완료되면 콜백 함수 실행
-            resizeImage(e.target.result, (resizedImages) => {
-                // 리사이징된 이미지 데이터를 전역 변수에 저장
+            // processImage 함수를 호출합니다.
+            processImage(e.target.result, (resizedImages) => {
                 selectedPhoto_320_Base64 = resizedImages.base64_320;
                 selectedPhoto_160_Base64 = resizedImages.base64_160;
-                // 큰 이미지를 미리보기로 표시
                 photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Photo preview">`;
             });
         };
@@ -144,7 +142,6 @@ function initializeFormListeners() {
     if (cameraInput) {
         cameraInput.addEventListener('change', handleFileSelect);
     }
-    // ⬆️ [새로운 코드 추가] 여기까지
 
     // --- 버튼 그룹 설정 실행 ---
     setupButtonGroup('classification_buttons');
@@ -984,57 +981,52 @@ function setFabVisibility(visible) {
     }
 }
 
-function resizeAndEncode(img, width, height) {
+/**
+ * 이미지를 비율에 맞게 캔버스 중앙에 그리고 Base64로 반환하는 헬퍼 함수
+ */
+function resizeToFit(img, targetSize) {
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = targetSize;
+    canvas.height = targetSize;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, width, height);
-    return canvas.toDataURL('image/png'); // PNG 포맷으로 변경
+
+    const aspectRatio = img.width / img.height;
+    
+    let drawWidth = targetSize;
+    let drawHeight = targetSize;
+
+    // 이미지의 가로가 더 긴 경우 (가로 기준 리사이징)
+    if (aspectRatio > 1) {
+        drawHeight = targetSize / aspectRatio;
+    } 
+    // 이미지의 세로가 더 길거나 같은 경우 (세로 기준 리사이징)
+    else {
+        drawWidth = targetSize * aspectRatio;
+    }
+
+    // 캔버스 중앙에 이미지를 위치시키기 위한 좌표 계산
+    const xOffset = (targetSize - drawWidth) / 2;
+    const yOffset = (targetSize - drawHeight) / 2;
+    
+    // 캔버스에 비율이 유지된 이미지 그리기
+    ctx.drawImage(img, xOffset, yOffset, drawWidth, drawHeight);
+    
+    return canvas.toDataURL('image/png');
 }
 
 /**
- * 이미지를 320px, 160px 두 가지 버전으로 리사이징하는 메인 함수
+ * 이미지를 320px, 160px 두 가지 버전으로 처리하는 메인 함수
  */
-function resizeImage(base64Str, callback) {
+function processImage(base64Str, callback) {
     const img = new Image();
     img.src = base64Str;
     img.onload = () => {
-        // 원본 이미지 비율에 맞춰 320x320 박스 안에 들어갈 크기 계산
-        let width = img.width;
-        let height = img.height;
-        const max_size = 320;
-
-        if (width > height) {
-            if (width > max_size) {
-                height *= max_size / width;
-                width = max_size;
-            }
-        } else {
-            if (height > max_size) {
-                width *= max_size / height;
-                height = max_size;
-            }
-        }
-
-        // 리사이징된 이미지를 다시 캔버스에 그려서 320, 160 사이즈 생성
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = width;
-        tempCanvas.height = height;
-        const tempCtx = tempCanvas.getContext('2d');
-        tempCtx.drawImage(img, 0, 0, width, height);
+        const resized_320 = resizeToFit(img, 320);
+        const resized_160 = resizeToFit(img, 160);
         
-        const finalImg = new Image();
-        finalImg.src = tempCanvas.toDataURL();
-        finalImg.onload = () => {
-            const resized_320 = resizeAndEncode(finalImg, 320, 320);
-            const resized_160 = resizeAndEncode(finalImg, 160, 160);
-            
-            // 두 가지 버전의 이미지 데이터를 콜백으로 전달
-            callback({
-                base64_320: resized_320,
-                base64_160: resized_160
-            });
-        };
+        callback({
+            base64_320: resized_320,
+            base64_160: resized_160
+        });
     };
 }
