@@ -842,6 +842,7 @@ function loadLocationListPage() {
 function setupLocationList() {
     // 이제 이 함수는 직접 불리지 않고, fetchCabinetListAndRender가 직접 콜백으로 사용됩니다.
     // 혼란을 방지하기 위해 내용을 비워두거나, fetchCabinetListAndRender를 호출하도록 유지할 수 있습니다.
+    setFabVisibility(true);
     console.log("약품 보관장 목록 페이지 로드 완료. 데이터 로드 시작.");
     fetchCabinetListAndRender();
 }
