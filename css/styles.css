@@ -423,3 +423,31 @@ button:disabled {
     font-weight: bold;
     color: white;
 }
+
+/* =================================================================
+   새 약품 보관장 설정
+================================================================= */
+.fab {
+    position: fixed;
+    bottom: 70px; /* 하단 네비게이션 바 바로 위 */
+    left: 20px;   /* 화면 좌우 여백 (body의 padding과 동일하게) */
+    right: 20px;  /* 화면 좌우 여백 */
+    width: auto;  /* 너비를 자동으로 조절 */
+
+    /* 버튼 모양 및 텍스트 스타일 */
+    padding: 12px 20px;
+    border-radius: 8px; /* 일반적인 버튼처럼 둥근 모서리 */
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    
+    /* 기존 색상 및 그림자 스타일 유지 */
+    background-color: #00bcd4;
+    color: white;
+    border: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 1001; /* 다른 요소들 위에 표시 */
+    cursor: pointer;
+    
+    /* 기존의 동그란 모양을 만들던 height 속성은 제거 */
+}
