@@ -709,13 +709,13 @@ function setupCabinetRegisterForm() {
     const cameraBtn = document.getElementById('cabinet-camera-btn');
     const photoBtn = document.getElementById('cabinet-photo-btn');
 
-    // ⬇️ [수정됨] '카메라로 촬영' 버튼은 startCamera 함수를 직접 호출합니다.
-    if (cameraBtn) {
-        cameraBtn.addEventListener('click', startCamera);
-    }
     // '파일에서 선택' 버튼은 기존과 동일하게 작동합니다.
     if (photoBtn && photoInput) {
         photoBtn.addEventListener('click', () => photoInput.click());
+    }
+    // '카메라로 촬영' 버튼은 startCamera 함수를 직접 호출합니다.
+    if (cameraBtn) {
+        cameraBtn.addEventListener('click', startCamera);
     }
 
     // 파일이 선택되었을 때의 공통 처리 함수
