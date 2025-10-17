@@ -90,26 +90,25 @@ function includeHTML(url, targetElementId, callback) {
 
 
 // =================================================================
-// 2. 폼 요소 초기화 로직 (콜백 함수)
+// 2. 폼 요소 초기화 로직
 // =================================================================
 
 function initializeFormListeners() {
     console.log("폼 요소 초기화 시작...");
     setFabVisibility(false);
 
+    // 전역 변수 재할당
     statusMessage = document.getElementById('statusMessage');
     manufacturerButtonsGroup = document.getElementById('manufacturer_buttons');
     otherManufacturerGroup = document.getElementById('other_manufacturer_group');
     manufacturerOtherInput = document.getElementById('manufacturer_other');
-
+    
     // 시약병 사진 관련 요소 초기화
     photoInput = document.getElementById('photo-input');
     cameraInput = document.getElementById('camera-input');
     photoPreview = document.getElementById('photo-preview');
     const cameraBtn = document.getElementById('camera-btn');
     const photoBtn = document.getElementById('photo-btn');
-    const captureBtn = document.getElementById('capture-btn');
-    const cancelCameraBtn = document.getElementById('cancel-camera-btn');
 
     if (photoBtn && photoInput) {
         photoBtn.addEventListener('click', () => photoInput.click());
@@ -117,12 +116,9 @@ function initializeFormListeners() {
     if (cameraBtn) {
         cameraBtn.addEventListener('click', startCamera);
     }
-    if (captureBtn) {
-        captureBtn.addEventListener('click', takePicture);
-    }
-    if (cancelCameraBtn) {
-        cancelCameraBtn.addEventListener('click', stopCamera);
-    }
+    
+    // 카메라 모달 버튼 리스너 설정
+    setupCameraModalListeners();
     
     const handleFileSelect = (event) => {
         const file = event.target.files[0];
@@ -145,6 +141,7 @@ function initializeFormListeners() {
         cameraInput.addEventListener('change', handleFileSelect);
     }
 
+    // 버튼 그룹 설정
     setupButtonGroup('classification_buttons');
     setupButtonGroup('state_buttons');
     setupButtonGroup('unit_buttons');
@@ -170,6 +167,7 @@ function initializeFormListeners() {
     fetchLocationData();
     console.log("폼 요소 초기화 완료.");
 
+    // 통합 폼 제출 이벤트 리스너
     const formContainer = document.getElementById('form-container');
     if (formContainer) {
         formContainer.addEventListener('submit', (event) => {
@@ -189,9 +187,8 @@ async function fetchLocationData() {
             headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         });
         const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || '장소 데이터 조회 실패');
-        }
+        if (!response.ok) throw new Error(data.error || '장소 데이터 조회 실패');
+        
         allAreas = data.areas;
         allCabinets = data.cabinets;
         populateAreaSelect(allAreas);
@@ -275,37 +272,10 @@ function handleCabinetSelect(cabinetIdStr, cabinetInfo) {
     clearLocationSteps();
     if (!cabinetId || !cabinetInfo) return;
 
-    generateLocationButtons(
-        'location_door_vertical_group', 
-        cabinetInfo.door_vertical_count, 
-        'door_vertical',
-        (value, count) => `${count - value + 1}층`
-    );
-    
-    generateLocationButtons(
-        'location_door_horizontal_group', 
-        cabinetInfo.door_horizontal_count, 
-        'door_horizontal',
-        (value, count) => {
-            if (count === 1) return '문';
-            if (value === 1) return '좌측문';
-            return '우측문';
-        }
-    );
-
-    generateLocationButtons(
-        'location_internal_shelf_group', 
-        cabinetInfo.shelf_height, 
-        'internal_shelf_level',
-        (value) => `${value}단`
-    );
-
-    generateLocationButtons(
-        'location_storage_column_group', 
-        cabinetInfo.storage_columns, 
-        'storage_columns',
-        (value) => `${value}열`
-    );
+    generateLocationButtons('location_door_vertical_group', cabinetInfo.door_vertical_count, 'door_vertical', (value, count) => `${count - value + 1}층`);
+    generateLocationButtons('location_door_horizontal_group', cabinetInfo.door_horizontal_count, 'door_horizontal', (value, count) => count === 1 ? '문' : (value === 1 ? '좌측문' : '우측문'));
+    generateLocationButtons('location_internal_shelf_group', cabinetInfo.shelf_height, 'internal_shelf_level', (value) => `${value}단`);
+    generateLocationButtons('location_storage_column_group', cabinetInfo.storage_columns, 'storage_columns', (value) => `${value}열`);
 }
 
 function clearLocationSteps() {
@@ -419,10 +389,8 @@ function setupNavbarListeners() {
     });
 
     globalThis.addEventListener('click', (event) => {
-        if (startMenu.classList.contains('visible')) {
-            if (!startMenu.contains(event.target) && !startButton.contains(event.target)) {
-                startMenu.classList.remove('visible');
-            }
+        if (startMenu.classList.contains('visible') && !startMenu.contains(event.target) && !startButton.contains(event.target)) {
+            startMenu.classList.remove('visible');
         }
     });
 }
@@ -486,20 +454,12 @@ async function importData(event) {
 
         const response = await fetch(EDGE_FUNCTION_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
             body: JSON.stringify(inventoryData)
         });
-
         const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
-        }
-        if (!data || !Array.isArray(data) || data.length === 0) {
-            throw new Error("서버에서 유효한 응답을 받지 못했습니다.");
-        }
+        if (!response.ok) throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
+        if (!data || !Array.isArray(data) || data.length === 0) throw new Error("서버에서 유효한 응답을 받지 못했습니다.");
 
         const result = data[0];
         const msg = result.isNewSubstance ? `✅ 신규 물질(${casRn}) 정보 및 시약병 등록 완료!` : `✅ 기존 물질(${casRn})에 새 시약병 등록 완료!`;
@@ -533,6 +493,7 @@ globalThis.addEventListener('DOMContentLoaded', () => {
 // =================================================================
 // 7. 시약장 관련 함수
 // =================================================================
+
 // deno-lint-ignore no-unused-vars
 function showNewCabinetForm() {
     console.log("새 시약장 등록 폼 로드 시작...");
@@ -559,6 +520,9 @@ function setupCabinetRegisterForm() {
     if (photoBtn && photoInput) {
         photoBtn.addEventListener('click', () => photoInput.click());
     }
+
+    // 카메라 모달 버튼 리스너 설정
+    setupCameraModalListeners();
 
     const handleFileSelect = (event) => {
         const file = event.target.files[0];
@@ -639,10 +603,7 @@ async function createCabinet(event) {
 
         const response = await fetch(CABINET_REG_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
             body: JSON.stringify(cabinetData)
         });
         const data = await response.json();
@@ -758,10 +719,11 @@ function renderCabinetCards(cabinets, container) {
         card.className = 'cabinet-card';
         card.setAttribute('data-cabinet-id', cabinet.id);
         
+        const imageUrl = cabinet.photo_url_320 || '';
         card.innerHTML = `
             <div class="card-image-placeholder">
-                <img src="${cabinet.photo_url_320 || ''}" alt="${cabinet.name} 사진" style="display: ${cabinet.photo_url_320 ? 'block' : 'none'};">
-                <span style="display: ${cabinet.photo_url_320 ? 'none' : 'block'};">[${cabinet.name} 사진 없음]</span>
+                <img src="${imageUrl}" alt="${cabinet.name} 사진" style="display: ${imageUrl ? 'block' : 'none'};">
+                <span style="display: ${imageUrl ? 'none' : 'block'};">[${cabinet.name} 사진 없음]</span>
             </div>
             <div class="card-info">
                 <h3>${cabinet.name}</h3>
@@ -811,20 +773,19 @@ function setFabVisibility(visible) {
 // =================================================================
 async function startCamera() {
     const cameraModal = document.getElementById('camera-modal');
+    if (!cameraModal) return;
     
-    // 1. 먼저 모달을 열어야 DOM 안의 video 요소가 존재함
     cameraModal.style.display = 'flex';
-
-    // 2. 다음 줄에서 요소를 찾는다
     const cameraView = document.getElementById('camera-view');
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         alert('현재 브라우저에서는 카메라 기능을 사용할 수 없습니다.');
+        stopCamera();
         return;
     }
-
     if (!cameraView) {
         console.error("❌ camera-view 요소를 찾을 수 없습니다.");
+        stopCamera();
         return;
     }
 
@@ -836,6 +797,7 @@ async function startCamera() {
     } catch (err) {
         console.error("카메라 접근 오류:", err);
         alert("카메라를 시작할 수 없습니다. 운영체제 및 브라우저의 카메라 접근 권한을 확인해주세요.");
+        stopCamera();
     }
 }
 
@@ -857,32 +819,23 @@ function takePicture() {
     canvas.height = cameraView.videoHeight;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(cameraView, 0, 0, canvas.width, canvas.height);
-    
     const base64Str = canvas.toDataURL('image/png');
 
-    // 현재 어떤 폼이 화면에 있는지 확인합니다.
     const isCabinetForm = !!document.getElementById('cabinet-creation-form');
 
     processImage(base64Str, (resizedImages) => {
         if (isCabinetForm) {
-            // 시약장 등록 폼일 경우
             const cabinetPhotoPreview = document.getElementById('cabinet-photo-preview');
             selectedCabinetPhoto_320_Base64 = resizedImages.base64_320;
             selectedCabinetPhoto_160_Base64 = resizedImages.base64_160;
-            if (cabinetPhotoPreview) {
-                cabinetPhotoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Cabinet photo preview">`;
-            }
+            if (cabinetPhotoPreview) cabinetPhotoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Cabinet photo preview">`;
         } else {
-            // 시약병 재고 정보 폼일 경우
             selectedPhoto_320_Base64 = resizedImages.base64_320;
             selectedPhoto_160_Base64 = resizedImages.base64_160;
-            if (photoPreview) {
-                photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Photo preview">`;
-            }
+            if (photoPreview) photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Photo preview">`;
         }
     });
 
-    // 사진을 찍은 후 카메라와 모달을 닫습니다.
     stopCamera();
 }
 
@@ -931,7 +884,6 @@ function cancelForm() {
 /**
  * 카메라 모달의 '사진 찍기', '취소' 버튼에 이벤트 리스너를 설정하는 함수
  */
-// deno-lint-ignore no-unused-vars
 function setupCameraModalListeners() {
     const captureBtn = document.getElementById('capture-btn');
     const cancelCameraBtn = document.getElementById('cancel-camera-btn');
