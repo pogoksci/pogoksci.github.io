@@ -693,30 +693,32 @@ function showNewCabinetForm() {
 /**
  * 새 캐비닛 등록 폼 로드 후 실행될 콜백 함수
  */
+// [전체 코드로 교체]
 function setupCabinetRegisterForm() {
-    console.log("새 캐비닛 등록 폼 로드 완료.");
+    console.log("새 시약장 등록 폼 로드 완료.");
     setFabVisibility(false);
 
-    // 📌 전역 변수 재할당: 동적으로 로드된 요소를 찾습니다.
-    //const form = document.getElementById('cabinet-creation-form');
-
+    // 📌 전역 변수 재할당
     otherAreaInput = document.getElementById('other_area_input');
     otherCabinetInput = document.getElementById('other_cabinet_input');
 
-    // 시약장 사진 관련 요소 초기화
+    // --- 시약장 사진 관련 요소 초기화 ---
     const photoInput = document.getElementById('cabinet-photo-input');
     const cameraInput = document.getElementById('cabinet-camera-input');
     const photoPreview = document.getElementById('cabinet-photo-preview');
     const cameraBtn = document.getElementById('cabinet-camera-btn');
     const photoBtn = document.getElementById('cabinet-photo-btn');
 
-    if (cameraBtn && cameraInput) {
-        cameraBtn.addEventListener('click', () => cameraInput.click());
+    // ⬇️ [수정됨] '카메라로 촬영' 버튼은 startCamera 함수를 직접 호출합니다.
+    if (cameraBtn) {
+        cameraBtn.addEventListener('click', startCamera);
     }
+    // '파일에서 선택' 버튼은 기존과 동일하게 작동합니다.
     if (photoBtn && photoInput) {
         photoBtn.addEventListener('click', () => photoInput.click());
     }
 
+    // 파일이 선택되었을 때의 공통 처리 함수
     const handleFileSelect = (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -735,23 +737,21 @@ function setupCabinetRegisterForm() {
         photoInput.addEventListener('change', handleFileSelect);
     }
     if (cameraInput) {
+        // 이 리스너는 모바일에서 capture 속성을 사용할 때를 위한 폴백(fallback)으로 남겨둡니다.
         cameraInput.addEventListener('change', handleFileSelect);
     }
 
-    // --- 1. 모든 버튼 그룹 초기화 ---
+    // --- 버튼 그룹 초기화 ---
     setupButtonGroup('location_type_buttons');
     setupButtonGroup('cabinet_name_buttons');
     setupButtonGroup('door_vertical_split_buttons');
     setupButtonGroup('door_horizontal_split_buttons');
     setupButtonGroup('shelf_height_buttons');
     setupButtonGroup('storage_columns_buttons');
-
-    // --- 2. '기타' 입력란 조건부 표시 로직 연결 ---
-    attachOtherInputLogic('location_type_buttons', 'other_area_group', 'other_area_input');
+    
+    // --- '기타' 입력란 로직 연결 ---
+    attachOtherInputLogic('location_type_buttons', 'other_area_group', 'other_area_input'); 
     attachOtherInputLogic('cabinet_name_buttons', 'other_cabinet_group', 'other_cabinet_input');
-
-    // --- 3. 폼 제출 이벤트 연결 ---
-    //form.addEventListener('submit', createCabinet);
 }
 
 // --- 4. 폼 제출 함수 ---
