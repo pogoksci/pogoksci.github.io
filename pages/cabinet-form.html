@@ -40,7 +40,7 @@
             <div class="photo-buttons">     
                 <input type="file" id="cabinet-photo-input" accept="image/*" style="display: none;">
                 <button type="button" id="cabinet-photo-btn">파일에서 선택</button>
-                
+
                 <input type="file" id="cabinet-camera-input" accept="image/*" capture="environment" style="display: none;">
                 <button type="button" id="cabinet-camera-btn">카메라로 촬영</button>
             </div>
@@ -91,5 +91,16 @@
     <div style="display: flex; justify-content: center; margin-top: 20px;">
         <button type="button" onclick="cancelForm()" style="width: 48%; background-color: #ccc; color: #333; margin-right: 10px;">취소</button>
         <button type="submit" id="cabinet-submit-button" style="width: 48%; background-color: #00bcd4; color: white;">시약장 등록</button>
+    </div>
+
+    <div id="camera-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <video id="camera-view" autoplay playsinline></video>
+        <canvas id="photo-canvas" style="display: none;"></canvas>
+        <div class="modal-controls">
+            <button type="button" id="capture-btn">사진 찍기</button>
+            <button type="button" id="cancel-camera-btn">취소</button>
+        </div>
+    </div>
     </div>
 </form>
