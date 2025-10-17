@@ -512,8 +512,8 @@ function setupNavbarListeners() {
 
             const itemText = event.target.textContent.trim();
 
-            if (itemText === '약품 보관장 설정') {
-                // 🚨 '약품 보관장 설정' 링크 클릭 시, 보관장 목록 페이지를 로드합니다.
+            if (itemText === '시약장 설정') {
+                // 🚨 '시약장 설정' 링크 클릭 시, 시약장 목록 페이지를 로드합니다.
                 includeHTML('pages/location-list.html', 'form-container', setupLocationList);
             }
             // Add logic for other menu items here (e.g., 교구/물품 설정)
@@ -671,7 +671,7 @@ globalThis.addEventListener('DOMContentLoaded', () => {
 });
 
 // =================================================================
-// 8. 보관장 등록 폼 로드 함수
+// 8. 시약장 등록 폼 로드 함수
 // =================================================================
 
 /**
@@ -749,7 +749,7 @@ async function createCabinet(event) {
         return;
     }
 
-    statusMessage.textContent = '보관장 등록을 시도 중...';
+    statusMessage.textContent = '시약장 등록을 시도 중...';
     statusMessage.style.color = 'blue';
 
     // ⬇️ [수정됨] 2. 텍스트 값을 올바른 숫자로 변환하는 로직
@@ -796,18 +796,18 @@ async function createCabinet(event) {
         }
 
         const newCabinetName = data.cabinetName || cabinetName;
-        console.log("✅ 보관장 등록 성공:", data);
-        alert(`✅ 보관장 "${newCabinetName}"이(가) 성공적으로 등록되었습니다.`);
+        console.log("✅ 시약장 등록 성공:", data);
+        alert(`✅ 시약장 "${newCabinetName}"이(가) 성공적으로 등록되었습니다.`);
         loadLocationListPage();
 
     } catch (error) {
-        console.error("보관장 등록 중 오류 발생:", error.message);
+        console.error("시약장 등록 중 오류 발생:", error.message);
         alert(`❌ 등록 실패: ${error.message}`);
         statusMessage.textContent = `❌ 등록 실패: ${error.message.substring(0, 50)}...`;
 
     } finally {
         submitButton.disabled = false;
-        submitButton.textContent = '보관장 등록';
+        submitButton.textContent = '시약장 등록';
     }
 }
 
@@ -843,7 +843,7 @@ function setupLocationList() {
     // 이제 이 함수는 직접 불리지 않고, fetchCabinetListAndRender가 직접 콜백으로 사용됩니다.
     // 혼란을 방지하기 위해 내용을 비워두거나, fetchCabinetListAndRender를 호출하도록 유지할 수 있습니다.
     setFabVisibility(true);
-    console.log("약품 보관장 목록 페이지 로드 완료. 데이터 로드 시작.");
+    console.log("시약장 목록 페이지 로드 완료. 데이터 로드 시작.");
     fetchCabinetListAndRender();
 }
 
@@ -869,24 +869,24 @@ async function fetchCabinetListAndRender() {
         const data = await response.json();
         
         if (!response.ok) {
-            throw new Error(data.error || '보관장 목록 데이터 조회 실패');
+            throw new Error(data.error || '시약장 목록 데이터 조회 실패');
         }
         
         allAreas = data.areas || [];
         const cabinets = data.cabinets || [];
         
         if (cabinets.length === 0) {
-            listContainer.innerHTML = `<div style="text-align: center; padding: 50px 20px; color: #888;"><h4>등록된 보관장소가 없습니다.</h4><p style="margin-top: 15px;">**+ 버튼**을 눌러 첫 번째 보관장을 등록해 주세요.</p></div>`;
+            listContainer.innerHTML = `<div style="text-align: center; padding: 50px 20px; color: #888;"><h4>등록된 보관장소가 없습니다.</h4><p style="margin-top: 15px;">'새 시약장 등록' 버튼을 눌러 첫 번째 시약장을 등록해 주세요.</p></div>`;
             return;
         }
 
         renderCabinetCards(cabinets, listContainer);
-        statusMsg.textContent = `✅ 보관장 목록 ${cabinets.length}개 로드 완료`;
+        statusMsg.textContent = `✅ 시약장 목록 ${cabinets.length}개 로드 완료`;
         statusMsg.style.color = 'green';
 
     } catch (error) {
-        console.error("보관장 목록 로드 중 오류 발생:", error);
-        statusMsg.textContent = `❌ 보관장 목록 로드 오류: ${error.message}`;
+        console.error("시약장 목록 로드 중 오류 발생:", error);
+        statusMsg.textContent = `❌ 시약장 목록 로드 오류: ${error.message}`;
         statusMsg.style.color = 'red';
     }
 
@@ -950,7 +950,7 @@ function renderCabinetCards(cabinets, container) {
  * ⬇️ [새로운 함수 추가] 캐비닛 삭제를 처리하는 함수
  */
 async function handleDeleteCabinet(cabinetId) {
-    if (!confirm(`정말로 이 보관장을 삭제하시겠습니까?\nID: ${cabinetId}`)) {
+    if (!confirm(`정말로 이 시약장을 삭제하시겠습니까?\nID: ${cabinetId}`)) {
         return;
     }
 

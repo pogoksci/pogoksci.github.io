@@ -1,5 +1,5 @@
 <form id="cabinet-creation-form" style="padding: 20px;">
-    <h2>캐비닛 등록</h2>
+    <h2>시약장 등록</h2>
 
     <div class="form-group">
         <label>1. 시약장이 위치한 장소 *</label>
@@ -15,10 +15,10 @@
     </div>
     
     <div class="form-group">
-        <label>2. 보관장 이름 및 번호 *</label>
+        <label>2. 시약장 이름 및 번호 *</label>
         <div class="button-group" id="cabinet_name_buttons">
-            <button type="button" data-value="약품보관장1">약품보관장1</button>
-            <button type="button" data-value="약품보관장2">약품보관장2</button>
+            <button type="button" data-value="시약장1">시약장1</button>
+            <button type="button" data-value="시약장2">시약장2</button>
             <button type="button" data-value="식품보관장">식품보관장</button>
             <button type="button" data-value="냉장고">냉장고</button>
             <button type="button" data-value="인화성물질1">인화성물질1</button>
@@ -28,7 +28,7 @@
         </div>
     </div>
     <div class="form-group other-input-group" id="other_cabinet_group" style="display: none;">
-        <input type="text" id="other_cabinet_input" placeholder="보관장 이름을 직접 입력하세요">
+        <input type="text" id="other_cabinet_input" placeholder="시약장 이름을 직접 입력하세요">
     </div>
 
 
@@ -75,6 +75,6 @@
     
     <div style="display: flex; justify-content: center; margin-top: 20px;">
         <button type="button" onclick="cancelForm()" style="width: 48%; background-color: #ccc; color: #333; margin-right: 10px;">취소</button>
-        <button type="submit" id="cabinet-submit-button" style="width: 48%; background-color: #00bcd4; color: white;">보관장 등록</button>
+        <button type="submit" id="cabinet-submit-button" style="width: 48%; background-color: #00bcd4; color: white;">시약장 등록</button>
     </div>
 </form>
