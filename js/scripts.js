@@ -958,7 +958,14 @@ async function startCamera() {
         cameraView.srcObject = cameraStream;
     } catch (err) {
         console.error("카메라 접근 오류:", err);
-        alert("카메라를 시작할 수 없습니다. 운영체제 및 브라우저의 카메라 접근 권한을 확인해주세요.");
+        // ⬇️ [수정됨] 오류 종류에 따라 다른 메시지를 표시합니다.
+        if (err.name === "NotAllowedError") {
+            alert("카메라 접근 권한이 차단되었습니다.\n브라우저 및 운영체제의 카메라 권한 설정을 확인해주세요.");
+        } else if (err.name === "NotFoundError") {
+            alert("컴퓨터에 연결된 카메라를 찾을 수 없습니다.");
+        } else {
+            alert("카메라를 시작하는 중 알 수 없는 오류가 발생했습니다.");
+        }
         stopCamera();
     }
 }
