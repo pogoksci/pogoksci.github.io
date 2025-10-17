@@ -54,6 +54,8 @@ let photoPreview = null;
 let selectedPhoto_320_Base64 = null; // 이미지 데이터를 Base64로 저장할 변수
 let selectedPhoto_160_Base64 = null; // 이미지 데이터를 Base64로 저장할 변수
 let cameraStream = null; // 카메라 스트림을 저장할 전역 변수
+let selectedCabinetPhoto_320_Base64 = null;
+let selectedCabinetPhoto_160_Base64 = null;
 
 // =================================================================
 // 1. HTML 조각 파일 로더 함수
@@ -692,9 +694,7 @@ function showNewCabinetForm() {
  * 새 캐비닛 등록 폼 로드 후 실행될 콜백 함수
  */
 function setupCabinetRegisterForm() {
-    console.log("TRACE: setupCabinetRegisterForm 실행됨 (이 함수 안에는 submit 리스너가 없어야 정상)");
     console.log("새 캐비닛 등록 폼 로드 완료.");
-
     setFabVisibility(false);
 
     // 📌 전역 변수 재할당: 동적으로 로드된 요소를 찾습니다.
@@ -702,6 +702,41 @@ function setupCabinetRegisterForm() {
 
     otherAreaInput = document.getElementById('other_area_input');
     otherCabinetInput = document.getElementById('other_cabinet_input');
+
+    // 시약장 사진 관련 요소 초기화
+    const photoInput = document.getElementById('cabinet-photo-input');
+    const cameraInput = document.getElementById('cabinet-camera-input');
+    const photoPreview = document.getElementById('cabinet-photo-preview');
+    const cameraBtn = document.getElementById('cabinet-camera-btn');
+    const photoBtn = document.getElementById('cabinet-photo-btn');
+
+    if (cameraBtn && cameraInput) {
+        cameraBtn.addEventListener('click', () => cameraInput.click());
+    }
+    if (photoBtn && photoInput) {
+        photoBtn.addEventListener('click', () => photoInput.click());
+    }
+
+    const handleFileSelect = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            processImage(e.target.result, (resizedImages) => {
+                selectedCabinetPhoto_320_Base64 = resizedImages.base64_320;
+                selectedCabinetPhoto_160_Base64 = resizedImages.base64_160;
+                photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Cabinet photo preview">`;
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+
+    if (photoInput) {
+        photoInput.addEventListener('change', handleFileSelect);
+    }
+    if (cameraInput) {
+        cameraInput.addEventListener('change', handleFileSelect);
+    }
 
     // --- 1. 모든 버튼 그룹 초기화 ---
     setupButtonGroup('location_type_buttons');
@@ -772,6 +807,8 @@ async function createCabinet(event) {
         door_horizontal_count: doorHorizontalCountValue,
         shelf_height: shelfHeightValue,
         storage_columns: storageColumnsValue,
+        photo_320_base64: selectedCabinetPhoto_320_Base64,
+        photo_160_base64: selectedCabinetPhoto_160_Base64,
     };
 
     const CABINET_REG_URL = `${SUPABASE_URL}/functions/v1/cabinet-register`;
@@ -798,6 +835,8 @@ async function createCabinet(event) {
         const newCabinetName = data.cabinetName || cabinetName;
         console.log("✅ 시약장 등록 성공:", data);
         alert(`✅ 시약장 "${newCabinetName}"이(가) 성공적으로 등록되었습니다.`);
+        selectedCabinetPhoto_320_Base64 = null;
+        selectedCabinetPhoto_160_Base64 = null;
         loadLocationListPage();
 
     } catch (error) {

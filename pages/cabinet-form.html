@@ -11,11 +11,11 @@
         </div>
     </div>
     <div class="form-group other-input-group" id="other_area_group" style="display: none;">
-        <input type="text" id="other_area_input" placeholder="장소명을 직접 입력하세요">
+        <input type="text" id="other_area_input" placeholder="보관장소명을 직접 입력하세요">
     </div>
     
     <div class="form-group">
-        <label>2. 시약장 이름 및 번호 *</label>
+        <label>2. 시약장 이름 *</label>
         <div class="button-group" id="cabinet_name_buttons">
             <button type="button" data-value="시약장1">시약장1</button>
             <button type="button" data-value="시약장2">시약장2</button>
@@ -31,9 +31,24 @@
         <input type="text" id="other_cabinet_input" placeholder="시약장 이름을 직접 입력하세요">
     </div>
 
+    <div class="form-group">
+        <label>3. 시약장 사진</label>
+        <div class="photo-container">
+            <div id="cabinet-photo-preview" class="photo-preview-box">
+                <span>사진 없음</span>
+            </div>
+            <div class="photo-buttons">
+                <input type="file" id="cabinet-camera-input" accept="image/*" capture="environment" style="display: none;">
+                <button type="button" id="cabinet-camera-btn">카메라로 촬영</button>
+                
+                <input type="file" id="cabinet-photo-input" accept="image/*" style="display: none;">
+                <button type="button" id="cabinet-photo-btn">파일에서 선택</button>
+            </div>
+        </div>
+    </div>
 
     <div class="form-group">
-        <label>3. 도어 상하분리 형태 *</label>
+        <label>4. 외부 도어의 상하분리 형태 *</label>
         <div class="button-group" id="door_vertical_split_buttons">
             <button type="button" data-value="상중하도어">상중하도어</button>
             <button type="button" data-value="상하도어">상하도어</button>
@@ -42,7 +57,7 @@
     </div>
 
     <div class="form-group">
-        <label>4. 도어 좌우분리 형태 *</label>
+        <label>5. 외부 도어의 좌우분리 형태 *</label>
         <div class="button-group" id="door_horizontal_split_buttons">
             <button type="button" data-value="좌우분리도어">좌우분리도어</button>
             <button type="button" data-value="단일도어">단일도어</button>
@@ -50,7 +65,7 @@
     </div>
 
     <div class="form-group">
-        <label>5. 도어 1개를 열었을 때 보이는 수납 층 형태 *</label>
+        <label>6. 외부 도어 1개를 열었을 때 보이는 내부 수납 층 형태 *</label>
         <div class="button-group" id="shelf_height_buttons">
             <button type="button" data-value="1">1층</button>
             <button type="button" data-value="2">2층</button>
@@ -62,7 +77,7 @@
     </div>
 
     <div class="form-group">
-        <label>6. 도어 1개를 열었을 때 보이는 수납 열 형태 *</label>
+        <label>7. 외부 도어 1개를 열었을 때 보이는 내부 수납 열 형태 *</label>
         <div class="button-group" id="storage_columns_buttons">
             <button type="button" data-value="1">1열</button>
             <button type="button" data-value="2">2열</button>
