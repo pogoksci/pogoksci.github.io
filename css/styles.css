@@ -430,12 +430,13 @@ button:disabled {
 .fab {
     position: fixed;
     bottom: 70px;
-    
-    /* 버튼 좌우 여백을 35px로 늘려 제목과 정렬 */
-    left: 35px;
-    right: 35px;
 
-    width: auto;
+    /* 기존 고정 폭 제거 */
+    left: 50%;
+    transform: translateX(-50%); /* 가운데 정렬 */
+
+    width: 100%;
+    max-width: 600px; /* body의 max-width와 동일하게 맞춤 */
     padding: 12px 20px;
     border-radius: 8px;
     font-size: 16px;

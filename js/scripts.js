@@ -811,9 +811,20 @@ function setFabVisibility(visible) {
 // =================================================================
 async function startCamera() {
     const cameraModal = document.getElementById('camera-modal');
+    
+    // 1. 먼저 모달을 열어야 DOM 안의 video 요소가 존재함
+    cameraModal.style.display = 'flex';
+
+    // 2. 다음 줄에서 요소를 찾는다
     const cameraView = document.getElementById('camera-view');
+
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         alert('현재 브라우저에서는 카메라 기능을 사용할 수 없습니다.');
+        return;
+    }
+
+    if (!cameraView) {
+        console.error("❌ camera-view 요소를 찾을 수 없습니다.");
         return;
     }
 
@@ -822,7 +833,6 @@ async function startCamera() {
             video: { facingMode: 'environment' }, audio: false 
         });
         cameraView.srcObject = cameraStream;
-        cameraModal.style.display = 'flex';
     } catch (err) {
         console.error("카메라 접근 오류:", err);
         alert("카메라를 시작할 수 없습니다. 운영체제 및 브라우저의 카메라 접근 권한을 확인해주세요.");
