@@ -927,3 +927,19 @@ function processImage(base64Str, callback) {
 function cancelForm() {
     loadLocationListPage();
 }
+
+/**
+ * 카메라 모달의 '사진 찍기', '취소' 버튼에 이벤트 리스너를 설정하는 함수
+ */
+// deno-lint-ignore no-unused-vars
+function setupCameraModalListeners() {
+    const captureBtn = document.getElementById('capture-btn');
+    const cancelCameraBtn = document.getElementById('cancel-camera-btn');
+
+    if (captureBtn) {
+        captureBtn.addEventListener('click', takePicture);
+    }
+    if (cancelCameraBtn) {
+        cancelCameraBtn.addEventListener('click', stopCamera);
+    }
+}
