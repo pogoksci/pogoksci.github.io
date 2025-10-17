@@ -307,6 +307,17 @@ button:disabled {
     text-align: right;
 }
 
+.card-actions .edit-btn {
+    background-color: #6c757d; /* 회색 계열 */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-right: 5px; /* 삭제 버튼과의 간격 */
+}
+
 .card-actions .delete-btn {
     background-color: #ff4d4d;
     color: white;
