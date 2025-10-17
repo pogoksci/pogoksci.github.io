@@ -847,23 +847,32 @@ function takePicture() {
     canvas.height = cameraView.videoHeight;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(cameraView, 0, 0, canvas.width, canvas.height);
+    
     const base64Str = canvas.toDataURL('image/png');
 
+    // 현재 어떤 폼이 화면에 있는지 확인합니다.
     const isCabinetForm = !!document.getElementById('cabinet-creation-form');
 
     processImage(base64Str, (resizedImages) => {
         if (isCabinetForm) {
+            // 시약장 등록 폼일 경우
             const cabinetPhotoPreview = document.getElementById('cabinet-photo-preview');
             selectedCabinetPhoto_320_Base64 = resizedImages.base64_320;
             selectedCabinetPhoto_160_Base64 = resizedImages.base64_160;
-            if (cabinetPhotoPreview) cabinetPhotoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Cabinet photo preview">`;
+            if (cabinetPhotoPreview) {
+                cabinetPhotoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Cabinet photo preview">`;
+            }
         } else {
+            // 시약병 재고 정보 폼일 경우
             selectedPhoto_320_Base64 = resizedImages.base64_320;
             selectedPhoto_160_Base64 = resizedImages.base64_160;
-            if (photoPreview) photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Photo preview">`;
+            if (photoPreview) {
+                photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Photo preview">`;
+            }
         }
     });
 
+    // 사진을 찍은 후 카메라와 모달을 닫습니다.
     stopCamera();
 }
 
