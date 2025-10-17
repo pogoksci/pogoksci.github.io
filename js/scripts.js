@@ -507,42 +507,70 @@ function setupCabinetRegisterForm() {
     console.log("시약장 폼 로드 완료. 모드:", isEditMode ? "수정" : "신규");
     setFabVisibility(false);
 
-    // 전역 변수 재할당
+    // 1. 전역 변수 및 요소 재할당
     otherAreaInput = document.getElementById('other_area_input');
     otherCabinetInput = document.getElementById('other_cabinet_input');
+    const photoPreview = document.getElementById('cabinet-photo-preview');
 
-    // 사진 관련 요소 초기화
+    // 2. 버튼 그룹과 이벤트 리스너를 먼저 설정합니다. (★★★★★ 순서 중요)
+    setupButtonGroup('location_type_buttons');
+    setupButtonGroup('cabinet_name_buttons');
+    setupButtonGroup('door_vertical_split_buttons');
+    setupButtonGroup('door_horizontal_split_buttons');
+    setupButtonGroup('shelf_height_buttons');
+    setupButtonGroup('storage_columns_buttons');
+    
+    attachOtherInputLogic('location_type_buttons', 'other_area_group', 'other_area_input'); 
+    attachOtherInputLogic('cabinet_name_buttons', 'other_cabinet_group', 'other_cabinet_input');
+
+    // 사진 관련 이벤트 리스너 설정
     const photoInput = document.getElementById('cabinet-photo-input');
     const cameraInput = document.getElementById('cabinet-camera-input');
-    const photoPreview = document.getElementById('cabinet-photo-preview');
     const cameraBtn = document.getElementById('cabinet-camera-btn');
     const photoBtn = document.getElementById('cabinet-photo-btn');
+    if (cameraBtn) cameraBtn.addEventListener('click', startCamera);
+    if (photoBtn && photoInput) photoBtn.addEventListener('click', () => photoInput.click());
+    setupCameraModalListeners();
+    
+    const handleFileSelect = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            processImage(e.target.result, (resizedImages) => {
+                selectedCabinetPhoto_320_Base64 = resizedImages.base64_320;
+                selectedCabinetPhoto_160_Base64 = resizedImages.base64_160;
+                photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Cabinet photo preview">`;
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+    if (photoInput) photoInput.addEventListener('change', handleFileSelect);
+    if (cameraInput) cameraInput.addEventListener('change', handleFileSelect);
 
-    // 수정 모드 또는 신규 모드에 따른 UI 및 데이터 설정
+    // 3. 모드에 따라 UI와 데이터를 설정합니다.
     if (isEditMode && editingCabinetId) {
         // --- 수정 모드 ---
         document.querySelector('#cabinet-creation-form h2').textContent = '시약장 정보 수정';
         document.getElementById('cabinet-submit-button').textContent = '수정 내용 저장';
 
-        // ⬇️ [수정됨] 문자열 ID를 숫자로 변환하여 비교합니다.
         const idToFind = parseInt(editingCabinetId, 10);
         const cabinetToEdit = allCabinets.find(c => c.id === idToFind);
 
         if (!cabinetToEdit) {
             alert("오류: 수정할 시약장 정보를 찾을 수 없습니다.");
-            loadLocationListPage(); // 목록으로 복귀
+            loadLocationListPage();
             return;
         }
 
-        // 사진 미리보기 설정
         if (cabinetToEdit.photo_url_320) {
             photoPreview.innerHTML = `<img src="${cabinetToEdit.photo_url_320}" alt="Cabinet photo preview">`;
         }
 
-        // 버튼 그룹의 기존 값들을 미리 선택하는 로직
+        // 버튼을 프로그래밍 방식으로 클릭하여 상태를 미리 설정합니다.
         const preselectButton = (groupId, value, otherInputId) => {
             const group = document.getElementById(groupId);
-            if (!group) return;
+            if (!group || !value) return; // 값이 없으면 실행 안 함
 
             const button = group.querySelector(`button[data-value="${value}"]`);
             if (button) {
@@ -578,49 +606,6 @@ function setupCabinetRegisterForm() {
         selectedCabinetPhoto_320_Base64 = null;
         selectedCabinetPhoto_160_Base64 = null;
     }
-
-    // --- 공통 이벤트 리스너 설정 ---
-    if (cameraBtn) {
-        cameraBtn.addEventListener('click', startCamera);
-    }
-    if (photoBtn && photoInput) {
-        photoBtn.addEventListener('click', () => photoInput.click());
-    }
-
-    setupCameraModalListeners();
-
-    const handleFileSelect = (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            processImage(e.target.result, (resizedImages) => {
-                selectedCabinetPhoto_320_Base64 = resizedImages.base64_320;
-                selectedCabinetPhoto_160_Base64 = resizedImages.base64_160;
-                photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Cabinet photo preview">`;
-            });
-        };
-        reader.readAsDataURL(file);
-    };
-
-    if (photoInput) {
-        photoInput.addEventListener('change', handleFileSelect);
-    }
-    if (cameraInput) {
-        cameraInput.addEventListener('change', handleFileSelect);
-    }
-
-    // 버튼 그룹 초기화
-    setupButtonGroup('location_type_buttons');
-    setupButtonGroup('cabinet_name_buttons');
-    setupButtonGroup('door_vertical_split_buttons');
-    setupButtonGroup('door_horizontal_split_buttons');
-    setupButtonGroup('shelf_height_buttons');
-    setupButtonGroup('storage_columns_buttons');
-    
-    // '기타' 입력란 로직 연결
-    attachOtherInputLogic('location_type_buttons', 'other_area_group', 'other_area_input'); 
-    attachOtherInputLogic('cabinet_name_buttons', 'other_cabinet_group', 'other_cabinet_input');
 }
 
 async function createCabinet(event) {
@@ -887,8 +872,6 @@ function renderCabinetCards(cabinets, container) {
             <div class="card-info">
                 <h3>${cabinet.name}</h3>
                 <p class="area-name">${areaName}</p>
-                <p class="cabinet-specs">${verticalDoorText}, ${horizontalDoorText}</p>
-                <p class="cabinet-specs">(${cabinet.shelf_height}단, ${cabinet.storage_columns}열)</p>
             </div>
             <div class="card-actions">
                 <button class="edit-btn" data-id="${cabinet.id}">수정</button>
