@@ -507,24 +507,27 @@ function setupCabinetRegisterForm() {
     console.log("시약장 폼 로드 완료. 모드:", isEditMode ? "수정" : "신규");
     setFabVisibility(false);
 
-    // 📌 전역 변수 재할당
+    // 전역 변수 재할당
     otherAreaInput = document.getElementById('other_area_input');
     otherCabinetInput = document.getElementById('other_cabinet_input');
 
-    // --- 사진 관련 요소 초기화 ---
+    // 사진 관련 요소 초기화
     const photoInput = document.getElementById('cabinet-photo-input');
     const cameraInput = document.getElementById('cabinet-camera-input');
     const photoPreview = document.getElementById('cabinet-photo-preview');
     const cameraBtn = document.getElementById('cabinet-camera-btn');
     const photoBtn = document.getElementById('cabinet-photo-btn');
 
-    // --- 수정 모드 또는 신규 모드에 따른 UI 및 데이터 설정 ---
+    // 수정 모드 또는 신규 모드에 따른 UI 및 데이터 설정
     if (isEditMode && editingCabinetId) {
         // --- 수정 모드 ---
         document.querySelector('#cabinet-creation-form h2').textContent = '시약장 정보 수정';
         document.getElementById('cabinet-submit-button').textContent = '수정 내용 저장';
 
-        const cabinetToEdit = allCabinets.find(c => c.id == editingCabinetId);
+        // ⬇️ [수정됨] 문자열 ID를 숫자로 변환하여 비교합니다.
+        const idToFind = parseInt(editingCabinetId, 10);
+        const cabinetToEdit = allCabinets.find(c => c.id === idToFind);
+
         if (!cabinetToEdit) {
             alert("오류: 수정할 시약장 정보를 찾을 수 없습니다.");
             loadLocationListPage(); // 목록으로 복귀
@@ -537,15 +540,14 @@ function setupCabinetRegisterForm() {
         }
 
         // 버튼 그룹의 기존 값들을 미리 선택하는 로직
-        // 버튼을 직접 클릭(programmatic click)하여 선택 상태와 전역 변수를 한 번에 업데이트합니다.
         const preselectButton = (groupId, value, otherInputId) => {
             const group = document.getElementById(groupId);
             if (!group) return;
 
             const button = group.querySelector(`button[data-value="${value}"]`);
             if (button) {
-                button.click(); // 일반 버튼 클릭
-            } else { // '기타' 항목일 경우
+                button.click();
+            } else {
                 const otherButton = group.querySelector('button[data-value="기타"]');
                 if (otherButton) otherButton.click();
                 const otherInput = document.getElementById(otherInputId);
@@ -553,16 +555,13 @@ function setupCabinetRegisterForm() {
             }
         };
 
-        // area_id를 area_name으로 변환
         const area = allAreas.find(a => a.id === cabinetToEdit.area_id);
         const areaName = area ? area.name : null;
 
-        // door_vertical_count를 텍스트로 변환
         let verticalDoorValue = '단일도어';
         if (cabinetToEdit.door_vertical_count === 3) verticalDoorValue = '상중하도어';
         else if (cabinetToEdit.door_vertical_count === 2) verticalDoorValue = '상하도어';
 
-        // door_horizontal_count를 텍스트로 변환
         const horizontalDoorValue = cabinetToEdit.door_horizontal_count === 2 ? '좌우분리도어' : '단일도어';
         
         preselectButton('location_type_buttons', areaName, 'other_area_input');
@@ -576,7 +575,6 @@ function setupCabinetRegisterForm() {
         // --- 신규 등록 모드 ---
         document.querySelector('#cabinet-creation-form h2').textContent = '시약장 등록';
         document.getElementById('cabinet-submit-button').textContent = '시약장 등록';
-        // 이전에 수정 모드에서 사용했을 수 있는 사진 변수 초기화
         selectedCabinetPhoto_320_Base64 = null;
         selectedCabinetPhoto_160_Base64 = null;
     }
@@ -612,7 +610,7 @@ function setupCabinetRegisterForm() {
         cameraInput.addEventListener('change', handleFileSelect);
     }
 
-    // 버튼 그룹 초기화 (선택된 값은 위에서 이미 설정됨)
+    // 버튼 그룹 초기화
     setupButtonGroup('location_type_buttons');
     setupButtonGroup('cabinet_name_buttons');
     setupButtonGroup('door_vertical_split_buttons');
