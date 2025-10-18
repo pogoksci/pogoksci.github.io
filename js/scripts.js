@@ -16,17 +16,17 @@ let selectedConcentrationUnit = null;
 let selectedManufacturer = null;
 
 // 🔑 수납위치 관련 전역 변수
-let allAreas = []; // Area 데이터 전체 저장
-let allCabinets = []; // Cabinet 데이터 전체 저장
-// 🔑 시약장 등록 폼 전용 선택 값
+let allAreas = [];
+let allCabinets = [];
+// 🔑 시약장 등록/수정 폼 전용 선택 값
 let selectedAreaCreation = null;
 let selectedCabinetName = null;
 let selectedDoorVerticalSplit = null;
 let selectedDoorHorizontalSplit = null;
 let selectedShelfHeight = null;
 let selectedStorageColumns = null;
-let isEditMode = false;
-let editingCabinetId = null;
+let isEditMode = false; // 수정 모드 여부
+let editingCabinetId = null; // 수정 중인 시약장 ID
 
 // 🔑 기타 입력란 DOM 요소
 let otherAreaInput = null;
@@ -58,6 +58,7 @@ let selectedCabinetPhoto_320_Base64 = null;
 let selectedCabinetPhoto_160_Base64 = null;
 let cameraStream = null;
 
+// (수정 기능 추가 시 `editingInventoryId`도 여기에 추가됩니다)
 
 // =================================================================
 // 1. HTML 조각 파일 로더 함수
@@ -99,13 +100,11 @@ function initializeFormListeners() {
     console.log("폼 요소 초기화 시작...");
     setFabVisibility(false);
 
-    // 전역 변수 재할당
     statusMessage = document.getElementById('statusMessage');
     manufacturerButtonsGroup = document.getElementById('manufacturer_buttons');
     otherManufacturerGroup = document.getElementById('other_manufacturer_group');
     manufacturerOtherInput = document.getElementById('manufacturer_other');
-    
-    // 시약병 사진 관련 요소 초기화
+
     photoInput = document.getElementById('photo-input');
     cameraInput = document.getElementById('camera-input');
     photoPreview = document.getElementById('photo-preview');
@@ -118,10 +117,9 @@ function initializeFormListeners() {
     if (cameraBtn) {
         cameraBtn.addEventListener('click', startCamera);
     }
-    
-    // 카메라 모달 버튼 리스너 설정
+
     setupCameraModalListeners();
-    
+
     const handleFileSelect = (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -130,7 +128,9 @@ function initializeFormListeners() {
             processImage(e.target.result, (resizedImages) => {
                 selectedPhoto_320_Base64 = resizedImages.base64_320;
                 selectedPhoto_160_Base64 = resizedImages.base64_160;
-                photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Photo preview">`;
+                if (photoPreview) {
+                    photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Photo preview">`;
+                }
             });
         };
         reader.readAsDataURL(file);
@@ -143,7 +143,6 @@ function initializeFormListeners() {
         cameraInput.addEventListener('change', handleFileSelect);
     }
 
-    // 버튼 그룹 설정
     setupButtonGroup('classification_buttons');
     setupButtonGroup('state_buttons');
     setupButtonGroup('unit_buttons');
@@ -174,8 +173,14 @@ function initializeFormListeners() {
     if (formContainer) {
         formContainer.addEventListener('submit', (event) => {
             if (event.target && event.target.id === 'cabinet-creation-form') {
-                createCabinet(event);
+                // 수정 모드인지 확인하여 적절한 함수 호출
+                if (isEditMode) {
+                    updateCabinet(event);
+                } else {
+                    createCabinet(event);
+                }
             } else if (event.target && event.target.id === 'inventory-form') {
+                // (나중에 재고 수정 기능 추가 시 여기도 isEditMode 확인 로직 추가)
                 importData(event);
             }
         });
@@ -191,9 +196,12 @@ async function fetchLocationData() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || '장소 데이터 조회 실패');
         
-        allAreas = data.areas;
-        allCabinets = data.cabinets;
-        populateAreaSelect(allAreas);
+        allAreas = data.areas || [];
+        allCabinets = data.cabinets || [];
+        // populateAreaSelect는 form-input.html에만 존재하므로 여기서 호출
+        if(document.getElementById('location_area_select')) {
+            populateAreaSelect(allAreas);
+        }
     } catch (error) {
         console.error("장소 데이터 로드 중 오류 발생:", error);
         if (statusMessage) {
@@ -387,6 +395,10 @@ function setupNavbarListeners() {
             if (itemText === '시약장 설정') {
                 includeHTML('pages/location-list.html', 'form-container', setupLocationList);
             }
+            // ⬇️ [새로운 코드 추가] '약품 관리' 탭 기능 구현을 위한 임시 네비게이션
+            else if (itemText === '약품 관리') {
+                loadInventoryListPage();
+            }
         });
     });
 
@@ -488,7 +500,8 @@ async function importData(event) {
 // 6. 페이지 진입점
 // =================================================================
 globalThis.addEventListener('DOMContentLoaded', () => {
-    includeHTML('pages/form-input.html', 'form-container', initializeFormListeners);
+    // ⬇️ [수정됨] 초기 화면을 main.html로 변경
+    includeHTML('pages/main.html', 'form-container'); 
     includeHTML('pages/navbar.html', 'navbar-container', setupNavbarListeners);
 });
 
@@ -507,12 +520,9 @@ function setupCabinetRegisterForm() {
     console.log("시약장 폼 로드 완료. 모드:", isEditMode ? "수정" : "신규");
     setFabVisibility(false);
 
-    // 1. 전역 변수 및 요소 재할당
     otherAreaInput = document.getElementById('other_area_input');
     otherCabinetInput = document.getElementById('other_cabinet_input');
-    const photoPreview = document.getElementById('cabinet-photo-preview');
 
-    // 2. 버튼 그룹과 이벤트 리스너를 먼저 설정합니다. (★★★★★ 순서 중요)
     setupButtonGroup('location_type_buttons');
     setupButtonGroup('cabinet_name_buttons');
     setupButtonGroup('door_vertical_split_buttons');
@@ -523,13 +533,25 @@ function setupCabinetRegisterForm() {
     attachOtherInputLogic('location_type_buttons', 'other_area_group', 'other_area_input'); 
     attachOtherInputLogic('cabinet_name_buttons', 'other_cabinet_group', 'other_cabinet_input');
 
-    // 사진 관련 이벤트 리스너 설정
     const photoInput = document.getElementById('cabinet-photo-input');
     const cameraInput = document.getElementById('cabinet-camera-input');
+    const photoPreview = document.getElementById('cabinet-photo-preview');
     const cameraBtn = document.getElementById('cabinet-camera-btn');
     const photoBtn = document.getElementById('cabinet-photo-btn');
+    const cancelButton = document.getElementById('cancel-form-btn');
+    if (cancelButton) {
+        cancelButton.addEventListener('click', () => {
+            // isEditMode와 editingCabinetId를 초기화하여
+            // 수정 모드 상태가 남지 않도록 합니다.
+            isEditMode = false;
+            editingCabinetId = null;
+            loadLocationListPage();
+        });
+    }
+
     if (cameraBtn) cameraBtn.addEventListener('click', startCamera);
     if (photoBtn && photoInput) photoBtn.addEventListener('click', () => photoInput.click());
+    
     setupCameraModalListeners();
     
     const handleFileSelect = (event) => {
@@ -540,7 +562,9 @@ function setupCabinetRegisterForm() {
             processImage(e.target.result, (resizedImages) => {
                 selectedCabinetPhoto_320_Base64 = resizedImages.base64_320;
                 selectedCabinetPhoto_160_Base64 = resizedImages.base64_160;
-                photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Cabinet photo preview">`;
+                if (photoPreview) {
+                  photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Cabinet photo preview">`;
+                }
             });
         };
         reader.readAsDataURL(file);
@@ -548,9 +572,7 @@ function setupCabinetRegisterForm() {
     if (photoInput) photoInput.addEventListener('change', handleFileSelect);
     if (cameraInput) cameraInput.addEventListener('change', handleFileSelect);
 
-    // 3. 모드에 따라 UI와 데이터를 설정합니다.
     if (isEditMode && editingCabinetId) {
-        // --- 수정 모드 ---
         document.querySelector('#cabinet-creation-form h2').textContent = '시약장 정보 수정';
         document.getElementById('cabinet-submit-button').textContent = '수정 내용 저장';
 
@@ -563,14 +585,13 @@ function setupCabinetRegisterForm() {
             return;
         }
 
-        if (cabinetToEdit.photo_url_320) {
+        if (cabinetToEdit.photo_url_320 && photoPreview) {
             photoPreview.innerHTML = `<img src="${cabinetToEdit.photo_url_320}" alt="Cabinet photo preview">`;
         }
 
-        // 버튼을 프로그래밍 방식으로 클릭하여 상태를 미리 설정합니다.
         const preselectButton = (groupId, value, otherInputId) => {
             const group = document.getElementById(groupId);
-            if (!group || !value) return; // 값이 없으면 실행 안 함
+            if (!group || value == null) return;
 
             const button = group.querySelector(`button[data-value="${value}"]`);
             if (button) {
@@ -589,7 +610,6 @@ function setupCabinetRegisterForm() {
         let verticalDoorValue = '단일도어';
         if (cabinetToEdit.door_vertical_count === 3) verticalDoorValue = '상중하도어';
         else if (cabinetToEdit.door_vertical_count === 2) verticalDoorValue = '상하도어';
-
         const horizontalDoorValue = cabinetToEdit.door_horizontal_count === 2 ? '좌우분리도어' : '단일도어';
         
         preselectButton('location_type_buttons', areaName, 'other_area_input');
@@ -598,9 +618,7 @@ function setupCabinetRegisterForm() {
         preselectButton('door_horizontal_split_buttons', horizontalDoorValue);
         preselectButton('shelf_height_buttons', cabinetToEdit.shelf_height.toString());
         preselectButton('storage_columns_buttons', cabinetToEdit.storage_columns.toString());
-
     } else {
-        // --- 신규 등록 모드 ---
         document.querySelector('#cabinet-creation-form h2').textContent = '시약장 등록';
         document.getElementById('cabinet-submit-button').textContent = '시약장 등록';
         selectedCabinetPhoto_320_Base64 = null;
@@ -687,11 +705,9 @@ async function updateCabinet(event) {
         return;
     }
 
-    // 1. 폼에서 현재 값들을 수집합니다.
     const areaName = selectedAreaCreation === '기타' ? (otherAreaInput?.value?.trim() || null) : selectedAreaCreation;
     const cabinetName = selectedCabinetName === '기타' ? (otherCabinetInput?.value?.trim() || null) : selectedCabinetName;
 
-    // 2. 필수 필드 유효성 검사
     if (!areaName || !cabinetName || !selectedDoorVerticalSplit || !selectedShelfHeight || !selectedStorageColumns || !selectedDoorHorizontalSplit) {
         alert("모든 필수 필드(*)를 선택/입력해 주세요.");
         return;
@@ -700,7 +716,6 @@ async function updateCabinet(event) {
     statusMessage.textContent = '시약장 정보를 수정하는 중...';
     statusMessage.style.color = 'blue';
 
-    // 3. 텍스트 값을 숫자로 변환합니다.
     let doorVerticalCountValue = 1;
     if (selectedDoorVerticalSplit === '상중하도어') doorVerticalCountValue = 3;
     else if (selectedDoorVerticalSplit === '상하도어') doorVerticalCountValue = 2;
@@ -709,16 +724,15 @@ async function updateCabinet(event) {
     const shelfHeightValue = parseInt(selectedShelfHeight, 10) || 3;
     const storageColumnsValue = parseInt(selectedStorageColumns, 10) || 1;
 
-    // 4. 서버로 보낼 데이터 구성
     const cabinetData = {
-        cabinet_id: editingCabinetId, // ⬅️ 수정할 시약장의 ID를 추가합니다.
+        cabinet_id: editingCabinetId,
         area_name: areaName,
         cabinet_name: cabinetName,
         door_vertical_count: doorVerticalCountValue,
         door_horizontal_count: doorHorizontalCountValue,
         shelf_height: shelfHeightValue,
         storage_columns: storageColumnsValue,
-        photo_320_base64: selectedCabinetPhoto_320_Base64, // 새로 선택된 사진이 있다면 데이터가 담김
+        photo_320_base64: selectedCabinetPhoto_320_Base64,
         photo_160_base64: selectedCabinetPhoto_160_Base64,
     };
 
@@ -728,19 +742,14 @@ async function updateCabinet(event) {
         submitButton.disabled = true;
         submitButton.textContent = '저장 중...';
 
-        // 5. 서버에 PATCH 메소드로 수정 요청을 보냅니다.
         const response = await fetch(CABINET_REG_URL, {
-            method: 'PATCH', // ⬅️ 메소드를 'PATCH'로 변경
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            },
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
             body: JSON.stringify(cabinetData)
         });
         const data = await response.json();
         if (!response.ok || data.error) throw new Error(data.error || `HTTP Error! Status: ${response.status}`);
 
-        // 6. 성공 처리
         console.log("✅ 시약장 수정 성공:", data);
         alert(`✅ 시약장 정보가 성공적으로 수정되었습니다.`);
         loadLocationListPage();
@@ -750,10 +759,9 @@ async function updateCabinet(event) {
         alert(`❌ 수정 실패: ${error.message}`);
         if (statusMessage) statusMessage.textContent = `❌ 수정 실패: ${error.message.substring(0, 50)}...`;
     } finally {
-        // 7. 버튼 상태를 되돌리고, 수정 모드를 종료합니다.
         submitButton.disabled = false;
-        submitButton.textContent = '수정 내용 저장'; // 텍스트는 수정 화면에 맞게
-        editingCabinetId = null; // ⬅️ 수정 모드 상태를 초기화합니다.
+        submitButton.textContent = '수정 내용 저장';
+        editingCabinetId = null;
         isEditMode = false;
     }
 }
@@ -836,16 +844,8 @@ async function fetchCabinetListAndRender() {
         else if (event.target.classList.contains('edit-btn')) {
             const cabinetId = event.target.dataset.id;
             handleEditCabinet(cabinetId);
-        }    
+        }    
     });
-}
-
-function handleEditCabinet(cabinetId) {
-    isEditMode = true;
-    editingCabinetId = cabinetId;
-    
-    // 시약장 등록 폼을 로드하고, 로드가 완료되면 setupCabinetRegisterForm을 호출
-    includeHTML('pages/cabinet-form.html', 'form-container', setupCabinetRegisterForm);
 }
 
 function renderCabinetCards(cabinets, container) {
@@ -870,8 +870,9 @@ function renderCabinetCards(cabinets, container) {
                 <span style="display: ${imageUrl ? 'none' : 'block'};">[${cabinet.name} 사진 없음]</span>
             </div>
             <div class="card-info">
-                <h3>${cabinet.name}</h3>
-                <p class="area-name">${areaName}</p>
+                <h3>${cabinet.name} <small class="area-name">${areaName}</small></h3>
+                <p class="cabinet-specs">${verticalDoorText}, ${horizontalDoorText}</p>
+                <p class="cabinet-specs">(${cabinet.shelf_height}단, ${cabinet.storage_columns}열)</p>
             </div>
             <div class="card-actions">
                 <button class="edit-btn" data-id="${cabinet.id}">수정</button>
@@ -939,7 +940,6 @@ async function startCamera() {
         cameraView.srcObject = cameraStream;
     } catch (err) {
         console.error("카메라 접근 오류:", err);
-        // ⬇️ [수정됨] 오류 종류에 따라 다른 메시지를 표시합니다.
         if (err.name === "NotAllowedError") {
             alert("카메라 접근 권한이 차단되었습니다.\n브라우저 및 운영체제의 카메라 권한 설정을 확인해주세요.");
         } else if (err.name === "NotFoundError") {
@@ -1043,5 +1043,316 @@ function setupCameraModalListeners() {
     }
     if (cancelCameraBtn) {
         cancelCameraBtn.addEventListener('click', stopCamera);
+    }
+}
+
+// =================================================================
+// 9. 약품 관리 목록 및 상세 정보 관련 함수
+// =================================================================
+
+/**
+ * '약품 입고 정보 입력' 폼을 로드하는 함수
+ */
+function loadInventoryFormPage() {
+    isEditMode = false;
+    editingInventoryId = null;
+    includeHTML('pages/form-input.html', 'form-container', initializeFormListeners);
+}
+
+/**
+ * '약품 관리' 목록 페이지를 로드하고 FAB 버튼을 설정하는 함수
+ */
+function loadInventoryListPage() {
+    const fab = document.getElementById('fab-button');
+    if (fab) {
+        fab.textContent = '+';
+        fab.onclick = loadInventoryFormPage;
+    }
+    setFabVisibility(true);
+    includeHTML('pages/inventory-list.html', 'form-container', fetchInventoryAndRender);
+}
+
+/**
+ * 서버에서 인벤토리 목록을 가져와 화면에 렌더링하는 함수
+ */
+async function fetchInventoryAndRender() {
+    const listContainer = document.getElementById('inventory-list-container');
+    const statusMsg = document.getElementById('status-message-inventory-list');
+    if (!listContainer || !statusMsg) return;
+
+    statusMsg.textContent = '재고 목록을 불러오는 중...';
+    try {
+        const response = await fetch(`${EDGE_FUNCTION_URL}?type=inventory`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '재고 목록 조회 실패');
+        
+        if (allCabinets.length === 0) {
+            await fetchLocationData();
+        }
+        
+        if (!data.inventory || data.inventory.length === 0) {
+            listContainer.innerHTML = `<p style="text-align:center; color:#888;">등록된 재고가 없습니다.</p>`;
+            return;
+        }
+        
+        renderInventoryCards(data.inventory, listContainer);
+        statusMsg.textContent = `✅ 재고 ${data.inventory.length}개 로드 완료`;
+        
+    } catch (error) {
+        console.error("재고 목록 로드 오류:", error);
+        statusMsg.textContent = `❌ ${error.message}`;
+    }
+}
+
+/**
+ * 인벤토리 데이터를 받아 카드 UI를 생성하는 함수
+ */
+function renderInventoryCards(inventory, container) {
+    container.innerHTML = '';
+    
+    const grouped = inventory.reduce((acc, item) => {
+        const key = item.classification || '미분류';
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(item);
+        return acc;
+    }, {});
+
+    for (const category in grouped) {
+        const categoryHeader = document.createElement('div');
+        categoryHeader.className = 'category-header';
+        categoryHeader.innerHTML = `<h3>${category}</h3><span>${grouped[category].length}</span>`;
+        container.appendChild(categoryHeader);
+
+        grouped[category].forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'inventory-card';
+            card.onclick = () => onInventoryCardClick(item.id);
+
+            const cabinet = allCabinets.find(c => c.id === item.cabinet_id);
+            const locationText = cabinet ? `『${cabinet.name}』 ${item.internal_shelf_level || '?'}단 ${item.storage_column || '?'}열` : '위치 미지정';
+
+            card.innerHTML = `
+                <div class="inventory-card-image">
+                    <img src="${item.photo_url_160 || ''}" alt="시약병 사진" style="display: ${item.photo_url_160 ? 'block' : 'none'};">
+                    <span style="display: ${item.photo_url_160 ? 'none' : 'block'};">[사진 없음]</span>
+                </div>
+                <div class="inventory-card-info">
+                    <p class="name"><strong>${item.Substance.name || '이름 없음'} ${item.concentration_value || ''}${item.concentration_unit || ''}</strong> No.${item.id}</p>
+                    <p class="location">${locationText}</p>
+                </div>
+                <div class="inventory-card-formula">
+                    ${item.Substance.molecular_formula || ''}
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+}
+
+/**
+ * '약품 관리' 목록의 카드를 클릭했을 때 상세 페이지를 로드하는 함수
+ */
+function onInventoryCardClick(inventoryId) {
+    includeHTML('pages/inventory-detail.html', 'form-container', () => {
+        fetchAndRenderDetails(inventoryId);
+    });
+}
+
+/**
+ * 서버에서 특정 재고의 상세 데이터를 가져와 화면에 렌더링하는 함수
+ */
+async function fetchAndRenderDetails(inventoryId) {
+    setFabVisibility(false); // FAB 숨기기
+    try {
+        const response = await fetch(`${EDGE_FUNCTION_URL}?type=inventory-detail&id=${inventoryId}`, {
+            headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '상세 정보 조회 실패');
+
+        // 1. 기본 정보 채우기
+        if (data.photo_url_320) {
+            document.getElementById('detail-photo').innerHTML = `<img src="${data.photo_url_320}" alt="시약병 사진">`;
+        } else {
+            document.getElementById('detail-photo').innerHTML = '<span>사진 없음</span>';
+        }
+        document.getElementById('detail-name').textContent = data.Substance.name || '이름 없음';
+        document.getElementById('detail-cas').textContent = `CAS: ${data.Substance.cas_rn}`;
+        const locationText = data.Cabinet ? `위치: 『${data.Cabinet.name}』 ${data.internal_shelf_level || '?'}단 ${data.storage_column || '?'}열` : '위치: 미지정';
+        document.getElementById('detail-location').textContent = locationText;
+
+        // 2. MSDS 아코디언 채우기
+        const msdsContainer = document.getElementById('msds-accordion');
+        msdsContainer.innerHTML = '';
+        if (data.Substance.MSDS && data.Substance.MSDS.length > 0) {
+            data.Substance.MSDS.sort((a, b) => a.section_number - b.section_number);
+            const titles = ["화학제품과 회사에 관한 정보", "유해성·위험성", "구성성분의 명칭 및 함유량", "응급조치 요령", "폭발·화재 시 대처방법", "누출 사고 시 대처방법", "취급 및 저장방법", "노출방지 및 개인보호구", "물리화학적 특성", "안정성 및 반응성", "독성에 관한 정보", "환경에 미치는 영향", "폐기 시 주의사항", "운송에 필요한 정보", "법적 규제 현황", "그 밖의 참고사항"];
+            data.Substance.MSDS.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'accordion-item';
+                itemEl.innerHTML = `
+                    <button class="accordion-header">${item.section_number}. ${titles[item.section_number - 1] || '정보'}</button>
+                    <div class="accordion-content">
+                        <p>${item.content}</p>
+                    </div>
+                `;
+                msdsContainer.appendChild(itemEl);
+            });
+            msdsContainer.querySelectorAll('.accordion-header').forEach(button => {
+                button.addEventListener('click', () => {
+                    button.classList.toggle('active');
+                    const content = button.nextElementSibling;
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        content.classList.remove('show');
+                    } else {
+                        content.classList.add('show');
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    }
+                });
+            });
+        } else {
+            msdsContainer.innerHTML = '<p>등록된 MSDS 정보가 없습니다.</p>';
+        }
+
+        // 3. 유해화학물질 정보 채우기
+        const hazardContainer = document.getElementById('hazard-info-container');
+        hazardContainer.innerHTML = '';
+        if (data.Substance.HazardClassifications && data.Substance.HazardClassifications.length > 0) {
+            data.Substance.HazardClassifications.forEach(item => {
+                const hazardCard = document.createElement('div');
+                hazardCard.className = 'hazard-card';
+                hazardCard.innerHTML = `
+                    <h4>${item.classification_type || '분류 정보 없음'}</h4>
+                    <p><strong>고유번호:</strong> ${item.id_number || '정보 없음'}</p>
+                    <p><strong>함량정보:</strong> ${item.content_info || '정보 없음'}</p>
+                    <p><strong>고시정보:</strong> ${item.gosi_info || '정보 없음'}</p>
+                    <p><strong>고시일자:</strong> ${item.gosidate || '정보 없음'}</p>
+                `;
+                hazardContainer.appendChild(hazardCard);
+            });
+        } else {
+            hazardContainer.innerHTML = '<p>등록된 유해화학물질 정보가 없습니다.</p>';
+        }
+
+        // 4. 삭제 및 수정 버튼에 이벤트 연결
+        document.getElementById('delete-inventory-btn').onclick = () => handleDeleteInventory(inventoryId);
+        document.getElementById('edit-inventory-btn').onclick = () => handleEditInventory(inventoryId);
+
+    } catch (error) {
+        console.error("상세 정보 로드 오류:", error);
+        document.getElementById('detail-page-container').innerHTML = `<p>오류: ${error.message}</p>`;
+    }
+}
+
+/**
+ * 재고 삭제를 처리하는 함수
+ */
+async function handleDeleteInventory(inventoryId) {
+    if (!confirm("정말로 이 재고 항목을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
+
+    try {
+        const response = await fetch(`${EDGE_FUNCTION_URL}?type=inventory&id=${inventoryId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '삭제 실패');
+        
+        alert('성공적으로 삭제되었습니다.');
+        loadInventoryListPage();
+    } catch (error) {
+        alert(`삭제 중 오류 발생: ${error.message}`);
+    }
+}
+
+/**
+ * '수정' 버튼 클릭 시 실행: 수정 모드를 활성화하고 폼을 로드합니다.
+ */
+function handleEditInventory(inventoryId) {
+    console.log(`수정 모드 시작: Inventory ID ${inventoryId}`);
+    isEditMode = true;
+    editingInventoryId = inventoryId;
+    includeHTML('pages/form-input.html', 'form-container', initializeFormListeners);
+}
+
+/**
+ * 수정된 재고 정보를 서버에 PATCH 요청으로 전송합니다.
+ */
+async function updateInventory(event) {
+    if (event) event.preventDefault();
+
+    const submitButton = document.getElementById('inventory-submit-button');
+    if (!statusMessage || !submitButton || !editingInventoryId) return;
+
+    const casRn = document.getElementById('cas_rn').value.trim();
+    if (!casRn) {
+        alert('CAS 번호는 필수입니다.');
+        return;
+    }
+    
+    // 1. 폼 데이터 수집 (importData와 동일)
+    const purchaseVolumeStr = document.getElementById('purchase_volume').value;
+    const concentrationValueStr = document.getElementById('concentration_value').value;
+    const manufacturerOther = manufacturerOtherInput ? manufacturerOtherInput.value.trim() : '';
+    const purchaseDate = document.getElementById('purchase_date').value;
+
+    const purchaseVolume = parseFloat(purchaseVolumeStr);
+    const concentrationValue = parseFloat(concentrationValueStr);
+
+    const finalManufacturer = selectedManufacturer === '기타' ? (manufacturerOther || null) : selectedManufacturer;
+    const finalClassification = selectedClassification || '미분류';
+
+    // 2. 서버로 전송할 최종 데이터 구성
+    const inventoryData = {
+        inventory_id: editingInventoryId, // 수정할 재고의 ID
+        inventoryDetails: {
+            // casRn은 수정하지 않으므로 여기서 제외합니다.
+            concentration_value: isNaN(concentrationValue) ? null : concentrationValue,
+            concentration_unit: selectedConcentrationUnit || null,
+            purchase_volume: isNaN(purchaseVolume) ? null : purchaseVolume,
+            // current_amount는 사용량 등록 기능에서 별도로 관리해야 하므로, 여기서는 수정하지 않습니다.
+            unit: selectedUnit || null,
+            state: selectedState || null,
+            manufacturer: finalManufacturer,
+            purchase_date: purchaseDate || null,
+            classification: finalClassification,
+            cabinet_id: locationSelections.cabinet_id,
+            door_vertical: locationSelections.door_vertical,
+            door_horizontal: locationSelections.door_horizontal,
+            internal_shelf_level: locationSelections.internal_shelf_level,
+            storage_columns: locationSelections.storage_columns,
+            // 새로 선택한 사진이 있다면 데이터가 담기고, 없다면 null이 전송됩니다.
+            photo_320_base64: selectedPhoto_320_Base64,
+            photo_160_base64: selectedPhoto_160_Base64,
+        }
+    };
+
+    try {
+        submitButton.disabled = true;
+        submitButton.textContent = '수정 중...';
+
+        const response = await fetch(EDGE_FUNCTION_URL, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+            body: JSON.stringify(inventoryData)
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '수정 실패');
+
+        alert('✅ 성공적으로 수정되었습니다.');
+        loadInventoryListPage();
+
+    } catch (error) {
+        console.error("데이터 수정 중 오류 발생:", error);
+        alert(`❌ 수정 실패: ${error.message}`);
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = '수정 내용 저장';
+        isEditMode = false;
+        editingInventoryId = null;
     }
 }

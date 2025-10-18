@@ -460,3 +460,96 @@ button:disabled {
     z-index: 1001;
     cursor: pointer;
 }
+
+/* =================================================================
+   상세 정보 페이지 스타일
+================================================================= */
+.detail-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background-color: #fff;
+}
+.detail-section h2 { margin-top: 0; }
+.detail-section h3 { margin-top: 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+.detail-section p { color: #555; }
+
+/* 아코디언 UI 스타일 */
+.accordion-item {
+    border-bottom: 1px solid #eee;
+}
+.accordion-header {
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 15px 5px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.accordion-header::after {
+    content: '▼';
+    font-size: 10px;
+    transition: transform 0.2s;
+}
+.accordion-header.active::after {
+    transform: rotate(180deg);
+}
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    padding: 0 15px;
+    white-space: pre-wrap; /* 줄바꿈(\n)을 그대로 표시 */
+    font-size: 13px;
+    color: #333;
+}
+.accordion-content.show {
+    padding-bottom: 15px;
+}
+
+/* 유해화학물질 정보 카드 스타일 */
+.hazard-card {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+.hazard-card h4 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #d9534f; /* 위험을 나타내는 붉은색 계열 */
+}
+.hazard-card p {
+    margin: 3px 0;
+    font-size: 12px;
+}
+
+/* 플로팅 버튼 컨테이너 */
+.fab-container {
+    position: fixed;
+    bottom: 70px;
+    right: 20px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.fab-edit, .fab-delete {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+    cursor: pointer;
+}
+.fab-edit { background-color: #5cb85c; } /* 수정: 초록색 */
+.fab-delete { background-color: #d9534f; } /* 삭제: 붉은색 */
