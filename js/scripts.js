@@ -1107,7 +1107,7 @@ function loadInventoryFormPage() {
 function loadInventoryListPage() {
     const fab = document.getElementById('fab-button');
     if (fab) {
-        fab.textContent = '+ 시약병 등록'; // 버튼 텍스트
+        fab.textContent = '입고 약품 등록'; // 버튼 텍스트
         fab.onclick = loadInventoryFormPage; // 버튼 기능
     }
     setFabVisibility(true); // 버튼 보이기
