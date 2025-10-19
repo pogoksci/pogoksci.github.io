@@ -376,55 +376,51 @@ function setupButtonGroup(groupId, initialValue = null) {
 // 4. Navbar 이벤트 리스너 설정
 // =================================================================
 function setupNavbarListeners() {
-    // 1. 필요한 모든 네비게이션 요소를 가져옵니다.
+    // 1. 필요한 네비게이션 요소를 가져옵니다. (homeNav 제거)
     const startMenu = document.getElementById('start-menu');
     const startButton = document.querySelector('.start-button');
-    const homeNav = document.getElementById('nav-home');         // '홈' 탭 버튼
-    const inventoryNav = document.getElementById('nav-inventory'); // '약품 관리' 탭 버튼
+    const inventoryNav = document.getElementById('nav-inventory');
     
-    // 요소가 하나라도 없으면 오류를 방지하기 위해 함수를 중단합니다.
-    if (!startMenu || !startButton || !inventoryNav || !homeNav) {
+    if (!startMenu || !startButton || !inventoryNav) {
         console.error("네비게이션 요소 중 일부를 찾을 수 없습니다. navbar.html의 id를 확인해주세요.");
         return;
     }
 
     // --- 하단 네비게이션 탭 이벤트 리스너 ---
 
-    // '홈' 탭 클릭 시 메인 화면 로드
-    homeNav.addEventListener('click', (event) => {
-        event.preventDefault();
-        setFabVisibility(false); // FAB 버튼 숨기기
-        includeHTML('pages/main.html', 'form-container');
-    });
-
-    // '약품 관리' 탭 클릭 시 '약품 관리 목록' 페이지 로드
+    // '약품 관리' 탭 클릭 시 목록 페이지 로드
     inventoryNav.addEventListener('click', (event) => {
         event.preventDefault();
-        loadInventoryListPage(); // 입력 폼이 아닌 목록 페이지를 로드합니다.
+        loadInventoryListPage();
     });
 
 
     // --- 시작 메뉴(팝업) 이벤트 리스너 ---
 
-    // 시작 메뉴(햄버거 아이콘) 버튼 클릭 시 팝업 열기/닫기
+    // 시작 메뉴(햄버거 아이콘) 버튼 클릭 시 팝업 토글
     startButton.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
         startMenu.classList.toggle('visible');
     });
 
-    // 팝업 메뉴 안의 항목('시약장 설정' 등) 클릭 시
+    // 팝업 메뉴 안의 항목 클릭 시
     const menuItems = startMenu.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
         item.addEventListener('click', (event) => {
             event.preventDefault();
-            startMenu.classList.remove('visible'); // 메뉴 닫기
+            startMenu.classList.remove('visible');
             const itemText = event.target.textContent.trim();
 
             if (itemText === '시약장 설정') {
-                loadLocationListPage(); // 시약장 목록 페이지 로드
+                loadLocationListPage();
             } else if (itemText === '약품 관리') {
-                loadInventoryListPage(); // 약품 관리 목록 페이지 로드
+                loadInventoryListPage();
+            } 
+            // ⬇️ [수정됨] '홈' 메뉴 클릭 시 동작 추가
+            else if (itemText === '홈') {
+                setFabVisibility(false); // FAB 버튼 숨기기
+                includeHTML('pages/main.html', 'form-container');
             }
         });
     });
@@ -889,11 +885,6 @@ function renderCabinetCards(cabinets, container) {
     cabinets.forEach(cabinet => {
         const areaName = allAreas.find(a => a.id === cabinet.area_id)?.name || '알 수 없음';
         
-        let verticalDoorText = '단일도어';
-        if (cabinet.door_vertical_count === 3) verticalDoorText = '상중하도어';
-        else if (cabinet.door_vertical_count === 2) verticalDoorText = '상하도어';
-        const horizontalDoorText = cabinet.door_horizontal_count === 2 ? '좌우분리도어' : '단일도어';
-        
         const card = document.createElement('div');
         card.className = 'cabinet-card';
         card.setAttribute('data-cabinet-id', cabinet.id);
@@ -906,8 +897,6 @@ function renderCabinetCards(cabinets, container) {
             </div>
             <div class="card-info">
                 <h3>${cabinet.name} <small class="area-name">${areaName}</small></h3>
-                <p class="cabinet-specs">${verticalDoorText}, ${horizontalDoorText}</p>
-                <p class="cabinet-specs">(${cabinet.shelf_height}단, ${cabinet.storage_columns}열)</p>
             </div>
             <div class="card-actions">
                 <button class="edit-btn" data-id="${cabinet.id}">수정</button>
