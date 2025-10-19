@@ -378,30 +378,41 @@ function setupButtonGroup(groupId, initialValue = null) {
 function setupNavbarListeners() {
     const startMenu = document.getElementById('start-menu');
     const startButton = document.querySelector('.start-button');
-    if (!startMenu || !startButton) return;
+    const inventoryNav = document.getElementById('nav-inventory'); // '약품 관리' 탭 버튼
+    
+    if (!startMenu || !startButton || !inventoryNav) return;
 
+    // ⬇️ [수정됨] '약품 관리' 탭 클릭 시 입고 폼 로드
+    inventoryNav.addEventListener('click', (event) => {
+        event.preventDefault();
+        // 기존의 loadInventoryListPage() 대신 loadInventoryFormPage() 호출
+        loadInventoryFormPage(); 
+    });
+
+    // 시작 메뉴(햄버거) 버튼 클릭 이벤트 (기존과 동일)
     startButton.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
         startMenu.classList.toggle('visible');
     });
 
+    // 시작 메뉴 안의 메뉴 아이템들 클릭 이벤트 (기존과 동일)
     const menuItems = startMenu.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
         item.addEventListener('click', (event) => {
             event.preventDefault();
             startMenu.classList.remove('visible');
             const itemText = event.target.textContent.trim();
+
             if (itemText === '시약장 설정') {
-                includeHTML('pages/location-list.html', 'form-container', setupLocationList);
-            }
-            // ⬇️ [새로운 코드 추가] '약품 관리' 탭 기능 구현을 위한 임시 네비게이션
-            else if (itemText === '약품 관리') {
+                loadLocationListPage();
+            } else if (itemText === '약품 관리') {
                 loadInventoryListPage();
             }
         });
     });
 
+    // 팝업 외부 클릭 시 닫기 (기존과 동일)
     globalThis.addEventListener('click', (event) => {
         if (startMenu.classList.contains('visible') && !startMenu.contains(event.target) && !startButton.contains(event.target)) {
             startMenu.classList.remove('visible');
@@ -500,7 +511,7 @@ async function importData(event) {
 // 6. 페이지 진입점
 // =================================================================
 globalThis.addEventListener('DOMContentLoaded', () => {
-    // ⬇️ [수정됨] 초기 화면을 main.html로 변경
+    // ⬇️ [수정됨] 초기 화면을 main.html로 변경하고, 콜백 함수를 제거합니다.
     includeHTML('pages/main.html', 'form-container'); 
     includeHTML('pages/navbar.html', 'navbar-container', setupNavbarListeners);
 });
