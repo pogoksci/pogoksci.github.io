@@ -821,8 +821,13 @@ function attachOtherInputLogic(buttonGroupId, otherGroupId, targetInputId) {
 }
 
 function loadLocationListPage() {
-    console.log("목록 페이지로 복귀 및 데이터 새로고침 시작.");
-    setFabVisibility(true); // ⬅️ 이 화면에서만 버튼을 보이게 함
+    const fab = document.getElementById('fab-button');
+    if (fab) {
+        // ⬇️ [수정됨] 시약장 등록에 맞게 버튼 텍스트와 기능을 변경합니다.
+        fab.textContent = '새 시약장 등록';
+        fab.onclick = showNewCabinetForm;
+    }
+    setFabVisibility(true); // FAB 보이기
     includeHTML('pages/location-list.html', 'form-container', fetchCabinetListAndRender);
 }
 
@@ -1091,10 +1096,11 @@ function loadInventoryFormPage() {
 function loadInventoryListPage() {
     const fab = document.getElementById('fab-button');
     if (fab) {
-        fab.textContent = '+';
-        fab.onclick = loadInventoryFormPage;
+        // ⬇️ [수정됨] 약품 등록에 맞게 버튼 텍스트와 기능을 변경합니다.
+        fab.textContent = '+ 시약병 등록';
+        fab.onclick = loadInventoryFormPage; 
     }
-    setFabVisibility(true);
+    setFabVisibility(true); // FAB 보이기
     includeHTML('pages/inventory-list.html', 'form-container', fetchInventoryAndRender);
 }
 
