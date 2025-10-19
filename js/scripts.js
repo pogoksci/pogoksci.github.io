@@ -380,10 +380,10 @@ function setupNavbarListeners() {
     // 1. 필요한 모든 네비게이션 요소를 가져옵니다.
     const startMenu = document.getElementById('start-menu');
     const startButton = document.querySelector('.start-button');
-    const inventoryNav = document.getElementById('nav-inventory');
-    
+    const inventoryNav = document.getElementById('nav-inventory'); // '약품 관리' 탭
+
     if (!startMenu || !startButton || !inventoryNav) {
-        console.error("네비게이션 요소 중 일부를 찾을 수 없습니다. navbar.html의 id를 확인해주세요.");
+        console.error("네비게이션 요소를 찾을 수 없습니다. navbar.html의 id를 확인해주세요.");
         return;
     }
 
@@ -396,6 +396,18 @@ function setupNavbarListeners() {
     });
 
     // --- 시작 메뉴(팝업) 이벤트 리스너 ---
+
+    // 시작 메뉴(팝업)의 '홈' 버튼 클릭 시 메인 화면 로드 및 FAB 숨기기
+    const homeMenuItem = startMenu.querySelector('.menu-item-home'); // '홈' 메뉴 아이템
+    if (homeMenuItem) {
+        homeMenuItem.addEventListener('click', (event) => {
+            event.preventDefault();
+            startMenu.classList.remove('visible');
+            includeHTML('pages/main.html', 'form-container', () => {
+                setFabVisibility(false);
+            });
+        });
+    }
 
     // 시작 메뉴(햄버거 아이콘) 버튼 클릭 시 팝업 토글
     startButton.addEventListener('click', (event) => {
@@ -823,11 +835,10 @@ function attachOtherInputLogic(buttonGroupId, otherGroupId, targetInputId) {
 function loadLocationListPage() {
     const fab = document.getElementById('fab-button');
     if (fab) {
-        // ⬇️ [수정됨] 시약장 등록에 맞게 버튼 텍스트와 기능을 변경합니다.
-        fab.textContent = '새 시약장 등록';
-        fab.onclick = showNewCabinetForm;
+        fab.textContent = '새 시약장 등록'; // 버튼 텍스트
+        fab.onclick = showNewCabinetForm; // 버튼 기능
     }
-    setFabVisibility(true); // FAB 보이기
+    setFabVisibility(true); // 버튼 보이기
     includeHTML('pages/location-list.html', 'form-container', fetchCabinetListAndRender);
 }
 
@@ -1096,11 +1107,10 @@ function loadInventoryFormPage() {
 function loadInventoryListPage() {
     const fab = document.getElementById('fab-button');
     if (fab) {
-        // ⬇️ [수정됨] 약품 등록에 맞게 버튼 텍스트와 기능을 변경합니다.
-        fab.textContent = '+ 시약병 등록';
-        fab.onclick = loadInventoryFormPage; 
+        fab.textContent = '+ 시약병 등록'; // 버튼 텍스트
+        fab.onclick = loadInventoryFormPage; // 버튼 기능
     }
-    setFabVisibility(true); // FAB 보이기
+    setFabVisibility(true); // 버튼 보이기
     includeHTML('pages/inventory-list.html', 'form-container', fetchInventoryAndRender);
 }
 
