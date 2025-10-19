@@ -516,21 +516,19 @@ async function importData(event) {
         const result = data[0];
         const msg = result.isNewSubstance ? `✅ 신규 물질(${casRn}) 정보 및 시약병 등록 완료!` : `✅ 기존 물질(${casRn})에 새 시약병 등록 완료!`;
         alert(msg);
-        statusMessage.textContent = '';
 
-        document.getElementById('inventory-form').reset();
-        if (photoPreview) photoPreview.innerHTML = '<span>사진 없음</span>';
-        selectedPhoto_320_Base64 = null;
-        selectedPhoto_160_Base64 = null;
-        document.querySelectorAll('.button-group .active').forEach(button => button.classList.remove('active'));
-
+        // ⬇️ [수정됨] 폼 초기화 대신 '약품 관리' 목록 화면으로 이동합니다.
+        loadInventoryListPage();
+    
     } catch (error) {
         console.error("데이터 전송 중 오류 발생:", error);
         alert(`❌ 오류: 데이터 처리 실패.\n\n(${error.message})`);
         statusMessage.textContent = '';
     } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = '재고 정보 DB에 저장';
+        if (document.getElementById('inventory-form')) { // 현재 폼이 아직 화면에 있다면
+             submitButton.disabled = false;
+             submitButton.textContent = '입고 약품 정보 저장';
+        }
     }
 }
 
