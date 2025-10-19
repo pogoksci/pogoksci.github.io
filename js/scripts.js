@@ -375,8 +375,9 @@ function setupButtonGroup(groupId, initialValue = null) {
 // =================================================================
 // 4. Navbar 이벤트 리스너 설정
 // =================================================================
+// [전체 코드로 교체]
 function setupNavbarListeners() {
-    // 1. 필요한 네비게이션 요소를 가져옵니다. (homeNav 제거)
+    // 1. 필요한 모든 네비게이션 요소를 가져옵니다.
     const startMenu = document.getElementById('start-menu');
     const startButton = document.querySelector('.start-button');
     const inventoryNav = document.getElementById('nav-inventory');
@@ -393,7 +394,6 @@ function setupNavbarListeners() {
         event.preventDefault();
         loadInventoryListPage();
     });
-
 
     // --- 시작 메뉴(팝업) 이벤트 리스너 ---
 
@@ -417,10 +417,12 @@ function setupNavbarListeners() {
             } else if (itemText === '약품 관리') {
                 loadInventoryListPage();
             } 
-            // ⬇️ [수정됨] '홈' 메뉴 클릭 시 동작 추가
+            // ⬇️ [수정됨] '홈' 메뉴 클릭 시 동작 변경
             else if (itemText === '홈') {
-                setFabVisibility(false); // FAB 버튼 숨기기
-                includeHTML('pages/main.html', 'form-container');
+                // main.html 로드가 완료된 후, 콜백 함수를 실행하여 버튼을 숨깁니다.
+                includeHTML('pages/main.html', 'form-container', () => {
+                    setFabVisibility(false);
+                });
             }
         });
     });
