@@ -376,43 +376,60 @@ function setupButtonGroup(groupId, initialValue = null) {
 // 4. Navbar 이벤트 리스너 설정
 // =================================================================
 function setupNavbarListeners() {
+    // 1. 필요한 모든 네비게이션 요소를 가져옵니다.
     const startMenu = document.getElementById('start-menu');
     const startButton = document.querySelector('.start-button');
+    const homeNav = document.getElementById('nav-home');         // '홈' 탭 버튼
     const inventoryNav = document.getElementById('nav-inventory'); // '약품 관리' 탭 버튼
     
-    if (!startMenu || !startButton || !inventoryNav) return;
+    // 요소가 하나라도 없으면 오류를 방지하기 위해 함수를 중단합니다.
+    if (!startMenu || !startButton || !inventoryNav || !homeNav) {
+        console.error("네비게이션 요소 중 일부를 찾을 수 없습니다. navbar.html의 id를 확인해주세요.");
+        return;
+    }
 
-    // ⬇️ [수정됨] '약품 관리' 탭 클릭 시 입고 폼 로드
-    inventoryNav.addEventListener('click', (event) => {
+    // --- 하단 네비게이션 탭 이벤트 리스너 ---
+
+    // '홈' 탭 클릭 시 메인 화면 로드
+    homeNav.addEventListener('click', (event) => {
         event.preventDefault();
-        // 기존의 loadInventoryListPage() 대신 loadInventoryFormPage() 호출
-        loadInventoryFormPage(); 
+        setFabVisibility(false); // FAB 버튼 숨기기
+        includeHTML('pages/main.html', 'form-container');
     });
 
-    // 시작 메뉴(햄버거) 버튼 클릭 이벤트 (기존과 동일)
+    // '약품 관리' 탭 클릭 시 '약품 관리 목록' 페이지 로드
+    inventoryNav.addEventListener('click', (event) => {
+        event.preventDefault();
+        loadInventoryListPage(); // 입력 폼이 아닌 목록 페이지를 로드합니다.
+    });
+
+
+    // --- 시작 메뉴(팝업) 이벤트 리스너 ---
+
+    // 시작 메뉴(햄버거 아이콘) 버튼 클릭 시 팝업 열기/닫기
     startButton.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
         startMenu.classList.toggle('visible');
     });
 
-    // 시작 메뉴 안의 메뉴 아이템들 클릭 이벤트 (기존과 동일)
+    // 팝업 메뉴 안의 항목('시약장 설정' 등) 클릭 시
     const menuItems = startMenu.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
         item.addEventListener('click', (event) => {
             event.preventDefault();
-            startMenu.classList.remove('visible');
+            startMenu.classList.remove('visible'); // 메뉴 닫기
             const itemText = event.target.textContent.trim();
 
             if (itemText === '시약장 설정') {
-                loadLocationListPage();
+                loadLocationListPage(); // 시약장 목록 페이지 로드
             } else if (itemText === '약품 관리') {
-                loadInventoryListPage();
+                loadInventoryListPage(); // 약품 관리 목록 페이지 로드
             }
         });
     });
 
-    // 팝업 외부 클릭 시 닫기 (기존과 동일)
+    // 팝업 메뉴 바깥쪽 클릭 시 닫기
     globalThis.addEventListener('click', (event) => {
         if (startMenu.classList.contains('visible') && !startMenu.contains(event.target) && !startButton.contains(event.target)) {
             startMenu.classList.remove('visible');
@@ -511,9 +528,16 @@ async function importData(event) {
 // 6. 페이지 진입점
 // =================================================================
 globalThis.addEventListener('DOMContentLoaded', () => {
-    // ⬇️ [수정됨] 초기 화면을 main.html로 변경하고, 콜백 함수를 제거합니다.
+// 1. 초기 화면을 main.html로 로드
     includeHTML('pages/main.html', 'form-container'); 
-    includeHTML('pages/navbar.html', 'navbar-container', setupNavbarListeners);
+    
+    // 2. 하단 네비게이션 바 로드 및 기능 연결
+    includeHTML('pages/navbar.html', 'navbar-container', () => {
+        // navbar.html 로드가 완료된 후, 버튼 기능 설정
+        setupNavbarListeners();
+        // 3. 앱이 처음 시작될 때 FAB 버튼을 숨김
+        setFabVisibility(false);
+    });
 });
 
 // =================================================================
@@ -800,12 +824,12 @@ function attachOtherInputLogic(buttonGroupId, otherGroupId, targetInputId) {
 
 function loadLocationListPage() {
     console.log("목록 페이지로 복귀 및 데이터 새로고침 시작.");
-    setFabVisibility(true);
+    setFabVisibility(true); // ⬅️ 이 화면에서만 버튼을 보이게 함
     includeHTML('pages/location-list.html', 'form-container', fetchCabinetListAndRender);
 }
 
 function setupLocationList() {
-    setFabVisibility(true);
+    setFabVisibility(true); // ⬅️ 이 화면에서만 버튼을 보이게 함
     console.log("시약장 목록 페이지 로드 완료. 데이터 로드 시작.");
     fetchCabinetListAndRender();
 }
