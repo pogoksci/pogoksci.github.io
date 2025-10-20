@@ -332,107 +332,167 @@ button:disabled {
 /* =================================================================
    하단 네비게이션 바 및 메뉴
 ================================================================= */
+/* ---------------------------
+   하단 네비게이션 바
+--------------------------- */
 .navbar {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     display: flex;
-    height: 55px;
-    background-color: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    height: 60px;
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
     z-index: 1000;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #eee;
 }
 
+/* 각 아이콘 및 텍스트 버튼 */
 .nav-item {
     flex-grow: 1;
     text-align: center;
-    color: #444;
+    color: #333;
     text-decoration: none;
-    padding: 8px 0;
-    font-size: 12px;
+    padding: 10px 0;
+    font-size: 13px;
+    font-weight: 500;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: transparent;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease-in-out;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
+.material-symbols-outlined {
+    font-variation-settings:
+      'FILL' 0,
+      'wght' 500,
+      'GRAD' 0,
+      'opsz' 24;
+}
+
+/* 아이콘 */
 .nav-icon {
-    font-size: 18px;
-    margin-bottom: 2px;
+    font-size: 24px;
+    margin-bottom: 3px;
+    transition: transform 0.2s;
 }
 
+/* 터치 효과 */
+.nav-item:active {
+    background-color: rgba(0, 188, 212, 0.1);
+}
+.nav-item:active .nav-icon {
+    transform: scale(0.9);
+}
+
+/* 활성 탭 */
 .nav-item.active {
+    color: #00bcd4;
+    font-weight: 600;
+}
+
+
+/* 메뉴 버튼 */
+.nav-item.start-button {
     background-color: #00bcd4;
     color: white;
-}
-
-.nav-item.start-button {
-    background-color: #307690;
-    color: white;
     flex-grow: 0;
-    width: 60px;
+    width: 70px;
+    border-top-right-radius: 10px;
 }
 
+/* ---------------------------
+   좌측 팝업 메뉴 (Start Menu)
+--------------------------- */
+/* ---------------------------
+   팝업 메뉴 (Start Menu)
+--------------------------- */
 .start-menu-popup {
-    display: none;
     position: fixed;
-    bottom: 55px;
-    left: 10px;
-    width: 250px;
-    background-color: #333;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    bottom: 70px;
+    left: 15px;
+    width: 260px;
+    background-color: rgba(255, 255, 255, 0.97);
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
     z-index: 1010;
-    padding: 10px;
+    padding: 12px;
     flex-direction: column;
+    opacity: 0;
+    transform: translateY(15px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .start-menu-popup.visible {
-    display: flex;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
 }
 
-.menu-list {
-    flex-grow: 1;
-    padding-bottom: 10px;
-}
-
+/* 메뉴 아이템 */
 .menu-item {
-    display: block;
-    padding: 10px;
-    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 12px;
+    color: #333;
     text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.1s;
+    border-radius: 8px;
+    transition: background-color 0.15s;
     font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.2px;
 }
 
-.menu-item:hover {
-    background-color: #555;
+.menu-item:hover,
+.menu-item:active {
+    background-color: rgba(0, 188, 212, 0.15);
 }
 
+/* 아이콘 정렬 */
+.menu-item .material-symbols-outlined {
+    font-size: 20px;
+    color: #00a0b2;
+}
+
+/* 구분선 */
+.menu-list {
+    border-bottom: 1px solid #eee;
+    margin-bottom: 8px;
+}
+
+/* 하단 사용자 정보 */
 .menu-footer {
     display: flex;
     align-items: center;
-    padding: 10px;
-    margin-top: 10px;
-    border-top: 1px solid #555;
-    background-color: #444;
-    border-radius: 5px;
+    justify-content: flex-start;
+    padding: 12px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    margin-top: 5px;
     cursor: pointer;
 }
 
 .user-icon {
-    font-size: 20px;
+    font-size: 22px;
     margin-right: 10px;
+    color: #00a0b2;
 }
 
 .user-id {
-    font-weight: bold;
-    color: white;
+    font-weight: 600;
+    color: #333;
+}
+
+/* 터치 피드백 강화 */
+.nav-item, .menu-item {
+    min-height: 44px;
 }
 
 /* =================================================================

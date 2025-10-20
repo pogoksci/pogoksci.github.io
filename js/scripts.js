@@ -7,6 +7,8 @@ const SUPABASE_URL = "https://muprmzkvrjacqatqxayf.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11cHJtemt2cmphY3FhdHF4YXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjYwNzAsImV4cCI6MjA3NTEwMjA3MH0.K2MO-l6QG5nztCPlT3_zqYOrMt-bqM-O5ZYLQpV1L9Y";
 const FUNCTION_NAME = "casimport";
 const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`;
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 
 // 🔑 버튼 그룹의 선택 값을 저장할 전역 변수
 let selectedClassification = null;
@@ -1112,38 +1114,89 @@ function loadInventoryListPage() {
     includeHTML('pages/inventory-list.html', 'form-container', fetchInventoryAndRender);
 }
 
-/**
- * 서버에서 인벤토리 목록을 가져와 화면에 렌더링하는 함수
- */
+// ✅ 재고 목록 불러오기
 async function fetchInventoryAndRender() {
-    const listContainer = document.getElementById('inventory-list-container');
-    const statusMsg = document.getElementById('status-message-inventory-list');
-    if (!listContainer || !statusMsg) return;
+    const container = document.getElementById("inventory-list-container");
+    const statusMessage = document.getElementById("status-message-inventory-list");
 
-    statusMsg.textContent = '재고 목록을 불러오는 중...';
     try {
-        const response = await fetch(`${EDGE_FUNCTION_URL}?type=inventory`, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || '재고 목록 조회 실패');
-        
-        if (allCabinets.length === 0) {
-            await fetchLocationData();
-        }
-        
-        if (!data.inventory || data.inventory.length === 0) {
-            listContainer.innerHTML = `<p style="text-align:center; color:#888;">등록된 재고가 없습니다.</p>`;
+        statusMessage.textContent = "재고 목록을 불러오는 중...";
+        container.innerHTML = "";
+
+        // Supabase에서 Inventory + Substance + Cabinet 정보 함께 조회
+        const { data, error } = await supabase
+            .from("Inventory")
+            .select(`
+                id,
+                bottle_identifier,
+                current_amount,
+                unit,
+                purchase_date,
+                state,
+                classification,
+                manufacturer,
+                photo_url_160,
+                substance_id (
+                    id,
+                    name,
+                    cas_rn
+                ),
+                cabinet_id (
+                    id,
+                    name,
+                    area_id (
+                        id,
+                        name
+                    )
+                )
+            `)
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            statusMessage.textContent = "등록된 재고가 없습니다.";
             return;
         }
-        
-        renderInventoryCards(data.inventory, listContainer);
-        statusMsg.textContent = `✅ 재고 ${data.inventory.length}개 로드 완료`;
-        
-    } catch (error) {
-        console.error("재고 목록 로드 오류:", error);
-        statusMsg.textContent = `❌ ${error.message}`;
+
+        // 목록 렌더링
+        data.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "cabinet-card";
+            div.style.marginBottom = "10px";
+
+            const imgUrl = item.photo_url_160 || "css/logo.png";
+            const substanceName = item.substance_id?.name || "이름 없음";
+            const cas = item.substance_id?.cas_rn || "-";
+            const location = item.cabinet_id?.area_id?.name
+                ? `${item.cabinet_id.area_id.name} > ${item.cabinet_id.name}`
+                : "위치 정보 없음";
+
+            div.innerHTML = `
+                <div class="card-image-placeholder">
+                    <img src="${imgUrl}" alt="${substanceName}" style="width:100%; height:100%; object-fit:cover;">
+                </div>
+                <div class="card-info">
+                    <h3>${substanceName}</h3>
+                    <p class="area-name">${location}</p>
+                    <p class="cabinet-specs">CAS: ${cas}</p>
+                    <p class="cabinet-specs">${item.current_amount ?? "-"} ${item.unit ?? ""}</p>
+                </div>
+            `;
+
+            // 클릭 시 상세 페이지로 이동
+            div.addEventListener("click", () => {
+                localStorage.setItem("selected_inventory_id", item.id);
+                includeHTML("pages/inventory-detail.html");
+            });
+
+            container.appendChild(div);
+        });
+
+        statusMessage.textContent = "";
+    } catch (err) {
+        console.error("재고 목록 로드 오류:", err);
+        statusMessage.textContent = "재고 목록을 불러오는 중 오류가 발생했습니다.";
     }
 }
 
