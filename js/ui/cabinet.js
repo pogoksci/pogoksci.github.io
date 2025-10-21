@@ -68,51 +68,48 @@
   }
 
   // ✅ 수정 모드: 폼 로드 및 기존 데이터 채우기
-  async function handleEditCabinet(cabinetId) {
-    try {
-      const { data, error } = await supabase
-        .from("Cabinet")
-        .select(`id, name, area_id ( id, name ), photo_url_160, photo_url_320, door_vertical_count, door_horizontal_count, shelf_height, storage_columns`)
-        .eq("id", cabinetId)
-        .maybeSingle();
+async function handleEditCabinet(cabinetId) {
+  try {
+    const { data, error } = await supabase
+      .from("Cabinet")
+      .select(`id, name, area_id ( id, name ), photo_url_160, photo_url_320, door_vertical_count, door_horizontal_count, shelf_height, storage_columns`)
+      .eq("id", cabinetId)
+      .maybeSingle();
 
-      if (error || !data) throw error || new Error("시약장 정보를 불러오지 못했습니다.");
+    if (error || !data) throw error || new Error("시약장 정보를 불러오지 못했습니다.");
 
-      console.log("✅ 시약장 수정 데이터:", data);
+    await includeHTML("pages/cabinet-form.html", "form-container");
 
-      // 📄 수정 폼 HTML 로드
-      await includeHTML("pages/cabinet-form.html", "form-container");
+    document.querySelector("h2").textContent = "시약장 정보 수정";
+    document.getElementById("cabinet-submit-button").textContent = "수정 내용 저장";
 
-      // 제목 변경
-      document.querySelector("h2").textContent = "시약장 정보 수정";
-      document.getElementById("cabinet-submit-button").textContent = "수정 내용 저장";
+    // ✅ 자동 매핑 적용
+    Object.entries(data).forEach(([key, value]) => {
+      const input = document.getElementById(key);
+      if (input) input.value = value ?? "";
+    });
 
-      // 입력 필드 채우기 (id들은 실제 폼의 input id에 맞게 수정)
-      document.getElementById("cabinet_name").value = data.name || "";
-      document.getElementById("door_vertical_count").value = data.door_vertical_count || 1;
-      document.getElementById("door_horizontal_count").value = data.door_horizontal_count || 1;
-      document.getElementById("shelf_height").value = data.shelf_height || 3;
-      document.getElementById("storage_columns").value = data.storage_columns || 1;
-
-      // 사진 표시
-      const preview = document.getElementById("cabinet-photo-preview");
-      if (preview) {
-        if (data.photo_url_320)
-          preview.innerHTML = `<img src="${data.photo_url_320}" alt="${data.name}" style="max-width:100%;">`;
-        else
-          preview.innerHTML = `<span>사진 없음</span>`;
-      }
-
-      // 수정 이벤트 연결
-      const form = document.getElementById("cabinet-creation-form");
-      form.onsubmit = (e) => updateCabinet(e, cabinetId);
-
-      alert(`✅ 시약장 "${data.name}" 정보를 불러왔습니다.`);
-    } catch (err) {
-      console.error("시약장 수정 오류:", err);
-      alert("시약장 정보를 불러오지 못했습니다.");
+    // ✅ 중첩 필드 (area_id.name) 등은 따로 처리
+    if (data.area_id?.name && document.getElementById("area_name")) {
+      document.getElementById("area_name").value = data.area_id.name;
     }
+
+    // ✅ 사진 미리보기
+    const preview = document.getElementById("cabinet-photo-preview");
+    if (preview) {
+      preview.innerHTML = data.photo_url_320
+        ? `<img src="${data.photo_url_320}" alt="${data.name}" style="max-width:100%;">`
+        : "사진 없음";
+    }
+
+    // ✅ 수정 저장 핸들러 연결
+    document.getElementById("cabinet-creation-form").onsubmit = (e) => updateCabinet(e, cabinetId);
+
+  } catch (err) {
+    console.error("시약장 수정 오류:", err);
+    alert("시약장 정보를 불러오지 못했습니다.");
   }
+}
 
   // ✅ 수정 저장 함수
   async function updateCabinet(event, cabinetId) {
