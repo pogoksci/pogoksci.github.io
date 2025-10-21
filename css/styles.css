@@ -281,11 +281,12 @@ button:disabled {
 }
 
 /* 위치 텍스트 스타일 */
-.cabinet-card .card-info .area-name {
+/*.cabinet-card .card-info .area-name {
   color: #666;
   font-size: 0.9rem;
-  white-space: nowrap;       /* 줄바꿈 방지 */
-}
+  white-space: nowrap;
+}*/
+.cabinet-card .card-info .area-name { position: relative; top: 1px; }
 
 .card-image-placeholder {
     width: 100%;
