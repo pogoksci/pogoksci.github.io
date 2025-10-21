@@ -1,65 +1,78 @@
-// ====================================================================
-// 카메라 및 이미지 처리 관련 함수
-// ====================================================================
-let cameraStream = null;
+// js/core/camera.js
+(function () {
+  let stream = null;
 
-async function startCamera() {
-  const cameraModal = document.getElementById("camera-modal");
-  const cameraView = document.getElementById("camera-view");
-  if (!cameraModal || !cameraView) return;
+  async function startCamera() {
+    const modal = document.getElementById("camera-modal");
+    const view = document.getElementById("camera-view");
 
-  cameraModal.style.display = "flex";
-  try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-    cameraView.srcObject = cameraStream;
-  } catch (err) {
-    alert("카메라 접근 실패: " + err.message);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      alert("브라우저가 카메라를 지원하지 않습니다.");
+      return;
+    }
+
+    try {
+      modal.style.display = "flex";
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false,
+      });
+      view.srcObject = stream;
+    } catch (err) {
+      alert("카메라 접근 오류: " + err.message);
+      stopCamera();
+    }
+  }
+
+  function stopCamera() {
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+    }
+    const modal = document.getElementById("camera-modal");
+    if (modal) modal.style.display = "none";
+  }
+
+  async function takePicture(targetPreviewId = "photo-preview") {
+    const canvas = document.getElementById("photo-canvas");
+    const view = document.getElementById("camera-view");
+    const preview = document.getElementById(targetPreviewId);
+    if (!view || !canvas) return null;
+
+    canvas.width = view.videoWidth;
+    canvas.height = view.videoHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(view, 0, 0, canvas.width, canvas.height);
+    const base64 = canvas.toDataURL("image/png");
+
+    const resized = await resizeImage(base64, 320);
+    preview.innerHTML = `<img src="${resized}" alt="preview">`;
+
     stopCamera();
+    return resized;
   }
-}
 
-function stopCamera() {
-  if (cameraStream) {
-    cameraStream.getTracks().forEach((t) => t.stop());
-    cameraStream = null;
+  async function resizeImage(base64, size) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = base64;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const aspect = img.width / img.height;
+        let w = size,
+          h = size;
+        if (aspect > 1) h = size / aspect;
+        else w = size * aspect;
+        canvas.width = size;
+        canvas.height = size;
+        ctx.clearRect(0, 0, size, size);
+        ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+        resolve(canvas.toDataURL("image/png"));
+      };
+    });
   }
-  const cameraModal = document.getElementById("camera-modal");
-  if (cameraModal) cameraModal.style.display = "none";
-}
 
-function takePicture() {
-  const cameraView = document.getElementById("camera-view");
-  const canvas = document.getElementById("photo-canvas");
-  if (!cameraView || !canvas) return;
-
-  canvas.width = cameraView.videoWidth;
-  canvas.height = cameraView.videoHeight;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(cameraView, 0, 0);
-  const base64 = canvas.toDataURL("image/png");
-
-  processImage(base64, (resized) => {
-    const preview = document.getElementById("photo-preview");
-    preview.innerHTML = `<img src="${resized.base64_320}">`;
-  });
-  stopCamera();
-}
-
-function resizeToFit(img, size) {
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  const ratio = img.width / img.height;
-  let w = size, h = size;
-  if (ratio > 1) h = size / ratio; else w = size * ratio;
-  ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
-  return canvas.toDataURL("image/png");
-}
-
-function processImage(base64, cb) {
-  const img = new Image();
-  img.src = base64;
-  img.onload = () => {
-    cb({ base64_320: resizeToFit(img, 320), base64_160: resizeToFit(img, 160) });
-  };
-}
+  globalThis.App = globalThis.App || {};
+  App.Camera = { startCamera, stopCamera, takePicture, resizeImage };
+})();

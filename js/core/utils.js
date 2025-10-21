@@ -1,23 +1,34 @@
-// ====================================================================
-// 공통 유틸 함수 (페이지 로드, FAB 표시 등)
-// ====================================================================
+// js/core/utils.js
+(function () {
+  console.log("✅ utils.js 로드됨");
 
-function includeHTML(url, targetElementId, callback) {
-  fetch(url)
-    .then((response) => {
-      if (!response.ok) throw new Error(`Failed to load ${url}`);
-      return response.text();
-    })
-    .then((html) => {
-      const el = document.getElementById(targetElementId);
-      if (!el) return console.error(`Target #${targetElementId} not found`);
-      el.innerHTML = html;
-      if (callback) callback();
-    })
-    .catch((err) => console.error("includeHTML() 오류:", err));
-}
+  /** 간단한 지연 (await delay(500)) */
+  const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
-function setFabVisibility(visible) {
-  const fab = document.querySelector(".fab");
-  if (fab) fab.style.display = visible ? "block" : "none";
-}
+  /** 날짜 YYYY-MM-DD 포맷 */
+  const formatDate = (date = new Date()) =>
+    date.toISOString().split("T")[0];
+
+  /** 간단한 토스트 메시지 */
+  function toast(msg, color = "black", duration = 2000) {
+    const el = document.createElement("div");
+    el.textContent = msg;
+    Object.assign(el.style, {
+      position: "fixed",
+      bottom: "30px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      background: color,
+      color: "white",
+      padding: "8px 20px",
+      borderRadius: "20px",
+      fontSize: "14px",
+      zIndex: 9999,
+    });
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), duration);
+  }
+
+  globalThis.App = globalThis.App || {};
+  App.Utils = { delay, formatDate, toast };
+})();
