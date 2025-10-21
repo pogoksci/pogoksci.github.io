@@ -258,14 +258,32 @@ button:disabled {
 /* =================================================================
    시약장 목록 카드
 ================================================================= */
-.cabinet-card {
-    display: flex;
-    flex-direction: column;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    width: 100%;
+.cabinet-card .card-info {
+  display: flex;
+  align-items: center;       /* 세로 중앙 정렬 */
+  gap: 6px;                  /* 이름과 구분점 사이 간격 */
+  font-size: 1rem;
+}
+
+/* 이름 스타일 */
+.cabinet-card .card-info h3 {
+  margin: 0;
+  font-weight: 600;
+  white-space: nowrap;       /* 줄바꿈 방지 */
+}
+
+/* 위치(areaName) 앞에 가운데점(·) 자동 추가 */
+.cabinet-card .card-info .area-name::before {
+  content: "·";
+  margin: 0 4px;
+  color: #888;
+}
+
+/* 위치 텍스트 스타일 */
+.cabinet-card .card-info .area-name {
+  color: #666;
+  font-size: 0.9rem;
+  white-space: nowrap;       /* 줄바꿈 방지 */
 }
 
 .card-image-placeholder {
