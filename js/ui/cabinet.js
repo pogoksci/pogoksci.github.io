@@ -111,30 +111,33 @@
   async function initializeCabinetForm(detail) {
     console.log("🧭 시약장 수정 초기화", detail);
 
+    // 1️⃣ 기본 폼 데이터 채우기
     fillFormFromData(detail, "cabinet-creation-form");
 
-    // 버튼 그룹 초기화
-    setupButtonGroup("location_type_buttons");
+    // 2️⃣ 버튼 그룹 이벤트 리스너 초기화
+    setupButtonGroup("area-button-group");
 
-    // ✅ 기존 area_id 반영
+    // 3️⃣ 기존 area_id 반영 (id 기반으로 자동 선택)
     if (detail.area_id?.id) {
-      selectedAreaId = detail.area_id.id; // 선택된 위치 저장
-      const buttons = document.querySelectorAll("#location_type_buttons button");
+      selectedAreaId = detail.area_id.id; // 전역 상태 반영
+
+      const buttons = document.querySelectorAll("#area-button-group button");
       buttons.forEach((btn) => {
-        if (btn.dataset.id == detail.area_id.id) {
+        if (parseInt(btn.dataset.id) === selectedAreaId) {
           btn.classList.add("active");
         } else {
           btn.classList.remove("active");
         }
       });
+
+      console.log(`✅ 기존 선택된 위치: id=${selectedAreaId}, name=${detail.area_id.name}`);
     }
 
-    // ✅ 저장 버튼 리스너 연결
-    const saveBtn = document.getElementById("cabinet-submit-button");
+    // 4️⃣ 저장 버튼 설정
+    const saveBtn = document.getElementById("cabinet-save-btn");
     if (saveBtn) {
-      saveBtn.textContent = "시약장 수정 저장";
-      saveBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
+      saveBtn.textContent = "시약장 정보 수정";
+      saveBtn.addEventListener("click", async () => {
         await updateCabinetInfo(detail.id);
       });
     }

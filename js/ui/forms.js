@@ -9,40 +9,80 @@ let formMode = "create"; // 'create' | 'edit'
 // ------------------------------------------------------------
 // 1️⃣ 버튼 그룹 설정 (공용)
 // ------------------------------------------------------------
+/**
+ * 💡 범용 버튼 그룹 초기화 함수
+ * 모든 button-group에 대해 active 표시, 선택값 추적, 기타입력칸 처리까지 자동화
+ */
 function setupButtonGroup(groupId) {
   const group = document.getElementById(groupId);
   if (!group) return;
 
-  // 중복 이벤트 제거 후 새로 바인딩
+  // 🔄 중복 리스너 제거
   const newGroup = group.cloneNode(true);
   group.parentNode.replaceChild(newGroup, group);
+
+  // 🔹 전역 상태 맵 (필요시 확장 가능)
+  window.SelectedValues = window.SelectedValues || {};
 
   newGroup.addEventListener("click", (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
 
-    // 기존 active 제거 → 새 버튼 활성화
+    // 기존 active 해제 → 새 선택 반영
     newGroup.querySelectorAll(".active").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
 
-    // 선택한 ID 저장
-    selectedAreaId = btn.dataset.id || null;
+    // 공통 속성 추출
+    const id = btn.dataset.id ? parseInt(btn.dataset.id) : null;
+    const value = btn.dataset.value || btn.textContent.trim();
 
-    // 숨겨진 input 자동 업데이트 (collectFormData 호환)
-    const hiddenInput = newGroup.querySelector("input[type='hidden']");
-    if (hiddenInput) hiddenInput.value = btn.dataset.value || btn.textContent.trim();
+    // 그룹별 전역 변수 저장
+    switch (groupId) {
+      case "area-button-group":
+        window.selectedAreaId = id;
+        window.SelectedValues.area = { id, value };
+        break;
+      case "cabinet_name_buttons":
+        window.selectedCabinetName = value;
+        window.SelectedValues.cabinet_name = value;
+        break;
+      case "door_vertical_split_buttons":
+        window.selectedDoorVertical = value;
+        window.SelectedValues.door_vertical = value;
+        break;
+      case "door_horizontal_split_buttons":
+        window.selectedDoorHorizontal = value;
+        window.SelectedValues.door_horizontal = value;
+        break;
+      case "shelf_height_buttons":
+        window.selectedShelfHeight = value;
+        window.SelectedValues.shelf_height = value;
+        break;
+      case "storage_columns_buttons":
+        window.selectedStorageColumns = value;
+        window.SelectedValues.storage_columns = value;
+        break;
+      default:
+        // 기타 그룹도 자동 저장
+        window.SelectedValues[groupId] = value;
+    }
 
-    // 기타 입력칸 처리
-    const otherGroup = document.getElementById("other_area_group");
+    console.log(`✅ [${groupId}] 선택됨 → id=${id}, value=${value}`);
+
+    // 기타 입력칸 자동 표시
+    const otherGroupId = groupId.replace("_buttons", "_group");
+    const otherGroup = document.getElementById(otherGroupId);
     if (otherGroup) {
-      if (btn.textContent.includes("기타")) {
+      if (value.includes("기타")) {
         otherGroup.style.display = "block";
       } else {
         otherGroup.style.display = "none";
       }
     }
 
-    console.log(`✅ 선택된 area_id=${selectedAreaId}, value=${btn.dataset.value}`);
+    // 숨겨진 input 업데이트 (collectFormData 호환)
+    const hiddenInput = newGroup.querySelector("input[type='hidden']");
+    if (hiddenInput) hiddenInput.value = value;
   });
 }
 
@@ -81,11 +121,12 @@ async function initializeCabinetForm(detail = null) {
   console.log(`🧭 시약장 폼 초기화 (mode=${formMode})`);
 
   // 공통 버튼 그룹 초기화
-  setupButtonGroup("area-button-group");
-  setupButtonGroup("door_vertical_split_buttons");
-  setupButtonGroup("door_horizontal_split_buttons");
-  setupButtonGroup("shelf_height_buttons");
-  setupButtonGroup("storage_columns_buttons");
+  setupButtonGroup("area-button-group");              // 시약장 위치
+  setupButtonGroup("cabinet_name_buttons");           // 시약장 이름
+  setupButtonGroup("door_vertical_split_buttons");    // 상하 도어
+  setupButtonGroup("door_horizontal_split_buttons");  // 좌우 도어
+  setupButtonGroup("shelf_height_buttons");           // 내부 층
+  setupButtonGroup("storage_columns_buttons");        // 내부 열
 
   // 수정 모드인 경우 기존 데이터 채움
   if (formMode === "edit" && detail) {
