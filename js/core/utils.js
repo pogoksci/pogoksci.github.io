@@ -13,6 +13,15 @@
     const root = formId ? document.getElementById(formId) : document;
 
     Object.entries(data).forEach(([key, value]) => {
+      // ✅ 1️⃣ 이미지 필드 처리 (photo_url_* → 미리보기 자동 반영)
+      if (key.includes("photo_url") && value) {
+        const previewEl = root.querySelector(`#${key}-preview`) || root.querySelector(`#cabinet-photo-preview`);
+        if (previewEl) {
+          previewEl.innerHTML = `<img src="${value}" alt="이미지 미리보기" style="width:100%; height:100%; object-fit:cover;">`;
+        }
+      }
+
+      // ✅ 2️⃣ 일반 입력 필드 채우기
       const input = root.querySelector(`#${key}`);
       if (!input) return; // 없는 요소는 무시
 

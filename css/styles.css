@@ -633,3 +633,131 @@ button:disabled {
 }
 .fab-edit { background-color: #5cb85c; } /* 수정: 초록색 */
 .fab-delete { background-color: #d9534f; } /* 삭제: 붉은색 */
+
+/* ================================================================
+   시약장 폼 개선 (area-button-group / 기타 입력 필드)
+================================================================ */
+
+/* 1️⃣ 장소 선택 버튼 그룹은 폭이 넓으므로 버튼 간격/정렬 보정 */
+#area-button-group {
+    justify-content: space-between;
+}
+
+#area-button-group button {
+    flex: 1 1 calc(50% - 8px); /* 한 줄에 2개씩 배치 */
+    min-width: 120px;
+}
+
+/* 2️⃣ “기타 입력” 필드 자연스럽게 표시 */
+.other-input-group {
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+.other-input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+/* 3️⃣ 버튼 active 상태 명확히 */
+.button-group button.active {
+    background-color: #00bcd4;
+    color: white;
+    border-color: #00a0b2;
+    box-shadow: 0 2px 5px rgba(0, 188, 212, 0.3);
+    transform: scale(1.03);
+    transition: all 0.2s ease-in-out;
+}
+
+/* 4️⃣ “기타” 입력칸 활성화 시 약간 강조 */
+.other-input-group input:focus {
+    border-color: #00bcd4;
+    box-shadow: 0 0 5px rgba(0, 188, 212, 0.4);
+}
+
+/* ================================================================
+   📱 모바일 뷰(320~480px) 대응 — 버튼 그룹 자동 재배치
+   (cabinet-form.html 기준)
+================================================================ */
+@media (max-width: 480px) {
+  /* 1️⃣ 공통: 버튼 그룹 기본은 세로 정렬 */
+  .button-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .button-group button {
+    flex: 1 1 100%;
+    width: 100%;
+    font-size: 15px;
+    padding: 12px;
+  }
+
+  /* 2️⃣ 장소 선택 (area-button-group) */
+  #area-button-group button {
+    text-align: center;
+    padding: 14px;
+    font-weight: 500;
+  }
+
+  /* 3️⃣ 시약장 이름 선택 (cabinet_name_buttons) */
+  #cabinet_name_buttons button {
+    text-align: center;
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  /* 4️⃣ 도어 형태 선택 (상하 / 좌우 분리) */
+  #door_vertical_split_buttons,
+  #door_horizontal_split_buttons {
+    flex-direction: column;
+  }
+  #door_vertical_split_buttons button,
+  #door_horizontal_split_buttons button {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  /* 5️⃣ 내부 수납층 / 수납열 선택 (숫자형은 가로 유지) */
+  #shelf_height_buttons,
+  #storage_columns_buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  #shelf_height_buttons button,
+  #storage_columns_buttons button {
+    flex: 1 1 calc(33% - 6px); /* 한 줄에 3개씩 표시 */
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  /* 6️⃣ 기타 입력칸 보정 */
+  .other-input-group {
+    margin-top: 8px;
+  }
+  .other-input-group input {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  /* 7️⃣ 제목과 간격 보정 */
+  .form-group label {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  /* 8️⃣ 폼 전체 패딩 및 버튼 영역 */
+  form {
+    padding: 15px;
+  }
+
+  #cabinet-submit-button,
+  #cancel-form-btn {
+    font-size: 15px;
+    padding: 12px;
+  }
+}
