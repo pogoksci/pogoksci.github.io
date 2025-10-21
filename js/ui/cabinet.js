@@ -1,180 +1,121 @@
 // js/ui/cabinet.js
-(function () {
+(async function () {
   const { supabase } = globalThis.App;
-  // callEdge, EDGE는 아직 사용 안 하므로 _ 접두사로 무시 처리
-  const { callEdge: _callEdge, EDGE: _EDGE } = globalThis.App.API;
 
-  // ====================================================================
-  // 시약장 목록 불러오기
-  // ====================================================================
   async function loadCabinetList() {
     const container = document.getElementById("cabinet-list-container");
     const status = document.getElementById("status-message-list");
-    if (!container || !status) return;
-
     try {
       status.textContent = "시약장 목록 불러오는 중...";
-
       const { data, error } = await supabase
         .from("Cabinet")
         .select(`
           id,
           name,
           area_id ( id, name ),
+          door_vertical_count,
+          door_horizontal_count,
+          shelf_height,
+          storage_columns,
+          photo_url_320,
           photo_url_160
         `)
         .order("created_at", { ascending: false });
-
       if (error) throw error;
 
-      if (!data || data.length === 0) {
+      globalThis._cabinetCache = data || [];
+
+      if (!data.length) {
         status.textContent = "등록된 시약장이 없습니다.";
         return;
       }
 
       container.innerHTML = "";
       data.forEach((cab) => {
+        const areaName = cab.area_id?.name || "-";
+        const imgUrl = cab.photo_url_320 || "";
+
         const card = document.createElement("div");
         card.className = "cabinet-card";
-
-        const imgUrl = cab.photo_url_160 || "css/logo.png";
-        const areaName = cab.area_id?.name || "위치 미상";
-
+        card.setAttribute("data-cabinet-id", cab.id);
         card.innerHTML = `
           <div class="card-image-placeholder">
-            <img src="${imgUrl}" alt="${cab.name}" style="width:100%; height:100%; object-fit:cover;">
+            ${imgUrl ? `<img src="${imgUrl}" alt="${cab.name}">` : "사진 없음"}
           </div>
           <div class="card-info">
             <h3>${cab.name}</h3>
             <p class="area-name">${areaName}</p>
           </div>
           <div class="card-actions">
-            <button class="edit-btn" onclick="editCabinet(${cab.id})">수정</button>
-            <button class="delete-btn" onclick="deleteCabinet(${cab.id})">삭제</button>
+            <button class="edit-btn" data-id="${cab.id}">수정</button>
+            <button class="delete-btn" data-id="${cab.id}">삭제</button>
           </div>
         `;
-
         container.appendChild(card);
       });
+
+      container.onclick = (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        const id = Number(btn.dataset.id);
+        if (btn.classList.contains("edit-btn")) editCabinet(id);
+        if (btn.classList.contains("delete-btn")) deleteCabinet(id);
+      };
 
       status.textContent = "";
     } catch (err) {
       console.error("시약장 불러오기 오류:", err);
-      status.textContent = "시약장 정보를 불러오는 중 오류가 발생했습니다.";
+      status.textContent = "오류가 발생했습니다.";
     }
   }
 
-  // ====================================================================
-  // 시약장 수정 기능
-  // ====================================================================
+  // ✅ Promise 기반 수정
   async function editCabinet(id) {
     try {
-      const { data, error } = await supabase
-        .from("Cabinet")
-        .select(`
-          id,
-          name,
-          area_id ( id, name ),
-          door_vertical_split,
-          door_horizontal_split,
-          shelf_height,
-          storage_columns,
-          photo_url_160
-        `)
-        .eq("id", id)
-        .single();
+      let cab =
+        (globalThis._cabinetCache || []).find((c) => c.id === id) || null;
 
-      if (error || !data) throw error || new Error("시약장 정보를 찾을 수 없습니다.");
-
-      await includeHTML("pages/cabinet-form.html");
-
-      document.querySelector("h2").textContent = "시약장 수정";
-      const submitBtn = document.getElementById("cabinet-submit-button");
-      submitBtn.textContent = "수정 저장";
-
-      setActiveButton("location_type_buttons", data.area_id?.name);
-      setActiveButton("cabinet_name_buttons", data.name);
-      setActiveButton("door_vertical_split_buttons", data.door_vertical_split);
-      setActiveButton("door_horizontal_split_buttons", data.door_horizontal_split);
-      setActiveButton("shelf_height_buttons", String(data.shelf_height));
-      setActiveButton("storage_columns_buttons", String(data.storage_columns));
-
-      const preview = document.getElementById("cabinet-photo-preview");
-      if (data.photo_url_160 && preview) {
-        preview.innerHTML = `<img src="${data.photo_url_160}" style="width:100%;height:100%;object-fit:cover;">`;
+      if (!cab) {
+        const { data, error } = await supabase
+          .from("Cabinet")
+          .select(`*, area_id (id, name)`)
+          .eq("id", id)
+          .single();
+        if (error) throw error;
+        cab = data;
       }
 
-      submitBtn.onclick = async (event) => {
-        event.preventDefault();
-        submitBtn.disabled = true;
-        submitBtn.textContent = "수정 중...";
+      // ✅ 폼 완전히 로드될 때까지 기다림
+      await includeHTML("pages/cabinet-form.html", "form-container");
 
-        try {
-          const updated = {
-            name: getActiveButtonValue("cabinet_name_buttons"),
-            door_vertical_split: getActiveButtonValue("door_vertical_split_buttons"),
-            door_horizontal_split: getActiveButtonValue("door_horizontal_split_buttons"),
-            shelf_height: parseInt(getActiveButtonValue("shelf_height_buttons")),
-            storage_columns: parseInt(getActiveButtonValue("storage_columns_buttons")),
-          };
+      setupCabinetRegisterForm?.();
 
-          const { error: updateError } = await supabase
-            .from("Cabinet")
-            .update(updated)
-            .eq("id", id);
+      // ✅ 이후 DOM 조작 안전
+      const preview = document.getElementById("cabinet-photo-preview");
+      preview.innerHTML = cab.photo_url_320
+        ? `<img src="${cab.photo_url_320}" alt="Cabinet photo">`
+        : `<span>사진 없음</span>`;
 
-          if (updateError) throw updateError;
+      document.querySelector("#cabinet-creation-form h2").textContent =
+        "시약장 정보 수정";
+      document.getElementById("cabinet-submit-button").textContent = "수정 내용 저장";
 
-          alert("✅ 시약장 정보가 수정되었습니다!");
-          loadCabinetList();
-        } catch (err) {
-          console.error("수정 중 오류:", err);
-          alert("❌ 수정 중 오류가 발생했습니다.");
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = "시약장 수정";
-        }
-      };
     } catch (err) {
-      console.error("시약장 수정 로드 오류:", err);
-      alert("시약장 정보를 불러오지 못했습니다.");
+      console.error(err);
+      alert(err.message || "시약장 정보를 불러오지 못했습니다.");
     }
   }
 
-  // ====================================================================
-  // 삭제 기능
-  // ====================================================================
   async function deleteCabinet(id) {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
+    if (!confirm("정말로 삭제하시겠어요?")) return;
     try {
-      const { error } = await supabase.from("Cabinet").delete().eq("id", id);
-      if (error) throw error;
-      alert("🗑️ 시약장이 삭제되었습니다.");
-      loadCabinetList();
-    } catch (err) {
-      console.error("시약장 삭제 오류:", err);
-      alert("❌ 삭제 중 오류가 발생했습니다.");
+      await App.API.callEdge(`${App.API.EDGE.CABINET}?id=${id}`, { method: "DELETE" });
+      await loadCabinetList();
+    } catch (e) {
+      alert(e.message || "삭제 실패");
     }
   }
 
-  // ====================================================================
-  // 내부 유틸
-  // ====================================================================
-  function setActiveButton(groupId, value) {
-    const group = document.getElementById(groupId);
-    if (!group) return;
-    group.querySelectorAll("button").forEach((b) => {
-      if (b.dataset.value === value) b.classList.add("active");
-    });
-  }
-
-  function getActiveButtonValue(groupId) {
-    const group = document.getElementById(groupId);
-    const active = group?.querySelector("button.active");
-    return active ? active.dataset.value : null;
-  }
-
-  // 🔄 Deno 호환: window 대신 globalThis
   globalThis.loadCabinetList = loadCabinetList;
   globalThis.editCabinet = editCabinet;
   globalThis.deleteCabinet = deleteCabinet;

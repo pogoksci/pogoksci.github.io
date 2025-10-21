@@ -1,68 +1,80 @@
 // js/ui/inventory-detail.js
-(function () {
-  const { supabase } = window.App;
-  const { callEdge, EDGE } = window.App.API;
+(async function () {
+  const { supabase } = globalThis.App;
 
-  async function loadInventoryDetail() {
-    const id = localStorage.getItem("selected_inventory_id");
-    if (!id) return alert("선택된 시약 정보가 없습니다.");
-
-    const photoBox = document.getElementById("detail-photo");
-    const nameEl = document.getElementById("detail-name");
-    const casEl = document.getElementById("detail-cas");
-    const locationEl = document.getElementById("detail-location");
-
+  // ======================================================
+  // 2️⃣ 상세 정보 로드
+  // ======================================================
+  async function loadInventoryDetail(id = null) {
     try {
+      const inventoryId =
+        id || localStorage.getItem("selected_inventory_id");
+      if (!inventoryId) {
+        alert("잘못된 접근입니다.");
+        return;
+      }
+
       const { data, error } = await supabase
         .from("Inventory")
         .select(`
           id,
+          state,
           current_amount,
           unit,
-          photo_url_160,
-          substance_id ( name, cas_rn ),
-          cabinet_id ( name, area_id ( name ) )
+          classification,
+          manufacturer,
+          purchase_date,
+          photo_url_320,
+          substance_id ( id, name, cas_rn ),
+          cabinet_id ( id, name, area_id ( name ) )
         `)
-        .eq("id", id)
+        .eq("id", inventoryId)
         .single();
       if (error) throw error;
 
-      nameEl.textContent = data.substance_id?.name || "이름 없음";
-      casEl.textContent = `CAS: ${data.substance_id?.cas_rn || "-"}`;
-      locationEl.textContent =
-        data.cabinet_id?.area_id?.name && data.cabinet_id?.name
-          ? `${data.cabinet_id.area_id.name} > ${data.cabinet_id.name}`
-          : "위치 정보 없음";
+      // ✅ DOM 요소 반영
+      const photoDiv = document.getElementById("detail-photo");
+      photoDiv.innerHTML = data.photo_url_320
+        ? `<img src="${data.photo_url_320}" alt="시약병 사진">`
+        : `<span>사진 없음</span>`;
 
-      if (data.photo_url_160) {
-        photoBox.innerHTML = `<img src="${data.photo_url_160}" alt="${data.substance_id?.name}" />`;
-      } else {
-        photoBox.innerHTML = `<span>사진 없음</span>`;
-      }
+      document.getElementById("detail-name").textContent =
+        data.substance_id?.name || "이름 없음";
+      document.getElementById("detail-cas").textContent =
+        `CAS: ${data.substance_id?.cas_rn || "-"}`;
+
+      const locText = data.cabinet_id?.area_id?.name
+        ? `위치: ${data.cabinet_id.area_id.name} · ${data.cabinet_id.name}`
+        : "위치: 미지정";
+      document.getElementById("detail-location").textContent = locText;
+
+      document.getElementById("detail-class").textContent =
+        data.classification || "-";
+      document.getElementById("detail-state").textContent =
+        data.state || "-";
+      document.getElementById("detail-manufacturer").textContent =
+        data.manufacturer || "-";
+
+      // 삭제 및 수정 버튼 이벤트
+      document.getElementById("delete-inventory-btn")?.addEventListener("click", async () => {
+        if (!confirm("정말 삭제하시겠습니까?")) return;
+        await supabase.from("Inventory").delete().eq("id", inventoryId);
+        alert("삭제되었습니다.");
+        await includeHTML("pages/inventory-list.html", "form-container");
+        await fetchInventoryAndRender();
+      });
+
+      document.getElementById("edit-inventory-btn")?.addEventListener("click", async () => {
+        await includeHTML("pages/form-input.html", "form-container");
+        await initializeFormListeners();
+        alert("폼 수정 모드로 전환 (추후 구현)");
+      });
     } catch (err) {
-      console.error("상세 정보 로드 오류:", err);
-      nameEl.textContent = "정보를 불러오지 못했습니다.";
+      console.error("상세 페이지 로드 오류:", err);
+      document.getElementById("detail-page-container").innerHTML =
+        `<p>❌ 오류: ${err.message}</p>`;
     }
   }
 
-  async function deleteInventory() {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
-    const id = localStorage.getItem("selected_inventory_id");
-    if (!id) return alert("삭제할 항목이 없습니다.");
-
-    try {
-      const { error } = await supabase.from("Inventory").delete().eq("id", id);
-      if (error) throw error;
-
-      alert("삭제되었습니다.");
-      includeHTML("pages/inventory-list.html");
-    } catch (err) {
-      console.error("삭제 오류:", err);
-      alert("삭제 중 오류가 발생했습니다.");
-    }
-  }
-
-  // 초기화
-  window.loadInventoryDetail = loadInventoryDetail;
-  window.deleteInventory = deleteInventory;
+  globalThis.loadInventoryDetail = loadInventoryDetail;
 })();

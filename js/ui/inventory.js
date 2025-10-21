@@ -1,13 +1,17 @@
 // js/ui/inventory.js
-(function () {
-  const { supabase } = window.App;
+(async function () {
+  const { supabase } = globalThis.App;
 
+  // ======================================================
+  // 1️⃣ 약품 목록 불러오기
+  // ======================================================
   async function fetchInventoryAndRender() {
     const container = document.getElementById("inventory-list-container");
-    const statusMessage = document.getElementById("status-message-inventory-list");
+    const status = document.getElementById("status-message-inventory-list");
+    if (!container || !status) return;
 
     try {
-      statusMessage.textContent = "재고 목록을 불러오는 중...";
+      status.textContent = "재고 목록을 불러오는 중...";
       container.innerHTML = "";
 
       const { data, error } = await supabase
@@ -16,56 +20,55 @@
           id,
           current_amount,
           unit,
+          classification,
+          manufacturer,
           photo_url_160,
-          substance_id ( name, cas_rn ),
-          cabinet_id ( name, area_id ( name ) )
+          substance_id ( id, name, cas_rn ),
+          cabinet_id ( id, name, area_id ( name ) )
         `)
         .order("created_at", { ascending: false });
-      if (error) throw error;
 
-      if (!data || data.length === 0) {
-        statusMessage.textContent = "등록된 재고가 없습니다.";
+      if (error) throw error;
+      if (!data?.length) {
+        status.textContent = "등록된 약품이 없습니다.";
         return;
       }
 
+      // ✅ 목록 생성
+      container.innerHTML = "";
       data.forEach((item) => {
-        const div = document.createElement("div");
-        div.className = "cabinet-card";
-        div.style.marginBottom = "10px";
-
-        const imgUrl = item.photo_url_160 || "css/logo.png";
-        const substanceName = item.substance_id?.name || "이름 없음";
+        const name = item.substance_id?.name || "이름 없음";
         const cas = item.substance_id?.cas_rn || "-";
-        const location = item.cabinet_id?.area_id?.name
-          ? `${item.cabinet_id.area_id.name} > ${item.cabinet_id.name}`
+        const loc = item.cabinet_id?.area_id?.name
+          ? `${item.cabinet_id.area_id.name} · ${item.cabinet_id.name}`
           : "위치 정보 없음";
 
-        div.innerHTML = `
+        const card = document.createElement("div");
+        card.className = "cabinet-card";
+        card.innerHTML = `
           <div class="card-image-placeholder">
-            <img src="${imgUrl}" alt="${substanceName}" style="width:100%;height:100%;object-fit:cover;">
+            ${item.photo_url_160 ? `<img src="${item.photo_url_160}">` : "사진 없음"}
           </div>
           <div class="card-info">
-            <h3>${substanceName}</h3>
-            <p class="area-name">${location}</p>
+            <h3>${name}</h3>
+            <p class="area-name">${loc}</p>
             <p class="cabinet-specs">CAS: ${cas}</p>
-            <p class="cabinet-specs">${item.current_amount ?? "-"} ${item.unit ?? ""}</p>
           </div>
         `;
-
-        div.addEventListener("click", () => {
+        card.addEventListener("click", async () => {
           localStorage.setItem("selected_inventory_id", item.id);
-          includeHTML("pages/inventory-detail.html");
+          await includeHTML("pages/inventory-detail.html", "form-container");
+          await loadInventoryDetail(item.id);
         });
-
-        container.appendChild(div);
+        container.appendChild(card);
       });
 
-      statusMessage.textContent = "";
+      status.textContent = "";
     } catch (err) {
       console.error("재고 목록 로드 오류:", err);
-      statusMessage.textContent = "재고 목록을 불러오는 중 오류가 발생했습니다.";
+      status.textContent = "재고 목록 불러오기 중 오류 발생.";
     }
   }
 
-  window.fetchInventoryAndRender = fetchInventoryAndRender;
+  globalThis.fetchInventoryAndRender = fetchInventoryAndRender;
 })();
