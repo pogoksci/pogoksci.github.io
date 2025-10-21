@@ -1,19 +1,30 @@
-// js/core/fab.js
+// js/ui/fab.js
 (function () {
-  function setFabVisibility(visible, text = null, onClick = null) {
+  /**
+   * FAB 버튼 표시/숨김을 제어하는 함수
+   * @param {boolean} visible - true이면 표시, false이면 숨김
+   */
+  function setFabVisibility(visible) {
     const fab = document.getElementById("fab-button");
     if (!fab) return;
     fab.style.display = visible ? "block" : "none";
-    if (text) fab.textContent = text;
-    if (onClick) fab.onclick = onClick;
   }
 
-  function initFab() {
+  /**
+   * FAB 버튼 초기화 (기본 숨김)
+   */
+  function initFabButton() {
     const fab = document.getElementById("fab-button");
-    if (fab) fab.style.display = "none";
+    if (!fab) return;
+
+    fab.style.display = "none"; // 기본은 숨김
+    fab.addEventListener("click", () => {
+      console.log("📦 FAB 버튼 클릭됨");
+      includeHTML("pages/form-input.html"); // 약품 등록 페이지로 이동 예시
+    });
   }
 
-  globalThis.App = globalThis.App || {};
-  App.FAB = { setFabVisibility, initFab };
-  globalThis.setFabVisibility = setFabVisibility; // 기존 호환성 유지
+  // 전역 등록
+  window.setFabVisibility = setFabVisibility;
+  window.initFabButton = initFabButton;
 })();
