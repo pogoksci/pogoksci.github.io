@@ -1,11 +1,10 @@
 // js/ui/forms.js
 // ================================================================
-// 폼 관련 공통 로직 (등록/수정 겸용)
+// 📦 폼 관련 공통 로직 (등록/수정 겸용)
 // ================================================================
 
-globalThis.selectedAreaId = null; // ✅ 전역 area_id 추적
-globalThis.formMode = "create";   // 'create' | 'edit'
-globalThis.SelectedValues = globalThis.SelectedValues || {};
+let selectedAreaId = null; // 전역: 현재 선택된 area_id
+let formMode = "create"; // 'create' | 'edit'
 
 // ------------------------------------------------------------
 // 1️⃣ 버튼 그룹 설정 (공용)
@@ -18,7 +17,10 @@ function setupButtonGroup(groupId) {
   const group = document.getElementById(groupId);
   if (!group) return;
 
-  // 🔄 중복 리스너 제거 (DOM 교체 방식)
+  // 전역 상태 맵 (공용 저장소)
+  globalThis.SelectedValues = globalThis.SelectedValues || {};
+
+  // 중복 리스너 제거 (DOM 교체 없이 clone으로)
   const clone = group.cloneNode(true);
   group.parentNode.replaceChild(clone, group);
   const newGroup = document.getElementById(groupId);
@@ -31,7 +33,7 @@ function setupButtonGroup(groupId) {
     newGroup.querySelectorAll(".active").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
 
-    // ✅ 속성 추출
+    // ✅ 공통 속성 추출
     const id = btn.dataset.id ? parseInt(btn.dataset.id) : null;
     const value = btn.dataset.value || btn.textContent.trim();
 
@@ -66,9 +68,11 @@ function setupButtonGroup(groupId) {
     // ✅ 기타 입력칸 자동 표시
     const otherGroupId = groupId.replace("_buttons", "_group");
     const otherGroup = document.getElementById(otherGroupId);
-    if (otherGroup) otherGroup.style.display = value.includes("기타") ? "block" : "none";
+    if (otherGroup) {
+      otherGroup.style.display = value.includes("기타") ? "block" : "none";
+    }
 
-    // ✅ 숨겨진 input 자동 업데이트 (collectFormData 호환)
+    // ✅ 숨겨진 input 업데이트 (collectFormData 호환)
     const hiddenInput = newGroup.querySelector("input[type='hidden']");
     if (hiddenInput) hiddenInput.value = value;
   });
@@ -82,20 +86,65 @@ function fillCabinetForm(detail) {
 
   // ✅ 기존 장소 active 처리
   if (detail.area_id?.id) {
-    globalThis.selectedAreaId = detail.area_id.id;
+    selectedAreaId = detail.area_id.id;
     const buttons = document.querySelectorAll("#area-button-group button");
     buttons.forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.id == detail.area_id.id);
+      if (btn.dataset.id == detail.area_id.id) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
     });
   }
 
-  // ✅ 기존 시약장 이름 버튼 활성화 (수정 불가 처리)
+  // ✅ 시약장 이름 처리 + 비활성화
   if (detail.name) {
-    const btn = document.querySelector(`#cabinet_name_buttons button[data-value="${detail.name}"]`);
-    if (btn) {
-      btn.classList.add("active");
-      document.querySelectorAll("#cabinet_name_buttons button").forEach((b) => (b.disabled = true));
+    const nameBtn = document.querySelector(
+      `#cabinet_name_buttons button[data-value="${detail.name}"]`
+    );
+    if (nameBtn) {
+      nameBtn.classList.add("active");
+      document
+        .querySelectorAll("#cabinet_name_buttons button")
+        .forEach((b) => (b.disabled = true));
     }
+  }
+
+  // -------------------------------------------------------------------
+  // ✅ 도어 및 수납 구조 매핑 (숫자 → 버튼 value)
+  // -------------------------------------------------------------------
+  const verticalMap = { 3: "상중하도어", 2: "상하도어", 1: "단일도어" };
+  const horizontalMap = { 2: "좌우분리도어", 1: "단일도어" };
+
+  const verticalValue = verticalMap[detail.door_vertical_count];
+  const horizontalValue = horizontalMap[detail.door_horizontal_count];
+
+  if (verticalValue) {
+    const vBtn = document.querySelector(
+      `#door_vertical_split_buttons button[data-value="${verticalValue}"]`
+    );
+    if (vBtn) vBtn.classList.add("active");
+  }
+
+  if (horizontalValue) {
+    const hBtn = document.querySelector(
+      `#door_horizontal_split_buttons button[data-value="${horizontalValue}"]`
+    );
+    if (hBtn) hBtn.classList.add("active");
+  }
+
+  // ✅ 내부 층 / 열 매핑
+  if (detail.shelf_height) {
+    const sBtn = document.querySelector(
+      `#shelf_height_buttons button[data-value="${detail.shelf_height}"]`
+    );
+    if (sBtn) sBtn.classList.add("active");
+  }
+  if (detail.storage_columns) {
+    const cBtn = document.querySelector(
+      `#storage_columns_buttons button[data-value="${detail.storage_columns}"]`
+    );
+    if (cBtn) cBtn.classList.add("active");
   }
 }
 
@@ -168,7 +217,7 @@ function initializeCabinetForm(detail = null) {
 async function createCabinet() {
   try {
     const formData = collectFormData("cabinet-creation-form");
-    if (!globalThis.selectedAreaId) {
+    if (!selectedAreaId) {
       alert("❗ 시약장이 위치한 장소를 선택하세요.");
       return;
     }
@@ -176,7 +225,7 @@ async function createCabinet() {
     const { error } = await globalThis.App.supabase.from("Cabinet").insert([
       {
         name: formData.name,
-        area_id: globalThis.selectedAreaId,
+        area_id: selectedAreaId,
         door_vertical_count: formData.door_vertical_count,
         door_horizontal_count: formData.door_horizontal_count,
         shelf_height: formData.shelf_height,
@@ -191,7 +240,7 @@ async function createCabinet() {
     alert("✅ 시약장 등록이 완료되었습니다!");
     includeHTML("pages/location-list.html");
   } catch (err) {
-    console.error("시약장 등록 오류:", err);
+    console.error("❌ 시약장 등록 오류:", err);
     alert("❌ 시약장 등록 중 오류가 발생했습니다.");
   }
 }
@@ -203,15 +252,20 @@ async function updateCabinetInfo(cabinetId) {
   try {
     const formData = collectFormData("cabinet-creation-form");
 
-    if (!cabinetId) return alert("❌ 시약장 ID가 없습니다.");
-    if (!globalThis.selectedAreaId)
-      return alert("❗ 시약장이 위치한 장소를 선택해 주세요.");
+    if (!cabinetId) {
+      alert("❌ 시약장 ID가 없습니다.");
+      return;
+    }
+    if (!selectedAreaId) {
+      alert("❗ 시약장이 위치한 장소를 선택해 주세요.");
+      return;
+    }
 
     const { error } = await globalThis.App.supabase
       .from("Cabinet")
       .update({
         name: formData.name,
-        area_id: globalThis.selectedAreaId,
+        area_id: selectedAreaId,
         door_vertical_count: formData.door_vertical_count,
         door_horizontal_count: formData.door_horizontal_count,
         shelf_height: formData.shelf_height,
@@ -226,7 +280,7 @@ async function updateCabinetInfo(cabinetId) {
     alert("✅ 시약장 정보가 수정되었습니다!");
     includeHTML("pages/location-list.html");
   } catch (err) {
-    console.error("시약장 수정 오류:", err);
+    console.error("❌ 시약장 수정 오류:", err);
     alert("❌ 시약장 정보 수정 중 오류가 발생했습니다.");
   }
 }
@@ -236,7 +290,7 @@ async function updateCabinetInfo(cabinetId) {
 // ------------------------------------------------------------
 function initializeFormListeners() {
   console.log("📋 공용 폼 초기화 실행");
-  globalThis.setFabVisibility?.(false);
+  setFabVisibility?.(false);
 }
 
 // ------------------------------------------------------------

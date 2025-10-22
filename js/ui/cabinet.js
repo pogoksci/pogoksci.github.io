@@ -128,10 +128,7 @@
       submitBtn.textContent = "시약장 등록";
     }
 
-    // 2️⃣ 데이터 채우기
-    if (isEditMode) fillFormFromData(detail, "cabinet-creation-form");
-
-    // 3️⃣ 버튼 그룹 초기화
+    // ✅ 2️⃣ 버튼 그룹 먼저 초기화
     const groupIds = [
       "area-button-group",
       "cabinet_name_buttons",
@@ -141,6 +138,9 @@
       "storage_columns_buttons",
     ];
     groupIds.forEach((id) => setupButtonGroup(id));
+
+    // ✅ 3️⃣ 기존 데이터 채우기 (DOM 교체 후 실행해야 active 유지됨)
+    if (isEditMode) fillCabinetForm(detail);
 
     // 4️⃣ 기존 선택값 반영
     if (isEditMode) {
