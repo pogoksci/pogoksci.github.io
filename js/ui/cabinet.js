@@ -14,18 +14,23 @@
       const { data, error } = await supabase
         .from("Cabinet")
         .select(`
-          id, name, photo_url,
-          area_id (id, name),
+          id, name,
+          area_id ( id, name ),
+          photo_url_320, photo_url_160,
           door_vertical_count, door_horizontal_count,
           shelf_height, storage_columns
         `)
         .order("id", { ascending: true });
 
       if (error) throw error;
+      if (!data || !data.length) {
+        alert("등록된 시약장이 없습니다.");
+        return;
+      }
       renderCabinetList(data || []);
     } catch (err) {
       console.error("❌ 시약장 목록 로드 오류:", err);
-      alert("시약장 목록을 불러오지 못했습니다.");
+      alert(`시약장 목록을 불러오지 못했습니다.\n\n오류: ${err.message}`);
     }
   }
 
@@ -34,31 +39,35 @@
     if (!container) return;
 
     container.innerHTML = cabinets
-      .map(
-        (cab) => `
-      <div class="cabinet-card">
-        <div class="card-image-placeholder">
-          ${cab.photo_url
-            ? `<img src="${cab.photo_url}" alt="${cab.name}" style="width:100%;height:100%;object-fit:cover;">`
-            : "사진 없음"}
-        </div>
-        <div class="card-info">
+      .map((cab) => {
+        // ✅ 이미지 URL 우선순위 지정
+        const photo = cab.photo_url_320 || cab.photo_url_160 || null;
+
+        return `
+        <div class="cabinet-card">
+          <div class="card-image-placeholder">
+            ${
+              photo
+                ? `<img src="${photo}" alt="${cab.name}" style="width:100%;height:100%;object-fit:cover;">`
+                : "사진 없음"
+            }
+          </div>
           <div class="card-info">
             <h3>${cab.name}</h3>
             <span class="area-name">${cab.area_id?.name || "위치 없음"}</span>
+            <p class="cabinet-specs">
+              상하: ${cab.door_vertical_count || "-"},
+              좌우: ${cab.door_horizontal_count || "-"},
+              층: ${cab.shelf_height || "-"},
+              열: ${cab.storage_columns || "-"}
+            </p>
           </div>
-          <p class="cabinet-specs">
-            상하: ${cab.door_vertical_count || "-"}, 좌우: ${
-          cab.door_horizontal_count || "-"
-        }, 층: ${cab.shelf_height || "-"}, 열: ${cab.storage_columns || "-"}
-          </p>
-        </div>
-        <div class="card-actions">
-          <button class="edit-btn" onclick="editCabinet(${cab.id})">수정</button>
-          <button class="delete-btn" onclick="deleteCabinet(${cab.id})">삭제</button>
-        </div>
-      </div>`
-      )
+          <div class="card-actions">
+            <button class="edit-btn" onclick="editCabinet(${cab.id})">수정</button>
+            <button class="delete-btn" onclick="deleteCabinet(${cab.id})">삭제</button>
+          </div>
+        </div>`;
+      })
       .join("");
   }
 
@@ -69,11 +78,13 @@
     try {
       const { data: detail, error } = await supabase
         .from("Cabinet")
-        .select(
-          `id, name, area_id (id, name), photo_url,
-           door_vertical_count, door_horizontal_count,
-           shelf_height, storage_columns`
-        )
+        .select(`
+          id, name,
+          area_id ( id, name ),
+          photo_url_320, photo_url_160,
+          door_vertical_count, door_horizontal_count,
+          shelf_height, storage_columns
+        `)
         .eq("id", cabinetId)
         .maybeSingle();
 

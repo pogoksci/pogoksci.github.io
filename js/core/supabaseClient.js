@@ -6,7 +6,7 @@
 
   // ✅ 전역 네임스페이스 보장
   globalThis.App = globalThis.App || {};
-  App.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  globalThis.App.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   console.log("✅ Supabase 클라이언트 초기화 완료");
 })();
