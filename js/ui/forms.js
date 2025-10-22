@@ -3,8 +3,9 @@
 // 폼 관련 공통 로직 (등록/수정 겸용)
 // ================================================================
 
-let selectedAreaId = null; // ✅ 전역 변수로 area_id 추적
-let formMode = "create"; // 'create' | 'edit'
+globalThis.selectedAreaId = null; // ✅ 전역 area_id 추적
+globalThis.formMode = "create";   // 'create' | 'edit'
+globalThis.SelectedValues = globalThis.SelectedValues || {};
 
 // ------------------------------------------------------------
 // 1️⃣ 버튼 그룹 설정 (공용)
@@ -17,70 +18,57 @@ function setupButtonGroup(groupId) {
   const group = document.getElementById(groupId);
   if (!group) return;
 
-  // 🔄 중복 리스너 제거
-  const newGroup = group.cloneNode(true);
-  group.parentNode.replaceChild(newGroup, group);
-
-  // 🔹 전역 상태 맵 (필요시 확장 가능)
-  window.SelectedValues = window.SelectedValues || {};
+  // 🔄 중복 리스너 제거 (DOM 교체 방식)
+  const clone = group.cloneNode(true);
+  group.parentNode.replaceChild(clone, group);
+  const newGroup = document.getElementById(groupId);
 
   newGroup.addEventListener("click", (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
 
-    // 기존 active 해제 → 새 선택 반영
+    // ✅ 기존 active 해제 후 새 버튼 활성화
     newGroup.querySelectorAll(".active").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
 
-    // 공통 속성 추출
+    // ✅ 속성 추출
     const id = btn.dataset.id ? parseInt(btn.dataset.id) : null;
     const value = btn.dataset.value || btn.textContent.trim();
 
-    // 그룹별 전역 변수 저장
+    // ✅ 그룹별 전역 변수 갱신
     switch (groupId) {
       case "area-button-group":
-        window.selectedAreaId = id;
-        window.SelectedValues.area = { id, value };
+        globalThis.selectedAreaId = id;
+        globalThis.SelectedValues.area = { id, value };
         break;
       case "cabinet_name_buttons":
-        window.selectedCabinetName = value;
-        window.SelectedValues.cabinet_name = value;
+        globalThis.selectedCabinetName = value;
+        globalThis.SelectedValues.cabinet_name = value;
         break;
       case "door_vertical_split_buttons":
-        window.selectedDoorVertical = value;
-        window.SelectedValues.door_vertical = value;
+        globalThis.SelectedValues.door_vertical = value;
         break;
       case "door_horizontal_split_buttons":
-        window.selectedDoorHorizontal = value;
-        window.SelectedValues.door_horizontal = value;
+        globalThis.SelectedValues.door_horizontal = value;
         break;
       case "shelf_height_buttons":
-        window.selectedShelfHeight = value;
-        window.SelectedValues.shelf_height = value;
+        globalThis.SelectedValues.shelf_height = value;
         break;
       case "storage_columns_buttons":
-        window.selectedStorageColumns = value;
-        window.SelectedValues.storage_columns = value;
+        globalThis.SelectedValues.storage_columns = value;
         break;
       default:
-        // 기타 그룹도 자동 저장
-        window.SelectedValues[groupId] = value;
+        globalThis.SelectedValues[groupId] = value;
     }
 
     console.log(`✅ [${groupId}] 선택됨 → id=${id}, value=${value}`);
 
-    // 기타 입력칸 자동 표시
+    // ✅ 기타 입력칸 자동 표시
     const otherGroupId = groupId.replace("_buttons", "_group");
     const otherGroup = document.getElementById(otherGroupId);
-    if (otherGroup) {
-      if (value.includes("기타")) {
-        otherGroup.style.display = "block";
-      } else {
-        otherGroup.style.display = "none";
-      }
-    }
+    if (otherGroup) otherGroup.style.display = value.includes("기타") ? "block" : "none";
 
-    // 숨겨진 input 업데이트 (collectFormData 호환)
+    // ✅ 숨겨진 input 자동 업데이트 (collectFormData 호환)
     const hiddenInput = newGroup.querySelector("input[type='hidden']");
     if (hiddenInput) hiddenInput.value = value;
   });
@@ -92,24 +80,29 @@ function setupButtonGroup(groupId) {
 function fillCabinetForm(detail) {
   fillFormFromData(detail, "cabinet-creation-form");
 
-  // 기존 장소 active 처리
+  // ✅ 기존 장소 active 처리
   if (detail.area_id?.id) {
-    selectedAreaId = detail.area_id.id;
+    globalThis.selectedAreaId = detail.area_id.id;
     const buttons = document.querySelectorAll("#area-button-group button");
     buttons.forEach((btn) => {
-      if (btn.dataset.id == detail.area_id.id) {
-        btn.classList.add("active");
-      } else {
-        btn.classList.remove("active");
-      }
+      btn.classList.toggle("active", btn.dataset.id == detail.area_id.id);
     });
+  }
+
+  // ✅ 기존 시약장 이름 버튼 활성화 (수정 불가 처리)
+  if (detail.name) {
+    const btn = document.querySelector(`#cabinet_name_buttons button[data-value="${detail.name}"]`);
+    if (btn) {
+      btn.classList.add("active");
+      document.querySelectorAll("#cabinet_name_buttons button").forEach((b) => (b.disabled = true));
+    }
   }
 }
 
 // ------------------------------------------------------------
 // 3️⃣ 폼 초기화 (등록/수정 겸용)
 // ------------------------------------------------------------
-async function initializeCabinetForm(detail = null) {
+function initializeCabinetForm(detail = null) {
   const form = document.getElementById("cabinet-creation-form");
   if (!form) {
     console.warn("⚠️ cabinet-creation-form not found");
@@ -117,35 +110,38 @@ async function initializeCabinetForm(detail = null) {
   }
 
   // ✅ 모드 판별
-  formMode = detail ? "edit" : "create";
+  globalThis.formMode = detail ? "edit" : "create";
   console.log(`🧭 시약장 폼 초기화 (mode=${formMode})`);
 
-  // 공통 버튼 그룹 초기화
-  setupButtonGroup("area-button-group");              // 시약장 위치
-  setupButtonGroup("cabinet_name_buttons");           // 시약장 이름
-  setupButtonGroup("door_vertical_split_buttons");    // 상하 도어
-  setupButtonGroup("door_horizontal_split_buttons");  // 좌우 도어
-  setupButtonGroup("shelf_height_buttons");           // 내부 층
-  setupButtonGroup("storage_columns_buttons");        // 내부 열
+  // 버튼 그룹 초기화
+  [
+    "area-button-group",
+    "cabinet_name_buttons",
+    "door_vertical_split_buttons",
+    "door_horizontal_split_buttons",
+    "shelf_height_buttons",
+    "storage_columns_buttons",
+  ].forEach((id) => setupButtonGroup(id));
 
-  // 수정 모드인 경우 기존 데이터 채움
-  if (formMode === "edit" && detail) {
-    fillCabinetForm(detail);
-  }
+  // 수정 모드 → 기존 데이터 반영
+  if (formMode === "edit" && detail) fillCabinetForm(detail);
 
-  // ✅ 버튼 표시 전환
+  // ✅ 제목 및 버튼 전환
+  const title = form.querySelector("h2");
   const submitBtn = document.getElementById("cabinet-submit-button");
   const saveBtn = document.getElementById("cabinet-save-btn");
 
   if (formMode === "create") {
+    if (title) title.textContent = "시약장 등록";
     if (submitBtn) submitBtn.style.display = "inline-block";
     if (saveBtn) saveBtn.style.display = "none";
   } else {
+    if (title) title.textContent = `${detail.name} 정보 수정`;
     if (submitBtn) submitBtn.style.display = "none";
     if (saveBtn) saveBtn.style.display = "inline-block";
   }
 
-  // ✅ 등록 / 수정 이벤트 연결
+  // ✅ 등록 버튼
   if (submitBtn) {
     submitBtn.onclick = async (e) => {
       e.preventDefault();
@@ -153,6 +149,7 @@ async function initializeCabinetForm(detail = null) {
     };
   }
 
+  // ✅ 수정 버튼
   if (saveBtn) {
     saveBtn.onclick = async (e) => {
       e.preventDefault();
@@ -162,9 +159,7 @@ async function initializeCabinetForm(detail = null) {
 
   // ✅ 취소 버튼
   const cancelBtn = document.getElementById("cancel-form-btn");
-  if (cancelBtn) {
-    cancelBtn.onclick = () => includeHTML("pages/location-list.html");
-  }
+  if (cancelBtn) cancelBtn.onclick = () => includeHTML("pages/location-list.html");
 }
 
 // ------------------------------------------------------------
@@ -173,21 +168,21 @@ async function initializeCabinetForm(detail = null) {
 async function createCabinet() {
   try {
     const formData = collectFormData("cabinet-creation-form");
-    if (!selectedAreaId) {
+    if (!globalThis.selectedAreaId) {
       alert("❗ 시약장이 위치한 장소를 선택하세요.");
       return;
     }
 
-    const { error } = await window.App.supabase.from("Cabinet").insert([
+    const { error } = await globalThis.App.supabase.from("Cabinet").insert([
       {
         name: formData.name,
-        area_id: selectedAreaId,
+        area_id: globalThis.selectedAreaId,
         door_vertical_count: formData.door_vertical_count,
         door_horizontal_count: formData.door_horizontal_count,
         shelf_height: formData.shelf_height,
         storage_columns: formData.storage_columns,
-        photo_url_320: window.selectedCabinetPhoto320 || null,
-        photo_url_160: window.selectedCabinetPhoto160 || null,
+        photo_url_320: globalThis.selectedCabinetPhoto320 || null,
+        photo_url_160: globalThis.selectedCabinetPhoto160 || null,
       },
     ]);
 
@@ -208,26 +203,21 @@ async function updateCabinetInfo(cabinetId) {
   try {
     const formData = collectFormData("cabinet-creation-form");
 
-    if (!cabinetId) {
-      alert("❌ 시약장 ID가 없습니다.");
-      return;
-    }
-    if (!selectedAreaId) {
-      alert("❗ 시약장이 위치한 장소를 선택해 주세요.");
-      return;
-    }
+    if (!cabinetId) return alert("❌ 시약장 ID가 없습니다.");
+    if (!globalThis.selectedAreaId)
+      return alert("❗ 시약장이 위치한 장소를 선택해 주세요.");
 
-    const { error } = await window.App.supabase
+    const { error } = await globalThis.App.supabase
       .from("Cabinet")
       .update({
         name: formData.name,
-        area_id: selectedAreaId,
+        area_id: globalThis.selectedAreaId,
         door_vertical_count: formData.door_vertical_count,
         door_horizontal_count: formData.door_horizontal_count,
         shelf_height: formData.shelf_height,
         storage_columns: formData.storage_columns,
-        photo_url_320: window.selectedCabinetPhoto320 || null,
-        photo_url_160: window.selectedCabinetPhoto160 || null,
+        photo_url_320: globalThis.selectedCabinetPhoto320 || null,
+        photo_url_160: globalThis.selectedCabinetPhoto160 || null,
       })
       .eq("id", cabinetId);
 
@@ -246,14 +236,14 @@ async function updateCabinetInfo(cabinetId) {
 // ------------------------------------------------------------
 function initializeFormListeners() {
   console.log("📋 공용 폼 초기화 실행");
-  setFabVisibility?.(false);
+  globalThis.setFabVisibility?.(false);
 }
 
 // ------------------------------------------------------------
 // 7️⃣ 전역 등록
 // ------------------------------------------------------------
-window.setupButtonGroup = setupButtonGroup;
-window.initializeCabinetForm = initializeCabinetForm;
-window.createCabinet = createCabinet;
-window.updateCabinetInfo = updateCabinetInfo;
-window.initializeFormListeners = initializeFormListeners;
+globalThis.setupButtonGroup = setupButtonGroup;
+globalThis.initializeCabinetForm = initializeCabinetForm;
+globalThis.createCabinet = createCabinet;
+globalThis.updateCabinetInfo = updateCabinetInfo;
+globalThis.initializeFormListeners = initializeFormListeners;

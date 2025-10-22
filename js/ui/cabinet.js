@@ -1,180 +1,249 @@
+// ================================================================
 // js/ui/cabinet.js
+// 시약장 등록·수정 겸용 + Deno 호환(globalThis 기반)
+// ================================================================
+
 (function () {
-  const { supabase } = window.App;
-  let selectedAreaId = null; // 선택된 장소 ID 저장용 전역 변수
+  const { supabase } = globalThis.App;
 
-  // -------------------------------------------------------------------
-  // ✅ 시약장 목록 불러오기
-  // -------------------------------------------------------------------
+  // ---------------------------------------------------------------
+  // 시약장 목록 로드
+  // ---------------------------------------------------------------
   async function loadCabinetList() {
-    const container = document.getElementById("cabinet-list-container");
-    const status = document.getElementById("status-message-list");
-
     try {
-      status.textContent = "시약장 목록 불러오는 중...";
-
       const { data, error } = await supabase
         .from("Cabinet")
         .select(`
-          id,
-          name,
-          area_id ( id, name ),
-          photo_url_160,
-          photo_url_320,
-          door_vertical_count,
-          door_horizontal_count,
-          shelf_height,
-          storage_columns
+          id, name, photo_url,
+          area_id (id, name),
+          door_vertical_count, door_horizontal_count,
+          shelf_height, storage_columns
         `)
-        .order("created_at", { ascending: false });
+        .order("id", { ascending: true });
 
       if (error) throw error;
+      renderCabinetList(data || []);
+    } catch (err) {
+      console.error("❌ 시약장 목록 로드 오류:", err);
+      alert("시약장 목록을 불러오지 못했습니다.");
+    }
+  }
 
-      if (!data || data.length === 0) {
-        status.textContent = "등록된 시약장이 없습니다.";
-        return;
-      }
+  function renderCabinetList(cabinets) {
+    const container = document.getElementById("cabinet-list");
+    if (!container) return;
 
-      container.innerHTML = "";
-
-      data.forEach((cab) => {
-        const photo = cab.photo_url_320 || cab.photo_url_160 || null;
-        const areaName = cab.area_id?.name || "-";
-
-        const card = document.createElement("div");
-        card.className = "cabinet-card";
-        card.innerHTML = `
-          <div class="card-image-placeholder">
-            ${photo ? `<img src="${photo}" alt="${cab.name}" />` : "사진 없음"}
-          </div>
+    container.innerHTML = cabinets
+      .map(
+        (cab) => `
+      <div class="cabinet-card">
+        <div class="card-image-placeholder">
+          ${cab.photo_url
+            ? `<img src="${cab.photo_url}" alt="${cab.name}" style="width:100%;height:100%;object-fit:cover;">`
+            : "사진 없음"}
+        </div>
+        <div class="card-info">
           <div class="card-info">
-            <h3 style="display:inline-block; margin-right:6px;">${cab.name}</h3>
-            <span style="color:#666; font-size:14px; vertical-align:middle;">· ${areaName}</span>
+            <h3>${cab.name}</h3>
+            <span class="area-name">${cab.area_id?.name || "위치 없음"}</span>
           </div>
-          <div class="card-actions">
-            <button class="edit-btn" data-id="${cab.id}">수정</button>
-            <button class="delete-btn" data-id="${cab.id}">삭제</button>
-          </div>
-        `;
+          <p class="cabinet-specs">
+            상하: ${cab.door_vertical_count || "-"}, 좌우: ${
+          cab.door_horizontal_count || "-"
+        }, 층: ${cab.shelf_height || "-"}, 열: ${cab.storage_columns || "-"}
+          </p>
+        </div>
+        <div class="card-actions">
+          <button class="edit-btn" onclick="editCabinet(${cab.id})">수정</button>
+          <button class="delete-btn" onclick="deleteCabinet(${cab.id})">삭제</button>
+        </div>
+      </div>`
+      )
+      .join("");
+  }
 
-        // ------------------------------
-        // ✏️ 수정 버튼
-        // ------------------------------
-        card.querySelector(".edit-btn").addEventListener("click", async () => {
-          try {
-            const { data: detail, error } = await supabase
-              .from("Cabinet")
-              .select(`id, name, area_id ( id, name ), door_vertical_count, door_horizontal_count, shelf_height, storage_columns`)
-              .eq("id", cab.id)
-              .maybeSingle();
+  // ---------------------------------------------------------------
+  // 수정 버튼 클릭 시
+  // ---------------------------------------------------------------
+  globalThis.editCabinet = async function (cabinetId) {
+    try {
+      const { data: detail, error } = await supabase
+        .from("Cabinet")
+        .select(
+          `id, name, area_id (id, name), photo_url,
+           door_vertical_count, door_horizontal_count,
+           shelf_height, storage_columns`
+        )
+        .eq("id", cabinetId)
+        .maybeSingle();
 
-            if (error || !detail) throw error || new Error("데이터 없음");
+      if (error || !detail) throw error || new Error("시약장 없음");
 
-            await includeHTML("pages/cabinet-form.html", "form-container");
-            await sleep(80);
-            initializeCabinetForm(detail); // ✅ 수정모드로 자동전환
-          } catch (err) {
-            console.error("❌ 시약장 수정 오류:", err);
-            alert("시약장 정보를 불러오지 못했습니다.");
-          }
-        });
-
-        // ------------------------------
-        // 🗑️ 삭제 버튼
-        // ------------------------------
-        card.querySelector(".delete-btn").addEventListener("click", async () => {
-          if (!confirm(`"${cab.name}"을(를) 삭제하시겠습니까?`)) return;
-          const { error: delErr } = await supabase
-            .from("Cabinet")
-            .delete()
-            .eq("id", cab.id);
-          if (delErr) {
-            alert("❌ 삭제 중 오류 발생");
-            return;
-          }
-          loadCabinetList();
-        });
-
-        container.appendChild(card);
-      });
-
-      status.textContent = "";
+      await includeHTML("pages/cabinet-form.html", "form-container");
+      await sleep(50); // 렌더 대기
+      initializeCabinetForm(detail);
     } catch (err) {
       console.error("시약장 불러오기 오류:", err);
-      status.textContent = "오류가 발생했습니다.";
+      alert("시약장 정보를 불러올 수 없습니다.");
     }
-  }
+  };
 
-  // -------------------------------------------------------------------
-  // ✅ 시약장 수정 폼 초기화
-  // -------------------------------------------------------------------
-  async function initializeCabinetForm(detail) {
-    console.log("🧭 시약장 수정 초기화", detail);
+  // ---------------------------------------------------------------
+  // 시약장 등록/수정 폼 초기화
+  // ---------------------------------------------------------------
+  function initializeCabinetForm(detail = null) {
+    console.log("🧩 initializeCabinetForm 실행", detail);
 
-    // 1️⃣ 기본 폼 데이터 채우기
-    fillFormFromData(detail, "cabinet-creation-form");
+    const form = document.getElementById("cabinet-creation-form");
+    const title = form?.querySelector("h2");
+    const submitBtn = document.getElementById("cabinet-submit-button");
 
-    // 2️⃣ 버튼 그룹 이벤트 리스너 초기화
-    setupButtonGroup("area-button-group");
+    const isEditMode = !!detail;
 
-    // 3️⃣ 기존 area_id 반영 (id 기반으로 자동 선택)
-    if (detail.area_id?.id) {
-      selectedAreaId = detail.area_id.id; // 전역 상태 반영
+    // 1️⃣ 제목/버튼 텍스트
+    if (isEditMode) {
+      title.textContent = `${detail.name} 정보 수정`;
+      submitBtn.textContent = "시약장 정보 수정";
+      submitBtn.id = "cabinet-save-btn";
+    } else {
+      title.textContent = "시약장 등록";
+      submitBtn.textContent = "시약장 등록";
+    }
 
-      const buttons = document.querySelectorAll("#area-button-group button");
-      buttons.forEach((btn) => {
-        if (parseInt(btn.dataset.id) === selectedAreaId) {
-          btn.classList.add("active");
-        } else {
-          btn.classList.remove("active");
+    // 2️⃣ 데이터 채우기
+    if (isEditMode) fillFormFromData(detail, "cabinet-creation-form");
+
+    // 3️⃣ 버튼 그룹 초기화
+    const groupIds = [
+      "area-button-group",
+      "cabinet_name_buttons",
+      "door_vertical_split_buttons",
+      "door_horizontal_split_buttons",
+      "shelf_height_buttons",
+      "storage_columns_buttons",
+    ];
+    groupIds.forEach((id) => setupButtonGroup(id));
+
+    // 4️⃣ 기존 선택값 반영
+    if (isEditMode) {
+      if (detail.area_id?.id) {
+        globalThis.selectedAreaId = detail.area_id.id;
+        const btn = document.querySelector(
+          `#area-button-group button[data-id="${detail.area_id.id}"]`
+        );
+        if (btn) btn.classList.add("active");
+      }
+
+      if (detail.name) {
+        const nameBtn = document.querySelector(
+          `#cabinet_name_buttons button[data-value="${detail.name}"]`
+        );
+        if (nameBtn) {
+          nameBtn.classList.add("active");
+          document
+            .querySelectorAll("#cabinet_name_buttons button")
+            .forEach((b) => (b.disabled = true));
         }
-      });
+      }
 
-      console.log(`✅ 기존 선택된 위치: id=${selectedAreaId}, name=${detail.area_id.name}`);
+      if (detail.door_vertical_count) {
+        activateButton(
+          "door_vertical_split_buttons",
+          detail.door_vertical_count
+        );
+      }
+      if (detail.door_horizontal_count) {
+        activateButton(
+          "door_horizontal_split_buttons",
+          detail.door_horizontal_count
+        );
+      }
+      if (detail.shelf_height) {
+        activateButton("shelf_height_buttons", detail.shelf_height);
+      }
+      if (detail.storage_columns) {
+        activateButton("storage_columns_buttons", detail.storage_columns);
+      }
     }
 
-    // 4️⃣ 저장 버튼 설정
-    const saveBtn = document.getElementById("cabinet-save-btn");
-    if (saveBtn) {
-      saveBtn.textContent = "시약장 정보 수정";
-      saveBtn.addEventListener("click", async () => {
-        await updateCabinetInfo(detail.id);
-      });
-    }
+    // 5️⃣ 기타 입력칸 표시 안정화
+    document
+      .querySelectorAll(".button-group button")
+      .forEach((btn) =>
+        btn.addEventListener("click", () => {
+          const isOther = btn.textContent.includes("기타");
+          const group = btn.closest(".form-group");
+          const next = group?.nextElementSibling;
+          if (next && next.classList.contains("other-input-group")) {
+            next.style.display = isOther ? "block" : "none";
+          }
+        })
+      );
+
+    // 6️⃣ 저장/등록 버튼
+    submitBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      if (isEditMode) await updateCabinetInfo(detail.id);
+      else await createCabinet();
+    });
   }
 
-  // -------------------------------------------------------------------
-  // ✅ 시약장 수정 저장
-  // -------------------------------------------------------------------
-  async function updateCabinetInfo(cabinetId) {
+  // ---------------------------------------------------------------
+  // 새 시약장 등록
+  // ---------------------------------------------------------------
+  async function createCabinet() {
     try {
       const formData = collectFormData("cabinet-creation-form");
 
-      if (!cabinetId) {
-        alert("❌ 시약장 ID가 없습니다.");
-        return;
-      }
-
-      // ✅ area_id가 선택되지 않은 경우 처리
-      if (!selectedAreaId) {
+      if (!globalThis.selectedAreaId) {
         alert("❗ 시약장이 위치한 장소를 선택해 주세요.");
         return;
       }
+
+      const { error } = await supabase.from("Cabinet").insert([
+        {
+          name: formData.name,
+          area_id: globalThis.selectedAreaId,
+          door_vertical_count: formData.door_vertical_count,
+          door_horizontal_count: formData.door_horizontal_count,
+          shelf_height: formData.shelf_height,
+          storage_columns: formData.storage_columns,
+        },
+      ]);
+
+      if (error) throw error;
+      alert("✅ 시약장이 성공적으로 등록되었습니다!");
+      includeHTML("pages/location-list.html");
+    } catch (err) {
+      console.error("❌ 등록 오류:", err);
+      alert("시약장 등록 중 오류가 발생했습니다.");
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // 시약장 수정
+  // ---------------------------------------------------------------
+  async function updateCabinetInfo(cabinetId) {
+    try {
+      const formData = collectFormData("cabinet-creation-form");
+      if (!cabinetId) return alert("❌ 시약장 ID가 없습니다.");
+
+      if (!globalThis.selectedAreaId)
+        return alert("❗ 시약장이 위치한 장소를 선택해 주세요.");
 
       const { error } = await supabase
         .from("Cabinet")
         .update({
           name: formData.name,
+          area_id: globalThis.selectedAreaId,
           door_vertical_count: formData.door_vertical_count,
           door_horizontal_count: formData.door_horizontal_count,
           shelf_height: formData.shelf_height,
           storage_columns: formData.storage_columns,
-          area_id: selectedAreaId, // ✅ 새 위치 반영
         })
         .eq("id", cabinetId);
 
       if (error) throw error;
-
       alert("✅ 시약장 정보가 성공적으로 수정되었습니다!");
       includeHTML("pages/location-list.html");
     } catch (err) {
@@ -183,10 +252,21 @@
     }
   }
 
-  // -------------------------------------------------------------------
-  // ✅ 전역 등록
-  // -------------------------------------------------------------------
-  window.loadCabinetList = loadCabinetList;
-  window.initializeCabinetForm = initializeCabinetForm;
-  window.updateCabinetInfo = updateCabinetInfo;
+  // ---------------------------------------------------------------
+  // 버튼 활성화 유틸
+  // ---------------------------------------------------------------
+  function activateButton(groupId, value) {
+    const buttons = document.querySelectorAll(`#${groupId} button`);
+    buttons.forEach((btn) => {
+      if (btn.dataset.value == value) btn.classList.add("active");
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // 전역 등록
+  // ---------------------------------------------------------------
+  globalThis.loadCabinetList = loadCabinetList;
+  globalThis.initializeCabinetForm = initializeCabinetForm;
+  globalThis.updateCabinetInfo = updateCabinetInfo;
+  globalThis.createCabinet = createCabinet;
 })();
