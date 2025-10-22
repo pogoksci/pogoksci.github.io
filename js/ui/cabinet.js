@@ -10,27 +10,31 @@
   // 시약장 목록 로드
   // ---------------------------------------------------------------
   async function loadCabinetList() {
+    console.log("📦 loadCabinetList() 시작");
+    const listContainer = document.getElementById("cabinet-list-container");
+    const statusMessage = document.getElementById("status-message-list");
+    if (!listContainer || !statusMessage) return;
+
     try {
-      const { data, error } = await supabase
+      // ✅ Supabase에서 Cabinet 데이터 조회
+      const { data, error } = await App.supabase
         .from("Cabinet")
-        .select(`
-          id, name,
-          area_id ( id, name ),
-          photo_url_320, photo_url_160,
-          door_vertical_count, door_horizontal_count,
-          shelf_height, storage_columns
-        `)
+        .select("id, name, area_id(id, name), door_vertical_count, door_horizontal_count, shelf_height, storage_columns, photo_url_320, photo_url_160")
         .order("id", { ascending: true });
 
       if (error) throw error;
-      if (!data || !data.length) {
-        alert("등록된 시약장이 없습니다.");
+      console.log("✅ 시약장 목록:", data);
+
+      if (!data || data.length === 0) {
+        statusMessage.textContent = "등록된 시약장이 없습니다.";
         return;
       }
-      renderCabinetList(data || []);
+
+      statusMessage.style.display = "none";
+      renderCabinetList(data);
     } catch (err) {
-      console.error("❌ 시약장 목록 로드 오류:", err);
-      alert(`시약장 목록을 불러오지 못했습니다.\n\n오류: ${err.message}`);
+      console.error("❌ 시약장 목록 불러오기 실패:", err);
+      statusMessage.textContent = "시약장 목록을 불러오지 못했습니다.";
     }
   }
 
