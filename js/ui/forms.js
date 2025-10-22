@@ -4,7 +4,7 @@
 // ================================================================
 
 let selectedAreaId = null; // 전역: 현재 선택된 area_id
-const formMode = "create"; // 'create' | 'edit'
+let formMode = "create"; // 'create' | 'edit'
 
 // ------------------------------------------------------------
 // 1️⃣ 버튼 그룹 설정 (공용)
