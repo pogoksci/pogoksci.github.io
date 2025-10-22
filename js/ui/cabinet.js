@@ -39,38 +39,41 @@
   }
 
   function renderCabinetList(cabinets) {
-    const container = document.getElementById("cabinet-list");
-    if (!container) return;
+    const container = document.getElementById("cabinet-list-container");
+    if (!container) {
+      console.warn("⚠️ renderCabinetList: container not found");
+      return;
+    }
 
     container.innerHTML = cabinets
       .map((cab) => {
-        // ✅ 이미지 URL 우선순위 지정
         const photo = cab.photo_url_320 || cab.photo_url_160 || null;
+        const areaName = cab.area_id?.name || "위치 없음";
 
         return `
-        <div class="cabinet-card">
-          <div class="card-image-placeholder">
-            ${
-              photo
-                ? `<img src="${photo}" alt="${cab.name}" style="width:100%;height:100%;object-fit:cover;">`
-                : "사진 없음"
-            }
-          </div>
-          <div class="card-info">
-            <h3>${cab.name}</h3>
-            <span class="area-name">${cab.area_id?.name || "위치 없음"}</span>
-            <p class="cabinet-specs">
-              상하: ${cab.door_vertical_count || "-"},
-              좌우: ${cab.door_horizontal_count || "-"},
-              층: ${cab.shelf_height || "-"},
-              열: ${cab.storage_columns || "-"}
-            </p>
-          </div>
-          <div class="card-actions">
-            <button class="edit-btn" onclick="editCabinet(${cab.id})">수정</button>
-            <button class="delete-btn" onclick="deleteCabinet(${cab.id})">삭제</button>
-          </div>
-        </div>`;
+          <div class="cabinet-card">
+            <div class="card-image-placeholder">
+              ${
+                photo
+                  ? `<img src="${photo}" alt="${cab.name}" style="width:100%;height:100%;object-fit:cover;">`
+                  : "사진 없음"
+              }
+            </div>
+            <div class="card-info">
+              <h3>${cab.name}</h3>
+              <span class="area-name">${areaName}</span>
+              <p class="cabinet-specs">
+                상하: ${cab.door_vertical_count || "-"},
+                좌우: ${cab.door_horizontal_count || "-"},
+                층: ${cab.shelf_height || "-"},
+                열: ${cab.storage_columns || "-"}
+              </p>
+            </div>
+            <div class="card-actions">
+              <button class="edit-btn" onclick="editCabinet(${cab.id})">수정</button>
+              <button class="delete-btn" onclick="deleteCabinet(${cab.id})">삭제</button>
+            </div>
+          </div>`;
       })
       .join("");
   }
