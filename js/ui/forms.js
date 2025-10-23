@@ -1,4 +1,4 @@
-// js/ui/forms.js
+// /js/ui/forms.js
 // ================================================================
 // 📦 폼 관련 공통 로직 (등록/수정 겸용)
 // ================================================================
@@ -17,23 +17,26 @@ function setupButtonGroup(groupId) {
   const group = document.getElementById(groupId);
   if (!group) return;
 
-  // 전역 상태 맵 (공용 저장소)
+  // ✅ 전역 상태 맵 초기화
   globalThis.SelectedValues = globalThis.SelectedValues || {};
 
-  // 중복 리스너 제거 (DOM 교체 없이 clone으로)
-  const clone = group.cloneNode(true);
-  group.parentNode.replaceChild(clone, group);
+  // ✅ 기존 리스너 제거 (cloneNode 제거 → 안전하게 유지)
+  const oldGroup = group.cloneNode(true);
+  group.replaceWith(oldGroup);
+
   const newGroup = document.getElementById(groupId);
 
   newGroup.addEventListener("click", (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
 
-    // ✅ 기존 active 해제 후 새 버튼 활성화
+    // ✅ 기존 active 해제
     newGroup.querySelectorAll(".active").forEach((b) => b.classList.remove("active"));
+
+    // ✅ 새 버튼 활성화
     btn.classList.add("active");
 
-    // ✅ 공통 속성 추출
+    // ✅ 공통 데이터 추출
     const id = btn.dataset.id ? parseInt(btn.dataset.id) : null;
     const value = btn.dataset.value || btn.textContent.trim();
 
@@ -71,10 +74,6 @@ function setupButtonGroup(groupId) {
     if (otherGroup) {
       otherGroup.style.display = value.includes("기타") ? "block" : "none";
     }
-
-    // ✅ 숨겨진 input 업데이트 (collectFormData 호환)
-    const hiddenInput = newGroup.querySelector("input[type='hidden']");
-    if (hiddenInput) hiddenInput.value = value;
   });
 }
 
@@ -87,9 +86,12 @@ function fillCabinetForm(detail) {
   // ✅ 기존 장소 active 처리
   if (detail.area_id?.id) {
     selectedAreaId = detail.area_id.id;
+    globalThis.SelectedValues = globalThis.SelectedValues || {};
+    globalThis.SelectedValues.area = { id: detail.area_id.id, value: detail.area_id.name };
+
     const buttons = document.querySelectorAll("#area-button-group button");
     buttons.forEach((btn) => {
-      if (btn.dataset.id == detail.area_id.id) {
+      if (String(btn.dataset.id) === String(detail.area_id.id)) {
         btn.classList.add("active");
       } else {
         btn.classList.remove("active");
@@ -104,9 +106,9 @@ function fillCabinetForm(detail) {
     );
     if (nameBtn) {
       nameBtn.classList.add("active");
-      document
-        .querySelectorAll("#cabinet_name_buttons button")
-        .forEach((b) => (b.disabled = true));
+      document.querySelectorAll("#cabinet_name_buttons button").forEach((b) => (b.disabled = true));
+      globalThis.SelectedValues = globalThis.SelectedValues || {};
+      globalThis.SelectedValues.cabinet_name = detail.name;
     }
   }
 
@@ -124,6 +126,7 @@ function fillCabinetForm(detail) {
       `#door_vertical_split_buttons button[data-value="${verticalValue}"]`
     );
     if (vBtn) vBtn.classList.add("active");
+    globalThis.SelectedValues.door_vertical = verticalValue;
   }
 
   if (horizontalValue) {
@@ -131,6 +134,7 @@ function fillCabinetForm(detail) {
       `#door_horizontal_split_buttons button[data-value="${horizontalValue}"]`
     );
     if (hBtn) hBtn.classList.add("active");
+    globalThis.SelectedValues.door_horizontal = horizontalValue;
   }
 
   // ✅ 내부 층 / 열 매핑
@@ -139,14 +143,25 @@ function fillCabinetForm(detail) {
       `#shelf_height_buttons button[data-value="${detail.shelf_height}"]`
     );
     if (sBtn) sBtn.classList.add("active");
+    globalThis.SelectedValues.shelf_height = detail.shelf_height;
   }
+
   if (detail.storage_columns) {
     const cBtn = document.querySelector(
       `#storage_columns_buttons button[data-value="${detail.storage_columns}"]`
     );
     if (cBtn) cBtn.classList.add("active");
+    globalThis.SelectedValues.storage_columns = detail.storage_columns;
+  }
+
+  // ✅ “기타” 입력칸 안정화
+  const otherAreaGroup = document.getElementById("other_area_group");
+  if (otherAreaGroup) {
+    const areaName = detail.area_id?.name || "";
+    otherAreaGroup.style.display = areaName.includes("기타") ? "block" : "none";
   }
 }
+
 
 // ------------------------------------------------------------
 // 3️⃣ 폼 초기화 (등록/수정 겸용)

@@ -1,4 +1,4 @@
-// js/ui/inventory-detail.js
+// /js/ui/inventory-detail.js
 (async function () {
   const { supabase } = globalThis.App;
 

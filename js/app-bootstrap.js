@@ -1,4 +1,4 @@
-// js/app-bootstrap.js
+// /js/app-bootstrap.js
 (async function () {
   window.addEventListener("DOMContentLoaded", async () => {
     console.log("🚀 App bootstrap 시작");

@@ -1,4 +1,4 @@
-// js/ui/navbar.js
+// /js/ui/navbar.js
 (function () {
   function setupNavbar() {
     const menuBtn = document.getElementById("menu-toggle-btn");
