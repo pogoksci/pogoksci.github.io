@@ -207,58 +207,73 @@
   }
 
   function fillCabinetForm(detail) {
-      // 버튼을 프로그래밍 방식으로 클릭하여 상태를 미리 설정하는 헬퍼 함수
-      const preselectButton = (groupId, value, otherInputId) => {
-          const group = document.getElementById(groupId);
-          if (!group || value == null) return;
+    // 버튼을 프로그래밍 방식으로 클릭하여 상태를 미리 설정하는 헬퍼 함수
+    const verticalMap = { 3: "상중하도어", 2: "상하도어", 1: "단일도어(상하분리없음)" };
+    const horizontalMap = { 2: "좌우분리도어", 1: "단일도어" };
 
-          const button = group.querySelector(`button[data-value="${value}"]`);
-          if (button) {
-              button.click();
-          } else {
-              const otherButton = group.querySelector('button[data-value="기타"]');
-              if (otherButton) otherButton.click();
-              const otherInput = document.getElementById(otherInputId);
-              if (otherInput) otherInput.value = value;
-          }
-      };
+    // --- 데이터 미리 채우기 및 비활성화 ---
+    const areaGroup = document.getElementById('area-button-group');
+    const cabinetNameGroup = document.getElementById('cabinet_name_buttons');
 
-      const verticalMap = { 3: "상중하도어", 2: "상하도어", 1: "단일도어(상하분리없음)" };
-      const horizontalMap = { 2: "좌우분리도어", 1: "단일도어" };
-      
-      // --- 데이터 미리 채우기 ---
-      preselectButton('area-button-group', detail.area_id?.name, 'other_area_input');
-      preselectButton('cabinet_name_buttons', detail.name, 'other_cabinet_input');
-      preselectButton('door_vertical_split_buttons', verticalMap[detail.door_vertical_count]);
-      preselectButton('door_horizontal_split_buttons', horizontalMap[detail.door_horizontal_count]);
-      preselectButton('shelf_height_buttons', detail.shelf_height.toString());
-      preselectButton('storage_columns_buttons', detail.storage_columns.toString());
+    // 1. 장소(Area) 버튼 처리
+    if (areaGroup) {
+        // 모든 버튼을 일단 비활성화
+        areaGroup.querySelectorAll('button').forEach(btn => btn.disabled = true);
+        // 저장된 값과 일치하는 버튼에만 'active' 클래스 추가
+        const activeButton = areaGroup.querySelector(`button[data-value="${detail.area_id?.name}"]`);
+        if (activeButton) {
+            activeButton.classList.add('active');
+        } else { // '기타' 항목 처리
+            const otherButton = areaGroup.querySelector('button[data-value="기타"]');
+            if (otherButton) otherButton.classList.add('active');
+            const otherInput = document.getElementById('other_area_input');
+            if(otherInput) {
+                otherInput.value = detail.area_id?.name || '';
+                otherInput.disabled = true;
+                document.getElementById('other_area_group').style.display = 'block';
+            }
+        }
+    }
+    
+    // 2. 시약장 이름 버튼 처리 (동일한 로직 적용)
+    if (cabinetNameGroup) {
+        cabinetNameGroup.querySelectorAll('button').forEach(btn => btn.disabled = true);
+        const activeButton = cabinetNameGroup.querySelector(`button[data-value="${detail.name}"]`);
+        if (activeButton) {
+            activeButton.classList.add('active');
+        } else {
+            const otherButton = cabinetNameGroup.querySelector('button[data-value="기타"]');
+            if (otherButton) otherButton.classList.add('active');
+            const otherInput = document.getElementById('other_cabinet_input');
+            if(otherInput) {
+                otherInput.value = detail.name || '';
+                otherInput.disabled = true;
+                document.getElementById('other_cabinet_group').style.display = 'block';
+            }
+        }
+    }
 
-      // 사진 미리보기 설정
-      if (detail.photo_url_320) {
-          const photoPreview = document.getElementById('cabinet-photo-preview');
-          if (photoPreview) {
-              photoPreview.innerHTML = `<img src="${detail.photo_url_320}" alt="Cabinet photo preview">`;
-          }
-      }
+    // 3. 나머지 버튼 그룹 처리
+    const setButtonActive = (groupId, value) => {
+        const group = document.getElementById(groupId);
+        if (!group || value == null) return;
+        const button = group.querySelector(`button[data-value="${value}"]`);
+        if (button) button.classList.add('active');
+    };
 
-      // --- 장소와 이름 버튼 그룹 비활성화 ---
-      const areaButtonGroup = document.getElementById('area-button-group');
-      const cabinetNameGroup = document.getElementById('cabinet_name_buttons');
+    setButtonActive('door_vertical_split_buttons', verticalMap[detail.door_vertical_count]);
+    setButtonActive('door_horizontal_split_buttons', horizontalMap[detail.door_horizontal_count]);
+    setButtonActive('shelf_height_buttons', detail.shelf_height.toString());
+    setButtonActive('storage_columns_buttons', detail.storage_columns.toString());
 
-      if (areaButtonGroup) {
-          areaButtonGroup.querySelectorAll('button').forEach(btn => btn.disabled = true);
-      }
-      if (cabinetNameGroup) {
-          cabinetNameGroup.querySelectorAll('button').forEach(btn => btn.disabled = true);
-      }
-      // "기타" 입력 필드도 비활성화
-      const otherAreaInput = document.getElementById('other_area_input');
-      const otherCabinetInput = document.getElementById('other_cabinet_input');
-      if (otherAreaInput) otherAreaInput.disabled = true;
-      if (otherCabinetInput) otherCabinetInput.disabled = true;
+    // 4. 사진 미리보기
+    if (detail.photo_url_320) {
+        const photoPreview = document.getElementById('cabinet-photo-preview');
+        if (photoPreview) {
+            photoPreview.innerHTML = `<img src="${detail.photo_url_320}" alt="Cabinet photo preview">`;
+        }
+    }
   }
-
 
   // ---------------------------------------------------------------
   // 새 시약장 등록
