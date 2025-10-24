@@ -21,8 +21,8 @@
 
     if (file.includes("inventory-list")) fetchInventoryAndRender?.();
     if (file.includes("inventory-detail")) loadInventoryDetail?.();
-    //if (file.includes("location-list")) App.Cabinet.load?.();
-    if (file.includes("location-list")) loadCabinetList?.();
+    if (file.includes("location-list")) App.Cabinet.load?.();
+    //if (file.includes("location-list")) loadCabinetList?.();
     if (file.includes("inventory-form")) initializeFormListeners?.();
 
     return true; // ✅ Promise 기반
