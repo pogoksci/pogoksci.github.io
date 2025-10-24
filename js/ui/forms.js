@@ -59,9 +59,9 @@
     // 1. 위치(장소)
     if (detail.area_id?.id) {
       state.area_id = detail.area_id.id;
-      const areaBtn = document.querySelector(
-        `#area-button-group button[data-id="${detail.area_id.id}"]`
-      );
+      const areaBtn =
+        document.querySelector(`#area-button-group button[data-id="${detail.area_id.id}"]`) ||
+        document.querySelector(`#area-button-group button[data-value="${detail.area_id.name}"]`);
       if (areaBtn) {
         areaBtn.classList.add("active");
       } else {
