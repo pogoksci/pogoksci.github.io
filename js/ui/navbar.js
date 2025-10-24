@@ -1,5 +1,4 @@
 // /js/ui/navbar.js
-
 (function () {
     function setup() {
         const menuBtn = document.getElementById("menu-toggle-btn");
@@ -7,13 +6,12 @@
         const inventoryNav = document.getElementById("nav-inventory");
 
         if (!menuBtn || !startMenu || !inventoryNav) {
-            // HTML 요소가 아직 로드되지 않았을 수 있으므로 잠시 후 다시 시도합니다.
             console.warn("⚠️ Navbar elements not found, retrying...");
-            setTimeout(setup, 200);
+            setTimeout(setup, 200); // 0.2초 후 재시도
             return;
         }
 
-        // --- 하단 네비게이션 탭 이벤트 리스너 ---
+        // '약품 관리' 탭 이벤트
         inventoryNav.addEventListener("click", (e) => {
             e.preventDefault();
             if (typeof App.Inventory.load === "function") {
@@ -21,13 +19,14 @@
             }
         });
 
-        // --- 시작 메뉴(팝업) 이벤트 리스너 ---
+        // 메뉴(☰) 버튼 이벤트
         menuBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
             startMenu.classList.toggle("visible");
         });
 
+        // 팝업 메뉴 아이템 이벤트
         startMenu.querySelectorAll(".menu-item").forEach((item) => {
             item.addEventListener("click", (e) => {
                 e.preventDefault();
@@ -37,8 +36,6 @@
                 if (id === "menu-home") App.includeHTML("pages/main.html");
                 if (id === "menu-location") App.includeHTML("pages/location-list.html");
                 if (id === "menu-inventory") App.Inventory.load?.();
-                if (id === "menu-equipment") alert("교구/물품 설정 준비 중입니다.");
-                if (id === "menu-lablog") alert("과학실 기록/예약 기능 준비 중입니다.");
             });
         });
         
