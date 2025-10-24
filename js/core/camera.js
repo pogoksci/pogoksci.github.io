@@ -5,8 +5,8 @@
   /**
    * 전역 상태 — 사진 Base64 데이터 저장
    */
-  window.selectedCabinetPhoto320 = null;
-  window.selectedCabinetPhoto160 = null;
+  globalThis.selectedCabinetPhoto320 = null;
+  globalThis.selectedCabinetPhoto160 = null;
 
   // ------------------------------------------------------------
   // 1️⃣ 파일 선택 업로드
@@ -20,15 +20,15 @@
       selectBtn.addEventListener("click", () => fileInput.click());
     }
 
-    fileInput.addEventListener("change", async (e) => {
+    fileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = async (event) => {
+      reader.onload = (event) => {
         const base64Data = event.target.result;
         updatePhotoPreview(base64Data);
-        await processAndStorePhoto(base64Data);
+        processAndStorePhoto(base64Data);
       };
       reader.readAsDataURL(file);
     });
@@ -39,7 +39,6 @@
   // ------------------------------------------------------------
   const cameraBtn = document.getElementById("cabinet-camera-btn");
   const cameraModal = document.getElementById("camera-modal");
-  const cameraInput = document.getElementById("cabinet-camera-input");
   const video = document.getElementById("camera-view");
   const captureBtn = document.getElementById("capture-btn");
   const cancelBtn = document.getElementById("cancel-camera-btn");
@@ -106,8 +105,8 @@
       const resized320 = await resizeBase64(base64Data, 320);
       const resized160 = await resizeBase64(base64Data, 160);
 
-      window.selectedCabinetPhoto320 = resized320;
-      window.selectedCabinetPhoto160 = resized160;
+      globalThis.selectedCabinetPhoto320 = resized320;
+      globalThis.selectedCabinetPhoto160 = resized160;
 
       console.log("📷 Base64 저장 완료:", {
         "320px": resized320?.length,
@@ -121,7 +120,7 @@
   // ------------------------------------------------------------
   // 6️⃣ 이미지 리사이즈 (canvas 기반)
   // ------------------------------------------------------------
-  async function resizeBase64(base64, size) {
+  function resizeBase64(base64, size) {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -142,7 +141,7 @@
   // ------------------------------------------------------------
   // 7️⃣ 전역 노출
   // ------------------------------------------------------------
-  window.updatePhotoPreview = updatePhotoPreview;
-  window.processAndStorePhoto = processAndStorePhoto;
-  window.resizeBase64 = resizeBase64;
+  globalThis.updatePhotoPreview = updatePhotoPreview;
+  globalThis.processAndStorePhoto = processAndStorePhoto;
+  globalThis.resizeBase64 = resizeBase64;
 })();

@@ -1,6 +1,6 @@
 // /js/app-bootstrap.js
-(async function () {
-  window.addEventListener("DOMContentLoaded", async () => {
+(function () {
+  globalThis.addEventListener("DOMContentLoaded", async () => {
     console.log("🚀 App bootstrap 시작");
 
     await includeHTML("pages/main.html", "form-container");
@@ -21,11 +21,11 @@
 
     if (file.includes("inventory-list")) fetchInventoryAndRender?.();
     if (file.includes("inventory-detail")) loadInventoryDetail?.();
-    if (file.includes("location-list")) loadCabinetList?.();
+    if (file.includes("location-list")) App.Cabinet.load?.();
     if (file.includes("inventory-form")) initializeFormListeners?.();
 
     return true; // ✅ Promise 기반
   }
 
-  window.includeHTML = includeHTML;
+  globalThis.includeHTML = includeHTML;
 })();

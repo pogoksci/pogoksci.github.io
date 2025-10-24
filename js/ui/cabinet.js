@@ -139,6 +139,38 @@
     ];
     groupIds.forEach((id) => setupButtonGroup(id));
 
+    // 사진 및 카메라 기능 초기화
+    const photoInput = document.getElementById('cabinet-photo-input');
+    const cameraInput = document.getElementById('cabinet-camera-input');
+    const photoPreview = document.getElementById('cabinet-photo-preview');
+    const cameraBtn = document.getElementById('cabinet-camera-btn');
+    const photoBtn = document.getElementById('cabinet-photo-btn');
+
+    if (cameraBtn) cameraBtn.addEventListener('click', startCamera);
+    if (photoBtn && photoInput) photoBtn.addEventListener('click', () => photoInput.click());
+
+    setupCameraModalListeners(); // 모달 버튼(촬영, 취소) 기능 연결
+
+    const handleFileSelect = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            processImage(e.target.result, (resizedImages) => {
+                globalThis.selectedCabinetPhoto320 = resizedImages.base64_320;
+                globalThis.selectedCabinetPhoto160 = resizedImages.base64_160;
+                if (photoPreview) {
+                  photoPreview.innerHTML = `<img src="${resizedImages.base64_320}" alt="Cabinet photo preview">`;
+                }
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+    if (photoInput) photoInput.addEventListener('change', handleFileSelect);
+    if (cameraInput) cameraInput.addEventListener('change', handleFileSelect);
+
+
+
     // ✅ 3️⃣ 기존 데이터 채우기 (DOM 교체 후 실행해야 active 유지됨)
     if (isEditMode) fillCabinetForm(detail);
 
