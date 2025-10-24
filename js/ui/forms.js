@@ -186,8 +186,15 @@
     }
 
     // 카메라 촬영 버튼 → startCamera() (camera.js에서 전역 제공 가정)
-    if (cameraBtn && typeof startCamera === "function") {
-      cameraBtn.onclick = () => startCamera();
+    if (cameraBtn) {
+      cameraBtn.addEventListener("click", () => {
+        if (typeof globalThis.startCamera === "function") {
+          globalThis.startCamera();
+        } else {
+          console.warn("⚠️ startCamera() not available — camera.js 미로드 또는 전역 등록 누락");
+          alert("카메라 기능을 사용할 수 없습니다. camera.js가 정상 로드되었는지 확인하세요.");
+        }
+      });
     }
 
     function handleFile(file) {
