@@ -24,8 +24,8 @@
   ];
 
   const baseModules = [
-    "/js/supabaseClient.js",
-    "/js/app-bootstrap.js", // ✅ includeHTML 로딩
+    "/supabaseClient.js",
+    "/app-bootstrap.js", // ✅ includeHTML 로딩
   ];
 
   // ------------------------------------------------------------
