@@ -1,74 +1,88 @@
-// /js/ui/inventory.js
-(async function () {
-  const { supabase } = globalThis.App;
+// ================================================================
+// /js/ui/inventory.js — 약품(Inventory) 관리 모듈
+// ================================================================
+(function () {
+  const { supabase } = App;
 
-  // ======================================================
-  // 1️⃣ 약품 목록 불러오기
-  // ======================================================
-  async function fetchInventoryAndRender() {
+  // 목록
+  async function loadList() {
+    console.log("📦 App.Inventory.loadList()");
     const container = document.getElementById("inventory-list-container");
-    const status = document.getElementById("status-message-inventory-list");
-    if (!container || !status) return;
+    const status = document.getElementById("status-message-inventory");
 
     try {
-      status.textContent = "재고 목록을 불러오는 중...";
-      container.innerHTML = "";
-
       const { data, error } = await supabase
         .from("Inventory")
-        .select(`
-          id,
-          current_amount,
-          unit,
-          classification,
-          manufacturer,
-          photo_url_160,
-          substance_id ( id, name, cas_rn ),
-          cabinet_id ( id, name, area_id ( name ) )
-        `)
-        .order("created_at", { ascending: false });
+        .select("id, name, cas_number, quantity, storage_location, created_at")
+        .order("id", { ascending: false });
 
       if (error) throw error;
-      if (!data?.length) {
-        status.textContent = "등록된 약품이 없습니다.";
-        return;
-      }
+      if (!data.length) return (status.textContent = "등록된 약품이 없습니다.");
 
-      // ✅ 목록 생성
-      container.innerHTML = "";
-      data.forEach((item) => {
-        const name = item.substance_id?.name || "이름 없음";
-        const cas = item.substance_id?.cas_rn || "-";
-        const loc = item.cabinet_id?.area_id?.name
-          ? `${item.cabinet_id.area_id.name} · ${item.cabinet_id.name}`
-          : "위치 정보 없음";
-
-        const card = document.createElement("div");
-        card.className = "cabinet-card";
-        card.innerHTML = `
-          <div class="card-image-placeholder">
-            ${item.photo_url_160 ? `<img src="${item.photo_url_160}">` : "사진 없음"}
-          </div>
-          <div class="card-info">
-            <h3>${name}</h3>
-            <p class="area-name">${loc}</p>
-            <p class="cabinet-specs">CAS: ${cas}</p>
-          </div>
-        `;
-        card.addEventListener("click", async () => {
-          localStorage.setItem("selected_inventory_id", item.id);
-          await includeHTML("pages/inventory-detail.html", "form-container");
-          await loadInventoryDetail(item.id);
-        });
-        container.appendChild(card);
-      });
-
-      status.textContent = "";
+      status.style.display = "none";
+      container.innerHTML = data
+        .map(
+          (item) => `
+          <div class="inventory-card">
+            <h3>${item.name}</h3>
+            <p>CAS: ${item.cas_number || "-"}</p>
+            <p>수량: ${item.quantity || 0}</p>
+            <p>보관: ${item.storage_location || "-"}</p>
+            <div class="card-actions">
+              <button onclick="App.Inventory.edit(${item.id})">수정</button>
+              <button onclick="App.Inventory.delete(${item.id})">삭제</button>
+            </div>
+          </div>`
+        )
+        .join("");
     } catch (err) {
-      console.error("재고 목록 로드 오류:", err);
-      status.textContent = "재고 목록 불러오기 중 오류 발생.";
+      console.error("❌ Inventory 목록 불러오기 실패:", err);
+      status.textContent = "약품 목록을 불러오지 못했습니다.";
     }
   }
 
-  globalThis.fetchInventoryAndRender = fetchInventoryAndRender;
+  // 수정
+  async function edit(id) {
+    try {
+      const { data, error } = await supabase
+        .from("Inventory")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      if (error || !data) throw error;
+
+      await App.Router.go("addInventory", "form-container", () =>
+        App.Forms.initInventoryForm("edit", data)
+      );
+    } catch (err) {
+      console.error("❌ Inventory 수정 로드 실패:", err);
+      alert("약품 정보를 불러오지 못했습니다.");
+    }
+  }
+
+  // 등록
+  async function create(payload) {
+    const { error } = await supabase.from("Inventory").insert([payload]);
+    if (error) throw error;
+  }
+
+  // 수정
+  async function update(id, payload) {
+    const { error } = await supabase.from("Inventory").update(payload).eq("id", id);
+    if (error) throw error;
+  }
+
+  // 삭제
+  async function remove(id) {
+    if (!confirm("삭제하시겠습니까?")) return;
+    const { error } = await supabase.from("Inventory").delete().eq("id", id);
+    if (error) alert("삭제 실패");
+    else {
+      alert("삭제되었습니다.");
+      loadList();
+    }
+  }
+
+  globalThis.App = globalThis.App || {};
+  globalThis.App.Inventory = { loadList, edit, create, update, delete: remove };
 })();

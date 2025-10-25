@@ -1,81 +1,53 @@
 // ================================================================
-// /js/core/utils.js — 공용 유틸리티 함수
+// /js/core/utils.js — 공용 유틸리티 (Deno/브라우저 호환)
 // ================================================================
 (function () {
-  /**
-   * 🧩 객체 데이터를 폼 필드에 자동 채워넣기
-   * @param {Object} data - Supabase 또는 JSON 객체
-   * @param {string} [formId] - (선택) 특정 폼 ID 지정
-   */
-  function fillFormFromData(data, formId = null) {
-    if (!data || typeof data !== "object") return;
-
-    const root = formId ? document.getElementById(formId) : document;
-
-    Object.entries(data).forEach(([key, value]) => {
-      // ✅ 1️⃣ 이미지 필드 처리 (photo_url_* → 미리보기 자동 반영)
-      if (key.includes("photo_url") && value) {
-        const previewEl = root.querySelector(`#${key}-preview`) || root.querySelector(`#cabinet-photo-preview`);
-        if (previewEl) {
-          previewEl.innerHTML = `<img src="${value}" alt="이미지 미리보기" style="width:100%; height:100%; object-fit:cover;">`;
-        }
-      }
-
-      // ✅ 2️⃣ 일반 입력 필드 채우기
-      const input = root.querySelector(`#${key}`);
-      if (!input) return; // 없는 요소는 무시
-
-      if (input.type === "checkbox") {
-        input.checked = !!value;
-      } else if (input.tagName === "SELECT" || input.tagName === "TEXTAREA") {
-        input.value = value ?? "";
-      } else if ("value" in input) {
-        input.value = value ?? "";
-      }
-    });
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  /**
-   * 🧾 폼의 입력값을 자동으로 객체로 수집
-   * @param {string} formId - 폼 ID
-   * @returns {Object} formData
-   */
   function collectFormData(formId) {
     const form = document.getElementById(formId);
-    if (!form) {
-      console.warn(`❌ collectFormData: #${formId} not found`);
-      return {};
-    }
-
-    const formData = {};
-    const elements = form.querySelectorAll("input, select, textarea");
-
-    elements.forEach((el) => {
-      const key = el.id || el.name;
-      if (!key) return;
-
-      if (el.type === "checkbox") {
-        formData[key] = el.checked;
-      } else if (el.type === "number") {
-        formData[key] = el.value ? parseFloat(el.value) : null;
-      } else {
-        formData[key] = el.value?.trim() ?? null;
-      }
-    });
-
-    return formData;
+    if (!form) return {};
+    const data = {};
+    new FormData(form).forEach((v, k) => (data[k] = v));
+    return data;
   }
 
-  /** 📦 간단한 딜레이 */
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  function setupButtonGroup(groupId, onSelect) {
+    const group = document.getElementById(groupId);
+    if (!group) return;
+    const newGroup = group.cloneNode(true);
+    group.parentNode.replaceChild(newGroup, group);
 
-  /** 🎨 스타일 로그 */
-  const logStyled = (msg, color = "cyan") =>
-    console.log(`%c${msg}`, `color:${color}; font-weight:bold;`);
+    newGroup.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      newGroup.querySelectorAll(".active").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (typeof onSelect === "function") onSelect(btn);
 
-  // 전역 등록
-  window.fillFormFromData = fillFormFromData;
-  window.collectFormData = collectFormData;
-  window.sleep = sleep;
-  window.logStyled = logStyled;
+      const otherGroup = document.getElementById(groupId.replace("_buttons", "_group"));
+      if (otherGroup) otherGroup.style.display = btn.dataset.value === "기타" ? "block" : "none";
+    });
+  }
+
+  function makePayload(state) {
+    const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
+    const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
+
+    return {
+      name: state.name,
+      area_id: state.area_id,
+      door_vertical_count: verticalMap[state.door_vertical_value] ?? state.door_vertical_count ?? null,
+      door_horizontal_count: horizontalMap[state.door_horizontal_value] ?? state.door_horizontal_count ?? null,
+      shelf_height: parseInt(state.shelf_height, 10) || null,
+      storage_columns: parseInt(state.storage_columns, 10) || null,
+      photo_url_320: state.photo_url_320 || null,
+      photo_url_160: state.photo_url_160 || null,
+    };
+  }
+
+  globalThis.App = globalThis.App || {};
+  globalThis.App.Utils = { sleep, collectFormData, setupButtonGroup, makePayload };
 })();
