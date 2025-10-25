@@ -77,5 +77,5 @@
   globalThis.App = globalThis.App || {};
   globalThis.App.includeHTML = includeHTML;
 
-  //globalThis.addEventListener("DOMContentLoaded", bootstrap);
+  globalThis.addEventListener("DOMContentLoaded", bootstrap);
 })();
