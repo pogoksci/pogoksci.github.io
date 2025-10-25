@@ -17,29 +17,32 @@
       const html = await res.text();
       container.innerHTML = html;
 
-      // 페이지별 후처리: 초기화 함수 호출
+      // ✅ DOM이 렌더링될 시간을 한 프레임 확보
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      // ✅ 페이지별 후처리: 초기화 함수 호출
       if (file.includes("location-list.html")) {
-        // 시약장 목록 화면
-        if (App && App.Cabinet && typeof App.Cabinet.loadList === "function") {
-          App.Cabinet.loadList();
+        if (App?.Cabinet?.loadList) {
+          console.log("📦 includeHTML → Cabinet.loadList() 실행");
+          await App.Cabinet.loadList();
         }
       }
 
       if (file.includes("cabinet-form.html")) {
-        // 시약장 등록/수정 폼 화면
-        if (App && App.Forms && typeof App.Forms.initCabinetForm === "function") {
-          App.Forms.initCabinetForm(); // detail은 edit 시점에 넘김
+        if (App?.Forms?.initCabinetForm) {
+          console.log("📦 includeHTML → Forms.initCabinetForm() 실행");
+          await App.Forms.initCabinetForm();
         }
       }
 
       if (file.includes("inventory-list.html")) {
-        App.Inventory?.load?.();
+        await App.Inventory?.load?.();
       }
       if (file.includes("inventory-detail.html")) {
-        App.Inventory?.loadDetail?.();
+        await App.Inventory?.loadDetail?.();
       }
       if (file.includes("inventory-form.html")) {
-        App.Forms?.initInventoryForm?.();
+        await App.Forms?.initInventoryForm?.();
       }
 
       return true;

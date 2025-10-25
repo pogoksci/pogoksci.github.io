@@ -6,8 +6,15 @@
   const { sleep } = App.Utils;
 
   async function loadList() {
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     const container = document.getElementById("cabinet-list-container");
     const status = document.getElementById("status-message-list");
+
+    if (!container || !status) {
+      console.warn("⚠️ loadList(): DOM 요소를 찾지 못했습니다. HTML 로드가 완료되지 않았을 수 있습니다.");
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("Cabinet")

@@ -17,6 +17,14 @@
     console.log(`🧭 Router → ${pageKey}`);
     await App.includeHTML(file, targetId);
 
+    // ✅ 브라우저가 HTML을 DOM에 실제로 반영할 시간을 잠시 줌
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    // ✅ 페이지별 후처리 실행 (예: 목록 로딩)
+    if (pageKey === "cabinets" && App.Cabinet?.loadList) {
+      await App.Cabinet.loadList();
+    }
+
     if (typeof callback === "function") await callback();
   }
 
