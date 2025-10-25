@@ -12,7 +12,7 @@
     "/js/core/state.js",
     "/js/core/api.js",
     "/js/core/camera.js",
-    "/js/core/fan.js",
+    "/js/core/fab.js",
   ];
 
   const uiModules = [
