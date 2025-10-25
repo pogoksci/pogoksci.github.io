@@ -19,8 +19,8 @@
     "./js/core/fab.js",
   ];
   const uiModules = [
-    "./js/ui/forms.js",
     "./js/ui/cabinet.js",
+    "./js/ui/forms.js",
     "./js/ui/inventory.js",
     "./js/ui/inventory-detail.js",
     "./js/ui/navbar.js",
