@@ -8,7 +8,7 @@
   // 1️⃣ 모듈 경로 정의 (상대경로 사용)
   // ------------------------------------------------------------
   const baseModules = [
-    "./js/core/supabaseClient.js",
+    "./js/supabaseClient.js",
     "./js/app-bootstrap.js",
   ];
 
