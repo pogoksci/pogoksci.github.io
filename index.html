@@ -16,12 +16,22 @@
 </head>
 
 <body>
+  <!-- 🧭 네비게이션 영역 -->
   <div id="navbar-container"></div>
-  <div id="form-container"></div>
-  <p id="statusMessage" style="margin-top: 15px;"></p>
+
+  <!-- 🧪 메인 콘텐츠 -->
+  <div id="form-container">
+    <!-- 로딩 중 표시 (초기 로고 즉시 표시) -->
+    <div id="splash-screen" style="text-align:center; margin-top:100px;">
+      <img src="css/logo.png" alt="SciManager" style="max-width:150px; opacity:0.8;" />
+      <h2 style="color:#444;">SciManager</h2>
+      <p style="color:#888;">로딩 중...</p>
+    </div>
+  </div>
+
   <button class="fab" id="fab-button" style="display: none;"></button>
 
-  <!-- 카메라 모달 -->
+  <!-- 📸 카메라 모달 -->
   <div id="camera-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
       <video id="camera-view" autoplay playsinline></video>
