@@ -21,12 +21,12 @@
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
       // ✅ 페이지별 후처리: 초기화 함수 호출
-      if (file.includes("location-list.html")) {
-        if (App?.Cabinet?.loadList) {
-          console.log("📦 includeHTML → Cabinet.loadList() 실행");
-          await App.Cabinet.loadList();
-        }
-      }
+      //if (file.includes("location-list.html")) {
+      //  if (App?.Cabinet?.loadList) {
+      //    console.log("📦 includeHTML → Cabinet.loadList() 실행");
+      //    await App.Cabinet.loadList();
+      //  }
+      //}
 
       if (file.includes("cabinet-form.html")) {
         if (App?.Forms?.initCabinetForm) {

@@ -11,18 +11,34 @@
   };
 
   async function go(pageKey, targetId = "form-container", callback = null) {
+    const routes = {
+      main: "pages/main.html",
+      cabinets: "pages/location-list.html",
+      inventory: "pages/inventory-list.html",
+    };
+
     const file = routes[pageKey];
-    if (!file) return console.error(`❌ Router: ${pageKey} 라우트 없음`);
+    if (!file) {
+      console.warn(`❌ Router: ${pageKey} 라우트 없음`);
+      return;
+    }
 
     console.log(`🧭 Router → ${pageKey}`);
+
     await App.includeHTML(file, targetId);
 
-    // ✅ 브라우저가 HTML을 DOM에 실제로 반영할 시간을 잠시 줌
+    // ✅ DOM 렌더링 완료 보장
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
-    // ✅ 페이지별 후처리 실행 (예: 목록 로딩)
-    if (pageKey === "cabinets" && App.Cabinet?.loadList) {
+    // ✅ 페이지별 후처리
+    if (pageKey === "cabinets" && App?.Cabinet?.loadList) {
+      console.log("📦 Router → Cabinet.loadList() 실행");
       await App.Cabinet.loadList();
+    }
+
+    if (pageKey === "inventory" && App?.Inventory?.load) {
+      console.log("📦 Router → Inventory.load() 실행");
+      await App.Inventory.load();
     }
 
     if (typeof callback === "function") await callback();
