@@ -111,27 +111,102 @@
     }
 
     console.log(`✅ 시약장 폼 초기화 완료 (${mode})`);
+
+    // ✅ 1️⃣ 위치 기타 버튼
+    const areaOtherBtn = document.getElementById("area-other-btn");
+    const areaOtherGroup = document.getElementById("area-other-group");
+    const areaOtherInput = document.getElementById("area-other-input");
+
+    if (areaOtherBtn && areaOtherGroup && areaOtherInput) {
+      areaOtherBtn.addEventListener("click", () => {
+        document.querySelectorAll("#area-button-group button").forEach(btn => btn.classList.remove("active"));
+        areaOtherBtn.classList.add("active");
+        areaOtherGroup.style.display = "block";
+        areaOtherInput.focus();
+        App.State.set("area_id", "기타");
+      });
+
+      areaOtherInput.addEventListener("input", (e) => {
+        App.State.set("area_custom_name", e.target.value.trim());
+      });
+    }
+
+    // ✅ 2️⃣ 시약장 이름 기타 버튼
+    const cabinetOtherBtn = document.getElementById("cabinet-other-btn");
+    const cabinetOtherGroup = document.getElementById("cabinet-other-group");
+    const cabinetOtherInput = document.getElementById("cabinet-other-input");
+
+    if (cabinetOtherBtn && cabinetOtherGroup && cabinetOtherInput) {
+      cabinetOtherBtn.addEventListener("click", () => {
+        document.querySelectorAll("#cabinet_name_buttons button").forEach(btn => btn.classList.remove("active"));
+        cabinetOtherBtn.classList.add("active");
+        cabinetOtherGroup.style.display = "block";
+        cabinetOtherInput.focus();
+        App.State.set("cabinet_name", "기타");
+      });
+
+      cabinetOtherInput.addEventListener("input", (e) => {
+        App.State.set("cabinet_custom_name", e.target.value.trim());
+      });
+    }
+
+    document.querySelectorAll("#area-button-group button:not(#area-other-btn)").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const otherGroup = document.getElementById("area-other-group");
+        if (otherGroup) otherGroup.style.display = "none";
+      });
+    });
+
+    // ✅ 다른 시약장 이름 버튼 클릭 시 기타 입력란 숨김
+    document.querySelectorAll("#cabinet_name_buttons button:not(#cabinet-other-btn)").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const otherGroup = document.getElementById("cabinet-other-group");
+        if (otherGroup) otherGroup.style.display = "none";
+      });
+    });
   }
 
   function applyExistingSelection(detail) {
     console.log("🎯 applyExistingSelection", detail);
 
     // ① 장소 버튼
-    const areaBtn = document.querySelector(
-      `#area-button-group button[data-value="${detail.area_id?.name}"]`
-    );
-    if (areaBtn) areaBtn.classList.add("active");
+    if (detail.area_id?.name === "기타") {
+      const otherGroup = document.getElementById("area-other-group");
+      const otherInput = document.getElementById("area-other-input");
+      const btn = document.getElementById("area-other-btn");
+      if (btn) btn.classList.add("active");
+      if (otherGroup && otherInput) {
+        otherGroup.style.display = "block";
+        otherInput.value = detail.area_id?.custom_name || "";
+      }
+    } else {
+      const areaBtn = document.querySelector(
+        `#area-button-group button[data-value="${detail.area_id?.name}"]`
+      );
+      if (areaBtn) areaBtn.classList.add("active");
+    }
 
-    // ② 시약장 이름 버튼
-    const nameBtn = document.querySelector(
-      `#cabinet_name_buttons button[data-value="${detail.name}"]`
-    );
-    if (nameBtn) {
-      nameBtn.classList.add("active");
-      // 이름은 수정 불가
-      document
-        .querySelectorAll("#cabinet_name_buttons button")
-        .forEach((b) => (b.disabled = true));
+     // ② 시약장 이름 버튼
+    if (detail.name === "기타") {
+      const otherGroup = document.getElementById("cabinet-other-group");
+      const otherInput = document.getElementById("cabinet-other-input");
+      const btn = document.getElementById("cabinet-other-btn");
+      if (btn) btn.classList.add("active");
+      if (otherGroup && otherInput) {
+        otherGroup.style.display = "block";
+        otherInput.value = detail.cabinet_custom_name || "";
+      }
+    } else {
+      const nameBtn = document.querySelector(
+        `#cabinet_name_buttons button[data-value="${detail.name}"]`
+      );
+      if (nameBtn) {
+        nameBtn.classList.add("active");
+        // 이름은 수정 불가
+        document
+          .querySelectorAll("#cabinet_name_buttons button")
+          .forEach((b) => (b.disabled = true));
+      }
     }
 
     // ③ 나머지 선택 항목 자동 반영
