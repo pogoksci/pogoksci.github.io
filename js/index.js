@@ -10,13 +10,17 @@
   const coreModules = [
     "/js/core/utils.js",
     "/js/core/state.js",
+    "/js/core/api.js",
     "/js/core/camera.js",
+    "/js/core/fan.js",
   ];
 
   const uiModules = [
     "/js/ui/forms.js",
     "/js/ui/cabinet.js",
     "/js/ui/inventory.js",
+    "/js/ui/inventory-detail.js",
+    "/js/ui/navbar.js",
   ];
 
   const routerModules = [
@@ -24,8 +28,8 @@
   ];
 
   const baseModules = [
-    "/supabaseClient.js",
-    "/app-bootstrap.js", // ✅ includeHTML 로딩
+    "/js/supabaseClient.js",
+    "/js/app-bootstrap.js", // ✅ includeHTML 로딩
   ];
 
   // ------------------------------------------------------------
