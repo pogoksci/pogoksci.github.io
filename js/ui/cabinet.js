@@ -11,8 +11,10 @@
     const status = document.getElementById("status-message-list");
 
     if (!container || !status) {
-      console.warn("⚠️ loadList(): DOM 요소를 찾지 못했습니다. HTML 로드가 완료되지 않았을 수 있습니다.");
-      return;
+      if (retryCount < 3) {
+        setTimeout(() => loadList(retryCount + 1), 100);
+        return;
+      }
     }
 
     try {

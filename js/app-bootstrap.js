@@ -31,8 +31,10 @@
 
       console.log(`✅ includeHTML 완료 → ${file} (DOM 삽입 성공)`);
 
-      // 3️⃣ 렌더 안정화 (1프레임 대기)
-      await new Promise((resolve) => requestAnimationFrame(resolve));
+      // 3️⃣ 렌더 안정화 (2프레임 대기)
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve))
+      );
 
       // 4️⃣ 페이지별 진입 로그 (Router에서 후처리 담당)
       if (file.includes("navbar.html")) console.log("🧭 Navbar HTML 로드 완료");
