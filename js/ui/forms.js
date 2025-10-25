@@ -27,27 +27,42 @@
     }
   }
 
-  function initCabinetForm(mode = "create", detail = null) {
+  async function initCabinetForm(mode = "create", detail = null) {
     console.log("🧭 initCabinetForm()", mode, detail);
-    reset();
 
+    // ✅ 1️⃣ 폼 HTML을 먼저 로드 (이게 핵심 변경점)
+    await App.includeHTML("pages/cabinet-form.html", "form-container");
+
+    // ✅ 2️⃣ 기존 초기화 로직 그대로 유지
+    reset();
     set("mode", mode);
     if (detail) Object.entries(detail).forEach(([k, v]) => set(k, v));
 
+    // ✅ 3️⃣ DOM 요소 가져오기 (이제 폼이 존재함)
     const title = document.querySelector("#cabinet-creation-form h2");
     const submitBtn = document.getElementById("cabinet-submit-button");
     const cancelBtn = document.getElementById("cancel-form-btn");
 
-    if (title) title.textContent = mode === "edit" ? `${detail.name} 정보 수정` : "시약장 등록";
+    // ✅ 4️⃣ 제목, 버튼 텍스트, 이벤트 핸들러
+    if (title)
+      title.textContent =
+        mode === "edit" ? `${detail.name} 정보 수정` : "시약장 등록";
+
     if (submitBtn) {
-      submitBtn.textContent = mode === "edit" ? "수정 내용 저장" : "시약장 등록";
+      submitBtn.textContent =
+        mode === "edit" ? "수정 내용 저장" : "시약장 등록";
       submitBtn.onclick = (e) => {
         e.preventDefault();
         handleSave();
       };
     }
-    if (cancelBtn) cancelBtn.onclick = () => App.includeHTML("pages/location-list.html");
 
+    if (cancelBtn)
+      cancelBtn.onclick = () =>
+        App.Router?.go?.("cabinets") ??
+        App.includeHTML("pages/location-list.html");
+
+    // ✅ 5️⃣ 버튼 그룹 초기화 (그대로 유지)
     [
       "area-button-group",
       "cabinet_name_buttons",
@@ -62,7 +77,10 @@
       })
     );
 
+    // ✅ 6️⃣ edit 모드일 경우 기존 선택 반영 (그대로 유지)
     if (mode === "edit" && detail) applyExistingSelection(detail);
+
+    console.log(`✅ 시약장 폼 초기화 완료 (${mode})`);
   }
 
   function applyExistingSelection(detail) {

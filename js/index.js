@@ -129,6 +129,8 @@
     await loadModulesSequentially(routerModules, "Router");
 
     console.log("🧩 모든 모듈 로드 완료!");
+    // ✅ 모든 모듈이 완전히 로드되었음을 body에 표시 (스플래시 CSS 제어용)
+    document.body.classList.add("loaded");
 
     // DOM 상태에 관계없이 즉시 초기화
     if (document.readyState === "loading") {

@@ -787,3 +787,56 @@ button:disabled {
   animation: slideUpFade 0.25s ease forwards;
   box-shadow: 0 6px 16px rgba(0,0,0,0.2);
 }
+
+/* =================================================================
+   🌟 Main 로고 화면 (초기 스플래시 포함)
+================================================================= */
+#main-logo-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 80px); /* 네비게이션 제외한 화면 높이 */
+  text-align: center;
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+#main-logo-screen .main-logo {
+  width: 150px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+#main-logo-screen h1 {
+  font-size: 2.2em;
+  color: #333;
+  margin: 0;
+}
+
+#main-logo-screen p {
+  font-size: 1.1em;
+  color: #666;
+  margin-top: 8px;
+}
+
+/* 초기 로딩 중 스플래시 (JS 로드 전 표시) */
+#splash-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+}
+
+#splash-screen .main-logo {
+  width: 150px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+/* JS가 로딩 완료되면 사라짐 */
+body.loaded #splash-screen {
+  display: none;
+}
