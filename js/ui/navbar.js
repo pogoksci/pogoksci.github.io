@@ -55,6 +55,11 @@
           e.preventDefault();
           console.log(`➡️ Navbar 클릭: ${id} → ${route}`);
 
+          // ✅ 시약장 설정 클릭 시 Cabinet 모듈 상태 점검
+          if (id === "menu-location") {
+            console.log("🧪 App.Cabinet:", App.Cabinet);
+          }
+
           if (App.Router && typeof App.Router.go === "function") {
             await App.Router.go(route);
           } else {
