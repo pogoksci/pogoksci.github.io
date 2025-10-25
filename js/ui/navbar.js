@@ -33,9 +33,12 @@
                 startMenu.classList.remove("visible");
 
                 const id = item.id;
+                // App.includeHTML을 사용하여 페이지 로드
                 if (id === "menu-home") App.includeHTML("pages/main.html");
                 if (id === "menu-location") App.includeHTML("pages/location-list.html");
                 if (id === "menu-inventory") App.Inventory.load?.();
+                if (id === "menu-equipment") alert("교구/물품 설정 준비 중입니다.");
+                if (id === "menu-lablog") alert("과학실 기록/예약 기능 준비 중입니다.");
             });
         });
         
@@ -49,7 +52,7 @@
         console.log("✅ Navbar setup complete");
     }
 
-    // App 전역 객체에 함수 등록
+    // ⬇️ [수정됨] App 전역 객체에 함수 등록
     globalThis.App = globalThis.App || {};
     globalThis.App.Navbar = {
         setup,
