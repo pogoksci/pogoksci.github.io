@@ -65,16 +65,50 @@
     const splash = document.createElement("div");
     splash.id = "splash-screen";
     splash.style = `
-      position:fixed; top:0; left:0; width:100%; height:100%;
-      background:#ffffff; display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      z-index:9999; transition:opacity 0.5s ease;
+      position: fixed;
+      inset: 0;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease;
+      font-family: 'Arial', sans-serif; /* ✅ 앱 본문 폰트와 동일하게 */
     `;
+
     splash.innerHTML = `
-      <img src="css/logo.png" alt="SciManager" style="max-width:150px; opacity:0.9;">
-      <h2 style="color:#333; margin-top:15px;">SciManager</h2>
-      <p style="color:#666;">로딩 중...</p>
+      <div style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transform: translateY(-10px);
+      ">
+        <img src="css/logo.png"
+            alt="SciManager"
+            style="
+              width: 150px;
+              height: auto;
+              margin-bottom: 12px;
+              opacity: 0.95;
+            ">
+        <h2 style="
+          font-size: 22px;
+          font-weight: 700;
+          color: #333;
+          margin: 0;
+          letter-spacing: -0.5px;
+        ">SciManager</h2>
+        <p style="
+          margin-top: 10px;
+          font-size: 14px;
+          color: #666;
+          letter-spacing: -0.2px;
+        ">로딩 중...</p>
+      </div>
     `;
+
     document.body.appendChild(splash);
   }
 
