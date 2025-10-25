@@ -33,6 +33,27 @@
     // ✅ 1️⃣ 폼 HTML을 먼저 로드 (이게 핵심 변경점)
     await App.includeHTML("pages/cabinet-form.html", "form-container");
 
+    // ✅ 카메라 모달 리스너 재설정 (새 폼 로드 후 다시 연결)
+    if (typeof setupCameraModalListeners === "function") {
+      setupCameraModalListeners();
+    }
+
+    // ✅ 파일 업로드 버튼(예: <input type="file" id="photo-upload">) 이벤트도 추가
+    const fileInput = document.getElementById("photo-upload");
+    if (fileInput) {
+      fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const base64 = ev.target.result;
+          updatePhotoPreview(base64);
+          await processAndStorePhoto(base64);
+        };
+        reader.readAsDataURL(file);
+      };
+    }
+
     // ✅ 2️⃣ 기존 초기화 로직 그대로 유지
     reset();
     set("mode", mode);
@@ -77,21 +98,54 @@
       })
     );
 
+    if (App.Fab && typeof App.Fab.bindEvents === "function") {
+      App.Fab.bindEvents(); // 필요 시 FAB 관련 버튼 재활성화
+    }
+
     // ✅ 6️⃣ edit 모드일 경우 기존 선택 반영 (그대로 유지)
     if (mode === "edit" && detail) applyExistingSelection(detail);
+
+    // ✅ 기존 사진 미리보기 표시
+    if (mode === "edit" && detail?.photo_url_320) {
+      updatePhotoPreview(detail.photo_url_320);
+    }
 
     console.log(`✅ 시약장 폼 초기화 완료 (${mode})`);
   }
 
   function applyExistingSelection(detail) {
-    const areaBtn = document.querySelector(`#area-button-group button[data-value="${detail.area_id?.name}"]`);
+    console.log("🎯 applyExistingSelection", detail);
+
+    // ① 장소 버튼
+    const areaBtn = document.querySelector(
+      `#area-button-group button[data-value="${detail.area_id?.name}"]`
+    );
     if (areaBtn) areaBtn.classList.add("active");
 
-    const nameBtn = document.querySelector(`#cabinet_name_buttons button[data-value="${detail.name}"]`);
+    // ② 시약장 이름 버튼
+    const nameBtn = document.querySelector(
+      `#cabinet_name_buttons button[data-value="${detail.name}"]`
+    );
     if (nameBtn) {
       nameBtn.classList.add("active");
-      document.querySelectorAll("#cabinet_name_buttons button").forEach((b) => (b.disabled = true));
+      // 이름은 수정 불가
+      document
+        .querySelectorAll("#cabinet_name_buttons button")
+        .forEach((b) => (b.disabled = true));
     }
+
+    // ③ 나머지 선택 항목 자동 반영
+    const mapping = [
+      { id: "door_vertical_split_buttons", key: "door_vertical_count" },
+      { id: "door_horizontal_split_buttons", key: "door_horizontal_count" },
+      { id: "shelf_height_buttons", key: "shelf_height" },
+      { id: "storage_columns_buttons", key: "storage_columns" },
+    ];
+
+    mapping.forEach(({ id, key }) => {
+      const btn = document.querySelector(`#${id} button[data-value="${String(detail[key])}"]`);
+      if (btn) btn.classList.add("active");
+    });
   }
 
   globalThis.App = globalThis.App || {};
