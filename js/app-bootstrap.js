@@ -1,84 +1,65 @@
-// /js/app-bootstrap.js
+// ================================================================
+// /js/app-bootstrap.js — HTML 동적 로드 & 초기화 지원 유틸
+// ================================================================
 (function () {
-  // -----------------------------------------------------
-  // includeHTML: HTML 조각을 targetId에 넣고, Promise 반환
-  // -----------------------------------------------------
+  console.log("⚙️ AppBootstrap 모듈 로드됨");
+
+  /**
+   * HTML 파일을 비동기 로드하여 target 요소에 삽입
+   * @param {string} file - HTML 파일 경로
+   * @param {string} [targetId="form-container"] - 삽입 대상 컨테이너 ID
+   * @returns {Promise<boolean>} 성공 여부
+   */
   async function includeHTML(file, targetId = "form-container") {
     const container = document.getElementById(targetId);
+
     if (!container) {
-      console.warn(`❌ includeHTML: #${targetId} not found`);
-      return;
+      console.warn(`❌ includeHTML: #${targetId} 요소를 찾을 수 없습니다.`);
+      return false;
     }
 
-    try {
-      const res = await fetch(file);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    console.log(`📥 includeHTML 시작 → ${file}`);
 
+    try {
+      // 1️⃣ fetch로 파일 로드
+      const res = await fetch(file);
+      if (!res.ok) throw new Error(`HTTP ${res.status} (${res.statusText})`);
+
+      // 2️⃣ HTML 삽입
       const html = await res.text();
       container.innerHTML = html;
 
-      // ✅ DOM이 렌더링될 시간을 한 프레임 확보
+      console.log(`✅ includeHTML 완료 → ${file} (DOM 삽입 성공)`);
+
+      // 3️⃣ 렌더 안정화 (1프레임 대기)
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
-      // ✅ 페이지별 후처리: 초기화 함수 호출
-      //if (file.includes("location-list.html")) {
-      //  if (App?.Cabinet?.loadList) {
-      //    console.log("📦 includeHTML → Cabinet.loadList() 실행");
-      //    await App.Cabinet.loadList();
-      //  }
-      //}
-
-      if (file.includes("cabinet-form.html")) {
-        if (App?.Forms?.initCabinetForm) {
-          console.log("📦 includeHTML → Forms.initCabinetForm() 실행");
-          await App.Forms.initCabinetForm();
-        }
-      }
-
-      if (file.includes("inventory-list.html")) {
-        await App.Inventory?.load?.();
-      }
-      if (file.includes("inventory-detail.html")) {
-        await App.Inventory?.loadDetail?.();
-      }
-      if (file.includes("inventory-form.html")) {
-        await App.Forms?.initInventoryForm?.();
-      }
+      // 4️⃣ 페이지별 진입 로그 (Router에서 후처리 담당)
+      if (file.includes("navbar.html")) console.log("🧭 Navbar HTML 로드 완료");
+      if (file.includes("main.html")) console.log("🏠 Main 화면 HTML 로드 완료");
+      if (file.includes("location-list.html")) console.log("📦 시약장 목록 HTML 로드 완료");
+      if (file.includes("cabinet-form.html")) console.log("🧩 시약장 등록 폼 HTML 로드 완료");
+      if (file.includes("inventory-list.html")) console.log("🧪 재고 목록 HTML 로드 완료");
+      if (file.includes("inventory-form.html")) console.log("🧾 재고 등록 폼 HTML 로드 완료");
 
       return true;
     } catch (err) {
-      console.error(`❌ ${file} 로드 실패:`, err);
-      container.innerHTML =
-        `<p style="color:red; text-align:center;">페이지를 불러오는 데 실패했습니다.</p>`;
+      // 5️⃣ 에러 처리
+      console.error(`❌ includeHTML 실패 (${file}):`, err);
+      container.innerHTML = `
+        <div style="text-align:center; color:#d33; padding:20px;">
+          <p><strong>페이지를 불러오는 중 오류가 발생했습니다.</strong></p>
+          <p style="font-size:13px;">(${file})</p>
+        </div>`;
       return false;
     }
   }
 
-  // -----------------------------------------------------
-  // 앱 시작점
-  // -----------------------------------------------------
-  async function bootstrap() {
-    console.log("🚀 App bootstrap 시작");
-
-    // 메인 영역 로드
-    await includeHTML("pages/main.html", "form-container");
-
-    // navbar 로드 -> 로드된 뒤 setup 호출
-    const ok = await includeHTML("pages/navbar.html", "navbar-container");
-    if (ok && App && App.Navbar && typeof App.Navbar.setup === "function") {
-      App.Navbar.setup();
-      console.log("✅ Navbar setup complete");
-    }
-
-    // FAB 초기 숨김
-    App.Fab?.setVisibility(false);
-  }
-
-  // -----------------------------------------------------
-  // 전역 등록
-  // -----------------------------------------------------
+  // ------------------------------------------------------------
+  // 2️⃣ 전역 등록
+  // ------------------------------------------------------------
   globalThis.App = globalThis.App || {};
   globalThis.App.includeHTML = includeHTML;
 
-  //globalThis.addEventListener("DOMContentLoaded", bootstrap);
+  console.log("✅ AppBootstrap 초기화 완료 — includeHTML 전역 등록됨");
 })();
