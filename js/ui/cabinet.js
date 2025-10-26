@@ -2,13 +2,14 @@
 // /js/ui/cabinet.js — DB CRUD / 목록 관리 (재시도 포함 안정 버전)
 // ================================================================
 (function () {
-  const { supabase, includeHTML } = App;
-  const { sleep } = App.Utils;
+  //const { supabase, includeHTML } = App;
+  //const { sleep } = App.Utils;
 
   // ------------------------------------------------------------
   // 📦 1️⃣ 시약장 목록 로드 (자동 재시도 포함)
   // ------------------------------------------------------------
   async function loadList(retryCount = 0) {
+    const { supabase } = globalThis.App;
     const container = document.getElementById("cabinet-list-container");
     const status = document.getElementById("status-message-list");
 
@@ -42,40 +43,46 @@
       }
 
       status.style.display = "none";
-      container.innerHTML = data
-        .map(
-          (cab) => `
-        <div class="cabinet-card">
-          <div class="card-image-placeholder">
-            ${
-              cab.photo_url_320
-                ? `<img src="${cab.photo_url_320}" alt="${cab.name}" style="width:100%;height:100%;object-fit:cover;">`
-                : "사진 없음"
-            }
-          </div>
-          <div class="card-info">
-            <h3>${cab.name}</h3>
-            <span>${cab.area_id?.name || "위치 없음"}</span>
-            <p>
-              상하:${cab.door_vertical_count || "-"},
-              좌우:${cab.door_horizontal_count || "-"},
-              층:${cab.shelf_height || "-"},
-              열:${cab.storage_columns || "-"}
-            </p>
-          </div>
-          <div class="card-actions">
-            <button onclick="App.Cabinet.edit(${cab.id})">수정</button>
-            <button onclick="App.Cabinet.delete(${cab.id})">삭제</button>
-          </div>
-        </div>`
-        )
-        .join("");
 
-      console.log(`✅ 시약장 목록 불러오기 완료 (${data.length}개)`);
+      renderCabinetCards(data);
+
     } catch (err) {
       status.textContent = "시약장 목록을 불러올 수 없습니다.";
       console.error("❌ loadList() 오류:", err);
     }
+  }
+
+  // ------------------------------------------------------------
+  // 🎨 2️⃣ 목록 렌더링
+  // ------------------------------------------------------------
+  function renderCabinetCards(cabinets) {
+      const container = document.getElementById("cabinet-list-container");
+      if (!container) return;
+
+      container.innerHTML = cabinets.map((cab) => {
+          const photo = cab.photo_url_320 || cab.photo_url_160 || null;
+          const areaName = cab.area_id?.name || "위치 없음";
+          return `
+          <div class="cabinet-card">
+            <div class="card-image-placeholder">
+              ${photo ? `<img src="${photo}" alt="${cab.name}" style="width:100%;height:100%;object-fit:cover;">` : "사진 없음"}
+            </div>
+            <div class="card-info">
+              <h3>${cab.name} <small class="area-name">${areaName}</small></h3>
+            </div>
+            <div class="card-actions">
+              <button class="edit-btn" data-id="${cab.id}">수정</button>
+              <button class="delete-btn" data-id="${cab.id}">삭제</button>
+            </div>
+          </div>`;
+      }).join("");
+
+      container.querySelectorAll(".edit-btn").forEach((btn) =>
+          btn.addEventListener("click", () => edit(btn.getAttribute("data-id")))
+      );
+      container.querySelectorAll(".delete-btn").forEach((btn) =>
+          btn.addEventListener("click", () => remove(btn.getAttribute("data-id")))
+      );
   }
 
   // ------------------------------------------------------------
@@ -96,7 +103,7 @@
 
       // ⬇️ [수정됨] HTML 로드 코드를 제거하고 initCabinetForm만 호출합니다.
       if (App.Forms && typeof App.Forms.initCabinetForm === "function") {
-        App.Forms.initCabinetForm("edit", data);
+        App.Forms.initCabinetForm("edit", detail);
       }
     } catch (err) {
       console.error("❌ 시약장 불러오기 오류:", err);
@@ -108,11 +115,13 @@
   // ➕ 3️⃣ 시약장 등록 / 수정 / 삭제
   // ------------------------------------------------------------
   async function createCabinet(payload) {
+    const { supabase } = globalThis.App;
     const { error } = await supabase.from("Cabinet").insert([payload]);
     if (error) throw error;
   }
 
   async function updateCabinet(id, payload) {
+    const { supabase } = globalThis.App;
     const { error } = await supabase
       .from("Cabinet")
       .update(payload)
@@ -121,6 +130,7 @@
   }
 
   async function remove(id) {
+    const { supabase } = globalThis.App;
     if (!confirm("정말 삭제하시겠습니까?")) return;
     const { error } = await supabase.from("Cabinet").delete().eq("id", id);
     if (error) {
