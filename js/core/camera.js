@@ -136,7 +136,7 @@
     start: startCamera,
     setupModalListeners: setupModalListeners,
     updatePreview: updatePreview,
-    processImage: processImage,
+    processImage: processAndStorePhoto,
     resizeBase64: resizeBase64
   };
 })();
