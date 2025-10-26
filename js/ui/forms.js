@@ -129,6 +129,13 @@
       areaOtherInput.addEventListener("input", (e) => {
         App.State.set("area_custom_name", e.target.value.trim());
       });
+
+      // ✅ 다른 버튼 클릭 시 입력창 숨김
+      document.querySelectorAll("#area-button-group button:not(#area-other-btn)").forEach(btn => {
+        btn.addEventListener("click", () => {
+          areaOtherGroup.style.display = "none";
+        });
+      });
     }
 
     // ✅ 2️⃣ 시약장 이름 기타 버튼
@@ -218,8 +225,15 @@
     ];
 
     mapping.forEach(({ id, key }) => {
-      const btn = document.querySelector(`#${id} button[data-value="${String(detail[key])}"]`);
-      if (btn) btn.classList.add("active");
+      const value = String(detail[key]).trim();
+
+      // 모든 버튼의 data-value와 비교
+      document.querySelectorAll(`#${id} button`).forEach(btn => {
+        const btnValue = btn.dataset.value?.trim();
+        if (btnValue === value || btnValue.includes(value)) {
+          btn.classList.add("active");
+        }
+      });
     });
   }
 
