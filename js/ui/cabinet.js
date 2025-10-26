@@ -99,7 +99,7 @@
         .eq("id", id)
         .maybeSingle();
 
-      if (error || !data) throw error || new Error("시약장 없음");
+      if (error || !detail) throw error || new Error("시약장 없음");
 
       // ⬇️ [수정됨] HTML 로드 코드를 제거하고 initCabinetForm만 호출합니다.
       if (App.Forms && typeof App.Forms.initCabinetForm === "function") {
