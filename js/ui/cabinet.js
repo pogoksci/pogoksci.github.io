@@ -77,11 +77,22 @@
           </div>`;
       }).join("");
 
-      container.querySelectorAll(".edit-btn").forEach((btn) =>
-          btn.addEventListener("click", () => edit(btn.getAttribute("data-id")))
+    container
+        .querySelectorAll(".edit-btn")
+        .forEach((btn) =>
+          btn.addEventListener("click", () => {
+            const id = btn.getAttribute("data-id");
+            editCabinet(id); // editCabinet 함수 호출
+          })
       );
-      container.querySelectorAll(".delete-btn").forEach((btn) =>
-          btn.addEventListener("click", () => remove(btn.getAttribute("data-id")))
+
+    container
+        .querySelectorAll(".delete-btn")
+        .forEach((btn) =>
+          btn.addEventListener("click", () => {
+            const id = btn.getAttribute("data-id");
+            deleteCabinet(id); // deleteCabinet 함수 호출
+          })
       );
   }
 
