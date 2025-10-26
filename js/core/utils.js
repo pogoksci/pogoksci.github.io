@@ -17,8 +17,8 @@
   function setupButtonGroup(groupId, onSelect) {
     const group = document.getElementById(groupId);
     if (!group) return;
-    const newGroup = group.cloneNode(true);
-    group.parentNode.replaceChild(newGroup, group);
+    //const newGroup = group.cloneNode(true);
+    //group.parentNode.replaceChild(newGroup, group);
 
     newGroup.addEventListener("click", (e) => {
       const btn = e.target.closest("button");
