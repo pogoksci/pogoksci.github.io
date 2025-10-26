@@ -2,8 +2,7 @@
 // /js/core/camera.js — 카메라 촬영 + 파일 업로드 + Base64 리사이즈 (전역 호출형)
 // ================================================================
 (function () {
-  globalThis.selectedCabinetPhoto320 = null;
-  globalThis.selectedCabinetPhoto160 = null;
+  globalThis.App = globalThis.App || {};
 
   let stream = null;
 
@@ -26,8 +25,14 @@
       video.srcObject = stream;
       modal.style.display = "flex";
     } catch (err) {
-      console.error("📸 카메라 접근 실패:", err);
-      alert("카메라 접근이 차단되었습니다. 브라우저 권한을 확인하세요.");
+        console.error("📸 카메라 접근 실패:", err);
+        if (err.name === "NotAllowedError") {
+            alert("카메라 접근 권한이 차단되었습니다.\n브라우저 및 운영체제의 카메라 권한 설정을 확인해주세요.");
+        } else if (err.name === "NotFoundError") {
+            alert("컴퓨터에 연결된 카메라를 찾을 수 없습니다.");
+        } else {
+            alert("카메라를 시작하는 중 알 수 없는 오류가 발생했습니다.");
+        }
     }
   }
 
@@ -53,8 +58,9 @@
       stopCameraStream();
       modal.style.display = "none";
 
-      updatePhotoPreview(base64);
-      await processAndStorePhoto(base64);
+      // ⬇️ [수정됨] App.Camera 객체를 통해 함수 호출
+        App.Camera.updatePreview(base64); 
+        await App.Camera.processImage(base64);
     };
 
     cancelBtn.onclick = () => {
@@ -76,10 +82,15 @@
   // ------------------------------------------------------------
   // 🖼️ 4️⃣ 미리보기 업데이트
   // ------------------------------------------------------------
-  function updatePhotoPreview(base64Data) {
-    const previewBox = document.getElementById("cabinet-photo-preview");
+  function updatePreview(base64Data, previewId = "cabinet-photo-preview") {
+    // ⬇️ [수정됨] 어떤 폼인지 스스로 판단
+    const formId = globalThis.App.State.get('mode') === 'create' ? 'inventory-form' : 'cabinet-creation-form';
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    const previewBox = form.querySelector(`#${previewId}`);
     if (previewBox) {
-      previewBox.innerHTML = `<img src="${base64Data}" alt="사진 미리보기" style="width:100%;height:100%;object-fit:cover;">`;
+        previewBox.innerHTML = `<img src="${base64Data}" alt="사진 미리보기" style="width:100%;height:100%;object-fit:cover;">`;
     }
   }
 
@@ -90,12 +101,9 @@
     try {
       const resized320 = await resizeBase64(base64Data, 320);
       const resized160 = await resizeBase64(base64Data, 160);
-      globalThis.selectedCabinetPhoto320 = resized320;
-      globalThis.selectedCabinetPhoto160 = resized160;
-      console.log("📷 Base64 저장 완료:", {
-        "320px": resized320?.length,
-        "160px": resized160?.length,
-      });
+        App.State.set("photo_320_base64", resized320);
+        App.State.set("photo_160_base64", resized160);
+      console.log("📷 Base64 저장 완료:";
     } catch (err) {
       console.error("📸 사진 처리 중 오류:", err);
     }
@@ -124,9 +132,11 @@
   // ------------------------------------------------------------
   // 🌍 7️⃣ 전역 등록 (forms.js/cabinet.js 모두에서 사용 가능)
   // ------------------------------------------------------------
-  globalThis.startCamera = startCamera;
-  globalThis.setupCameraModalListeners = setupCameraModalListeners;
-  globalThis.updatePhotoPreview = updatePhotoPreview;
-  globalThis.processAndStorePhoto = processAndStorePhoto;
-  globalThis.resizeBase64 = resizeBase64;
+  globalThis.App.Camera = {
+    start: startCamera,
+    setupModalListeners: setupModalListeners,
+    updatePreview: updatePreview,
+    processImage: processImage,
+    resizeBase64: resizeBase64
+  };
 })();
