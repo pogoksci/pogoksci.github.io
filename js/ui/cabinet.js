@@ -168,7 +168,7 @@
   globalThis.App = globalThis.App || {};
   globalThis.App.Cabinet = {
     loadList,
-    edit,
+    editCabinet,
     createCabinet,
     updateCabinet,
     delete: remove,
