@@ -64,11 +64,11 @@
           const areaName = cab.area_id?.name || "위치 없음";
           return `
           <div class="cabinet-card">
-            <div class="card-image-placeholder">
-              ${photo ? `<img src="${photo}" alt="${cab.name}" style="width:100%;height:100%;object-fit:cover;">` : "사진 없음"}
-            </div>
             <div class="card-info">
               <h3>${cab.name} <small class="area-name">${areaName}</small></h3>
+            </div>
+            <div class="card-image-placeholder">
+              ${photo ? `<img src="${photo}" alt="${cab.name}" style="width:100%;height:100%;object-fit:cover;">` : "사진 없음"}
             </div>
             <div class="card-actions">
               <button class="edit-btn" data-id="${cab.id}">수정</button>
@@ -99,7 +99,7 @@
   // ------------------------------------------------------------
   // ✏️ 2️⃣ 시약장 수정
   // ------------------------------------------------------------
-  async function edit(id) {
+  async function editCabinet(id) {
     const { supabase } = globalThis.App;
       try {
         const { data: detail, error } = await supabase
