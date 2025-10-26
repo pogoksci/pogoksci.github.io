@@ -17,18 +17,25 @@
   function setupButtonGroup(groupId, onSelect) {
     const group = document.getElementById(groupId);
     if (!group) return;
-    //const newGroup = group.cloneNode(true);
-    //group.parentNode.replaceChild(newGroup, group);
 
+    // ✅ [수정됨] newGroup.addEventListener -> group.addEventListener
     group.addEventListener("click", (e) => {
-      const btn = e.target.closest("button");
-      if (!btn) return;
-      group.querySelectorAll(".active").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      if (typeof onSelect === "function") onSelect(btn);
+        const btn = e.target.closest("button");
+        if (!btn) return;
 
-      const otherGroup = document.getElementById(groupId.replace("_buttons", "_group"));
-      if (otherGroup) otherGroup.style.display = btn.dataset.value === "기타" ? "block" : "none";
+        // ✅ [수정됨] newGroup.querySelectorAll -> group.querySelectorAll
+        group.querySelectorAll(".active").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        if (typeof onSelect === "function") {
+            onSelect(btn);
+        }
+
+        // '기타' 입력칸 토글 처리
+        const otherGroup = document.getElementById(groupId.replace("_buttons", "_group"));
+        if (otherGroup) {
+            otherGroup.style.display = btn.dataset.value === "기타" ? "block" : "none";
+        }
     });
   }
 
