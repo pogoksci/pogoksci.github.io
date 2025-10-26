@@ -190,9 +190,9 @@
                 otherInput.disabled = true; // 수정 불가
             }
         }
-        //document.querySelectorAll("#cabinet_name_buttons button").forEach((b) => (b.disabled = true));
         document.querySelectorAll("#cabinet_name_buttons button").forEach((b) => (b.disabled = true));
-        document.querySelectorAll("#cabinet_other_input").forEach((input) => (input.disabled = true));
+        //document.querySelectorAll("#cabinet_name_buttons button").forEach((b) => (b.disabled = true));
+        //document.querySelectorAll("#cabinet_other_input").forEach((input) => (input.disabled = true));
 
 
         // ⬇️ [수정됨] ③ 나머지 선택 항목 자동 반영
