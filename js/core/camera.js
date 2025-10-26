@@ -103,7 +103,7 @@
       const resized160 = await resizeBase64(base64Data, 160);
         App.State.set("photo_320_base64", resized320);
         App.State.set("photo_160_base64", resized160);
-      console.log("📷 Base64 저장 완료:";
+      console.log("📷 Base64 저장 완료:");
     } catch (err) {
       console.error("📸 사진 처리 중 오류:", err);
     }
