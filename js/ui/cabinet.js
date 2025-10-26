@@ -78,10 +78,10 @@
       }).join("");
 
       container.querySelectorAll(".edit-btn").forEach((btn) =>
-          btn.addEventListener("click", () => edit(btn.getAttribute("data-id")))
+          btn.addEventListener("click", () => edit(btn.getAttribute("area-id")))
       );
       container.querySelectorAll(".delete-btn").forEach((btn) =>
-          btn.addEventListener("click", () => remove(btn.getAttribute("data-id")))
+          btn.addEventListener("click", () => remove(btn.getAttribute("area-id")))
       );
   }
 
