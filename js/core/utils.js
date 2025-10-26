@@ -20,10 +20,10 @@
     //const newGroup = group.cloneNode(true);
     //group.parentNode.replaceChild(newGroup, group);
 
-    newGroup.addEventListener("click", (e) => {
+    group.addEventListener("click", (e) => {
       const btn = e.target.closest("button");
       if (!btn) return;
-      newGroup.querySelectorAll(".active").forEach((b) => b.classList.remove("active"));
+      group.querySelectorAll(".active").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       if (typeof onSelect === "function") onSelect(btn);
 
