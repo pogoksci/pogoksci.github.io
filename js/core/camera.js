@@ -97,9 +97,9 @@
   }
 
   // ------------------------------------------------------------
-  // 📷 2️⃣ setupCameraModalListeners — 모달 버튼 이벤트 (촬영, 취소)
+  // 📷 2️⃣ setupModalListeners — 모달 버튼 이벤트 (촬영, 취소)
   // ------------------------------------------------------------
-  function setupCameraModalListeners() {
+  function setupModalListeners() {
     const modal = document.getElementById("camera-modal");
     const video = document.getElementById("camera-view");
     const canvas = document.getElementById("photo-canvas");
