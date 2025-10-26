@@ -37,6 +37,66 @@
   }
 
   // ------------------------------------------------------------
+  // 🧹 3️⃣ 카메라 종료
+  // ------------------------------------------------------------
+  function stopCameraStream() {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      stream = null;
+    }
+  }
+
+  // ------------------------------------------------------------
+  // 🖼️ 4️⃣ 미리보기 업데이트
+  // ------------------------------------------------------------
+  function updatePreview(base64Data, previewId = "cabinet-photo-preview") {
+    // ⬇️ [수정됨] 어떤 폼인지 스스로 판단
+    const formId = globalThis.App.State.get('mode') === 'create' ? 'inventory-form' : 'cabinet-creation-form';
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    const previewBox = form.querySelector(`#${previewId}`);
+    if (previewBox) {
+        previewBox.innerHTML = `<img src="${base64Data}" alt="사진 미리보기" style="width:100%;height:100%;object-fit:cover;">`;
+    }
+  }
+
+  // ------------------------------------------------------------
+  // 🔧 6️⃣ 리사이즈 유틸
+  // ------------------------------------------------------------
+  function resizeBase64(base64, size) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const scale = size / Math.max(img.width, img.height);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.8));
+      };
+      img.onerror = reject;
+      img.src = base64;
+    });
+  }
+
+  // ------------------------------------------------------------
+  // 🧩 5️⃣ 이미지 리사이즈 및 Base64 저장
+  // ------------------------------------------------------------
+  async function processAndStorePhoto(base64Data) {
+    try {
+      const resized320 = await resizeBase64(base64Data, 320);
+      const resized160 = await resizeBase64(base64Data, 160);
+        App.State.set("photo_320_base64", resized320);
+        App.State.set("photo_160_base64", resized160);
+      console.log("📷 Base64 저장 완료:");
+    } catch (err) {
+      console.error("📸 사진 처리 중 오류:", err);
+    }
+  }
+
+  // ------------------------------------------------------------
   // 📷 2️⃣ setupCameraModalListeners — 모달 버튼 이벤트 (촬영, 취소)
   // ------------------------------------------------------------
   function setupCameraModalListeners() {
@@ -67,66 +127,6 @@
       stopCameraStream();
       modal.style.display = "none";
     };
-  }
-
-  // ------------------------------------------------------------
-  // 🧹 3️⃣ 카메라 종료
-  // ------------------------------------------------------------
-  function stopCameraStream() {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      stream = null;
-    }
-  }
-
-  // ------------------------------------------------------------
-  // 🖼️ 4️⃣ 미리보기 업데이트
-  // ------------------------------------------------------------
-  function updatePreview(base64Data, previewId = "cabinet-photo-preview") {
-    // ⬇️ [수정됨] 어떤 폼인지 스스로 판단
-    const formId = globalThis.App.State.get('mode') === 'create' ? 'inventory-form' : 'cabinet-creation-form';
-    const form = document.getElementById(formId);
-    if (!form) return;
-
-    const previewBox = form.querySelector(`#${previewId}`);
-    if (previewBox) {
-        previewBox.innerHTML = `<img src="${base64Data}" alt="사진 미리보기" style="width:100%;height:100%;object-fit:cover;">`;
-    }
-  }
-
-  // ------------------------------------------------------------
-  // 🧩 5️⃣ 이미지 리사이즈 및 Base64 저장
-  // ------------------------------------------------------------
-  async function processAndStorePhoto(base64Data) {
-    try {
-      const resized320 = await resizeBase64(base64Data, 320);
-      const resized160 = await resizeBase64(base64Data, 160);
-        App.State.set("photo_320_base64", resized320);
-        App.State.set("photo_160_base64", resized160);
-      console.log("📷 Base64 저장 완료:");
-    } catch (err) {
-      console.error("📸 사진 처리 중 오류:", err);
-    }
-  }
-
-  // ------------------------------------------------------------
-  // 🔧 6️⃣ 리사이즈 유틸
-  // ------------------------------------------------------------
-  function resizeBase64(base64, size) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const scale = size / Math.max(img.width, img.height);
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.8));
-      };
-      img.onerror = reject;
-      img.src = base64;
-    });
   }
 
   // ------------------------------------------------------------
