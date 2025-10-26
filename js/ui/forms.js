@@ -170,7 +170,7 @@
             if (otherGroup && otherInput) {
                 otherGroup.style.display = "block";
                 otherInput.value = detail.area_id?.name || ""; // 기타 이름 표시
-                otherInput.disabled = true; // 수정 불가
+                //otherInput.disabled = true; // 수정 불가
             }
         }
         document.querySelectorAll("#area-button-group button").forEach((b) => (b.disabled = true));
