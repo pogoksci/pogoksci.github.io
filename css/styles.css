@@ -713,11 +713,17 @@ button:disabled {
     font-weight: 500;
   }
 
+  /* 시약장 이름 버튼 그룹 (3열 그리드) */
+  #cabinet_name_buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
   /* 3️⃣ 시약장 이름 선택 (cabinet_name_buttons) */
   #cabinet_name_buttons button {
-    text-align: center;
-    padding: 12px;
-    font-size: 14px;
+    flex-basis: auto; /* flex-grow 비활성화 */
+    width: 100%;
   }
 
   /* 4️⃣ 도어 형태 선택 (상하 / 좌우 분리) */

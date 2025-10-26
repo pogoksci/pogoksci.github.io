@@ -82,20 +82,26 @@
   // ✏️ 2️⃣ 시약장 수정
   // ------------------------------------------------------------
   async function edit(id) {
-    const { data, error } = await supabase
-      .from("Cabinet")
-      .select(
-        "id,name,area_id(id,name),photo_url_320,photo_url_160,door_vertical_count,door_horizontal_count,shelf_height,storage_columns"
-      )
-      .eq("id", id)
-      .maybeSingle();
+    const { supabase } = globalThis.App;
+      try {
+        const { data: detail, error } = await supabase
+        .from("Cabinet")
+        .select(
+          "id,name,area_id(id,name),photo_url_320,photo_url_160,door_vertical_count,door_horizontal_count,shelf_height,storage_columns"
+        )
+        .eq("id", id)
+        .maybeSingle();
 
-    if (error || !data) return alert("불러오기 실패");
+      if (error || !data) throw error || new Error("시약장 없음");
 
-    await includeHTML("pages/cabinet-form.html", "form-container");
-    await sleep(50);
-
-    App.Forms.initCabinetForm("edit", data);
+      // ⬇️ [수정됨] HTML 로드 코드를 제거하고 initCabinetForm만 호출합니다.
+      if (App.Forms && typeof App.Forms.initCabinetForm === "function") {
+        App.Forms.initCabinetForm("edit", data);
+      }
+    } catch (err) {
+      console.error("❌ 시약장 불러오기 오류:", err);
+      alert("시약장 정보를 불러올 수 없습니다.");
+    }
   }
 
   // ------------------------------------------------------------
@@ -126,6 +132,16 @@
   }
 
   // ------------------------------------------------------------
+  // 🆕 5️⃣ 신규 등록 폼 표시 (기존 showNewCabinetForm)
+  // ------------------------------------------------------------
+  async function showNewCabinetForm() {
+    // ⬇️ [수정됨] edit 함수와 동일하게 initCabinetForm만 호출합니다.
+    if (App.Forms && typeof App.Forms.initCabinetForm === "function") {
+     App.Forms.initCabinetForm("create", null);
+    }
+  }
+
+  // ------------------------------------------------------------
   // 🌍 4️⃣ 전역 등록
   // ------------------------------------------------------------
   globalThis.App = globalThis.App || {};
@@ -135,6 +151,7 @@
     createCabinet,
     updateCabinet,
     delete: remove,
+    showNewCabinetForm, // ⬅️ '새 시약장 등록' 버튼이 호출할 함수
   };
 
   console.log("✅ App.Cabinet 모듈 로드 완료");
