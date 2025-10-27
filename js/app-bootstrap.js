@@ -40,7 +40,7 @@
       if (file.includes("navbar.html")) console.log("🧭 Navbar HTML 로드 완료");
       if (file.includes("main.html")) console.log("🏠 Main 화면 HTML 로드 완료");
       if (file.includes("location-list.html")) console.log("📦 시약장 목록 HTML 로드 완료");
-      //if (file.includes("cabinet-form.html")) console.log("🧩 시약장 등록 폼 HTML 로드 완료");
+      if (file.includes("cabinet-form.html")) console.log("🧩 시약장 등록 폼 HTML 로드 완료");
       if (file.includes("inventory-list.html")) console.log("🧪 재고 목록 HTML 로드 완료");
       if (file.includes("inventory-form.html")) console.log("🧾 재고 등록 폼 HTML 로드 완료");
 

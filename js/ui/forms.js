@@ -128,8 +128,8 @@
         if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
 
         // ✅ 7️⃣ '기타' 버튼 로직 연결
-        setupOtherButtonLogic("area-other-btn", "area-other-group", "area-other-input", "area-button-group", "area_custom_name");
-        setupOtherButtonLogic("cabinet-other-btn", "cabinet-other-group", "cabinet-other-input", "cabinet_name_buttons", "cabinet_custom_name");
+        //setupOtherButtonLogic("area-other-btn", "area-other-group", "area-other-input", "area-button-group", "area_custom_name");
+        //setupOtherButtonLogic("cabinet-other-btn", "cabinet-other-group", "cabinet-other-input", "cabinet_name_buttons", "cabinet_custom_name");
 
         // ✅ 8️⃣ [수정됨] edit 모드일 경우 기존 선택 반영 (마지막에 호출)
         if (mode === "edit" && detail) {
