@@ -35,29 +35,15 @@
         }
 
         // '기타' 입력칸 토글 처리
-        //const otherGroup = document.getElementById(groupId.replace("_buttons", "_group"));
-        //if (otherGroup) {
-        //    otherGroup.style.display = btn.dataset.value === "기타" ? "block" : "none";
-        //}
-
-        // ⬇️ [수정됨] '기타' 버튼 로직을 이 함수로 통합합니다.
-        const isOtherButton = (btn.dataset.value === "기타" || btn.id.includes("other-btn"));
         const otherGroup = document.getElementById(groupId.replace("_buttons", "_group"));
-
         if (otherGroup) {
-            if (isOtherButton) {
-                otherGroup.style.display = "block";
-                otherGroup.querySelector('input')?.focus();
-            } else {
-                otherGroup.style.display = "none";
-            }
+            otherGroup.style.display = btn.dataset.value === "기타" ? "block" : "none";
         }
     });
   }
 
   function makePayload(state) {
-    //const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
-    const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1 };
+    const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
     const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
 
     return {

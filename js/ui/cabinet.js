@@ -155,7 +155,7 @@
   // ------------------------------------------------------------
   // 🆕 5️⃣ 신규 등록 폼 표시 (기존 showNewCabinetForm)
   // ------------------------------------------------------------
-  async function showNewCabinetForm() {
+  function showNewCabinetForm() {
     // ⬇️ [수정됨] edit 함수와 동일하게 initCabinetForm만 호출합니다.
     if (App.Forms && typeof App.Forms.initCabinetForm === "function") {
      App.Forms.initCabinetForm("create", null);
