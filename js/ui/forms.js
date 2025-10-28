@@ -98,20 +98,35 @@
             const otherGroup = document.getElementById("area-other-group");
             const otherInput = document.getElementById("area-other-input");
 
+            // 버튼 클릭 시 DOM 변형 없이 상태만 기록
             if (btn.dataset.value === "기타") {
-                otherGroup.style.display = "block";
-                otherInput.focus();
                 App.State.set("area_id", null);
+                App.State.set("area_custom_name", otherInput.value.trim());
             } else {
-                otherGroup.style.display = "none";
                 App.State.set("area_id", btn.dataset.value);
                 App.State.set("area_custom_name", null);
             }
 
-            // 입력 이벤트 (직접 입력 시)
-            otherInput.addEventListener("input", (e) => {
+            // ❗ DOM을 직접 바꾸는 대신 CSS class로 토글
+            const allButtons = document.querySelectorAll("#area-button-group button");
+            allButtons.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            // ❗ 기타 입력창은 CSS로만 표시
+            if (btn.dataset.value === "기타") {
+                otherGroup.classList.add("show");
+                otherInput.focus();
+            } else {
+                otherGroup.classList.remove("show");
+            }
+
+            // 입력 이벤트는 단 한 번만 등록
+            if (!otherInput._bound) {
+                otherInput.addEventListener("input", (e) => {
                 App.State.set("area_custom_name", e.target.value.trim());
-            });
+                });
+                otherInput._bound = true;
+            }
             }
 
             // 🔹 2️⃣ 시약장 이름 (cabinet_name_buttons)

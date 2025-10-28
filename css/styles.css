@@ -659,9 +659,12 @@ button:disabled {
 
 /* 2️⃣ “기타 입력” 필드 자연스럽게 표시 */
 .other-input-group {
-    margin-top: 8px;
-    width: 100%;
-    box-sizing: border-box;
+    display: none;
+    transition: opacity 0.2s ease;
+}
+.other-input-group.show {
+  display: block;
+  opacity: 1;
 }
 .other-input-group input {
     width: 100%;
@@ -670,6 +673,11 @@ button:disabled {
     border-radius: 6px;
     font-size: 14px;
     box-sizing: border-box;
+}
+/* 4️⃣ “기타” 입력칸 활성화 시 약간 강조 */
+.other-input-group input:focus {
+    border-color: #00bcd4;
+    box-shadow: 0 0 5px rgba(0, 188, 212, 0.4);
 }
 
 /* 3️⃣ 버튼 active 상태 명확히 */
@@ -680,12 +688,6 @@ button:disabled {
     box-shadow: 0 2px 5px rgba(0, 188, 212, 0.3);
     transform: scale(1.03);
     transition: all 0.2s ease-in-out;
-}
-
-/* 4️⃣ “기타” 입력칸 활성화 시 약간 강조 */
-.other-input-group input:focus {
-    border-color: #00bcd4;
-    box-shadow: 0 0 5px rgba(0, 188, 212, 0.4);
 }
 
 /* ================================================================
@@ -748,15 +750,6 @@ button:disabled {
   #shelf_height_buttons button,
   #storage_columns_buttons button {
     flex: 1 1 calc(33% - 6px); /* 한 줄에 3개씩 표시 */
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  /* 6️⃣ 기타 입력칸 보정 */
-  .other-input-group {
-    margin-top: 8px;
-  }
-  .other-input-group input {
     font-size: 14px;
     padding: 10px;
   }
