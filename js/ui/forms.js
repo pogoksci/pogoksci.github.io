@@ -89,54 +89,41 @@
         "shelf_height_buttons",
         "storage_columns_buttons",
         ].forEach((id) => {
-        setupButtonGroup(id, (btn) => {
-            const key = id.replace("_buttons", "");
-            App.State.set(key, btn.dataset.value);
+            setupButtonGroup(id, (btn) => {
+                const key = id.replace("_buttons", "");
+                App.State.set(key, btn.dataset.value);
 
-            // 🔹 위치 그룹 특수 처리
-            if (id === "area-button-group") {
-            const isOther = btn.id === "area-other-btn";
-
-            // area_id / area_custom_name 세팅
-            if (isOther) {
-                // "기타" 눌렀을 때: 사용자 정의 입력 모드
+                // 🔹 장소 버튼 그룹(1번 항목)만 특수 처리
+                if (id === "area-button-group") {
+                const isOther = btn.id === "area-other-btn";
                 const otherGroup = document.getElementById("area-other-group");
-                if (otherGroup) otherGroup.style.display = "block";
 
-                App.State.set("area_id", null); // 실제 id 없음
-                // 사용자가 입력창에 뭘 쓰는지는 아래 input listener에서 계속 갱신됨
-            } else {
-                // 기타 말고 다른 장소 눌렀을 때
-                const otherGroup = document.getElementById("area-other-group");
-                if (otherGroup) otherGroup.style.display = "none";
+                if (isOther) {
+                    if (otherGroup) otherGroup.style.display = "block";
+                    App.State.set("area_id", null);
+                } else {
+                    if (otherGroup) otherGroup.style.display = "none";
+                    App.State.set("area_id", btn.dataset.value);
+                    App.State.set("area_custom_name", null);
+                }
+                }
 
-                const areaIdRaw = btn.dataset.id;
-                const areaIdNum = areaIdRaw ? parseInt(areaIdRaw, 10) : null;
-                App.State.set("area_id", areaIdNum);
-                App.State.set("area_custom_name", null);
-            }
-            }
-
-            // 🔹 시약장 이름 그룹 특수 처리
-            if (id === "cabinet_name_buttons") {
-            const isOtherCab = btn.id === "cabinet-other-btn";
-
-            if (isOtherCab) {
+                // 🔹 시약장 이름 그룹(2번 항목)만 특수 처리
+                if (id === "cabinet_name_buttons") {
+                const isOtherCab = btn.id === "cabinet-other-btn";
                 const otherGroup = document.getElementById("cabinet-other-group");
-                if (otherGroup) otherGroup.style.display = "block";
 
-                // 이름은 아직 입력창 통해 별도로 저장
-            } else {
-                const otherGroup = document.getElementById("cabinet-other-group");
-                if (otherGroup) otherGroup.style.display = "none";
-
-                App.State.set("cabinet_custom_name", null);
-                App.State.set("name", btn.dataset.value); // cabinet 이름 그대로 저장
-            }
-            }
+                if (isOtherCab) {
+                    if (otherGroup) otherGroup.style.display = "block";
+                    App.State.set("cabinet_name", "기타");
+                } else {
+                    if (otherGroup) otherGroup.style.display = "none";
+                    App.State.set("cabinet_custom_name", null);
+                    App.State.set("cabinet_name", btn.dataset.value);
+                }
+                }
+            });
         });
-        });
-
 
         // ⬇️ [수정됨] 6️⃣ 사진/카메라 기능 초기화 (올바른 ID 사용)
         const photoInput = document.getElementById("cabinet-photo-input");
