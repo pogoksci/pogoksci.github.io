@@ -181,6 +181,41 @@
         });
         })();
 
+        // ✅ 기타 입력칸 표시 로직 (명시적 표시)
+        const areaOtherBtn = document.getElementById("area-other-btn");
+        const areaOtherGroup = document.getElementById("area-other-group");
+        const areaOtherInput = document.getElementById("area-other-input");
+
+        if (areaOtherBtn && areaOtherGroup && areaOtherInput) {
+        areaOtherBtn.addEventListener("click", () => {
+            document.querySelectorAll("#area-button-group button").forEach(b => b.classList.remove("active"));
+            areaOtherBtn.classList.add("active");
+            areaOtherGroup.style.display = "block";
+            areaOtherInput.focus();
+            App.State.set("area_id", null);
+        });
+        areaOtherInput.addEventListener("input", e => {
+            App.State.set("area_custom_name", e.target.value.trim());
+        });
+        }
+
+        const cabOtherBtn = document.getElementById("cabinet-other-btn");
+        const cabOtherGroup = document.getElementById("cabinet-other-group") || document.getElementById("cabinet_other-group");
+        const cabOtherInput = document.getElementById("cabinet-other-input") || document.getElementById("cabinet_other_input");
+
+        if (cabOtherBtn && cabOtherGroup && cabOtherInput) {
+        cabOtherBtn.addEventListener("click", () => {
+            document.querySelectorAll("#cabinet_name_buttons button").forEach(b => b.classList.remove("active"));
+            cabOtherBtn.classList.add("active");
+            cabOtherGroup.style.display = "block";
+            cabOtherInput.focus();
+            App.State.set("cabinet_name", "기타");
+        });
+        cabOtherInput.addEventListener("input", e => {
+            App.State.set("cabinet_custom_name", e.target.value.trim());
+        });
+        }
+
         // ⬇️ [수정됨] 6️⃣ 사진/카메라 기능 초기화 (올바른 ID 사용)
         const photoInput = document.getElementById("cabinet-photo-input");
         const cameraInput = document.getElementById("cabinet-camera-input");
