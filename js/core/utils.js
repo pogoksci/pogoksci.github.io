@@ -33,12 +33,6 @@
         if (typeof onSelect === "function") {
             onSelect(btn);
         }
-
-        // '기타' 입력칸 토글 처리
-        const otherGroup = document.getElementById(groupId.replace("_buttons", "_group"));
-        if (otherGroup) {
-            otherGroup.style.display = btn.dataset.value === "기타" ? "block" : "none";
-        }
     });
   }
 
