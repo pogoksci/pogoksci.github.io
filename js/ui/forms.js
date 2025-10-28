@@ -80,77 +80,106 @@
         if (cancelBtn)
             cancelBtn.onclick = () => App.includeHTML("pages/location-list.html");
 
-        // ✅ 5️⃣ 버튼 그룹 초기화
-        [
-        "area-button-group",
-        "cabinet_name_buttons",
-        "door_vertical_split_buttons",
-        "door_horizontal_split_buttons",
-        "shelf_height_buttons",
-        "storage_columns_buttons",
-        ].forEach((id) => {
-        setupButtonGroup(id, (btn) => {
-            const key = id.replace("_buttons", "");
-            App.State.set(key, btn.dataset.value);
+        // ✅ 5️⃣ 버튼 그룹 초기화 (수정된 버전)
+        (function initButtonGroups() {
+        // 미리 DOM 캐시
+        const areaGroupEl = document.getElementById("area-button-group");
+        const areaOtherGroup = document.getElementById("area-other-group");
+        const areaOtherInput = document.getElementById("area-other-input");
 
-            // 🔹 1️⃣ 시약장 위치 (area-button-group)
-            if (id === "area-button-group") {
-            const otherGroup = document.getElementById("area-other-group");
-            const otherInput = document.getElementById("area-other-input");
+        const cabGroupEl = document.getElementById("cabinet_name_buttons");
+        const cabOtherGroup = document.getElementById("cabinet-other-group") || document.getElementById("cabinet_other-group");
+        const cabOtherInput = document.getElementById("cabinet-other-input") || document.getElementById("cabinet_other_input");
 
-            // 버튼 클릭 시 DOM 변형 없이 상태만 기록
-            if (btn.dataset.value === "기타") {
-                App.State.set("area_id", null);
-                App.State.set("area_custom_name", otherInput.value.trim());
-            } else {
-                App.State.set("area_id", btn.dataset.value);
-                App.State.set("area_custom_name", null);
-            }
-
-            // ❗ DOM을 직접 바꾸는 대신 CSS class로 토글
-            const allButtons = document.querySelectorAll("#area-button-group button");
-            allButtons.forEach(b => b.classList.remove("active"));
+        // 🔹 1) 장소 버튼 그룹 -------------------------------------------------
+        setupButtonGroup("area-button-group", (btn) => {
+            // 1-1. active 표시를 우리가 확실히 관리 (부수효과 최소화)
+            areaGroupEl.querySelectorAll("button").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
 
-            // ❗ 기타 입력창은 CSS로만 표시
-            if (btn.dataset.value === "기타") {
-                otherGroup.classList.add("show");
-                otherInput.focus();
+            const val = btn.dataset.value;
+
+            if (val === "기타") {
+            // 기타 선택 상태 기록
+            App.State.set("area_id", null);
+            App.State.set("area_custom_name", areaOtherInput.value.trim());
+
+            // "기타 입력칸 보이기": display 직접 만지지 말고 class만
+            areaOtherGroup.classList.add("show");
+            // focus는 즉시 주지 말고, 살짝 늦게 줘서 레이아웃 흔들지 않게
+            setTimeout(() => {
+                areaOtherInput.focus();
+            }, 0);
             } else {
-                otherGroup.classList.remove("show");
-            }
+            // 일반 장소 선택
+            App.State.set("area_id", val);
+            App.State.set("area_custom_name", null);
 
-            // 입력 이벤트는 단 한 번만 등록
-            if (!otherInput._bound) {
-                otherInput.addEventListener("input", (e) => {
-                App.State.set("area_custom_name", e.target.value.trim());
-                });
-                otherInput._bound = true;
+            // "기타 입력칸 숨기기"
+            areaOtherGroup.classList.remove("show");
             }
-            }
+        });
 
-            // 🔹 2️⃣ 시약장 이름 (cabinet_name_buttons)
-            if (id === "cabinet_name_buttons") {
-            const otherGroup = document.getElementById("cabinet-other-group");
-            const otherInput = document.getElementById("cabinet-other-input");
-
-            if (btn.dataset.value === "기타") {
-                otherGroup.style.display = "block";
-                otherInput.focus();
-                App.State.set("cabinet_name", "기타");
-            } else {
-                otherGroup.style.display = "none";
-                App.State.set("cabinet_custom_name", null);
-                App.State.set("cabinet_name", btn.dataset.value);
-            }
-
-            // 입력 이벤트 (직접 입력 시)
-            otherInput.addEventListener("input", (e) => {
-                App.State.set("cabinet_custom_name", e.target.value.trim());
+        // 기타 입력칸에 대한 input 리스너는 한 번만
+        if (areaOtherInput && !areaOtherInput._bound) {
+            areaOtherInput.addEventListener("input", (e) => {
+            App.State.set("area_custom_name", e.target.value.trim());
             });
+            areaOtherInput._bound = true;
+        }
+
+        // 🔹 2) 시약장 이름 버튼 그룹 -----------------------------------------
+        setupButtonGroup("cabinet_name_buttons", (btn) => {
+            // active 확실히 관리
+            cabGroupEl.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const val = btn.dataset.value;
+
+            if (val === "기타") {
+            // 기타 상태 저장
+            App.State.set("cabinet_name", "기타");
+            App.State.set("cabinet_custom_name", cabOtherInput.value.trim());
+
+            // 기타 입력박스 보여주기 (class로)
+            if (cabOtherGroup) cabOtherGroup.classList.add("show");
+
+            // 마찬가지로 focus는 다음 tick
+            if (cabOtherInput) {
+                setTimeout(() => {
+                cabOtherInput.focus();
+                }, 0);
+            }
+            } else {
+            // 일반 이름
+            App.State.set("cabinet_name", val);
+            App.State.set("cabinet_custom_name", null);
+
+            // 기타 입력칸 숨김
+            if (cabOtherGroup) cabOtherGroup.classList.remove("show");
             }
         });
+
+        // 기타 입력칸 리스너도 한 번만
+        if (cabOtherInput && !cabOtherInput._bound) {
+            cabOtherInput.addEventListener("input", (e) => {
+            App.State.set("cabinet_custom_name", e.target.value.trim());
+            });
+            cabOtherInput._bound = true;
+        }
+
+        // 🔹 3) 나머지 그룹들 (도어/선반/열) ----------------------------------
+        ["door_vertical_split_buttons",
+        "door_horizontal_split_buttons",
+        "shelf_height_buttons",
+        "storage_columns_buttons"
+        ].forEach((id) => {
+            setupButtonGroup(id, (btn) => {
+            const key = id.replace("_buttons", "");
+            App.State.set(key, btn.dataset.value);
+            });
         });
+        })();
 
         // ⬇️ [수정됨] 6️⃣ 사진/카메라 기능 초기화 (올바른 ID 사용)
         const photoInput = document.getElementById("cabinet-photo-input");
