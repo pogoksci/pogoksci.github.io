@@ -89,10 +89,52 @@
         "shelf_height_buttons",
         "storage_columns_buttons",
         ].forEach((id) => {
-            setupButtonGroup(id, (btn) => {
-                const key = id.replace("_buttons", "");
-                App.State.set(key, btn.dataset.value);
+        setupButtonGroup(id, (btn) => {
+            const key = id.replace("_buttons", "");
+            App.State.set(key, btn.dataset.value);
+
+            // 🔹 1️⃣ 시약장 위치 (area-button-group)
+            if (id === "area-button-group") {
+            const otherGroup = document.getElementById("area-other-group");
+            const otherInput = document.getElementById("area-other-input");
+
+            if (btn.dataset.value === "기타") {
+                otherGroup.style.display = "block";
+                otherInput.focus();
+                App.State.set("area_id", null);
+            } else {
+                otherGroup.style.display = "none";
+                App.State.set("area_id", btn.dataset.value);
+                App.State.set("area_custom_name", null);
+            }
+
+            // 입력 이벤트 (직접 입력 시)
+            otherInput.addEventListener("input", (e) => {
+                App.State.set("area_custom_name", e.target.value.trim());
             });
+            }
+
+            // 🔹 2️⃣ 시약장 이름 (cabinet_name_buttons)
+            if (id === "cabinet_name_buttons") {
+            const otherGroup = document.getElementById("cabinet-other-group");
+            const otherInput = document.getElementById("cabinet-other-input");
+
+            if (btn.dataset.value === "기타") {
+                otherGroup.style.display = "block";
+                otherInput.focus();
+                App.State.set("cabinet_name", "기타");
+            } else {
+                otherGroup.style.display = "none";
+                App.State.set("cabinet_custom_name", null);
+                App.State.set("cabinet_name", btn.dataset.value);
+            }
+
+            // 입력 이벤트 (직접 입력 시)
+            otherInput.addEventListener("input", (e) => {
+                App.State.set("cabinet_custom_name", e.target.value.trim());
+            });
+            }
+        });
         });
 
         // ⬇️ [수정됨] 6️⃣ 사진/카메라 기능 초기화 (올바른 ID 사용)
@@ -131,8 +173,8 @@
         if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
 
         // ✅ 7️⃣ '기타' 버튼 로직 연결
-        setupOtherButtonLogic("area-other-btn", "area-other-group", "area-other-input", "area-button-group", "area_custom_name");
-        setupOtherButtonLogic("cabinet-other-btn", "cabinet-other-group", "cabinet-other-input", "cabinet_name_buttons", "cabinet_custom_name");
+        //setupOtherButtonLogic("area-other-btn", "area-other-group", "area-other-input", "area-button-group", "area_custom_name");
+        //setupOtherButtonLogic("cabinet-other-btn", "cabinet-other-group", "cabinet-other-input", "cabinet_name_buttons", "cabinet_custom_name");
 
         // ✅ 8️⃣ [수정됨] edit 모드일 경우 기존 선택 반영 (마지막에 호출)
         if (mode === "edit" && detail) {
@@ -208,26 +250,26 @@
     // -------------------------------------------------
     // 📎 '기타' 버튼 로직 헬퍼
     // -------------------------------------------------
-    function setupOtherButtonLogic(btnId, groupId, inputId, buttonGroupId, stateKey) {
-        const otherBtn = document.getElementById(btnId);
-        const otherGroup = document.getElementById(groupId);
-        const otherInput = document.getElementById(inputId);
-        const buttonGroup = document.getElementById(buttonGroupId);
+    //function setupOtherButtonLogic(btnId, groupId, inputId, buttonGroupId, stateKey) {
+    //    const otherBtn = document.getElementById(btnId);
+    //    const otherGroup = document.getElementById(groupId);
+    //    const otherInput = document.getElementById(inputId);
+    //    const buttonGroup = document.getElementById(buttonGroupId);
+//
+//        if (!otherBtn || !otherGroup || !otherInput || !buttonGroup) return;
 
-        if (!otherBtn || !otherGroup || !otherInput || !buttonGroup) return;
+//        otherBtn.addEventListener("click", () => {
+//            buttonGroup.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
+//            otherBtn.classList.add("active");
+//            otherGroup.style.display = "block";
+//            otherInput.focus();
+//            App.State.set(stateKey, otherInput.value.trim() || "기타");
+//        });
 
-        otherBtn.addEventListener("click", () => {
-            buttonGroup.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
-            otherBtn.classList.add("active");
-            otherGroup.style.display = "block";
-            otherInput.focus();
-            App.State.set(stateKey, otherInput.value.trim() || "기타");
-        });
-
-        otherInput.addEventListener("input", (e) => {
-            App.State.set(stateKey, e.target.value.trim());
-        });
-    }
+//        otherInput.addEventListener("input", (e) => {
+//            App.State.set(stateKey, e.target.value.trim());
+//        });
+//    }
 
     // -------------------------------------------------
     // (다른 종류 폼을 위한 임시 함수)
