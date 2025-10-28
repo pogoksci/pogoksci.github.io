@@ -92,36 +92,6 @@
             setupButtonGroup(id, (btn) => {
                 const key = id.replace("_buttons", "");
                 App.State.set(key, btn.dataset.value);
-
-                // 🔹 장소 버튼 그룹(1번 항목)만 특수 처리
-                if (id === "area-button-group") {
-                const isOther = btn.id === "area-other-btn";
-                const otherGroup = document.getElementById("area-other-group");
-
-                if (isOther) {
-                    if (otherGroup) otherGroup.style.display = "block";
-                    App.State.set("area_id", null);
-                } else {
-                    if (otherGroup) otherGroup.style.display = "none";
-                    App.State.set("area_id", btn.dataset.value);
-                    App.State.set("area_custom_name", null);
-                }
-                }
-
-                // 🔹 시약장 이름 그룹(2번 항목)만 특수 처리
-                if (id === "cabinet_name_buttons") {
-                const isOtherCab = btn.id === "cabinet-other-btn";
-                const otherGroup = document.getElementById("cabinet-other-group");
-
-                if (isOtherCab) {
-                    if (otherGroup) otherGroup.style.display = "block";
-                    App.State.set("cabinet_name", "기타");
-                } else {
-                    if (otherGroup) otherGroup.style.display = "none";
-                    App.State.set("cabinet_custom_name", null);
-                    App.State.set("cabinet_name", btn.dataset.value);
-                }
-                }
             });
         });
 
