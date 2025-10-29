@@ -551,6 +551,46 @@ button:disabled {
 }
 
 /* =================================================================
+   시약장 수정 버튼
+================================================================= */
+.form-bottom-buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.form-btn {
+    flex: 1;
+    height: 44px;
+    border-radius: 6px;
+    border: 2px solid #00bcd4;
+    background-color: white;
+    color: #00bcd4;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.form-btn:hover {
+    background-color: #00bcd4;
+    color: white;
+}
+
+.form-btn.primary {
+    background-color: #00bcd4;
+    color: white;
+}
+
+.form-btn.primary:hover {
+    background-color: #009bb3;
+}
+
+.form-btn:active {
+    box-shadow: 0 0 0 2px rgba(0,188,212,0.2) inset;
+}
+
+/* =================================================================
    상세 정보 페이지 스타일
 ================================================================= */
 .detail-section {
