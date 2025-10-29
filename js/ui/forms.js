@@ -69,6 +69,9 @@
                 saveBtn.style.display = "inline-block";
                 saveBtn.onclick = (e) => { e.preventDefault(); handleSave(); };
             }
+            document.querySelectorAll("#cabinet_name_buttons button").forEach(b => b.disabled = true);
+            const otherInput = document.getElementById("cabinet-other-input") || document.getElementById("cabinet_other_input");
+            if (otherInput) otherInput.disabled = true;
         } else {
             if (submitBtn) {
                 submitBtn.style.display = "inline-block";
@@ -111,12 +114,11 @@
                 areaOtherInput.focus();
             }, 0);
             } else {
-            // 일반 장소 선택
+            // 일반 장소 선택: 입력란 숨기기
             App.State.set("area_id", val);
             App.State.set("area_custom_name", null);
-
-            // "기타 입력칸 숨기기"
-            areaOtherGroup.classList.remove("show");
+            areaOtherGroup.style.display = "none";
+            areaOtherInput.value = ""; // 입력값 초기화 (선택사항)
             }
         });
 
@@ -287,14 +289,17 @@
         if (areaBtn) {
             areaBtn.classList.add("active");
         } else { // '기타' 항목 처리
-            const otherBtn = document.getElementById("area-other-btn");
+            const otherBtn = document.getElementById("cabinet-other-btn");
             if (otherBtn) otherBtn.classList.add("active");
-            const otherGroup = document.getElementById("area-other-group");
-            const otherInput = document.getElementById("area-other-input");
+            const otherGroup = document.getElementById("cabinet-other-group") || document.getElementById("cabinet_other-group");
+            const otherInput = document.getElementById("cabinet-other-input") || document.getElementById("cabinet_other_input");
             if (otherGroup && otherInput) {
+                // ✅ 기타 입력칸 항상 표시
                 otherGroup.style.display = "block";
-                otherInput.value = detail.area_id?.name || ""; // 기타 이름 표시
-                //otherInput.disabled = true; // 수정 불가
+                // ✅ 기존 입력값 복원
+                otherInput.value = detail.cabinet_custom_name || detail.name || "";
+                // ✅ 수정 금지
+                otherInput.disabled = true;
             }
         }
         //document.querySelectorAll("#area-button-group button").forEach((b) => (b.disabled = true));
