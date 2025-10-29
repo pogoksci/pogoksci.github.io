@@ -2,14 +2,17 @@
 // /js/ui/cabinet.js — DB CRUD / 목록 관리 (재시도 포함 안정 버전)
 // ================================================================
 (function () {
-  //const { supabase, includeHTML } = App;
-  //const { sleep } = App.Utils;
+  // ✅ 전역 App 안전하게 가져오기
+  const getApp = () => globalThis.App || window.App || {};
+
+  // ✅ supabase, utils 접근용 헬퍼
+  const getSupabase = () => getApp().supabase;
+  const getUtils = () => getApp().Utils || {};
 
   // ------------------------------------------------------------
   // 📦 1️⃣ 시약장 목록 로드 (자동 재시도 포함)
   // ------------------------------------------------------------
   async function loadList(retryCount = 0) {
-    const { supabase } = globalThis.App;
     const container = document.getElementById("cabinet-list-container");
     const status = document.getElementById("status-message-list");
 
@@ -100,7 +103,6 @@
   // ✏️ 2️⃣ 시약장 수정
   // ------------------------------------------------------------
   async function editCabinet(id) {
-    const { supabase } = globalThis.App;
       try {
         const { data: detail, error } = await supabase
         .from("Cabinet")
@@ -126,22 +128,61 @@
   // ➕ 3️⃣ 시약장 등록 / 수정 / 삭제
   // ------------------------------------------------------------
   async function createCabinet(payload) {
-    const { supabase } = globalThis.App;
     const { error } = await supabase.from("Cabinet").insert([payload]);
     if (error) throw error;
   }
 
   async function updateCabinet(id, payload) {
-    const { supabase } = globalThis.App;
-    const { error } = await supabase
+    console.log("🧩 updateCabinet() payload:", payload);
+
+    const clean = { ...payload };
+    if (typeof clean.area_id === "string") clean.area_id = null;
+
+    if (!clean.area_id && clean.area_custom_name) {
+      const { data: area } = await supabase
+        .from("Area")
+        .select("id")
+        .eq("name", clean.area_custom_name)
+        .maybeSingle();
+
+      if (area) {
+        clean.area_id = area.id;
+      } else {
+        const { data: newArea, error: areaErr } = await supabase
+          .from("Area")
+          .insert({ name: clean.area_custom_name })
+          .select()
+          .single();
+        if (!areaErr && newArea) clean.area_id = newArea.id;
+      }
+    }
+
+    const { data, error } = await supabase
       .from("Cabinet")
-      .update(payload)
-      .eq("id", id);
-    if (error) throw error;
+      .update({
+        name: clean.name,
+        area_id: clean.area_id,
+        door_vertical_count: clean.door_vertical_count,
+        door_horizontal_count: clean.door_horizontal_count,
+        shelf_height: clean.shelf_height,
+        storage_columns: clean.storage_columns,
+        photo_url_320: clean.photo_url_320,
+        photo_url_160: clean.photo_url_160,
+      })
+      .eq("id", id)
+      .select();
+
+    if (error) {
+      console.error("❌ updateCabinet 오류:", error);
+      alert("수정 중 오류가 발생했습니다.");
+      return null;
+    }
+
+    console.log("✅ updateCabinet 완료:", data);
+    return data;
   }
 
   async function remove(id) {
-    const { supabase } = globalThis.App;
     if (!confirm("정말 삭제하시겠습니까?")) return;
     const { error } = await supabase.from("Cabinet").delete().eq("id", id);
     if (error) {
