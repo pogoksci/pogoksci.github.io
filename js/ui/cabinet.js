@@ -13,6 +13,7 @@
   // 📦 1️⃣ 시약장 목록 로드 (자동 재시도 포함)
   // ------------------------------------------------------------
   async function loadList(retryCount = 0) {
+    const supabase = getSupabase();
     const container = document.getElementById("cabinet-list-container");
     const status = document.getElementById("status-message-list");
 
@@ -103,6 +104,7 @@
   // ✏️ 2️⃣ 시약장 수정
   // ------------------------------------------------------------
   async function editCabinet(id) {
+      const supabase = getSupabase();
       try {
         const { data: detail, error } = await supabase
         .from("Cabinet")
@@ -128,11 +130,13 @@
   // ➕ 3️⃣ 시약장 등록 / 수정 / 삭제
   // ------------------------------------------------------------
   async function createCabinet(payload) {
+    const supabase = getSupabase();
     const { error } = await supabase.from("Cabinet").insert([payload]);
     if (error) throw error;
   }
 
   async function updateCabinet(id, payload) {
+    const supabase = getSupabase();
     console.log("🧩 updateCabinet() payload:", payload);
 
     const clean = { ...payload };
@@ -183,6 +187,7 @@
   }
 
   async function remove(id) {
+    const supabase = getSupabase();
     if (!confirm("정말 삭제하시겠습니까?")) return;
     const { error } = await supabase.from("Cabinet").delete().eq("id", id);
     if (error) {
@@ -197,6 +202,7 @@
   // 🆕 5️⃣ 신규 등록 폼 표시 (기존 showNewCabinetForm)
   // ------------------------------------------------------------
   function showNewCabinetForm() {
+    const supabase = getSupabase();
     // ⬇️ [수정됨] edit 함수와 동일하게 initCabinetForm만 호출합니다.
     if (App.Forms && typeof App.Forms.initCabinetForm === "function") {
      App.Forms.initCabinetForm("create", null);
