@@ -864,18 +864,28 @@ button:disabled {
 
 /* 초기 로딩 중 스플래시 (JS 로드 전 표시) */
 #splash-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
 }
-
-#splash-screen .main-logo {
-  width: 150px;
-  height: auto;
-  margin-bottom: 20px;
+#splash-screen img.main-logo {
+    width: 140px;
+    height: 140px;
+    margin-bottom: 12px;
+}
+#splash-screen h1 {
+    margin: 8px 0 4px 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: #222;
+}
+#splash-screen p {
+    margin: 0;
+    font-size: 16px;
+    color: #666;
 }
 
 /* JS가 로딩 완료되면 사라짐 */
