@@ -773,66 +773,49 @@ transform: scale(0.98);
 }
 
 /* =================================================================
-   🌟 Main 로고 화면 (초기 스플래시 포함)
+     🌟 Main 로고 화면 (초기 스플래시 포함)
 ================================================================= */
-#main-logo-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 80px); /* 네비게이션 제외한 화면 높이 */
-  text-align: center;
-  padding: 40px 20px;
-  box-sizing: border-box;
-}
 
-#main-logo-screen .main-logo {
-  width: 150px;
-  height: auto;
-  margin-bottom: 20px;
-}
-
-#main-logo-screen h1 {
-  font-size: 2.2em;
-  color: #333;
-  margin: 0;
-}
-
-#main-logo-screen p {
-  font-size: 1.1em;
-  color: #666;
-  margin-top: 8px;
-}
-
-/* 초기 로딩 중 스플래시 (JS 로드 전 표시) */
+/* ⬇️ [수정됨] 
+   #main-logo-screen과 #splash-screen이
+   동일한 스타일을 공유하도록 .main-screen 클래스로 통합합니다.
+*/
+#main-logo-screen,
 #splash-screen {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    height: 100vh;
+    justify-content: center;
+    min-height: calc(100vh - 80px); /* 네비게이션 제외한 화면 높이 */
     text-align: center;
-}
-#splash-screen img.main-logo {
-    width: 140px;
-    height: 140px;
-    margin-bottom: 12px;
-}
-#splash-screen h1 {
-    margin: 8px 0 4px 0;
-    font-size: 28px;
-    font-weight: 700;
-    color: #222;
-}
-#splash-screen p {
-    margin: 0;
-    font-size: 16px;
-    color: #666;
+    padding: 40px 20px;
+    box-sizing: border-box;
 }
 
-/* JS가 로딩 완료되면 사라짐 */
+#main-logo-screen .main-logo,
+#splash-screen .main-logo {
+    width: 150px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+#main-logo-screen h1,
+#splash-screen h1 {
+    font-size: 2.2em; /* 폰트 크기 통일 */
+    color: #333;
+    margin: 0;
+}
+
+#main-logo-screen p,
+#splash-screen p {
+    font-size: 1.1em; /* 폰트 크기 통일 */
+    color: #666;
+    margin-top: 8px;
+}
+
+/* JS가 로딩 완료되면 스플래시 스크린만 숨김 */
 body.loaded #splash-screen {
-  display: none;
+    display: none;
 }
 
 /* ================================================================
