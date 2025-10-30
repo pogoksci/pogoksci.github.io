@@ -590,6 +590,48 @@ button:disabled {
     box-shadow: 0 0 0 2px rgba(0,188,212,0.2) inset;
 }
 
+/* 모든 버튼의 공통 모양과 반응 */
+#cancel-form-btn,
+#cabinet-submit-button,
+#cabinet-save-btn {
+flex: 1; /* 1:1 비율로 꽉 채움 */
+padding: 12px 20px;
+border: none;
+border-radius: 5px;
+font-size: 16px;
+font-weight: bold;
+cursor: pointer;
+transition: background-color 0.2s, transform 0.1s;
+}
+
+/* 버튼별 기본 색상 */
+#cancel-form-btn {
+background-color: #ccc;
+color: #333;
+}
+/* 등록 버튼과 수정 버튼 색상 통일 */
+#cabinet-submit-button,
+#cabinet-save-btn {
+background-color: #00bcd4;
+color: white;
+}
+
+/* 마우스 올렸을 때 (Hover) */
+#cancel-form-btn:hover {
+background-color: #b0b0b0;
+}
+#cabinet-submit-button:hover,
+#cabinet-save-btn:hover {
+background-color: #00a0b2;
+}
+
+/* 클릭했을 때 (Active) */
+#cancel-form-btn:active,
+#cabinet-submit-button:active,
+#cabinet-save-btn:active {
+transform: scale(0.98);
+}
+
 /* =================================================================
    상세 정보 페이지 스타일
 ================================================================= */
@@ -730,6 +772,89 @@ button:disabled {
     transition: all 0.2s ease-in-out;
 }
 
+/* =================================================================
+   🌟 Main 로고 화면 (초기 스플래시 포함)
+================================================================= */
+#main-logo-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 80px); /* 네비게이션 제외한 화면 높이 */
+  text-align: center;
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+#main-logo-screen .main-logo {
+  width: 150px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+#main-logo-screen h1 {
+  font-size: 2.2em;
+  color: #333;
+  margin: 0;
+}
+
+#main-logo-screen p {
+  font-size: 1.1em;
+  color: #666;
+  margin-top: 8px;
+}
+
+/* 초기 로딩 중 스플래시 (JS 로드 전 표시) */
+#splash-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+}
+#splash-screen img.main-logo {
+    width: 140px;
+    height: 140px;
+    margin-bottom: 12px;
+}
+#splash-screen h1 {
+    margin: 8px 0 4px 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: #222;
+}
+#splash-screen p {
+    margin: 0;
+    font-size: 16px;
+    color: #666;
+}
+
+/* JS가 로딩 완료되면 사라짐 */
+body.loaded #splash-screen {
+  display: none;
+}
+
+/* ================================================================
+   6️⃣ 시작메뉴 팝업 부드럽게
+   ================================================================ */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.start-menu-popup.open {
+  display: flex;
+  animation: slideUpFade 0.25s ease forwards;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+
 /* ================================================================
    📱 모바일 뷰(320~480px) 대응 — 버튼 그룹 자동 재배치
    (cabinet-form.html 기준)
@@ -804,91 +929,4 @@ button:disabled {
   form {
     padding: 15px;
   }
-
-  #cabinet-submit-button,
-  #cancel-form-btn {
-    font-size: 15px;
-    padding: 12px;
-  }
-}
-
-/* 6️⃣ 시작메뉴 팝업 부드럽게 */
-@keyframes slideUpFade {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.start-menu-popup.open {
-  display: flex;
-  animation: slideUpFade 0.25s ease forwards;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-}
-
-/* =================================================================
-   🌟 Main 로고 화면 (초기 스플래시 포함)
-================================================================= */
-#main-logo-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 80px); /* 네비게이션 제외한 화면 높이 */
-  text-align: center;
-  padding: 40px 20px;
-  box-sizing: border-box;
-}
-
-#main-logo-screen .main-logo {
-  width: 150px;
-  height: auto;
-  margin-bottom: 20px;
-}
-
-#main-logo-screen h1 {
-  font-size: 2.2em;
-  color: #333;
-  margin: 0;
-}
-
-#main-logo-screen p {
-  font-size: 1.1em;
-  color: #666;
-  margin-top: 8px;
-}
-
-/* 초기 로딩 중 스플래시 (JS 로드 전 표시) */
-#splash-screen {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    text-align: center;
-}
-#splash-screen img.main-logo {
-    width: 140px;
-    height: 140px;
-    margin-bottom: 12px;
-}
-#splash-screen h1 {
-    margin: 8px 0 4px 0;
-    font-size: 28px;
-    font-weight: 700;
-    color: #222;
-}
-#splash-screen p {
-    margin: 0;
-    font-size: 16px;
-    color: #666;
-}
-
-/* JS가 로딩 완료되면 사라짐 */
-body.loaded #splash-screen {
-  display: none;
 }
