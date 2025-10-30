@@ -791,9 +791,13 @@ transform: scale(0.98);
     transition: opacity 0.4s ease;
 }
 
+/* 모든 로고 이미지 공통 크기 */
+.main-logo {
+  width: 150px;
+  height: auto;
+}
+
 #splash-screen .main-logo {
-    width: 150px;
-    height: auto;
     margin-bottom: 20px;
 }
 
