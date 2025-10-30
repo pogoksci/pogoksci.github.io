@@ -57,11 +57,35 @@
     }
   }
 
+// -----------------------------------------------------
+  // ⬇️ [새로운 코드 추가] 2. 앱 시작점 (Bootstrap)
+  // -----------------------------------------------------
+  async function bootstrap() {
+    console.log("🚀 App bootstrap 시작");
+
+    // navbar 로드 -> 로드된 뒤 setup 호출
+    const ok = await includeHTML("pages/navbar.html", "navbar-container");
+    if (ok && App && App.Navbar && typeof App.Navbar.setup === "function") {
+      App.Navbar.setup();
+      console.log("✅ Navbar setup complete");
+    }
+
+    // FAB 초기 숨김
+    App.Fab?.setVisibility(false);
+    
+    // ⬇️ [수정됨] 스플래시 스크린을 숨기고 body에 'loaded' 클래스를 추가합니다.
+    document.body.classList.add('loaded');
+    console.log("✅ Bootstrap 완료. 스플래시 스크린 숨김.");
+  }
+
   // ------------------------------------------------------------
-  // 2️⃣ 전역 등록
+  // ⬇️ [수정됨] 3. 전역 등록 및 실행
   // ------------------------------------------------------------
   globalThis.App = globalThis.App || {};
   globalThis.App.includeHTML = includeHTML;
+
+  // ⬇️ [새로운 코드 추가] 모든 스크립트가 로드된 후 bootstrap 함수를 실행합니다.
+  globalThis.addEventListener("DOMContentLoaded", bootstrap);
 
   console.log("✅ AppBootstrap 초기화 완료 — includeHTML 전역 등록됨");
 })();
