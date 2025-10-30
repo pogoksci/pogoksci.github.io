@@ -59,68 +59,6 @@
   }
 
   // ------------------------------------------------------------
-  // 3️⃣ 로딩 스플래시 표시 (로고)
-  // ------------------------------------------------------------
-  function showSplash() {
-    const splash = document.createElement("div");
-    splash.id = "splash-screen";
-    splash.style = `
-      position: fixed;
-      inset: 0;
-      background: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      transition: opacity 0.5s ease;
-      font-family: 'Arial', sans-serif; /* ✅ 앱 본문 폰트와 동일하게 */
-    `;
-
-    splash.innerHTML = `
-      <div style="
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        transform: translateY(-10px);
-      ">
-        <img src="css/logo.png"
-            alt="SciManager"
-            style="
-              width: 150px;
-              height: auto;
-              margin-bottom: 12px;
-              opacity: 0.95;
-            ">
-        <h2 style="
-          font-size: 22px;
-          font-weight: 700;
-          color: #333;
-          margin: 0;
-          letter-spacing: -0.5px;
-        ">SciManager</h2>
-        <p style="
-          margin-top: 10px;
-          font-size: 14px;
-          color: #666;
-          letter-spacing: -0.2px;
-        ">로딩 중...</p>
-      </div>
-    `;
-
-    document.body.appendChild(splash);
-  }
-
-  function hideSplash() {
-    const splash = document.getElementById("splash-screen");
-    if (splash) {
-      splash.style.opacity = "0";
-      setTimeout(() => splash.remove(), 500);
-    }
-  }
-
-  // ------------------------------------------------------------
   // 4️⃣ 초기화 함수
   // ------------------------------------------------------------
   async function initApp() {
@@ -145,16 +83,11 @@
     // ✅ 기본 페이지 (시약장 목록 X, 로고 유지)
     App.Fab?.setVisibility(false);
     console.log("✅ 초기화 완료 — App 실행 중");
-
-    // ✅ 로딩 스플래시 제거
-    hideSplash();
   }
 
   // ------------------------------------------------------------
-  // 5️⃣ 실제 실행 (스플래시 표시 + 비동기 로드 + initApp)
+  // 5️⃣ 실제 실행
   // ------------------------------------------------------------
-  showSplash();
-
   try {
     // base → core → ui → router 순서대로 로드
     await loadModulesSequentially(baseModules, "Base");
@@ -163,8 +96,6 @@
     await loadModulesSequentially(routerModules, "Router");
 
     console.log("🧩 모든 모듈 로드 완료!");
-    // ✅ 모든 모듈이 완전히 로드되었음을 body에 표시 (스플래시 CSS 제어용)
-    document.body.classList.add("loaded");
 
     // DOM 상태에 관계없이 즉시 초기화
     if (document.readyState === "loading") {
@@ -173,9 +104,15 @@
       await initApp();
     }
 
+    // ✅ 여기 ‘한 번만’ loaded 부여 (스플래시 CSS가 알아서 숨김)
+    document.body.classList.add("loaded");
+
   } catch (err) {
     console.error("❌ 전체 모듈 로드 실패:", err);
     alert("필수 스크립트를 불러오지 못했습니다.");
-    hideSplash();
+
+    // 실패 시에도 스플래시가 계속 남아있지 않게 처리하고 싶다면,
+    // 아래 한 줄은 상황에 따라 선택:
+    document.body.classList.add("loaded");
   }
 })();
