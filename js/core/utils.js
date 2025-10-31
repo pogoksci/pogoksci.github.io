@@ -40,7 +40,7 @@
     const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
     const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
     // '기타' 입력값 처리
-    const areaName = state.area_custom_name || state.area_button_group;
+    //const areaName = state.area_custom_name || state.area_button_group;
     const cabinetName = state.cabinet_custom_name || state.cabinet_name_buttons;
 
     return {
