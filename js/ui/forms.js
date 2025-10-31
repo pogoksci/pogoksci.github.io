@@ -102,13 +102,12 @@
             btn.classList.add("active");
 
             const val = btn.dataset.value;
-            const id = btn.dataset.id ? parseInt(btn.dataset.id) : null; // ⬅️ [수정됨] id 가져오기
-
+            //const id = btn.dataset.id ? parseInt(btn.dataset.id) : null; // ⬅️ [수정됨] id 가져오기
 
             if (val === "기타") {
             // 기타 선택 상태 기록
             App.State.set("area_id", null);
-            App.State.set("area", "기타"); // ⬅️ [수정됨] 'area' 키에도 저장
+            //App.State.set("area", "기타"); // ⬅️ [수정됨] 'area' 키에도 저장
             App.State.set("area_custom_name", areaOtherInput.value.trim());
 
             // "기타 입력칸 보이기": display 직접 만지지 말고 class만
@@ -119,7 +118,7 @@
             }, 0);
             } else {
             // 일반 장소 선택: 입력란 숨기기
-            App.State.set("area_id", id); // ⬅️ [수정됨] 올바른 id 저장
+            //App.State.set("area_id", id); // ⬅️ [수정됨] 올바른 id 저장
             App.State.set("area", val); // ⬅️ [수정됨] 'area' 키에 저장
             App.State.set("area_custom_name", null);
             areaOtherGroup.style.display = "none";

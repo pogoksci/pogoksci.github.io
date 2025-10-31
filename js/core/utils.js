@@ -36,31 +36,55 @@
     });
   }
 
-  function makePayload(state) {
+  async function makePayload(state) {
     const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
     const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
-    // '기타' 입력값 처리
-    const areaName = state.area_custom_name || state.area;
+
+    // 1. 시약장 이름 결정 (기존 로직)
     const cabinetName = state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name;
+
+    // 2. ⬇️ [수정됨] 장소 이름(state.area)으로 DB에서 ID를 조회합니다.
+    let finalAreaId = state.area_id; // '수정' 모드의 초기 ID
+    const selectedAreaName = state.area; // '과학교과실1'
+
+    // 사용자가 '기타'가 아닌 다른 장소를 클릭했을 때 (selectedAreaName에 값이 있을 때)
+    if (selectedAreaName && selectedAreaName !== "기타") {
+        const { data: area, error } = await App.supabase
+            .from("Area")
+            .select("id")
+            .eq("name", selectedAreaName)
+            .single();
+        if (error) throw new Error("장소 ID 조회 오류: " + error.message);
+        if (area) {
+            finalAreaId = area.id; // ⬅️ 조회된 최신 ID로 덮어씀
+        } else {
+            // DB에 없는 이름이면 '기타'로 간주 (신규 장소 등록)
+            finalAreaId = null;
+            state.area_custom_name = selectedAreaName;
+        }
+    } else if (selectedAreaName === "기타") {
+        finalAreaId = null; // '기타' 버튼을 누르면 ID는 null
+    }
+    // ⬆️ [수정 완료]
 
     return {
         name: cabinetName,
-        area_id: state.area_id, // '기타'일 경우 area_id가 null이 됩니다. (Edge Function에서 '기타' 이름으로 Area를 생성해야 함)
-        area_custom_name: areaName, // '기타'일 때만 값이 있음
+        area_id: finalAreaId, // ⬅️ [수정됨] DB에서 조회한 ID
+        area_custom_name: state.area_custom_name, 
 
-        // ⬇️ [수정됨] state의 키 이름을 버튼 그룹 id에서 '_buttons'가 빠진 이름으로 수정
-        door_vertical_count: verticalMap[state.door_vertical_split] || null,
-        door_horizontal_count: horizontalMap[state.door_horizontal_split] || null,
+        // 텍스트 값을 숫자로 변환
+        door_vertical_count: verticalMap[state.door_vertical_split_buttons] || null,
+        door_horizontal_count: horizontalMap[state.door_horizontal_split_buttons] || null,
         shelf_height: state.shelf_height ? parseInt(state.shelf_height) : null,
         storage_columns: state.storage_columns ? parseInt(state.storage_columns) : null,
 
-        // 사진 데이터 (새 사진이 없으면 기존 URL 유지)
+        // 사진 데이터
         photo_320_base64: state.photo_320_base64 || null,
         photo_160_base64: state.photo_160_base64 || null,
         photo_url_320: state.mode === 'edit' && !state.photo_320_base64 ? state.photo_url_320 : null,
         photo_url_160: state.mode === 'edit' && !state.photo_160_base64 ? state.photo_url_160 : null,
     };
-  }
+}
 
   globalThis.App = globalThis.App || {};
   globalThis.App.Utils = { sleep, collectFormData, setupButtonGroup, makePayload };
