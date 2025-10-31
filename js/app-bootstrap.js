@@ -36,13 +36,28 @@
         requestAnimationFrame(() => requestAnimationFrame(resolve))
       );
 
-      // 4️⃣ 페이지별 진입 로그 (Router에서 후처리 담당)
-      if (file.includes("navbar.html")) console.log("🧭 Navbar HTML 로드 완료");
-      if (file.includes("main.html")) console.log("🏠 Main 화면 HTML 로드 완료");
-      if (file.includes("location-list.html")) console.log("📦 시약장 목록 HTML 로드 완료");
-      if (file.includes("cabinet-form.html")) console.log("🧩 시약장 등록 폼 HTML 로드 완료");
-      if (file.includes("inventory-list.html")) console.log("🧪 재고 목록 HTML 로드 완료");
-      if (file.includes("inventory-form.html")) console.log("🧾 재고 등록 폼 HTML 로드 완료");
+      // ⬇️ [수정됨] 4️⃣ 페이지별 후처리 함수를 "직접 호출"합니다.
+      if (file.includes("navbar.html")) {
+        console.log("🧭 Navbar HTML 로드 완료");
+      } else if (file.includes("main.html")) {
+        console.log("🏠 Main 화면 HTML 로드 완료");
+        App.Fab?.setVisibility(false); // 메인 화면에서는 FAB 숨기기
+      } else if (file.includes("location-list.html")) {
+        console.log("📦 시약장 목록 HTML 로드 완료");
+        App.Cabinet?.loadList?.(); // ⬅️ 여기서 직접 호출
+      } else if (file.includes("cabinet-form.html")) {
+        console.log("🧩 시약장 등록 폼 HTML 로드 완료");
+        // 폼 초기화는 cabinet.js의 edit/showNewCabinetForm에서 담당하므로 여기서는 호출 X
+      } else if (file.includes("inventory-list.html")) {
+        console.log("🧪 재고 목록 HTML 로드 완료");
+        App.Inventory?.loadList?.();
+      } else if (file.includes("inventory-detail.html")) {
+        console.log("🧬 재고 상세 HTML 로드 완료");
+        App.Inventory?.loadDetail?.();
+      } else if (file.includes("inventory-form.html")) {
+        console.log("🧾 재고 등록 폼 HTML 로드 완료");
+        App.Forms?.initInventoryForm?.("create", null);
+      }
 
       return true;
     } catch (err) {

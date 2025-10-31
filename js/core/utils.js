@@ -39,16 +39,24 @@
   function makePayload(state) {
     const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
     const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
+    // '기타' 입력값 처리
+    const areaName = state.area_custom_name || state.area_button_group;
+    const cabinetName = state.cabinet_custom_name || state.cabinet_name_buttons;
 
     return {
-      name: state.name,
-      area_id: state.area_id,
-      door_vertical_count: verticalMap[state.door_vertical_value] ?? state.door_vertical_count ?? null,
-      door_horizontal_count: horizontalMap[state.door_horizontal_value] ?? state.door_horizontal_count ?? null,
-      shelf_height: parseInt(state.shelf_height, 10) || null,
-      storage_columns: parseInt(state.storage_columns, 10) || null,
-      photo_url_320: state.photo_url_320 || null,
-      photo_url_160: state.photo_url_160 || null,
+        name: cabinetName,
+        area_id: state.area_id, // '기타'일 경우 area_id가 null이 됩니다. (Edge Function에서 '기타' 이름으로 Area를 생성해야 함)
+        area_custom_name: state.area_custom_name, // '기타'일 때만 값이 있음
+
+        // ⬇️ [수정됨] 텍스트 값을 숫자로 변환
+        door_vertical_count: verticalMap[state.door_vertical_split] || null,
+        door_horizontal_count: horizontalMap[state.door_horizontal_split] || null,
+        shelf_height: state.shelf_height ? parseInt(state.shelf_height) : null,
+        storage_columns: state.storage_columns ? parseInt(state.storage_columns) : null,
+
+        // 사진 데이터
+        photo_url_320: state.photo_320_base64 || state.photo_url_320 || null,
+        photo_url_160: state.photo_160_base64 || state.photo_url_160 || null,
     };
   }
 
