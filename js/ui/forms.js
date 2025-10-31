@@ -50,8 +50,9 @@
             Object.entries(detail).forEach(([k, v]) => set(k, v));
             set("cabinetId", detail.id);
             set("area_id", detail.area_id?.id || null);
-            // '기타'로 직접 입력한 경우를 위해 area_id.name을 area_custom_name으로 저장
             set("area_custom_name", detail.area_id?.name || null);
+            // ⬇️ [수정됨] 'makePayload'가 찾는 'cabinet_name'에도 값을 설정합니다.
+            set("cabinet_name", detail.name);
         }
 
         // ✅ 3️⃣ DOM 요소 가져오기
