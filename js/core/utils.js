@@ -41,7 +41,7 @@
     const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
     // '기타' 입력값 처리
     const areaName = state.area_custom_name || state.area_button_group;
-    const cabinetName = state.cabinet_custom_name || state.cabinet_name_buttons;
+    const cabinetName = state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name;
 
     return {
         name: cabinetName,
