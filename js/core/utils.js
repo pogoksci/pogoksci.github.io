@@ -41,11 +41,11 @@
     const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
 
     // 1. 시약장 이름 결정 (기존 로직)
-    const cabinetName = state.name || state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name;
+    const cabinetName = state.name || state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name || null;
 
     // 2. ⬇️ [수정됨] 장소 이름(state.area)으로 DB에서 ID를 조회합니다.
     let finalAreaId = state.area_id; // '수정' 모드의 초기 ID
-    const selectedAreaName = state.area; // '과학교과실1'
+    const selectedAreaName = state.area;
 
     // 사용자가 '기타'가 아닌 다른 장소를 클릭했을 때 (selectedAreaName에 값이 있을 때)
     if (selectedAreaName && selectedAreaName !== "기타") {
@@ -54,6 +54,8 @@
             .select("id")
             .eq("name", selectedAreaName)
             .maybeSingle();
+        console.log("🏠 Area 조회 결과:", area, "selectedAreaName:", selectedAreaName);
+        
         if (error) throw new Error("장소 ID 조회 오류: " + error.message);
         if (area) {
             finalAreaId = area.id; // ⬅️ 조회된 최신 ID로 덮어씀
