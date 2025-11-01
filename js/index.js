@@ -88,6 +88,7 @@
 
     // ⭐ ① 초기화 완료 시 스플래시/로고만 유지하고 스크롤 복원
     document.body.classList.remove("home-active"); // ← 스크롤 다시 활성화
+    requestAnimationFrame(() => document.body.classList.add("loaded"));
   }
 
   // ------------------------------------------------------------
