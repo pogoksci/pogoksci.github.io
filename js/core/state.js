@@ -32,5 +32,5 @@
   }
 
   globalThis.App = globalThis.App || {};
-  globalThis.App.State = { set, get, reset, dump };
+  globalThis.App.state = { set, get, reset, dump };
 })();
