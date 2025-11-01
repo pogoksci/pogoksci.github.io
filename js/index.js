@@ -3,6 +3,8 @@
 // ================================================================
 (async function () {
   console.log("🚀 App index.js 시작 — 모듈 비동기 로딩 중...");
+  // ⭐ 0️⃣ 홈(로고) 화면일 때 스크롤 막기
+  document.body.classList.add("home-active"); // ← 스크롤 비활성화
 
   // ------------------------------------------------------------
   // 1️⃣ 모듈 경로 정의 (상대 경로)
@@ -83,6 +85,9 @@
     // ✅ 기본 페이지 (시약장 목록 X, 로고 유지)
     App.Fab?.setVisibility(false);
     console.log("✅ 초기화 완료 — App 실행 중");
+
+    // ⭐ ① 초기화 완료 시 스플래시/로고만 유지하고 스크롤 복원
+    document.body.classList.remove("home-active"); // ← 스크롤 다시 활성화
   }
 
   // ------------------------------------------------------------
@@ -104,15 +109,8 @@
       await initApp();
     }
 
-    // ✅ 여기 ‘한 번만’ loaded 부여 (스플래시 CSS가 알아서 숨김)
-    document.body.classList.add("loaded");
-
   } catch (err) {
     console.error("❌ 전체 모듈 로드 실패:", err);
     alert("필수 스크립트를 불러오지 못했습니다.");
-
-    // 실패 시에도 스플래시가 계속 남아있지 않게 처리하고 싶다면,
-    // 아래 한 줄은 상황에 따라 선택:
-    document.body.classList.add("loaded");
   }
 })();

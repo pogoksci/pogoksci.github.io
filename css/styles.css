@@ -772,58 +772,60 @@ transform: scale(0.98);
     transition: all 0.2s ease-in-out;
 }
 /* =================================================================
-   🌟 초기 스플래시 전용: 로딩 중에는 스크롤 숨기기
+   🌟 SciManager 홈(로고) 화면 — 고정 로딩/홈 화면
 ================================================================= */
 html, body {
-  overflow: hidden;       /* ✅ 로딩 중 스크롤 완전 차단 */
+  margin: 0;
+  padding: 0;
+  width: 100%;
   height: 100%;
+  overflow: auto;
+  background-color: #ffffff;  /* ✅ 항상 동일한 배경 */
+  font-family: 'Noto Sans KR', Arial, sans-serif; /* ✅ 폰트 고정 */
+  color: #333;
 }
 
-/* =================================================================
-   🌟 초기 스플래시 (로딩 중 로고 화면)
-================================================================= */
+/* 🌟 로고 홈 화면 상태일 때 (스크롤 완전 차단) */
+body.home-active {
+  overflow: hidden;                 /* ✅ 스크롤 비활성화 */
+}
+
+/* 🧪 홈 로고 화면 */
 #splash-screen {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 40px 20px;
-    box-sizing: border-box;
-    background: #fff;
-    z-index: 9999;
-    transition: opacity 0.4s ease;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: #ffffff;  /* ✅ 배경색 고정 */
+  z-index: 9999;
+  box-sizing: border-box;
 }
 
-/* 공통 로고 크기 */
+/* 로고 */
 #splash-screen .main-logo {
   width: 150px;
   height: auto;
   margin-bottom: 20px;
 }
 
+/* 메인 타이틀 */
 #splash-screen h1 {
-    font-size: 2.2em;
-    color: #333;
-    margin: 0;
+  font-size: 2.2em;          /* ✅ 크기 고정 */
+  font-weight: 700;
+  color: #222;
+  margin: 0;
+  line-height: 1.2;
 }
 
+/* 서브 타이틀 */
 #splash-screen p {
-    font-size: 1.1em;
-    color: #666;
-    margin-top: 8px;
-}
-
-/* 앱 로드 완료 시 페이드아웃 */
-body.loaded #splash-screen {
-    opacity: 0;
-    pointer-events: none;
-}
-
-body.loaded {
-  overflow-y: auto;  /* 세로 스크롤 허용 */
+  font-size: 1.1em;
+  color: #666;
+  margin-top: 8px;
+  margin-bottom: 0;
 }
 
 /* ================================================================
