@@ -3,10 +3,10 @@
 // ================================================================
 (function () {
   // ✅ 전역 App 안전하게 가져오기
-  const getApp = () => globalThis.App || window.App || {};
+  const getApp = () => globalThis.App || {};
 
   // ✅ supabase, utils 접근용 헬퍼
-  const getSupabase = () => getApp().supabase;
+  const getSupabase = () => getApp().supabase || {};
   const getUtils = () => getApp().Utils || {};
 
   // ------------------------------------------------------------
