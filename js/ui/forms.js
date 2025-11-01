@@ -13,8 +13,9 @@
     // -------------------------------------------------
     async function handleSave() {
         try {
-            const state = dump(); // 현재 폼 상태 가져오기
-            const payload = makePayload(state); // 전송할 데이터로 가공
+            const state = App.State.dump(); // ✅ App.State에서 가져오는 게 명확
+            const payload = await App.Utils.makePayload(state); // ✅ await 필수
+            console.log("💾 payload 확인:", payload);
 
             // 유효성 검사
             if (!payload.name) return alert("시약장 이름을 선택하거나 입력하세요.");

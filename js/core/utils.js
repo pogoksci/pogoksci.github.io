@@ -55,7 +55,7 @@
             .eq("name", selectedAreaName)
             .maybeSingle();
         console.log("🏠 Area 조회 결과:", area, "selectedAreaName:", selectedAreaName);
-        
+
         if (error) throw new Error("장소 ID 조회 오류: " + error.message);
         if (area) {
             finalAreaId = area.id; // ⬅️ 조회된 최신 ID로 덮어씀
@@ -68,6 +68,13 @@
         finalAreaId = null; // '기타' 버튼을 누르면 ID는 null
     }
     // ⬆️ [수정 완료]
+    console.log("💾 makePayload 결과:", {
+      cabinetName,
+      nameInState: state.name,
+      cabinet_name: state.cabinet_name,
+      area: state.area,
+      finalAreaId
+    });
 
     return {
         name: cabinetName,
