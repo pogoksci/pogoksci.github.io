@@ -53,7 +53,7 @@
             .from("Area")
             .select("id")
             .eq("name", selectedAreaName)
-            .single();
+            .maybeSingle();
         if (error) throw new Error("장소 ID 조회 오류: " + error.message);
         if (area) {
             finalAreaId = area.id; // ⬅️ 조회된 최신 ID로 덮어씀
