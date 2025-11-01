@@ -41,7 +41,7 @@
     const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
 
     // 1. 시약장 이름 결정 (기존 로직)
-    const cabinetName = state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name;
+    const cabinetName = state.name || state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name;
 
     // 2. ⬇️ [수정됨] 장소 이름(state.area)으로 DB에서 ID를 조회합니다.
     let finalAreaId = state.area_id; // '수정' 모드의 초기 ID
