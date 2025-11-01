@@ -36,37 +36,52 @@
     });
   }
 
-  async function makePayload(state) {
-    const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
-    const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
+async function makePayload(state) {
+  const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
+  const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
 
-    // 1. 시약장 이름 결정 (기존 로직)
-    const cabinetName = state.name || state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name || null;
+  // 1️⃣ 시약장 이름 결정
+  const cabinetName = state.name || state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name || null;
 
-    // 2. ⬇️ [수정됨] 장소 이름(state.area)으로 DB에서 ID를 조회합니다.
-    let finalAreaId = state.area_id; // '수정' 모드의 초기 ID
-    const selectedAreaName = state.area;
+  // 2️⃣ 장소 이름 기반 area_id 처리
+  let finalAreaId = state.area_id; // '수정' 모드의 초기 ID
+  const selectedAreaName = state.area;
 
-    // 사용자가 '기타'가 아닌 다른 장소를 클릭했을 때 (selectedAreaName에 값이 있을 때)
-    if (selectedAreaName && selectedAreaName !== "기타") {
-        const { data: area, error } = await App.supabase
-            .from("Area")
-            .select("id")
-            .eq("name", selectedAreaName)
-            .maybeSingle();
-        console.log("🏠 Area 조회 결과:", area, "selectedAreaName:", selectedAreaName);
+  if (selectedAreaName && selectedAreaName !== "기타") {
+    // 🔍 먼저 기존 Area 테이블에서 해당 이름을 찾기
+    const { data: area, error: findErr } = await App.supabase
+      .from("Area")
+      .select("id")
+      .eq("name", selectedAreaName)
+      .maybeSingle();
 
-        if (error) throw new Error("장소 ID 조회 오류: " + error.message);
-        if (area) {
-            finalAreaId = area.id; // ⬅️ 조회된 최신 ID로 덮어씀
-        } else {
-            // DB에 없는 이름이면 '기타'로 간주 (신규 장소 등록)
-            finalAreaId = null;
-            state.area_custom_name = selectedAreaName;
+    if (findErr) console.warn("⚠️ Area 조회 중 오류:", findErr.message);
+
+    if (area && area.id) {
+      // ✅ 이미 존재 → 그 ID 사용
+      finalAreaId = area.id;
+    } else {
+      // ❌ 없으면 새로 추가
+      console.log("🆕 Area 신규 추가:", selectedAreaName);
+      const { data: newArea, error: insertErr } = await App.supabase
+        .from("Area")
+        .insert({ name: selectedAreaName })
+        .select("id")
+        .single();
+
+      if (insertErr) {
+        console.error("❌ Area 신규 추가 실패:", insertErr.message);
+        throw new Error("장소 추가 중 오류 발생: " + insertErr.message);
+      }
+
+      finalAreaId = newArea.id;
+            //state.area_custom_name = selectedAreaName;
+
         }
     } else if (selectedAreaName === "기타") {
         finalAreaId = null; // '기타' 버튼을 누르면 ID는 null
     }
+
     // ⬆️ [수정 완료]
     console.log("💾 makePayload 결과:", {
       cabinetName,
