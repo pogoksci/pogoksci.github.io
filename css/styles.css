@@ -5,7 +5,7 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0 auto;
-    padding: 20px;
+    padding: 0 20px 80px 20px; /* 상, 우, 하, 좌 */
     width: 100vw;
     background-color: white;
     padding-bottom: 80px; /* 하단 Navbar 높이만큼 여백 추가 */
@@ -27,8 +27,7 @@ h1, h2, h3 {
 #form-container {
   max-width: 600px;        /* 내용 폭 제한 */
   margin: 0 auto;          /* ✅ 브라우저 가운데 정렬 */
-  padding: 20px;
-  padding-bottom: 80px;    /* 하단 navbar 공간 확보 */
+  padding: 0 20px 80px 20px; /* 상, 우, 하, 좌 */
   box-sizing: border-box;  /* padding 포함 폭 계산 */
 }
 
