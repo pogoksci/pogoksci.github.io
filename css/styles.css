@@ -793,10 +793,13 @@ body.home-active {
 body.loaded #splash-screen {
   opacity: 0;
   pointer-events: none;
+  z-index: -1; /* ✅ 덮이지 않도록 완전히 뒤로 */
   transition: opacity 0.4s ease;
 }
 
-body.loaded #navbar-container {
+#navbar-container {
+  position: relative;
+  z-index: 200;               /* ✅ splash보다 위로 */
   opacity: 1;
 }
 
