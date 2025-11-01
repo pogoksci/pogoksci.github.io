@@ -813,20 +813,21 @@ body.loaded #splash-screen {
 }
 
 /* 🧪 홈 로고 화면 */
+#main-logo-screen,
 #splash-screen {
-  position: fixed;
-  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* ⬇️ [수정됨] 둘 다 동일한 높이와 패딩을 갖도록 통일 */
+  min-height: calc(100vh - 80px); /* 네비게이션 제외한 화면 높이 */
   text-align: center;
-  background-color: #ffffff;  /* ✅ 배경색 고정 */
-  z-index: 9999;
+  padding: 40px 20px; 
   box-sizing: border-box;
 }
 
 /* 로고 */
+#main-logo-screen .main-logo,
 #splash-screen .main-logo {
   width: 150px;
   height: auto;
@@ -834,6 +835,7 @@ body.loaded #splash-screen {
 }
 
 /* 메인 타이틀 */
+#main-logo-screen h1,
 #splash-screen h1 {
   font-size: 2.2em;          /* ✅ 크기 고정 */
   font-weight: 700;
@@ -843,6 +845,7 @@ body.loaded #splash-screen {
 }
 
 /* 서브 타이틀 */
+#main-logo-screen p,
 #splash-screen p {
   font-size: 1.1em;
   color: #666;
@@ -952,4 +955,5 @@ body.loaded #splash-screen {
   height: auto;
   display: block;
   margin: 0 auto;
+  margin-bottom: 20px; /* ⬅️ 로고와 "SciManager" 글씨 사이의 여백 통일 */
 }

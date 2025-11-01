@@ -142,6 +142,7 @@
     const clean = { ...payload };
     if (typeof clean.area_id === "string") clean.area_id = null;
 
+    // 🔹 '기타' 입력 처리
     if (!clean.area_id && clean.area_custom_name) {
       const { data: area } = await supabase
         .from("Area")
@@ -161,19 +162,26 @@
       }
     }
 
+    // ✅ updateFields: null이 아닌 항목만 모아서 업데이트
+    const updateFields = {
+      name: clean.name,
+      area_id: clean.area_id,
+      door_vertical_count: clean.door_vertical_count,
+      door_horizontal_count: clean.door_horizontal_count,
+      shelf_height: clean.shelf_height,
+      storage_columns: clean.storage_columns,
+    };
+
+    if (clean.photo_url_320) updateFields.photo_url_320 = clean.photo_url_320;
+    if (clean.photo_url_160) updateFields.photo_url_160 = clean.photo_url_160;
+
+    // ✅ id는 숫자로 강제 변환
+    const cabinetId = Number(id);
+
     const { data, error } = await supabase
       .from("Cabinet")
-      .update({
-        name: clean.name,
-        area_id: clean.area_id,
-        door_vertical_count: clean.door_vertical_count,
-        door_horizontal_count: clean.door_horizontal_count,
-        shelf_height: clean.shelf_height,
-        storage_columns: clean.storage_columns,
-        photo_url_320: clean.photo_url_320,
-        photo_url_160: clean.photo_url_160,
-      })
-      .eq("id", id)
+      .update(updateFields)
+      .eq("id", cabinetId)
       .select();
 
     if (error) {
