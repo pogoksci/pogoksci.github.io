@@ -142,27 +142,63 @@
     const clean = { ...payload };
     if (typeof clean.area_id === "string") clean.area_id = null;
 
-    // 🔹 '기타' 입력 처리
-    if (!clean.area_id && clean.area_custom_name) {
-      const { data: area } = await supabase
-        .from("Area")
-        .select("id")
-        .eq("name", clean.area_custom_name)
-        .maybeSingle();
+    // ✅ 1️⃣ Area 이름 결정
+    let areaName = null;
 
-      if (area) {
-        clean.area_id = area.id;
-      } else {
-        const { data: newArea, error: areaErr } = await supabase
-          .from("Area")
-          .insert({ name: clean.area_custom_name })
-          .select()
-          .single();
-        if (!areaErr && newArea) clean.area_id = newArea.id;
-      }
+    // ① '기타 입력' 우선 처리
+    if (clean.area_custom_name) {
+      areaName = clean.area_custom_name;
+    }
+    // ② payload에 area가 존재할 경우
+    else if (clean.area) {
+      areaName = clean.area;
+    }
+    // ③ 아무 값도 없는 경우 → 기본 장소로 자동 생성
+    else {
+      areaName = "미지정 장소";
     }
 
-    // ✅ updateFields: null이 아닌 항목만 모아서 업데이트
+    // ✅ 2️⃣ Area 존재 여부 확인 및 생성
+    let areaRecord = null;
+
+    // 먼저 Area 이름으로 조회
+    const { data: foundArea, error: findErr } = await supabase
+      .from("Area")
+      .select("id, name")
+      .eq("name", areaName)
+      .maybeSingle();
+
+    if (findErr) {
+      console.warn("⚠️ Area 조회 오류:", findErr.message);
+    }
+
+    // DB에 이미 있는 경우
+    if (foundArea && foundArea.id) {
+      areaRecord = foundArea;
+      console.log(`📍 기존 Area (${areaName}) 연결 → id=${areaRecord.id}`);
+    } else {
+      // 없는 경우 신규 생성
+      console.log("🆕 Area 신규 생성:", areaName);
+      const { data: newArea, error: insertErr } = await supabase
+        .from("Area")
+        .insert({ name: areaName })
+        .select("id, name")
+        .single();
+
+      if (insertErr) {
+        console.error("❌ Area 생성 오류:", insertErr.message);
+        alert("장소 생성 중 오류가 발생했습니다.");
+        return null;
+      }
+
+      areaRecord = newArea;
+      console.log(`✅ 신규 Area 생성 완료 → id=${areaRecord.id}`);
+    }
+
+    // ✅ 최종 area_id 확정
+    clean.area_id = areaRecord.id;
+
+    // ✅ 3️⃣ Cabinet 업데이트 필드 구성
     const updateFields = {
       name: clean.name,
       area_id: clean.area_id,
@@ -172,12 +208,12 @@
       storage_columns: clean.storage_columns,
     };
 
+    // ✅ 사진 URL 필드: null이 아닐 때만 업데이트
     if (clean.photo_url_320) updateFields.photo_url_320 = clean.photo_url_320;
     if (clean.photo_url_160) updateFields.photo_url_160 = clean.photo_url_160;
 
-    // ✅ id는 숫자로 강제 변환
+    // ✅ 4️⃣ Cabinet 업데이트 실행
     const cabinetId = Number(id);
-
     const { data, error } = await supabase
       .from("Cabinet")
       .update(updateFields)
@@ -186,7 +222,7 @@
 
     if (error) {
       console.error("❌ updateCabinet 오류:", error);
-      alert("수정 중 오류가 발생했습니다.");
+      alert("시약장 수정 중 오류가 발생했습니다.");
       return null;
     }
 

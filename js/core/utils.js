@@ -43,25 +43,30 @@ async function makePayload(state) {
   // 1️⃣ 시약장 이름 결정
   const cabinetName = state.name || state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name || null;
 
-  // 2️⃣ 장소 이름 기반 area_id 처리
-  let finalAreaId = state.area_id; // '수정' 모드의 초기 ID
-  const selectedAreaName = state.area;
+  // 2️⃣ 장소 이름 확인
+  let finalAreaId = state.area_id;
+  let selectedAreaName = state.area;
+  let areaCustomName = state.area_custom_name;
 
+  // ✅ state.area가 비어있거나 null인 경우 → 기본 장소 이름 부여
+  if (!selectedAreaName && !areaCustomName) {
+    selectedAreaName = "미지정 장소"; // ← 새 기본 장소명
+    areaCustomName = "미지정 장소";
+  }
+
+  // 3️⃣ Area 테이블 확인 / 신규 추가
   if (selectedAreaName && selectedAreaName !== "기타") {
-    // 🔍 먼저 기존 Area 테이블에서 해당 이름을 찾기
-    const { data: area, error: findErr } = await App.supabase
+    const { data: existingArea, error: findErr } = await App.supabase
       .from("Area")
       .select("id")
       .eq("name", selectedAreaName)
       .maybeSingle();
 
-    if (findErr) console.warn("⚠️ Area 조회 중 오류:", findErr.message);
+    if (findErr) console.warn("⚠️ Area 조회 오류:", findErr.message);
 
-    if (area && area.id) {
-      // ✅ 이미 존재 → 그 ID 사용
-      finalAreaId = area.id;
+    if (existingArea && existingArea.id) {
+      finalAreaId = existingArea.id;
     } else {
-      // ❌ 없으면 새로 추가
       console.log("🆕 Area 신규 추가:", selectedAreaName);
       const { data: newArea, error: insertErr } = await App.supabase
         .from("Area")
@@ -69,47 +74,44 @@ async function makePayload(state) {
         .select("id")
         .single();
 
-      if (insertErr) {
-        console.error("❌ Area 신규 추가 실패:", insertErr.message);
-        throw new Error("장소 추가 중 오류 발생: " + insertErr.message);
-      }
-
+      if (insertErr) throw new Error("장소 생성 오류: " + insertErr.message);
       finalAreaId = newArea.id;
-            //state.area_custom_name = selectedAreaName;
-
-        }
-    } else if (selectedAreaName === "기타") {
-        finalAreaId = null; // '기타' 버튼을 누르면 ID는 null
     }
+  } else if (selectedAreaName === "기타" && areaCustomName) {
+    // 기타 입력 시 직접 생성
+    const { data: newArea, error: insertErr } = await App.supabase
+      .from("Area")
+      .insert({ name: areaCustomName })
+      .select("id")
+      .single();
 
-    // ⬆️ [수정 완료]
-    console.log("💾 makePayload 결과:", {
-      cabinetName,
-      nameInState: state.name,
-      cabinet_name: state.cabinet_name,
-      area: state.area,
-      finalAreaId
-    });
+    if (insertErr) throw new Error("기타 장소 생성 오류: " + insertErr.message);
+    finalAreaId = newArea.id;
+  }
 
-    return {
-        name: cabinetName,
-        area_id: finalAreaId, // ⬅️ [수정됨] DB에서 조회한 ID
-        area_custom_name: state.area_custom_name, 
+  console.log("💾 makePayload 결과:", {
+    cabinetName,
+    nameInState: state.name,
+    area: selectedAreaName,
+    finalAreaId,
+  });
 
-        // 텍스트 값을 숫자로 변환
-        door_vertical_count: verticalMap[state.door_vertical_split_buttons] || null,
-        door_horizontal_count: horizontalMap[state.door_horizontal_split_buttons] || null,
-        shelf_height: state.shelf_height ? parseInt(state.shelf_height) : null,
-        storage_columns: state.storage_columns ? parseInt(state.storage_columns) : null,
-
-        // 사진 데이터
-        photo_320_base64: state.photo_320_base64 || null,
-        photo_160_base64: state.photo_160_base64 || null,
-        photo_url_320: state.mode === 'edit' && !state.photo_320_base64 ? state.photo_url_320 : null,
-        photo_url_160: state.mode === 'edit' && !state.photo_160_base64 ? state.photo_url_160 : null,
-    };
+  // 4️⃣ 최종 반환
+  return {
+    name: cabinetName,
+    area_id: finalAreaId,
+    area_custom_name: areaCustomName || null,
+    door_vertical_count: verticalMap[state.door_vertical_split_buttons] || null,
+    door_horizontal_count: horizontalMap[state.door_horizontal_split_buttons] || null,
+    shelf_height: state.shelf_height ? parseInt(state.shelf_height) : null,
+    storage_columns: state.storage_columns ? parseInt(state.storage_columns) : null,
+    photo_320_base64: state.photo_320_base64 || null,
+    photo_160_base64: state.photo_160_base64 || null,
+    photo_url_320: state.mode === "edit" && !state.photo_320_base64 ? state.photo_url_320 : null,
+    photo_url_160: state.mode === "edit" && !state.photo_160_base64 ? state.photo_url_160 : null,
+  };
 }
 
-  globalThis.App = globalThis.App || {};
-  globalThis.App.Utils = { sleep, collectFormData, setupButtonGroup, makePayload };
+globalThis.App = globalThis.App || {};
+globalThis.App.Utils = { sleep, collectFormData, setupButtonGroup, makePayload };
 })();
