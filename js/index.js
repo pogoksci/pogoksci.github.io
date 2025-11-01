@@ -113,4 +113,10 @@
     console.error("❌ 전체 모듈 로드 실패:", err);
     alert("필수 스크립트를 불러오지 못했습니다.");
   }
+
+  // ✅ 스플래시 해제 트리거 (여기에 추가!)
+  globalThis.addEventListener("load", () => {
+    document.body.classList.add("loaded");
+    console.log("🌈 body.loaded 클래스 추가됨 — splash-screen 사라짐");
+  });
 })();

@@ -790,6 +790,16 @@ body.home-active {
   overflow: hidden;                 /* ✅ 스크롤 비활성화 */
 }
 
+body.loaded #splash-screen {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+body.loaded #navbar-container {
+  opacity: 1;
+}
+
 /* 🧪 홈 로고 화면 */
 #splash-screen {
   position: fixed;
