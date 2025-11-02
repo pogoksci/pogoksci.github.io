@@ -799,83 +799,6 @@ transform: scale(0.98);
     transform: scale(1.03);
     transition: all 0.2s ease-in-out;
 }
-/* =================================================================
-   🌟 SciManager 홈(로고) 화면 — 고정 로딩/홈 화면
-================================================================= */
-/* 🌟 로고 홈 화면 상태일 때 (스크롤 완전 차단) */
-body.home-active {
-  overflow: hidden; /* 스크롤 비활성화 */
-}
-
-/* 🌟 로딩 완료 후 (일반 화면 상태) */
-body.loaded #splash-screen {
-  opacity: 0;
-  pointer-events: none;
-  z-index: -1;
-  transition: opacity 0.4s ease; /* 부드럽게 사라지게 */
-}
-
-/* 🧭 네비게이션 항상 위에 표시 */
-#navbar-container {
-  position: relative;
-  z-index: 200;
-  opacity: 1;
-}
-
-/* 🧪 스플래시(로딩) 화면 — 홈 진입 시 중앙 정렬 */
-body.home-active #splash-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  width: 100%;
-  height: 100vh;          /* 화면 전체 높이 채움 */
-  background-color: #fff; /* 일관된 배경 */
-  padding: 40px 20px;     /* 내부 여백만 유지 */
-  box-sizing: border-box;
-}
-
-/* ✅ 일반 화면에서는 완전히 숨김 */
-body:not(.home-active) #splash-screen {
-  display: none;
-  padding: 0;
-  height: 0;
-}
-
-/* 로고 이미지 */
-#splash-screen .main-logo {
-  width: 150px;
-  height: auto;
-  margin-bottom: 20px;
-}
-
-/* 메인 타이틀 */
-#splash-screen h1 {
-  font-size: 2.2em;
-  font-weight: 700;
-  color: #222;
-  margin: 0;
-  line-height: 1.2;
-}
-
-/* 서브 타이틀 */
-#splash-screen p {
-  font-size: 1.1em;
-  color: #666;
-  margin-top: 8px;
-  margin-bottom: 0;
-}
-
-/* 🔧 보조 효과: 스플래시 로딩 중 transition */
-@keyframes splashFadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-body.home-active #splash-screen {
-  animation: splashFadeIn 0.4s ease-out;
-}
 
 /* ================================================================
    6️⃣ 시작메뉴 팝업 부드럽게
@@ -1745,14 +1668,15 @@ transform: scale(0.98);
     transition: all 0.2s ease-in-out;
 }
 /* =================================================================
-   🌟 SciManager 홈(로고) 화면 — 고정 로딩/홈 화면
+   🌟 SciManager 홈(로고) 화면 — 고정 로딩/홈 화면 (최종 정리 버전)
 ================================================================= */
-/* 🌟 로고 홈 화면 상태일 때 (스크롤 완전 차단) */
+
+/* 🌟 홈(로고) 상태일 때 — 스크롤 차단 */
 body.home-active {
   overflow: hidden;
 }
 
-/* 🌟 로딩 완료 후 (일반 화면 상태) */
+/* 🌟 로딩 완료 후 (loaded 상태일 때) */
 body.loaded #splash-screen {
   opacity: 0;
   pointer-events: none;
@@ -1760,35 +1684,42 @@ body.loaded #splash-screen {
   transition: opacity 0.4s ease; /* 부드럽게 사라지게 */
 }
 
-/* 🧭 네비게이션 항상 위에 표시 */
+/* 🧭 네비게이션 항상 화면 위에 표시 */
 #navbar-container {
-  position: relative;
-  z-index: 200;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* ✅ 스플래시보다 위 */
   opacity: 1;
 }
 
-/* 🧪 스플래시(로딩) 화면 — 홈 진입 시 중앙 정렬 */
-body.home-active #splash-screen {
+/* 🧪 스플래시(로고) 화면 — 중앙 정렬 및 배경 유지 */
+#splash-screen {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100vh;
   display: flex;
-  flex-direction: column;     /* ✅ 세로 방향으로 정렬 */
-  align-items: center;        /* ✅ 가로 중앙 */
-  justify-content: center;    /* ✅ 세로 중앙 */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   background-color: #ffffff;
-  z-index: 9999;
+  box-sizing: border-box;
+  padding: 40px 20px;
+  z-index: 10;           /* ✅ navbar 아래쪽 */
+  pointer-events: none;  /* ✅ 클릭 차단 (뒤 navbar 클릭 가능) */
   transition: opacity 0.4s ease;
 }
 
-/* ✅ 일반 화면에서는 완전히 숨김 */
+/* ✅ 홈이 아닐 때 (#splash-screen 숨김) */
 body:not(.home-active) #splash-screen {
   display: none;
-  padding: 0;
+  opacity: 0;
   height: 0;
+  padding: 0;
 }
 
 /* 로고 이미지 */
@@ -1815,16 +1746,22 @@ body:not(.home-active) #splash-screen {
   margin-bottom: 0;
 }
 
-/* 🔧 보조 효과: 스플래시 로딩 중 transition */
+/* 🔧 등장 시 부드러운 페이드인 애니메이션 */
 @keyframes splashFadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
+/* 홈일 때만 페이드인 적용 */
 body.home-active #splash-screen {
   animation: splashFadeIn 0.4s ease-out;
 }
-
 
 /* ================================================================
    6️⃣ 시작메뉴 팝업 부드럽게
