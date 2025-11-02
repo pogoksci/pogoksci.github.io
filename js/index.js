@@ -3,11 +3,12 @@
 // ================================================================
 (async function () {
   console.log("🚀 App index.js 시작 — 모듈 비동기 로딩 중...");
-  // ⭐ 0️⃣ 홈(로고) 화면일 때 스크롤 막기
-  document.body.classList.add("home-active"); // ← 스크롤 비활성화
+
+  // ✅ 홈(로고) 화면 표시 + 스크롤 비활성화
+  document.body.classList.add("home-active");
 
   // ------------------------------------------------------------
-  // 1️⃣ 모듈 경로 정의 (상대 경로)
+  // 1️⃣ 모듈 경로 정의
   // ------------------------------------------------------------
   const baseModules = [
     "./js/supabaseClient.js",
@@ -27,12 +28,10 @@
     "./js/ui/inventory-detail.js",
     "./js/ui/navbar.js",
   ];
-  const routerModules = [
-    "./js/router/router.js",
-  ];
+  const routerModules = ["./js/router/router.js"];
 
   // ------------------------------------------------------------
-  // 2️⃣ 스크립트 로드 유틸리티 (Promise 기반 비동기 로더)
+  // 2️⃣ 스크립트 로드 유틸리티
   // ------------------------------------------------------------
   function loadScript(path) {
     return new Promise((resolve, reject) => {
@@ -61,63 +60,54 @@
   }
 
   // ------------------------------------------------------------
-  // 4️⃣ 초기화 함수
+  // 3️⃣ 초기화 함수
   // ------------------------------------------------------------
   async function initApp() {
     console.log("📦 initApp() — 초기화 시작");
 
-    // ✅ includeHTML 준비 확인
+    // includeHTML 준비 확인
     if (typeof App.includeHTML !== "function") {
       console.error("❌ App.includeHTML이 정의되지 않음");
       return;
     }
 
-    // ✅ Navbar & Main 페이지 로드
+    // Navbar 로드
     await App.includeHTML("pages/navbar.html", "navbar-container");
+    if (App.Navbar?.setup) App.Navbar.setup();
 
-    if (App.Navbar && typeof App.Navbar.setup === "function") {
-      App.Navbar.setup();
-      console.log("✅ Navbar setup 완료");
-    }
-
+    // Main 화면 로드
     await App.includeHTML("pages/main.html", "form-container");
 
-    // ✅ 기본 페이지 (시약장 목록 X, 로고 유지)
+    // FAB 숨김
     App.Fab?.setVisibility(false);
     console.log("✅ 초기화 완료 — App 실행 중");
 
-    // ⭐ ① 초기화 완료 시 스플래시/로고만 유지하고 스크롤 복원
-    document.body.classList.remove("home-active"); // ← 스크롤 다시 활성화
-    requestAnimationFrame(() => document.body.classList.add("loaded"));
+    // ⭐ 스플래시 유지 → 0.8초 후 사라짐
+    setTimeout(() => {
+      document.body.classList.remove("home-active"); // splash 종료
+      document.body.classList.add("loaded");         // 화면 표시
+      console.log("🌈 Splash → Loaded 전환 완료");
+    }, 800);
   }
 
   // ------------------------------------------------------------
-  // 5️⃣ 실제 실행
+  // 4️⃣ 실행 순서
   // ------------------------------------------------------------
   try {
-    // base → core → ui → router 순서대로 로드
     await loadModulesSequentially(baseModules, "Base");
     await loadModulesSequentially(coreModules, "Core");
     await loadModulesSequentially(uiModules, "UI");
     await loadModulesSequentially(routerModules, "Router");
-
     console.log("🧩 모든 모듈 로드 완료!");
 
-    // DOM 상태에 관계없이 즉시 초기화
+    // DOM 상태에 따라 초기화 실행
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", initApp);
     } else {
       await initApp();
     }
-
   } catch (err) {
     console.error("❌ 전체 모듈 로드 실패:", err);
     alert("필수 스크립트를 불러오지 못했습니다.");
   }
-
-  // ✅ 스플래시 해제 트리거 (여기에 추가!)
-  globalThis.addEventListener("load", () => {
-    document.body.classList.add("loaded");
-    console.log("🌈 body.loaded 클래스 추가됨 — splash-screen 사라짐");
-  });
 })();
