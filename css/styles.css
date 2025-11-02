@@ -47,7 +47,7 @@ h1, h2, h3 {
 #form-container {
   max-width: 600px;        /* 내용 폭 제한 */
   margin: 0 auto;          /* ✅ 브라우저 가운데 정렬 */
-  padding: 0 20px 80px 20px; /* 상, 우, 하, 좌 */
+  padding: 20 20px 80px 20px; /* 상, 우, 하, 좌 */
   box-sizing: border-box;  /* padding 포함 폭 계산 */
 }
 
@@ -828,9 +828,9 @@ body.loaded #splash-screen {
   align-items: center;
   justify-content: center;
   /* ⬇️ [수정됨] 둘 다 동일한 높이와 패딩을 갖도록 통일 */
-  min-height: calc(100vh - 80px); /* 네비게이션 제외한 화면 높이 */
+  min-height: calc(100vh - 160px); /* 네비게이션 제외한 화면 높이 */
   text-align: center;
-  padding: 40px 20px; 
+  padding: 0 0 40px 0; 
   box-sizing: border-box;
 }
 
@@ -953,7 +953,7 @@ body.loaded #splash-screen {
 
   /* 8️⃣ 폼 전체 패딩 및 버튼 영역 */
   form {
-    padding: 15px;
+    padding: 0;
   }
 }
 
