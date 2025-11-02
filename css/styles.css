@@ -3,8 +3,8 @@
    기본 스타일 (Body, Form 등)
 ================================================================= */
 html, body {
-    margin: 0 !important;;
-    padding: 0 !important;;
+    margin: 0;
+    padding: 0;
     width: 100%;
     height: 100%;
     overflow-x: hidden; /* 가로 스크롤 방지 */
@@ -18,10 +18,7 @@ h1, h2, h3 {
     color: #333;
 }
 
-.form-group {/* =================================================================
-   /css/styles.css
-   기본 스타일 (Body, Form 등)
-================================================================= */
+.form-group {
 html, body {
     margin: 0;
     padding: 0;
