@@ -5,38 +5,44 @@
   <title>SciManager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
+  <!-- 파비콘 -->
   <link rel="icon" type="image/x-icon" href="css/favicon.ico" />
-  
+
+  <!-- 구글 아이콘 폰트 -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
   <!-- ✅ Supabase SDK -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
-  <!-- ✅ 앱 진입점 -->
-  <script src="js/index.js" defer></script>
+  <!-- ✅ 메인 스타일 -->
   <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- ✅ 앱 진입 스크립트 -->
+  <script src="js/index.js" defer></script>
 </head>
 
-<body>
-
-  <!-- 로딩 중 표시 (초기 로고 즉시 표시) -->
+<body class="home-active">
+  <!-- 🧪 스플래시(로딩) 화면 -->
   <div id="splash-screen">
     <img src="css/logo.png" alt="로고" class="main-logo" />
     <h1>SciManager</h1>
     <p>GOE학교</p>
   </div>
 
+  <!-- 🔹 메인 컨텐츠 -->
   <div id="form-container"></div>
-  <!-- 🧭 네비게이션 영역 -->
+
+  <!-- 🧭 하단 네비게이션 -->
   <div id="navbar-container"></div>
   
+  <!-- ➕ 플로팅 액션 버튼 -->
   <button class="fab" id="fab-button" style="display: none;"></button>
 
   <!-- 📸 카메라 모달 -->
   <div id="camera-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
       <video id="camera-view" autoplay playsinline></video>
-      <canvas id="photo-canvas" style="display:none;"></canvas>
+      <canvas id="photo-canvas" style="display: none;"></canvas>
       <div class="modal-controls">
         <button type="button" id="capture-btn">📸 사진 찍기</button>
         <button type="button" id="cancel-camera-btn">❌ 닫기</button>
