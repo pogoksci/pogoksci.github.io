@@ -43,8 +43,8 @@
 
       // Start 메뉴 영역
       { id: "menu-location", route: "cabinets" },
-      { id: "menu-equipment", route: "inventory" }, // 교구·물품 설정 → 임시 inventory로 연결
-      { id: "menu-lablog", route: "inventory" }, // 과학실 기록·예약 → 임시 inventory로 연결
+      { id: "menu-equipment", route: "inventory" },
+      { id: "menu-lablog", route: "inventory" },
       { id: "menu-home", route: "main" },
     ];
 
@@ -55,11 +55,22 @@
           e.preventDefault();
           console.log(`➡️ Navbar 클릭: ${id} → ${route}`);
 
+          // ✅ 홈 클릭 시: 로고 화면 표시
+          if (id === "menu-home") {
+            document.body.classList.add("home-active");
+            console.log("🏠 홈 화면 복귀 — 로고 표시됨");
+          } else {
+            // ✅ 그 외 페이지 클릭 시: 로고 숨김
+            document.body.classList.remove("home-active");
+            console.log("📄 페이지 이동 — 로고 숨김");
+          }
+
           // ✅ 시약장 설정 클릭 시 Cabinet 모듈 상태 점검
           if (id === "menu-location") {
             console.log("🧪 App.Cabinet:", App.Cabinet);
           }
 
+          // ✅ Router 이동
           if (App.Router && typeof App.Router.go === "function") {
             await App.Router.go(route);
           } else {
@@ -97,7 +108,7 @@
   function setup() {
     setupStartMenuToggle();
     setupNavLinks();
-    console.log("✅ Navbar.setup() 완료 — 모든 메뉴 바인딩 완료");
+    console.log("✅ Navbar.setup() 완료 — 홈 화면 제어 포함됨");
   }
 
   // ------------------------------------------------------------

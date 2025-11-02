@@ -1,5 +1,5 @@
 // ================================================================
-// /js/index.js — 로딩 스플래시 + 비동기 JS 로딩 최적화 + 완전 실행 보장
+// /js/index.js — 홈 로고 유지 + 비동기 모듈 로딩 최적화
 // ================================================================
 (async function () {
   console.log("🚀 App index.js 시작 — 모듈 비동기 로딩 중...");
@@ -65,7 +65,6 @@
   async function initApp() {
     console.log("📦 initApp() — 초기화 시작");
 
-    // includeHTML 준비 확인
     if (typeof App.includeHTML !== "function") {
       console.error("❌ App.includeHTML이 정의되지 않음");
       return;
@@ -80,14 +79,11 @@
 
     // FAB 숨김
     App.Fab?.setVisibility(false);
+
     console.log("✅ 초기화 완료 — App 실행 중");
 
-    // ⭐ 스플래시 유지 → 0.8초 후 사라짐
-    setTimeout(() => {
-      document.body.classList.remove("home-active"); // splash 종료
-      document.body.classList.add("loaded");         // 화면 표시
-      console.log("🌈 Splash → Loaded 전환 완료");
-    }, 800);
+    // 🚫 더 이상 splash를 숨기지 않음 (홈 로고로 계속 유지)
+    console.log("🏠 홈 로고 화면 유지 중 (home-active 상태 지속)");
   }
 
   // ------------------------------------------------------------
@@ -100,7 +96,6 @@
     await loadModulesSequentially(routerModules, "Router");
     console.log("🧩 모든 모듈 로드 완료!");
 
-    // DOM 상태에 따라 초기화 실행
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", initApp);
     } else {
