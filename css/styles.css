@@ -1769,15 +1769,20 @@ body.loaded #splash-screen {
 
 /* 🧪 스플래시(로딩) 화면 — 홈 진입 시 중앙 정렬 */
 body.home-active #splash-screen {
+  position: fixed;           /* 화면 전체 덮기 */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;             /* 전체 높이 */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  width: 100%;
-  height: 100vh;          /* 화면 전체 높이 채움 */
-  background-color: #fff; /* 일관된 배경 */
-  padding: 40px 20px;     /* 내부 여백만 유지 */
+  background-color: #fff;    /* 배경색 명시 */
+  z-index: 9999;             /* 네비게이션보다 위에 */
+  padding: 0;                /* 여백 제거 */
+  margin: 0;
   box-sizing: border-box;
 }
 
