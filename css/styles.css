@@ -803,7 +803,6 @@ transform: scale(0.98);
    🌟 SciManager 홈(로고) 화면 — 고정 로딩/홈 화면
 ================================================================= */
 /* 🌟 로고 홈 화면 상태일 때 (스크롤 완전 차단) */
-/* 🌟 로고 홈 화면 상태일 때 (스크롤 완전 차단) */
 body.home-active {
   overflow: hidden; /* 스크롤 비활성화 */
 }
@@ -813,24 +812,27 @@ body.loaded #splash-screen {
   opacity: 0;
   pointer-events: none;
   z-index: -1;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.4s ease; /* 부드럽게 사라지게 */
 }
 
-/* 네비게이션 항상 위에 */
+/* 🧭 네비게이션 항상 위에 표시 */
 #navbar-container {
   position: relative;
   z-index: 200;
   opacity: 1;
 }
 
-/* 🧪 홈 로고 / 스플래시 화면 — 단순 중앙 정렬 */
+/* 🧪 스플래시(로딩) 화면 — 홈 진입 시 중앙 정렬 */
 body.home-active #splash-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 40px 20px;  /* 내부 여백만 유지 */
+  width: 100%;
+  height: 100vh;          /* 화면 전체 높이 채움 */
+  background-color: #fff; /* 일관된 배경 */
+  padding: 40px 20px;     /* 내부 여백만 유지 */
   box-sizing: border-box;
 }
 
@@ -838,6 +840,7 @@ body.home-active #splash-screen {
 body:not(.home-active) #splash-screen {
   display: none;
   padding: 0;
+  height: 0;
 }
 
 /* 로고 이미지 */
@@ -862,6 +865,16 @@ body:not(.home-active) #splash-screen {
   color: #666;
   margin-top: 8px;
   margin-bottom: 0;
+}
+
+/* 🔧 보조 효과: 스플래시 로딩 중 transition */
+@keyframes splashFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+body.home-active #splash-screen {
+  animation: splashFadeIn 0.4s ease-out;
 }
 
 /* ================================================================
