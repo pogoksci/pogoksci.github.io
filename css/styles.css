@@ -2,13 +2,16 @@
    /css/styles.css
    기본 스타일 (Body, Form 등)
 ================================================================= */
-body {
-    font-family: Arial, sans-serif;
-    margin: 0 auto;
-    padding: 0 20px 80px 20px; /* 상, 우, 하, 좌 */
-    width: 100vw;
-    background-color: white;
-    padding-bottom: 80px; /* 하단 Navbar 높이만큼 여백 추가 */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden; /* 가로 스크롤 방지 */
+    overflow-y: auto;
+    background-color: #ffffff; /* ✅ 항상 동일한 흰색 배경 */
+    font-family: 'Noto Sans KR', Arial, sans-serif; /* ✅ 폰트 고정 */
+    color: #333;
 }
 
 h1, h2, h3 {
@@ -782,17 +785,6 @@ transform: scale(0.98);
 /* =================================================================
    🌟 SciManager 홈(로고) 화면 — 고정 로딩/홈 화면
 ================================================================= */
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: #ffffff;  /* ✅ 항상 동일한 배경 */
-  font-family: 'Noto Sans KR', Arial, sans-serif; /* ✅ 폰트 고정 */
-  color: #333;
-}
-
 /* 🌟 로고 홈 화면 상태일 때 (스크롤 완전 차단) */
 body.home-active {
   overflow: hidden;                 /* ✅ 스크롤 비활성화 */
