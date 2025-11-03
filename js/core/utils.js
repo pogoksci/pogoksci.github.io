@@ -37,78 +37,41 @@
   }
 
 async function makePayload(state) {
-  const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
+  const verticalMap = {
+    "상중하도어": 3,
+    "상하도어": 2,
+    "단일도어": 1,
+    "단일도어(상하분리없음)": 1,
+  };
   const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
 
-  // 1️⃣ 시약장 이름 결정
-  const cabinetName = state.name || state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name || null;
+  // 1️⃣ 시약장 이름
+  const cabinetName =
+    state.name ||
+    state.cabinet_custom_name ||
+    state.cabinet_name_buttons ||
+    state.cabinet_name ||
+    null;
 
-  // 2️⃣ 장소 이름 확인
-  let finalAreaId = state.area_id;
-  let selectedAreaName = state.area;
-  let areaCustomName = state.area_custom_name;
+  // 2️⃣ 장소 이름 (area_name)
+  let areaName = state.area_custom_name || state.area || "미지정 장소";
 
-  // ✅ state.area가 비어있거나 null인 경우 → 기본 장소 이름 부여
-  if (!selectedAreaName && !areaCustomName) {
-    selectedAreaName = "미지정 장소"; // ← 새 기본 장소명
-    areaCustomName = "미지정 장소";
-  }
-
-  // 3️⃣ Area 테이블 확인 / 신규 추가
-  if (selectedAreaName && selectedAreaName !== "기타") {
-    const { data: existingArea, error: findErr } = await App.supabase
-      .from("Area")
-      .select("id")
-      .eq("name", selectedAreaName)
-      .maybeSingle();
-
-    if (findErr) console.warn("⚠️ Area 조회 오류:", findErr.message);
-
-    if (existingArea && existingArea.id) {
-      finalAreaId = existingArea.id;
-    } else {
-      console.log("🆕 Area 신규 추가:", selectedAreaName);
-      const { data: newArea, error: insertErr } = await App.supabase
-        .from("Area")
-        .insert({ name: selectedAreaName })
-        .select("id")
-        .single();
-
-      if (insertErr) throw new Error("장소 생성 오류: " + insertErr.message);
-      finalAreaId = newArea.id;
-    }
-  } else if (selectedAreaName === "기타" && areaCustomName) {
-    // 기타 입력 시 직접 생성
-    const { data: newArea, error: insertErr } = await App.supabase
-      .from("Area")
-      .insert({ name: areaCustomName })
-      .select("id")
-      .single();
-
-    if (insertErr) throw new Error("기타 장소 생성 오류: " + insertErr.message);
-    finalAreaId = newArea.id;
-  }
-
-  console.log("💾 makePayload 결과:", {
-    cabinetName,
-    nameInState: state.name,
-    area: selectedAreaName,
-    finalAreaId,
+  // ✅ Area 관련 DB 접근 제거 (Edge Function에서 처리)
+  console.log("💾 makePayload (Edge용) 결과:", {
+    cabinet_name: cabinetName,
+    area_name: areaName,
   });
 
-  // 4️⃣ 최종 반환
+  // 3️⃣ 최종 반환 (Edge Function 입력 구조에 맞춤)
   return {
-    name: cabinetName,
-    area_id: finalAreaId,
-    area_custom_name: areaCustomName || null,
+    area_name: areaName,
+    cabinet_name: cabinetName,
     door_vertical_count: verticalMap[state.door_vertical_split_buttons] || null,
     door_horizontal_count: horizontalMap[state.door_horizontal_split_buttons] || null,
     shelf_height: state.shelf_height ? parseInt(state.shelf_height) : null,
     storage_columns: state.storage_columns ? parseInt(state.storage_columns) : null,
     photo_320_base64: state.photo_320_base64 || null,
     photo_160_base64: state.photo_160_base64 || null,
-    photo_url_320: state.mode === "edit" && !state.photo_320_base64 ? state.photo_url_320 : null,
-    photo_url_160: state.mode === "edit" && !state.photo_160_base64 ? state.photo_url_160 : null,
   };
 }
 
