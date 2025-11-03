@@ -37,16 +37,11 @@
   }
 
 function makePayload(state) {
-  const verticalMap = {
-    "상중하도어": 3,
-    "상하도어": 2,
-    "단일도어": 1,
-    "단일도어(상하분리없음)": 1,
-  };
+  const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
   const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
 
   // ⬇️ [수정됨] '기타' 입력값, '클릭'한 버튼 값, '초기' 이름 값 순서로 확인합니다.
-  const cabinetName = state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name;
+  const cabinetName = state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name || null;
   // ⬇️ [수정됨] 'area' 키도 확인합니다.
   const areaName = state.area_custom_name || state.area;
 
@@ -56,21 +51,14 @@ function makePayload(state) {
 
   // 3️⃣ 최종 반환 (Edge Function 입력 구조에 맞춤)
   return {
-    name: cabinetName,
-    area_id: state.area_id,
-    area_custom_name: areaName, // '기타'일 경우와 일반 이름 모두 areaName 변수 사용
-
-    // ⬇️ [수정됨] state의 키 이름을 버튼 그룹 id에서 '_buttons'가 빠진 이름으로 수정
-    door_vertical_count: verticalMap[state.door_vertical_split] || null,
-    door_horizontal_count: horizontalMap[state.door_horizontal_split] || null,
-    shelf_height: state.shelf_height ? parseInt(state.shelf_height, 10) : null,
-    storage_columns: state.storage_columns ? parseInt(state.storage_columns, 10) : null,
-
-    // 사진 데이터 (새 사진이 없으면 기존 URL 유지)
+    cabinet_name: cabinetName,   // ✅ Edge Function에서 요구
+    area_name: areaName,         // ✅ 정확한 필드명
+    door_vertical_count: verticalMap[state.door_vertical_split_buttons] || null,
+    door_horizontal_count: horizontalMap[state.door_horizontal_split_buttons] || null,
+    shelf_height: state.shelf_height ? parseInt(state.shelf_height) : null,
+    storage_columns: state.storage_columns ? parseInt(state.storage_columns) : null,
     photo_320_base64: state.photo_320_base64 || null,
     photo_160_base64: state.photo_160_base64 || null,
-    photo_url_320: state.mode === 'edit' && !state.photo_320_base64 ? state.photo_url_320 : null,
-    photo_url_160: state.mode === 'edit' && !state.photo_160_base64 ? state.photo_url_160 : null,
   };
 }
 
