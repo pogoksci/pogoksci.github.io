@@ -36,7 +36,7 @@
     });
   }
 
-async function makePayload(state) {
+function makePayload(state) {
   const verticalMap = {
     "상중하도어": 3,
     "상하도어": 2,
@@ -54,7 +54,7 @@ async function makePayload(state) {
     null;
 
   // 2️⃣ 장소 이름 (area_name)
-  let areaName = state.area_custom_name || state.area || "미지정 장소";
+  const areaName = state.area_custom_name || state.area || "미지정 장소";
 
   // ✅ Area 관련 DB 접근 제거 (Edge Function에서 처리)
   console.log("💾 makePayload (Edge용) 결과:", {

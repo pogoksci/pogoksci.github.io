@@ -186,7 +186,7 @@
     editCabinet,
     createCabinet,
     updateCabinet,
-    delete: remove,
+    delete: deleteCabinet,
     createForm, // ⬅️ '새 시약장 등록' 버튼이 호출할 함수
   };
 
