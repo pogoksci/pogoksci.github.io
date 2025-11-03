@@ -55,8 +55,8 @@ function makePayload(state) {
     area_name: areaName,         // ✅ 정확한 필드명
     door_vertical_count: verticalMap[state.door_vertical_split] || null,
     door_horizontal_count: horizontalMap[state.door_horizontal_split] || null,
-    shelf_height: state.shelf_height ? parseInt(state.shelf_height) : null,
-    storage_columns: state.storage_columns ? parseInt(state.storage_columns) : null,
+    shelf_height: state.shelf_height ? parseInt(state.shelf_height, 10) : null,
+    storage_columns: state.storage_columns ? parseInt(state.storage_columns, 10) : null,
     photo_320_base64: state.photo_320_base64 || null,
     photo_160_base64: state.photo_160_base64 || null,
   };
