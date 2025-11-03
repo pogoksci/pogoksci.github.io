@@ -19,7 +19,7 @@
 
             // 유효성 검사
             if (!payload.cabinet_name) return alert("시약장 이름을 선택하거나 입력하세요.");
-            if (!payload.area_id && !payload.area_custom_name) return alert("시약장 위치를 선택하세요.");
+            if (!payload.area_name) return alert("시약장 위치를 선택하세요.");
 
             if (state.mode === "create") {
                 await App.Cabinet.createCabinet(payload);
