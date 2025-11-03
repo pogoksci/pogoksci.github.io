@@ -243,9 +243,9 @@
   }
 
   // ------------------------------------------------------------
-  // 🆕 5️⃣ 신규 등록 폼 표시 (기존 showNewCabinetForm)
+  // 🆕 5️⃣ 신규 등록 폼 표시
   // ------------------------------------------------------------
-  function showNewCabinetForm() {
+  function createForm() {
     const supabase = getSupabase();
     // ⬇️ [수정됨] edit 함수와 동일하게 initCabinetForm만 호출합니다.
     if (App.Forms && typeof App.Forms.initCabinetForm === "function") {
@@ -263,7 +263,7 @@
     createCabinet,
     updateCabinet,
     delete: remove,
-    showNewCabinetForm, // ⬅️ '새 시약장 등록' 버튼이 호출할 함수
+    createForm, // ⬅️ '새 시약장 등록' 버튼이 호출할 함수
   };
 
   console.log("✅ App.Cabinet 모듈 로드 완료");
