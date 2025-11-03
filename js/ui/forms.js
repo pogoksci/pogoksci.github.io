@@ -103,23 +103,23 @@
             btn.classList.add("active");
 
             const val = btn.dataset.value;
-            //const id = btn.dataset.id ? parseInt(btn.dataset.id) : null; // ⬅️ [수정됨] id 가져오기
+            const id = btn.dataset.id ? parseInt(btn.dataset.id) : null; // ⬅️ [수정됨] id 가져오기
 
             if (val === "기타") {
             // 기타 선택 상태 기록
             App.State.set("area_id", null);
-            //App.State.set("area", "기타"); // ⬅️ [수정됨] 'area' 키에도 저장
-            App.State.set("area_custom_name", areaOtherInput.value.trim());
+                App.State.set("area", "기타"); // ⬅️ [수정됨] 'area' 키에도 저장
+                App.State.set("area_custom_name", areaOtherInput.value.trim());
 
-            // "기타 입력칸 보이기": display 직접 만지지 말고 class만
-            areaOtherGroup.classList.add("show");
-            // focus는 즉시 주지 말고, 살짝 늦게 줘서 레이아웃 흔들지 않게
-            setTimeout(() => {
-                areaOtherInput.focus();
-            }, 0);
+                // "기타 입력칸 보이기": display 직접 만지지 말고 class만
+                areaOtherGroup.classList.add("show");
+                // focus는 즉시 주지 말고, 살짝 늦게 줘서 레이아웃 흔들지 않게
+                setTimeout(() => {
+                    areaOtherInput.focus();
+                }, 0);
             } else {
             // 일반 장소 선택: 입력란 숨기기
-            //App.State.set("area_id", id); // ⬅️ [수정됨] 올바른 id 저장
+            App.State.set("area_id", id); // ⬅️ [수정됨] 올바른 id 저장
             App.State.set("area", val); // ⬅️ [수정됨] 'area' 키에 저장
             App.State.set("area_custom_name", null);
             areaOtherGroup.style.display = "none";
@@ -144,26 +144,26 @@
             const val = btn.dataset.value;
 
             if (val === "기타") {
-            // 기타 상태 저장
-            App.State.set("cabinet_name", "기타");
-            App.State.set("cabinet_custom_name", cabOtherInput.value.trim());
+                // 기타 상태 저장
+                App.State.set("cabinet_name_buttons", "기타");
+                App.State.set("cabinet_custom_name", cabOtherInput.value.trim());
 
-            // 기타 입력박스 보여주기 (class로)
-            if (cabOtherGroup) cabOtherGroup.classList.add("show");
+                // 기타 입력박스 보여주기 (class로)
+                if (cabOtherGroup) cabOtherGroup.classList.add("show");
 
-            // 마찬가지로 focus는 다음 tick
-            if (cabOtherInput) {
-                setTimeout(() => {
-                cabOtherInput.focus();
-                }, 0);
-            }
+                // 마찬가지로 focus는 다음 tick
+                if (cabOtherInput) {
+                    setTimeout(() => {
+                    cabOtherInput.focus();
+                    }, 0);
+                }
             } else {
-            // 일반 이름
-            App.State.set("cabinet_name", val);
-            App.State.set("cabinet_custom_name", null);
+                // 일반 이름
+                App.State.set("cabinet_name_buttons", val);
+                App.State.set("cabinet_custom_name", null);
 
-            // 기타 입력칸 숨김
-            if (cabOtherGroup) cabOtherGroup.classList.remove("show");
+                // 기타 입력칸 숨김
+                if (cabOtherGroup) cabOtherGroup.classList.remove("show");
             }
         });
 
@@ -176,16 +176,13 @@
         }
 
         // 🔹 3) 나머지 그룹들 (도어/선반/열) ----------------------------------
-        ["door_vertical_split_buttons",
-        "door_horizontal_split_buttons",
-        "shelf_height_buttons",
-        "storage_columns_buttons"
-        ].forEach((id) => {
-            setupButtonGroup(id, (btn) => {
-            const key = id.replace("_buttons", "");
-            App.State.set(key, btn.dataset.value);
+        ["door_vertical_split_buttons", "door_horizontal_split_buttons", "shelf_height_buttons", "storage_columns_buttons"]
+            .forEach((id) => {
+                setupButtonGroup(id, (btn) => {
+                const key = id.replace("_buttons", "");
+                App.State.set(key, btn.dataset.value);
+                });
             });
-        });
         })();
 
         // ✅ 기타 입력칸 표시 로직 (명시적 표시)
