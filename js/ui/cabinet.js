@@ -8,7 +8,8 @@
   // ✅ supabase, utils 접근용 헬퍼
   const getSupabase = () => getApp().supabase || {};
   const getUtils = () => getApp().Utils || {};
-
+  const getAPI = () => getApp().API || {};
+  
   // ------------------------------------------------------------
   // 📦 1️⃣ 시약장 목록 로드 (자동 재시도 포함)
   // ------------------------------------------------------------
@@ -127,128 +128,42 @@
   }
 
   // ------------------------------------------------------------
-  // ➕ 3️⃣ 시약장 등록 / 수정 / 삭제
+  // ➕ 4️⃣ 시약장 등록 / 수정 / 삭제 (Edge Function 호출로 수정됨)
   // ------------------------------------------------------------
   async function createCabinet(payload) {
-    const supabase = getSupabase();
-    // ✅ 불필요한 필드 제거
-    const clean = { ...payload };
-    delete clean.area_custom_name;
-
-    const { error } = await supabase.from("Cabinet").insert([clean]);
-    if (error) throw error;
+      const API = getAPI();
+      // ⬇️ [수정됨] DB 직접 insert 대신 Edge Function 호출
+      await API.callEdge(API.EDGE.CABINET, {
+          method: 'POST',
+          body: payload
+      });
   }
 
   async function updateCabinet(id, payload) {
-    const supabase = getSupabase();
-    console.log("🧩 updateCabinet() payload:", payload);
-
-    const clean = { ...payload };
-
-    // ✅ [추가] DB에 없는 필드 제거
-    delete clean.area_custom_name;
-    delete clean.area;
-
-    if (typeof clean.area_id === "string") clean.area_id = null;
-
-    // ✅ 1️⃣ Area 이름 결정
-    let areaName = null;
-
-    // ① '기타 입력' 우선 처리
-    if (clean.area_custom_name) {
-      areaName = clean.area_custom_name;
-    }
-    // ② payload에 area가 존재할 경우
-    else if (clean.area) {
-      areaName = clean.area;
-    }
-    // ③ 아무 값도 없는 경우 → 기본 장소로 자동 생성
-    else {
-      areaName = "미지정 장소";
-    }
-
-    // ✅ 2️⃣ Area 존재 여부 확인 및 생성
-    let areaRecord = null;
-
-    // 먼저 Area 이름으로 조회
-    const { data: foundArea, error: findErr } = await supabase
-      .from("Area")
-      .select("id, name")
-      .eq("name", areaName)
-      .maybeSingle();
-
-    if (findErr) {
-      console.warn("⚠️ Area 조회 오류:", findErr.message);
-    }
-
-    // DB에 이미 있는 경우
-    if (foundArea && foundArea.id) {
-      areaRecord = foundArea;
-      console.log(`📍 기존 Area (${areaName}) 연결 → id=${areaRecord.id}`);
-    } else {
-      // 없는 경우 신규 생성
-      console.log("🆕 Area 신규 생성:", areaName);
-      const { data: newArea, error: insertErr } = await supabase
-        .from("Area")
-        .insert({ name: areaName })
-        .select("id, name")
-        .single();
-
-      if (insertErr) {
-        console.error("❌ Area 생성 오류:", insertErr.message);
-        alert("장소 생성 중 오류가 발생했습니다.");
-        return null;
-      }
-
-      areaRecord = newArea;
-      console.log(`✅ 신규 Area 생성 완료 → id=${areaRecord.id}`);
-    }
-
-    // ✅ 최종 area_id 확정
-    clean.area_id = areaRecord.id;
-
-    // ✅ 3️⃣ Cabinet 업데이트 필드 구성
-    const updateFields = {
-      name: clean.name,
-      area_id: clean.area_id,
-      door_vertical_count: clean.door_vertical_count,
-      door_horizontal_count: clean.door_horizontal_count,
-      shelf_height: clean.shelf_height,
-      storage_columns: clean.storage_columns,
-    };
-
-    // ✅ 사진 URL 필드: null이 아닐 때만 업데이트
-    if (clean.photo_url_320) updateFields.photo_url_320 = clean.photo_url_320;
-    if (clean.photo_url_160) updateFields.photo_url_160 = clean.photo_url_160;
-
-    // ✅ 4️⃣ Cabinet 업데이트 실행
-    const cabinetId = Number(id);
-    const { data, error } = await supabase
-      .from("Cabinet")
-      .update(updateFields)
-      .eq("id", cabinetId)
-      .select();
-
-    if (error) {
-      console.error("❌ updateCabinet 오류:", error);
-      alert("시약장 수정 중 오류가 발생했습니다.");
-      return null;
-    }
-
-    console.log("✅ updateCabinet 완료:", data);
-    return data;
+      const API = getAPI();
+      // ⬇️ [수정됨] DB 직접 update 대신 Edge Function 호출
+      const patchPayload = {
+          ...payload,
+          cabinet_id: id 
+      };
+      await API.callEdge(API.EDGE.CABINET, {
+          method: 'PATCH',
+          body: patchPayload
+      });
   }
 
-  async function remove(id) {
-    const supabase = getSupabase();
-    if (!confirm("정말 삭제하시겠습니까?")) return;
-    const { error } = await supabase.from("Cabinet").delete().eq("id", id);
-    if (error) {
-      alert("삭제 실패: " + error.message);
-    } else {
-      alert("삭제되었습니다.");
-      loadList(); // 삭제 후 목록 새로고침
-    }
+  async function deleteCabinet(id) {
+      const API = getAPI();
+      // ⬇️ [수정됨] DB 직접 delete 대신 Edge Function 호출
+      if (!confirm("정말 삭제하시겠습니까?")) return;
+      try {
+          await API.callEdge(`${API.EDGE.CABINET}?id=${id}`, { method: 'DELETE' });
+          alert("삭제되었습니다.");
+          loadList(); // 삭제 후 목록 새로고침
+      } catch (err) {
+          const errorMessage = err.message || "알 수 없는 오류";
+          alert(`삭제 실패: ${errorMessage}`);
+      }
   }
 
   // ------------------------------------------------------------
