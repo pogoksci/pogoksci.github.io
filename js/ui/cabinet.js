@@ -131,7 +131,11 @@
   // ------------------------------------------------------------
   async function createCabinet(payload) {
     const supabase = getSupabase();
-    const { error } = await supabase.from("Cabinet").insert([payload]);
+    // ✅ 불필요한 필드 제거
+    const clean = { ...payload };
+    delete clean.area_custom_name;
+
+    const { error } = await supabase.from("Cabinet").insert([clean]);
     if (error) throw error;
   }
 
@@ -140,6 +144,11 @@
     console.log("🧩 updateCabinet() payload:", payload);
 
     const clean = { ...payload };
+
+    // ✅ [추가] DB에 없는 필드 제거
+    delete clean.area_custom_name;
+    delete clean.area;
+
     if (typeof clean.area_id === "string") clean.area_id = null;
 
     // ✅ 1️⃣ Area 이름 결정
