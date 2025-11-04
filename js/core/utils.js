@@ -53,12 +53,15 @@ function makePayload(state) {
   return {
     cabinet_name: cabinetName,   // ✅ Edge Function에서 요구
     area_name: areaName,         // ✅ 정확한 필드명
-    door_vertical_count: verticalMap[state.door_vertical_split] || null,
-    door_horizontal_count: horizontalMap[state.door_horizontal_split] || null,
+    
+    door_vertical_count: verticalMap[state.door_vertical_split_buttons] || null,
+    door_horizontal_count: horizontalMap[state.door_horizontal_split_buttons] || null,
     shelf_height: state.shelf_height ? parseInt(state.shelf_height, 10) : null,
     storage_columns: state.storage_columns ? parseInt(state.storage_columns, 10) : null,
     photo_320_base64: state.photo_320_base64 || null,
     photo_160_base64: state.photo_160_base64 || null,
+    photo_url_320: state.mode === 'edit' && !state.photo_320_base64 ? state.photo_url_320 : null,
+    photo_url_160: state.mode === 'edit' && !state.photo_160_base64 ? state.photo_url_160 : null,
   };
 }
 
