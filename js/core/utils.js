@@ -40,28 +40,29 @@ function makePayload(state) {
   const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
   const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
 
-  // ⬇️ [수정됨] '기타' 입력값, '클릭'한 버튼 값, '초기' 이름 값 순서로 확인합니다.
-  const cabinetName = state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name || null;
-  // ⬇️ [수정됨] 'area' 키도 확인합니다.
-  const areaName = state.area_custom_name || state.area;
+  // 1. 시약장 이름 결정
+  // '기타' 입력값 > '등록' 시 클릭한 버튼 값 > '수정' 시 폼에 저장된 초기 이름 값
+  const cabinetName = state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name;
+  
+  // 2. 장소 이름 결정
+  // '기타' 입력값 > '등록'/'수정' 시 클릭한 버튼 값 > '수정' 시 폼에 저장된 초기 이름 값
+  const areaName = state.area_custom_name || state.area || state.area_custom_name;
 
-  // ✅ Area 관련 DB 접근 제거 (Edge Function에서 처리)
-  console.log("💾 makePayload (Edge용) 결과:", {
-  });
-
-  // 3️⃣ 최종 반환 (Edge Function 입력 구조에 맞춤)
+  // 3. 최종 반환 (Edge Function 입력 구조에 맞춤)
   return {
-    cabinet_name: cabinetName,   // ✅ Edge Function에서 요구
-    area_name: areaName,         // ✅ 정확한 필드명
-    
-    door_vertical_count: verticalMap[state.door_vertical_split_buttons] || null,
-    door_horizontal_count: horizontalMap[state.door_horizontal_split_buttons] || null,
-    shelf_height: state.shelf_height ? parseInt(state.shelf_height, 10) : null,
-    storage_columns: state.storage_columns ? parseInt(state.storage_columns, 10) : null,
-    photo_320_base64: state.photo_320_base64 || null,
-    photo_160_base64: state.photo_160_base64 || null,
-    photo_url_320: state.mode === 'edit' && !state.photo_320_base64 ? state.photo_url_320 : null,
-    photo_url_160: state.mode === 'edit' && !state.photo_160_base64 ? state.photo_url_160 : null,
+      cabinet_name: cabinetName,
+      area_name: areaName,
+      
+      door_vertical_count: verticalMap[state.door_vertical_split_buttons] || null,
+      door_horizontal_count: horizontalMap[state.door_horizontal_split_buttons] || null,
+      shelf_height: state.shelf_height ? parseInt(state.shelf_height, 10) : null,
+      storage_columns: state.storage_columns ? parseInt(state.storage_columns, 10) : null,
+
+      // 사진 데이터 (새 사진이 없으면 기존 URL 유지)
+      photo_320_base64: state.photo_320_base64 || null,
+      photo_160_base64: state.photo_160_base64 || null,
+      photo_url_320: state.mode === 'edit' && !state.photo_320_base64 ? state.photo_url_320 : null,
+      photo_url_160: state.mode === 'edit' && !state.photo_160_base64 ? state.photo_url_160 : null,
   };
 }
 

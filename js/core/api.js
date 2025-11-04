@@ -25,11 +25,36 @@
         },
         body: body ? JSON.stringify(body) : undefined,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+      // ✅ 서버 응답(JSON 파싱)
+      let data = {};
+      try {
+        data = await res.json();
+      } catch {
+        console.warn("⚠️ callEdge: JSON 파싱 실패 (서버가 비JSON 응답)");
+      }
+
+      // ✅ 상세 로그 추가
+      console.log(`📡 [${method}] ${url}`);
+      console.log("📦 요청 body:", body);
+      console.log("📩 응답 data:", data);
+      console.log("📩 응답 상태:", res.status);
+
+      // ✅ 실패 처리 강화 — 에러 객체를 안전하게 문자열화
+      if (!res.ok) {
+        const message =
+          typeof data.error === "string"
+            ? data.error
+            : data.error?.message ||
+              JSON.stringify(data.error || data, null, 2) ||
+              `HTTP ${res.status}`;
+        console.error("❌ callEdge 실패 응답:", data);
+        throw new Error(message);
+      }
+
       return data;
     } catch (err) {
-      console.error("❌ callEdge 실패:", err);
+      console.error("💥 callEdge 예외:", err);
       throw err;
     }
   }
