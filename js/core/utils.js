@@ -53,8 +53,8 @@ function makePayload(state) {
       cabinet_name: cabinetName,
       area_name: areaName,
       
-      door_vertical_count: verticalMap[state.door_vertical_split_buttons] || null,
-      door_horizontal_count: horizontalMap[state.door_horizontal_split_buttons] || null,
+      door_vertical_count: verticalMap[state.door_vertical_split] || null,
+      door_horizontal_count: horizontalMap[state.door_horizontal_split] || null,
       shelf_height: state.shelf_height ? parseInt(state.shelf_height, 10) : null,
       storage_columns: state.storage_columns ? parseInt(state.storage_columns, 10) : null,
 
