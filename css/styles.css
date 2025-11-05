@@ -1,5 +1,4 @@
 /* =================================================================
-   /css/styles.css
    기본 스타일 (Body, Form 등)
 ================================================================= */
 html, body {
@@ -18,23 +17,9 @@ h1, h2, h3 {
     color: #333;
 }
 
-.form-group {
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow-x: hidden; /* 가로 스크롤 방지 */
-    overflow-y: auto;
-    background-color: #ffffff; /* ✅ 항상 동일한 흰색 배경 */
-    font-family: 'Noto Sans KR', Arial, sans-serif; /* ✅ 폰트 고정 */
-    color: #333;
-}
-
-h1, h2, h3 {
-    color: #333;
-}
-
+/* =================================================================
+   폼 그룹 스타일
+================================================================= */
 .form-group {
     margin-bottom: 20px;
     padding: 15px;
@@ -43,882 +28,19 @@ h1, h2, h3 {
     background-color: #fff;
 }
 
-/* ✅ 모든 실제 페이지 콘텐츠(시약장 설정 등)를 가운데로 정렬 */
+/* =================================================================
+   폼 컨테이너 스타일
+================================================================= */
 #form-container {
-  max-width: 600px;        /* 내용 폭 제한 */
-  margin: 0 auto;          /* ✅ 브라우저 가운데 정렬 */
-  padding: 20 20px 80px 20px; /* 상, 우, 하, 좌 */
-  box-sizing: border-box;  /* padding 포함 폭 계산 */
-}
-
-label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: #333;
-}
-
-input[type="text"],
-input[type="number"],
-input[type="date"],
-select {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-    background-color: #fff; /* 배경색 명시 */
-    -webkit-appearance: none; /* iOS 기본 스타일 제거 */
-    -moz-appearance: none; /* Firefox 기본 스타일 제거 */
-    appearance: none; /* 표준 기본 스타일 제거 */
-}
-
-/* select 태그에만 화살표 아이콘 추가 */
-select {
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22/%3E%3C/svg%3E');
-    background-repeat: no-repeat;
-    background-position: right 10px top 50%;
-    background-size: 10px auto;
-    padding-right: 30px; /* 화살표 공간 확보 */
-}
-
-/* 드롭다운이 열렸을 때(focus) 스타일 */
-select:focus {
-    border-color: #00bcd4;
-    box-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
-    outline: none;
-}
-
-button[type="submit"] {
-    background-color: #00a0b2;
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    width: 100%;
-}
-
-button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-
-
-/* =================================================================
-   버튼 그룹 (선택 버튼)
-================================================================= */
-.button-group {
-    display: flex;
-    flex-wrap: wrap; /* 버튼이 많아지면 다음 줄로 자동 줄바꿈 */
-    gap: 8px; /* 버튼 사이의 간격 */
-    margin-top: 5px;
-    box-sizing: border-box;
-}
-
-.button-group button {
-    flex-grow: 1; /* 가능한 공간을 채우도록 함 */
-    padding: 8px 10px;
-    border: 1px solid #ddd;
-    background-color: white;
-    color: #333;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    text-align: center;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.button-group button:hover {
-    background-color: #f0f0f0;
-}
-
-.button-group button.active {
-    background-color: #00bcd4;
-    color: white;
-    border-color: #00a0b2;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-
-/* =================================================================
-   사진 등록 영역
-================================================================= */
-.photo-container {
-    display: flex;
-    flex-wrap: wrap; /* 화면이 좁으면 버튼이 아래로 내려가도록 */
-    align-items: center;
-    gap: 15px;
-}
-
-.photo-preview-box {
-    width: 100%;                  /* 1. 일단 부모 요소의 전체 너비를 차지하도록 설정 */
-    max-width: 320px;             /* 2. 하지만 최대 너비는 320px를 넘지 않도록 제한 */
-    height: auto;                 /* 3. 높이는 자동으로 조절되도록 설정 */
-    aspect-ratio: 1 / 1;          /* 4. 가로세로 비율을 1:1 (정사각형)로 강제 */
-    
-    border: 2px dashed #ccc;      /* (기존 스타일 유지) */
-    border-radius: 8px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #888;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.photo-preview-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.photo-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.photo-buttons button {
-    padding: 10px 15px;
-    border: 1px solid #ccc;
-    background-color: #f0f0f0;
-    cursor: pointer;
-    border-radius: 5px;
-    width: auto; /* 버튼 너비 자동 조정 */
-}
-
-/* =================================================================
-   카메라 모달 스타일
-================================================================= */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-}
-
-.modal-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
-
-#camera-view {
-    width: 100%;
-    max-width: 500px;
-    border-radius: 5px;
-    background-color: #000;
-}
-
-.modal-controls {
-    display: flex;
-    gap: 10px;
-}
-
-/* =================================================================
-   보관 위치 설정 (6단계)
-================================================================= */
-.form-group-location {
-    margin-bottom: 25px;
-    padding: 15px;
-    border: 2px solid #00bcd4;
-    border-radius: 8px;
-    background-color: #f8f8ff;
-}
-
-.form-group-location h3 {
-    margin-top: 0;
-    font-size: 16px;
-    color: #00a0b2;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 5px;
-    margin-bottom: 15px;
-}
-
-.location-step {
-    margin-bottom: 15px;
-}
-
-.location-step label {
-    font-size: 14px;
-    color: #555;
-}
-
-/* 위치 선택 버튼 (btn-location) 스타일 */
-.btn-location {
-    flex-basis: calc(16.66% - 10px); /* 가로 6개 배치를 위한 기본 너비 */
-    flex-grow: 1;
-    padding: 10px;
-    border: 1px solid #ccc;
-    background-color: #f9f9f9;
-    cursor: pointer;
-    text-align: center;
-    border-radius: 5px;
-    transition: background-color 0.2s, border-color 0.2s;
-}
-
-.btn-location:hover {
-    background-color: #e9e9e9;
-    border-color: #999;
-}
-
-.btn-location.active {
-    background-color: #00bcd4;
-    color: white;
-    border-color: #00bcd4;
-}
-
-
-/* =================================================================
-   시약장 목록 카드
-================================================================= */
-.cabinet-card .card-info {
-  display: flex;
-  align-items: center;   /* ← 핵심: 세로 가운데 정렬 */
-  gap: 6px;
-}
-
-/* 제목과 위치 텍스트 공통 정렬 보정 */
-.cabinet-card .card-info h3,
-.cabinet-card .card-info .area-name {
-  margin: 0;
-  line-height: 1.2;      /* 폰트 크기 달라도 중앙에 가깝게 */
-  display: flex;
-  align-items: center;
-}
-
-/* 위치 앞 ‘·’ 구분자 */
-.cabinet-card .card-info .area-name::before {
-  content: "·";
-  margin: 0 6px 0 2px;
-  color: #8a8a8a;
-}
-
-/* 위치 텍스트 스타일 */
-/*.cabinet-card .card-info .area-name {
-  color: #666;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}*/
-.cabinet-card .card-info .area-name { position: relative; top: 1px; }
-
-.card-image-placeholder {
-    width: 100%;
-    height: 150px;
-    background-color: #f0f0f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    color: #555;
-}
-
-.card-info {
-    padding: 15px;
-}
-
-.card-info h3 {
-    margin: 0 0 5px 0;
-    font-size: 18px;
-}
-
-.card-info .area-name {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    color: #666;
-}
-
-.card-info .cabinet-specs {
-    margin: 0;
-    font-size: 12px;
-    color: #888;
-}
-
-.card-actions {
-    padding: 10px 15px;
-    background-color: #f9f9f9;
-    border-top: 1px solid #f0f0f0;
-    text-align: right;
-}
-
-.card-actions .edit-btn {
-    background-color: #6c757d; /* 회색 계열 */
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    font-size: 12px;
-    cursor: pointer;
-    margin-right: 5px; /* 삭제 버튼과의 간격 */
-}
-
-.card-actions .delete-btn {
-    background-color: #ff4d4d;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    font-size: 12px;
-    cursor: pointer;
-}
-
-
-/* =================================================================
-   하단 네비게이션 바 및 메뉴
-================================================================= */
-/* ---------------------------
-   하단 네비게이션 바
---------------------------- */
-.navbar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    height: 60px;
-    background-color: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
-    z-index: 1000;
-    backdrop-filter: blur(10px);
-    border-top: 1px solid #eee;
-}
-
-/* 각 아이콘 및 텍스트 버튼 */
-.nav-item {
-    flex-grow: 1;
-    text-align: center;
-    color: #333;
-    text-decoration: none;
-    padding: 10px 0;
-    font-size: 13px;
-    font-weight: 500;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease-in-out;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.material-symbols-outlined {
-    font-variation-settings:
-      'FILL' 0,
-      'wght' 500,
-      'GRAD' 0,
-      'opsz' 24;
-}
-
-/* 아이콘 */
-.nav-icon {
-    font-size: 24px;
-    margin-bottom: 3px;
-    transition: transform 0.2s;
-}
-
-/* 터치 효과 */
-.nav-item:active {
-    background-color: rgba(0, 188, 212, 0.1);
-}
-.nav-item:active .nav-icon {
-    transform: scale(0.9);
-}
-
-/* 활성 탭 */
-.nav-item.active {
-    color: #00bcd4;
-    font-weight: 600;
-}
-
-
-/* 메뉴 버튼 */
-.nav-item.start-button {
-    background-color: #00bcd4;
-    color: white;
-    flex-grow: 0;
-    width: 70px;
-    border-top-right-radius: 10px;
-}
-
-/* ---------------------------
-   좌측 팝업 메뉴 (Start Menu)
---------------------------- */
-/* ---------------------------
-   팝업 메뉴 (Start Menu)
---------------------------- */
-.start-menu-popup {
-    position: fixed;
-    bottom: 70px;
-    left: 15px;
-    width: 260px;
-    background-color: rgba(255, 255, 255, 0.97);
-    border-radius: 12px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-    z-index: 1010;
-    padding: 12px;
-    flex-direction: column;
-    opacity: 0;
-    transform: translateY(15px);
-    pointer-events: none;
-    transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-.start-menu-popup.open {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: all;
-}
-
-/* 메뉴 아이템 */
-.menu-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 12px;
-    color: #333;
-    text-decoration: none;
-    border-radius: 8px;
-    transition: background-color 0.15s;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: -0.2px;
-}
-
-.menu-item:hover,
-.menu-item:active {
-    background-color: rgba(0, 188, 212, 0.15);
-}
-
-/* 현재 선택된 메뉴 항목 (지속 강조) */
-.menu-item.active {
-    background-color: rgba(0, 188, 212, 0.25);
-    color: #00a0b2;
-    font-weight: 600;
-}
-
-/* 아이콘 정렬 */
-.menu-item .material-symbols-outlined {
-    font-size: 20px;
-    color: #00a0b2;
-}
-
-/* 구분선 */
-.menu-list {
-    border-bottom: 1px solid #eee;
-    margin-bottom: 8px;
-}
-
-/* 하단 사용자 정보 */
-.menu-footer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 12px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    margin-top: 5px;
-    cursor: pointer;
-}
-
-.user-icon {
-    font-size: 22px;
-    margin-right: 10px;
-    color: #00a0b2;
-}
-
-.user-id {
-    font-weight: 600;
-    color: #333;
-}
-
-/* 터치 피드백 강화 */
-.nav-item, .menu-item {
-    min-height: 44px;
-}
-
-/* =================================================================
-   새 시약장 설정
-================================================================= */
-.fab {
-    position: fixed;
-    bottom: 70px;
-
-    /* 기존 고정 폭 제거 */
-    left: 50%;
-    transform: translateX(-50%); /* 가운데 정렬 */
-
-    width: 100%;
-    max-width: 600px; /* body의 max-width와 동일하게 맞춤 */
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    text-align: center;
-    background-color: #00bcd4;
-    color: white;
-    border: none;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    z-index: 1001;
-    cursor: pointer;
-}
-
-/* =================================================================
-   시약장 수정 버튼
-================================================================= */
-.form-bottom-buttons {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-    gap: 10px;
-}
-
-.form-btn {
-    flex: 1;
-    height: 44px;
-    border-radius: 6px;
-    border: 2px solid #00bcd4;
-    background-color: white;
-    color: #00bcd4;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-}
-
-.form-btn:hover {
-    background-color: #00bcd4;
-    color: white;
-}
-
-.form-btn.primary {
-    background-color: #00bcd4;
-    color: white;
-}
-
-.form-btn.primary:hover {
-    background-color: #009bb3;
-}
-
-.form-btn:active {
-    box-shadow: 0 0 0 2px rgba(0,188,212,0.2) inset;
-}
-
-/* 모든 버튼의 공통 모양과 반응 */
-#cancel-form-btn,
-#cabinet-submit-button,
-#cabinet-save-btn {
-flex: 1; /* 1:1 비율로 꽉 채움 */
-padding: 12px 20px;
-border: none;
-border-radius: 5px;
-font-size: 16px;
-font-weight: bold;
-cursor: pointer;
-transition: background-color 0.2s, transform 0.1s;
-}
-
-/* 버튼별 기본 색상 */
-#cancel-form-btn {
-background-color: #ccc;
-color: #333;
-}
-/* 등록 버튼과 수정 버튼 색상 통일 */
-#cabinet-submit-button,
-#cabinet-save-btn {
-background-color: #00bcd4;
-color: white;
-}
-
-/* 마우스 올렸을 때 (Hover) */
-#cancel-form-btn:hover {
-background-color: #b0b0b0;
-}
-#cabinet-submit-button:hover,
-#cabinet-save-btn:hover {
-background-color: #00a0b2;
-}
-
-/* 클릭했을 때 (Active) */
-#cancel-form-btn:active,
-#cabinet-submit-button:active,
-#cabinet-save-btn:active {
-transform: scale(0.98);
-}
-
-/* =================================================================
-   상세 정보 페이지 스타일
-================================================================= */
-.detail-section {
-    margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    background-color: #fff;
-}
-.detail-section h2 { margin-top: 0; }
-.detail-section h3 { margin-top: 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-.detail-section p { color: #555; }
-
-/* 아코디언 UI 스타일 */
-.accordion-item {
-    border-bottom: 1px solid #eee;
-}
-.accordion-header {
-    width: 100%;
-    background: none;
-    border: none;
-    text-align: left;
-    padding: 15px 5px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.accordion-header::after {
-    content: '▼';
-    font-size: 10px;
-    transition: transform 0.2s;
-}
-.accordion-header.active::after {
-    transform: rotate(180deg);
-}
-.accordion-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-    padding: 0 15px;
-    white-space: pre-wrap; /* 줄바꿈(\n)을 그대로 표시 */
-    font-size: 13px;
-    color: #333;
-}
-.accordion-content.show {
-    padding-bottom: 15px;
-}
-
-/* 유해화학물질 정보 카드 스타일 */
-.hazard-card {
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 10px;
-    margin-bottom: 10px;
-}
-.hazard-card h4 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    color: #d9534f; /* 위험을 나타내는 붉은색 계열 */
-}
-.hazard-card p {
-    margin: 3px 0;
-    font-size: 12px;
-}
-
-/* 플로팅 버튼 컨테이너 */
-.fab-container {
-    position: fixed;
-    bottom: 70px;
-    right: 20px;
-    z-index: 1001;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-.fab-edit, .fab-delete {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    border: none;
-    color: white;
-    font-size: 14px;
-    font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.25);
-    cursor: pointer;
-}
-.fab-edit { background-color: #5cb85c; } /* 수정: 초록색 */
-.fab-delete { background-color: #d9534f; } /* 삭제: 붉은색 */
-
-/* ================================================================
-   시약장 폼 개선 (area-button-group / 기타 입력 필드)
-================================================================ */
-
-/* 1️⃣ 장소 선택 버튼 그룹은 폭이 넓으므로 버튼 간격/정렬 보정 */
-#area-button-group {
-    justify-content: space-between;
-}
-
-#area-button-group button {
-    flex: 1 1 calc(50% - 8px); /* 한 줄에 2개씩 배치 */
-    min-width: 120px;
-}
-
-/* 2️⃣ “기타 입력” 필드 자연스럽게 표시 */
-.other-input-group {
-    display: none;
-    transition: opacity 0.2s ease;
-}
-.other-input-group.show {
-  display: block;
-  opacity: 1;
-}
-.other-input-group input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 14px;
-    box-sizing: border-box;
-}
-/* 4️⃣ “기타” 입력칸 활성화 시 약간 강조 */
-.other-input-group input:focus {
-    border-color: #00bcd4;
-    box-shadow: 0 0 5px rgba(0, 188, 212, 0.4);
-}
-
-/* 3️⃣ 버튼 active 상태 명확히 */
-.button-group button.active {
-    background-color: #00bcd4;
-    color: white;
-    border-color: #00a0b2;
-    box-shadow: 0 2px 5px rgba(0, 188, 212, 0.3);
-    transform: scale(1.03);
-    transition: all 0.2s ease-in-out;
-}
-
-/* ================================================================
-   6️⃣ 시작메뉴 팝업 부드럽게
-   ================================================================ */
-@keyframes slideUpFade {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.start-menu-popup.open {
-  display: flex;
-  animation: slideUpFade 0.25s ease forwards;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-}
-
-/* ================================================================
-   📱 모바일 뷰(320~480px) 대응 — 버튼 그룹 자동 재배치
-   (cabinet-form.html 기준)
-================================================================ */
-@media (max-width: 480px) {
-  /* 1️⃣ 공통: 버튼 그룹 기본은 세로 정렬 */
-  .button-group {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .button-group button {
-    flex: 1 1 100%;
-    width: 100%;
-    font-size: 15px;
-    padding: 12px;
-  }
-
-  /* 2️⃣ 장소 선택 (area-button-group) */
-  #area-button-group button {
-    text-align: center;
-    padding: 14px;
-    font-weight: 500;
-  }
-
-  /* 시약장 이름 버튼 그룹 (3열 그리드) */
-  #cabinet_name_buttons {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-
-  /* 3️⃣ 시약장 이름 선택 (cabinet_name_buttons) */
-  #cabinet_name_buttons button {
-    flex-basis: auto; /* flex-grow 비활성화 */
-    width: 100%;
-  }
-
-  /* 4️⃣ 도어 형태 선택 (상하 / 좌우 분리) */
-  #door_vertical_split_buttons,
-  #door_horizontal_split_buttons {
-    flex-direction: column;
-  }
-  #door_vertical_split_buttons button,
-  #door_horizontal_split_buttons button {
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  /* 5️⃣ 내부 수납층 / 수납열 선택 (숫자형은 가로 유지) */
-  #shelf_height_buttons,
-  #storage_columns_buttons {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-  }
-
-  #shelf_height_buttons button,
-  #storage_columns_buttons button {
-    flex: 1 1 calc(33% - 6px); /* 한 줄에 3개씩 표시 */
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  /* 7️⃣ 제목과 간격 보정 */
-  .form-group label {
-    font-size: 15px;
-    line-height: 1.4;
-  }
-
-  /* 8️⃣ 폼 전체 패딩 및 버튼 영역 */
-  form {
-    padding: 0;
-  }
-}
-
-/* 🌟 모든 화면에서 공통 적용되는 로고 크기 */
-.main-logo {
-  width: 150px;
-  height: auto;
-  display: block;
+  max-width: 600px;
   margin: 0 auto;
-  margin-bottom: 20px; /* ⬅️ 로고와 "SciManager" 글씨 사이의 여백 통일 */
-}
-    margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: #fff;
+  padding: 20px 20px 80px 20px; /* 상, 우, 하, 좌 */
+  box-sizing: border-box;
 }
 
-/* ✅ 모든 실제 페이지 콘텐츠(시약장 설정 등)를 가운데로 정렬 */
-#form-container {
-  max-width: 600px;        /* 내용 폭 제한 */
-  margin: 0 auto;          /* ✅ 브라우저 가운데 정렬 */
-  padding: 0 20px 80px 20px; /* 상, 우, 하, 좌 */
-  box-sizing: border-box;  /* padding 포함 폭 계산 */
-}
-
+/* =================================================================
+   레이블 및 입력 폼 스타일
+================================================================= */
 label {
     display: block;
     margin-bottom: 8px;
@@ -936,28 +58,30 @@ select {
     border: 1px solid #ddd;
     border-radius: 4px;
     box-sizing: border-box;
-    background-color: #fff; /* 배경색 명시 */
-    -webkit-appearance: none; /* iOS 기본 스타일 제거 */
-    -moz-appearance: none; /* Firefox 기본 스타일 제거 */
-    appearance: none; /* 표준 기본 스타일 제거 */
+    background-color: #fff;
+    appearance: none;
 }
 
-/* select 태그에만 화살표 아이콘 추가 */
+/* =================================================================
+   Select 박스 스타일
+================================================================= */
 select {
     background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22/%3E%3C/svg%3E');
     background-repeat: no-repeat;
     background-position: right 10px top 50%;
     background-size: 10px auto;
-    padding-right: 30px; /* 화살표 공간 확보 */
+    padding-right: 30px;
 }
 
-/* 드롭다운이 열렸을 때(focus) 스타일 */
 select:focus {
     border-color: #00bcd4;
     box-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
     outline: none;
 }
 
+/* =================================================================
+   버튼 스타일 (기본 버튼 및 선택 버튼)
+================================================================= */
 button[type="submit"] {
     background-color: #00a0b2;
     color: white;
@@ -974,20 +98,19 @@ button:disabled {
     cursor: not-allowed;
 }
 
-
 /* =================================================================
-   버튼 그룹 (선택 버튼)
+   버튼 그룹 스타일
 ================================================================= */
 .button-group {
     display: flex;
-    flex-wrap: wrap; /* 버튼이 많아지면 다음 줄로 자동 줄바꿈 */
-    gap: 8px; /* 버튼 사이의 간격 */
+    flex-wrap: wrap;
+    gap: 8px;
     margin-top: 5px;
     box-sizing: border-box;
 }
 
 .button-group button {
-    flex-grow: 1; /* 가능한 공간을 채우도록 함 */
+    flex-grow: 1;
     padding: 8px 10px;
     border: 1px solid #ddd;
     background-color: white;
@@ -997,9 +120,6 @@ button:disabled {
     font-size: 14px;
     text-align: center;
     transition: all 0.2s ease;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .button-group button:hover {
@@ -1013,24 +133,22 @@ button:disabled {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-
 /* =================================================================
    사진 등록 영역
 ================================================================= */
 .photo-container {
     display: flex;
-    flex-wrap: wrap; /* 화면이 좁으면 버튼이 아래로 내려가도록 */
+    flex-wrap: wrap;
     align-items: center;
     gap: 15px;
 }
 
 .photo-preview-box {
-    width: 100%;                  /* 1. 일단 부모 요소의 전체 너비를 차지하도록 설정 */
-    max-width: 320px;             /* 2. 하지만 최대 너비는 320px를 넘지 않도록 제한 */
-    height: auto;                 /* 3. 높이는 자동으로 조절되도록 설정 */
-    aspect-ratio: 1 / 1;          /* 4. 가로세로 비율을 1:1 (정사각형)로 강제 */
-    
-    border: 2px dashed #ccc;      /* (기존 스타일 유지) */
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    border: 2px dashed #ccc;
     border-radius: 8px;
     display: flex;
     justify-content: center;
@@ -1058,7 +176,6 @@ button:disabled {
     background-color: #f0f0f0;
     cursor: pointer;
     border-radius: 5px;
-    width: auto; /* 버튼 너비 자동 조정 */
 }
 
 /* =================================================================
@@ -1130,7 +247,7 @@ button:disabled {
 
 /* 위치 선택 버튼 (btn-location) 스타일 */
 .btn-location {
-    flex-basis: calc(16.66% - 10px); /* 가로 6개 배치를 위한 기본 너비 */
+    flex-basis: calc(16.66% - 10px);
     flex-grow: 1;
     padding: 10px;
     border: 1px solid #ccc;
@@ -1152,39 +269,33 @@ button:disabled {
     border-color: #00bcd4;
 }
 
-
 /* =================================================================
    시약장 목록 카드
 ================================================================= */
 .cabinet-card .card-info {
-  display: flex;
-  align-items: center;   /* ← 핵심: 세로 가운데 정렬 */
-  gap: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-/* 제목과 위치 텍스트 공통 정렬 보정 */
 .cabinet-card .card-info h3,
 .cabinet-card .card-info .area-name {
-  margin: 0;
-  line-height: 1.2;      /* 폰트 크기 달라도 중앙에 가깝게 */
-  display: flex;
-  align-items: center;
+    margin: 0;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
 }
 
-/* 위치 앞 ‘·’ 구분자 */
 .cabinet-card .card-info .area-name::before {
-  content: "·";
-  margin: 0 6px 0 2px;
-  color: #8a8a8a;
+    content: "·";
+    margin: 0 6px 0 2px;
+    color: #8a8a8a;
 }
 
-/* 위치 텍스트 스타일 */
-/*.cabinet-card .card-info .area-name {
-  color: #666;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}*/
-.cabinet-card .card-info .area-name { position: relative; top: 1px; }
+.cabinet-card .card-info .area-name {
+    position: relative;
+    top: 1px;
+}
 
 .card-image-placeholder {
     width: 100%;
@@ -1226,14 +337,14 @@ button:disabled {
 }
 
 .card-actions .edit-btn {
-    background-color: #6c757d; /* 회색 계열 */
+    background-color: #6c757d;
     color: white;
     border: none;
     padding: 8px 12px;
     border-radius: 5px;
     font-size: 12px;
     cursor: pointer;
-    margin-right: 5px; /* 삭제 버튼과의 간격 */
+    margin-right: 5px;
 }
 
 .card-actions .delete-btn {
@@ -1246,13 +357,9 @@ button:disabled {
     cursor: pointer;
 }
 
-
 /* =================================================================
    하단 네비게이션 바 및 메뉴
 ================================================================= */
-/* ---------------------------
-   하단 네비게이션 바
---------------------------- */
 .navbar {
     position: fixed;
     bottom: 0;
@@ -1267,7 +374,6 @@ button:disabled {
     border-top: 1px solid #eee;
 }
 
-/* 각 아이콘 및 텍스트 버튼 */
 .nav-item {
     flex-grow: 1;
     text-align: center;
@@ -1281,41 +387,19 @@ button:disabled {
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease-in-out;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
 }
 
-.material-symbols-outlined {
-    font-variation-settings:
-      'FILL' 0,
-      'wght' 500,
-      'GRAD' 0,
-      'opsz' 24;
-}
-
-/* 아이콘 */
 .nav-icon {
     font-size: 24px;
     margin-bottom: 3px;
     transition: transform 0.2s;
 }
 
-/* 터치 효과 */
-.nav-item:active {
-    background-color: rgba(0, 188, 212, 0.1);
-}
-.nav-item:active .nav-icon {
-    transform: scale(0.9);
-}
-
-/* 활성 탭 */
 .nav-item.active {
     color: #00bcd4;
     font-weight: 600;
 }
 
-
-/* 메뉴 버튼 */
 .nav-item.start-button {
     background-color: #00bcd4;
     color: white;
@@ -1324,12 +408,9 @@ button:disabled {
     border-top-right-radius: 10px;
 }
 
-/* ---------------------------
-   좌측 팝업 메뉴 (Start Menu)
---------------------------- */
-/* ---------------------------
-   팝업 메뉴 (Start Menu)
---------------------------- */
+/* =================================================================
+   시작메뉴 팝업 (Start Menu)
+================================================================= */
 .start-menu-popup {
     position: fixed;
     bottom: 70px;
@@ -1344,7 +425,6 @@ button:disabled {
     opacity: 0;
     transform: translateY(15px);
     pointer-events: none;
-    transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .start-menu-popup.open {
@@ -1353,7 +433,6 @@ button:disabled {
     pointer-events: all;
 }
 
-/* 메뉴 아이템 */
 .menu-item {
     display: flex;
     align-items: center;
@@ -1363,36 +442,14 @@ button:disabled {
     text-decoration: none;
     border-radius: 8px;
     transition: background-color 0.15s;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: -0.2px;
 }
 
-.menu-item:hover,
-.menu-item:active {
-    background-color: rgba(0, 188, 212, 0.15);
-}
-
-/* 현재 선택된 메뉴 항목 (지속 강조) */
 .menu-item.active {
     background-color: rgba(0, 188, 212, 0.25);
     color: #00a0b2;
     font-weight: 600;
 }
 
-/* 아이콘 정렬 */
-.menu-item .material-symbols-outlined {
-    font-size: 20px;
-    color: #00a0b2;
-}
-
-/* 구분선 */
-.menu-list {
-    border-bottom: 1px solid #eee;
-    margin-bottom: 8px;
-}
-
-/* 하단 사용자 정보 */
 .menu-footer {
     display: flex;
     align-items: center;
@@ -1415,24 +472,13 @@ button:disabled {
     color: #333;
 }
 
-/* 터치 피드백 강화 */
-.nav-item, .menu-item {
-    min-height: 44px;
-}
-
-/* =================================================================
-   새 시약장 설정
-================================================================= */
 .fab {
     position: fixed;
     bottom: 70px;
-
-    /* 기존 고정 폭 제거 */
     left: 50%;
-    transform: translateX(-50%); /* 가운데 정렬 */
-
+    transform: translateX(-50%);
     width: 100%;
-    max-width: 600px; /* body의 max-width와 동일하게 맞춤 */
+    max-width: 600px;
     padding: 12px 20px;
     border-radius: 8px;
     font-size: 16px;
@@ -1442,171 +488,8 @@ button:disabled {
     color: white;
     border: none;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    z-index: 1001;
-    cursor: pointer;
 }
 
-/* =================================================================
-   시약장 수정 버튼
-================================================================= */
-.form-bottom-buttons {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-    gap: 10px;
-}
-
-.form-btn {
-    flex: 1;
-    height: 44px;
-    border-radius: 6px;
-    border: 2px solid #00bcd4;
-    background-color: white;
-    color: #00bcd4;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-}
-
-.form-btn:hover {
-    background-color: #00bcd4;
-    color: white;
-}
-
-.form-btn.primary {
-    background-color: #00bcd4;
-    color: white;
-}
-
-.form-btn.primary:hover {
-    background-color: #009bb3;
-}
-
-.form-btn:active {
-    box-shadow: 0 0 0 2px rgba(0,188,212,0.2) inset;
-}
-
-/* 모든 버튼의 공통 모양과 반응 */
-#cancel-form-btn,
-#cabinet-submit-button,
-#cabinet-save-btn {
-flex: 1; /* 1:1 비율로 꽉 채움 */
-padding: 12px 20px;
-border: none;
-border-radius: 5px;
-font-size: 16px;
-font-weight: bold;
-cursor: pointer;
-transition: background-color 0.2s, transform 0.1s;
-}
-
-/* 버튼별 기본 색상 */
-#cancel-form-btn {
-background-color: #ccc;
-color: #333;
-}
-/* 등록 버튼과 수정 버튼 색상 통일 */
-#cabinet-submit-button,
-#cabinet-save-btn {
-background-color: #00bcd4;
-color: white;
-}
-
-/* 마우스 올렸을 때 (Hover) */
-#cancel-form-btn:hover {
-background-color: #b0b0b0;
-}
-#cabinet-submit-button:hover,
-#cabinet-save-btn:hover {
-background-color: #00a0b2;
-}
-
-/* 클릭했을 때 (Active) */
-#cancel-form-btn:active,
-#cabinet-submit-button:active,
-#cabinet-save-btn:active {
-transform: scale(0.98);
-}
-
-/* =================================================================
-   상세 정보 페이지 스타일
-================================================================= */
-.detail-section {
-    margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    background-color: #fff;
-}
-.detail-section h2 { margin-top: 0; }
-.detail-section h3 { margin-top: 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-.detail-section p { color: #555; }
-
-/* 아코디언 UI 스타일 */
-.accordion-item {
-    border-bottom: 1px solid #eee;
-}
-.accordion-header {
-    width: 100%;
-    background: none;
-    border: none;
-    text-align: left;
-    padding: 15px 5px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.accordion-header::after {
-    content: '▼';
-    font-size: 10px;
-    transition: transform 0.2s;
-}
-.accordion-header.active::after {
-    transform: rotate(180deg);
-}
-.accordion-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-    padding: 0 15px;
-    white-space: pre-wrap; /* 줄바꿈(\n)을 그대로 표시 */
-    font-size: 13px;
-    color: #333;
-}
-.accordion-content.show {
-    padding-bottom: 15px;
-}
-
-/* 유해화학물질 정보 카드 스타일 */
-.hazard-card {
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 10px;
-    margin-bottom: 10px;
-}
-.hazard-card h4 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    color: #d9534f; /* 위험을 나타내는 붉은색 계열 */
-}
-.hazard-card p {
-    margin: 3px 0;
-    font-size: 12px;
-}
-
-/* 플로팅 버튼 컨테이너 */
-.fab-container {
-    position: fixed;
-    bottom: 70px;
-    right: 20px;
-    z-index: 1001;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
 .fab-edit, .fab-delete {
     width: 60px;
     height: 60px;
@@ -1618,47 +501,45 @@ transform: scale(0.98);
     box-shadow: 0 2px 5px rgba(0,0,0,0.25);
     cursor: pointer;
 }
+
 .fab-edit { background-color: #5cb85c; } /* 수정: 초록색 */
 .fab-delete { background-color: #d9534f; } /* 삭제: 붉은색 */
 
-/* ================================================================
+/* =================================================================
    시약장 폼 개선 (area-button-group / 기타 입력 필드)
-================================================================ */
-
-/* 1️⃣ 장소 선택 버튼 그룹은 폭이 넓으므로 버튼 간격/정렬 보정 */
+================================================================= */
 #area-button-group {
     justify-content: space-between;
 }
 
 #area-button-group button {
-    flex: 1 1 calc(50% - 8px); /* 한 줄에 2개씩 배치 */
+    flex: 1 1 calc(50% - 8px);
     min-width: 120px;
 }
 
-/* 2️⃣ “기타 입력” 필드 자연스럽게 표시 */
 .other-input-group {
     display: none;
     transition: opacity 0.2s ease;
 }
+
 .other-input-group.show {
   display: block;
   opacity: 1;
 }
+
 .other-input-group input {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #ccc;
     border-radius: 6px;
     font-size: 14px;
-    box-sizing: border-box;
 }
-/* 4️⃣ “기타” 입력칸 활성화 시 약간 강조 */
+
 .other-input-group input:focus {
     border-color: #00bcd4;
     box-shadow: 0 0 5px rgba(0, 188, 212, 0.4);
 }
 
-/* 3️⃣ 버튼 active 상태 명확히 */
 .button-group button.active {
     background-color: #00bcd4;
     color: white;
@@ -1667,69 +548,52 @@ transform: scale(0.98);
     transform: scale(1.03);
     transition: all 0.2s ease-in-out;
 }
-/* =================================================================
-   🌟 SciManager 홈(로고) 화면 — 고정 로딩/홈 화면 (최종 정리 버전)
-================================================================= */
 
-/* 🌟 홈(로고) 상태일 때 — 스크롤 차단 */
+/* =================================================================
+   🌟 SciManager 홈(로고) 화면 — 고정 로딩/홈 화면
+================================================================= */
 body.home-active {
   overflow: hidden;
 }
 
-/* 🌟 로딩 완료 후 (loaded 상태일 때) */
 body.loaded #splash-screen {
   opacity: 0;
   pointer-events: none;
   z-index: -1;
-  transition: opacity 0.4s ease; /* 부드럽게 사라지게 */
+  transition: opacity 0.4s ease;
 }
 
-/* 🧭 네비게이션 항상 화면 위에 표시 */
 #navbar-container {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  z-index: 1000; /* ✅ 스플래시보다 위 */
+  position: relative;
+  z-index: 200;
   opacity: 1;
 }
 
-/* 🧪 스플래시(로고) 화면 — 중앙 정렬 및 배경 유지 */
-#splash-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
+body.home-active #splash-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  background-color: #ffffff;
-  box-sizing: border-box;
+  width: 100%;
+  height: 100vh;
+  background-color: #fff;
   padding: 40px 20px;
-  z-index: 10;           /* ✅ navbar 아래쪽 */
-  pointer-events: none;  /* ✅ 클릭 차단 (뒤 navbar 클릭 가능) */
+  box-sizing: border-box;
+  z-index: 9999;
   transition: opacity 0.4s ease;
 }
 
-/* ✅ 홈이 아닐 때 (#splash-screen 숨김) */
 body:not(.home-active) #splash-screen {
   display: none;
-  opacity: 0;
-  height: 0;
-  padding: 0;
 }
 
-/* 로고 이미지 */
 #splash-screen .main-logo {
   width: 150px;
   height: auto;
   margin-bottom: 20px;
 }
 
-/* 메인 타이틀 */
 #splash-screen h1 {
   font-size: 2.2em;
   font-weight: 700;
@@ -1738,7 +602,6 @@ body:not(.home-active) #splash-screen {
   line-height: 1.2;
 }
 
-/* 서브 타이틀 */
 #splash-screen p {
   font-size: 1.1em;
   color: #666;
@@ -1746,124 +609,11 @@ body:not(.home-active) #splash-screen {
   margin-bottom: 0;
 }
 
-/* 🔧 등장 시 부드러운 페이드인 애니메이션 */
 @keyframes splashFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* 홈일 때만 페이드인 적용 */
 body.home-active #splash-screen {
   animation: splashFadeIn 0.4s ease-out;
-}
-
-/* ================================================================
-   6️⃣ 시작메뉴 팝업 부드럽게
-   ================================================================ */
-@keyframes slideUpFade {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.start-menu-popup.open {
-  display: flex;
-  animation: slideUpFade 0.25s ease forwards;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-}
-
-/* ================================================================
-   📱 모바일 뷰(320~480px) 대응 — 버튼 그룹 자동 재배치
-   (cabinet-form.html 기준)
-================================================================ */
-@media (max-width: 480px) {
-  /* 1️⃣ 공통: 버튼 그룹 기본은 세로 정렬 */
-  .button-group {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .button-group button {
-    flex: 1 1 100%;
-    width: 100%;
-    font-size: 15px;
-    padding: 12px;
-  }
-
-  /* 2️⃣ 장소 선택 (area-button-group) */
-  #area-button-group button {
-    text-align: center;
-    padding: 14px;
-    font-weight: 500;
-  }
-
-  /* 시약장 이름 버튼 그룹 (3열 그리드) */
-  #cabinet_name_buttons {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-
-  /* 3️⃣ 시약장 이름 선택 (cabinet_name_buttons) */
-  #cabinet_name_buttons button {
-    flex-basis: auto; /* flex-grow 비활성화 */
-    width: 100%;
-  }
-
-  /* 4️⃣ 도어 형태 선택 (상하 / 좌우 분리) */
-  #door_vertical_split_buttons,
-  #door_horizontal_split_buttons {
-    flex-direction: column;
-  }
-  #door_vertical_split_buttons button,
-  #door_horizontal_split_buttons button {
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  /* 5️⃣ 내부 수납층 / 수납열 선택 (숫자형은 가로 유지) */
-  #shelf_height_buttons,
-  #storage_columns_buttons {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-  }
-
-  #shelf_height_buttons button,
-  #storage_columns_buttons button {
-    flex: 1 1 calc(33% - 6px); /* 한 줄에 3개씩 표시 */
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  /* 7️⃣ 제목과 간격 보정 */
-  .form-group label {
-    font-size: 15px;
-    line-height: 1.4;
-  }
-
-  /* 8️⃣ 폼 전체 패딩 및 버튼 영역 */
-  form {
-    padding: 15px;
-  }
-}
-
-/* 🌟 모든 화면에서 공통 적용되는 로고 크기 */
-.main-logo {
-  width: 150px;
-  height: auto;
-  display: block;
-  margin: 0 auto;
-  margin-bottom: 20px; /* ⬅️ 로고와 "SciManager" 글씨 사이의 여백 통일 */
 }
