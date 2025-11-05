@@ -289,11 +289,11 @@ button:disabled {
 ================================================================= */
 
 /* ⬇️ [수정됨] 2단 그리드 레이아웃을 위한 컨테이너 설정 */
-#cabinet-list-container {
+#cabinet-list-container.list-view {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2개의 열을 1:1 비율로 */
   gap: 16px; /* 카드 사이의 간격 */
-  padding: 0 16px; /* 목록 좌우 여백 */
+  padding: 20px 16px 0 16px; /* 목록 여백 */
 }
 
 /* ⬇️ [신규] 카드 전체 스타일 (이전 .card-info 등에서 분리) */
