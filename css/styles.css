@@ -345,6 +345,12 @@ button:disabled {
     font-size: 14px;
     color: #666;
     font-weight: normal;
+    position: relative; 
+    top: 1px;
+    margin: 0; /* ⬅️ 수정됨 */
+    line-height: 1.2; /* ⬅️ 수정됨 */
+    display: flex; /* ⬅️ 수정됨 */
+    align-items: center; /* ⬅️ 수정됨 */
 }
 
 /* ⬇️ [신규] area-name 스타일에서 중복되는 부분 분리 */
