@@ -38,7 +38,7 @@
       } else if (file.includes("location-list.html")) {
         console.log("📦 시약장 목록 HTML 로드 완료");
         App.Cabinet?.loadList?.();
-        App.Fab?.setVisibility(true, () => { App.Cabinet?.createForm?.(); });
+        App.Fab?.setVisibility(true, "새 시약장 등록", () => { App.Cabinet?.createForm?.(); });
       } else if (file.includes("cabinet-form.html")) {
         console.log("🧩 시약장 등록 폼 HTML 로드 완료");
       } else if (file.includes("inventory-list.html")) {
