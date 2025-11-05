@@ -272,6 +272,13 @@ button:disabled {
 /* =================================================================
    시약장 목록 카드
 ================================================================= */
+#location-list-page #cabinet-list-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 16px;
+  padding: 20px 16px 0 16px;
+}
+
 /* 시약장 목록을 2열로 배치 */
 .cabinet-list {
   display: flex;
