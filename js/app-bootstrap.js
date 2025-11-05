@@ -26,6 +26,9 @@
         requestAnimationFrame(() => requestAnimationFrame(resolve))
       );
 
+      // 4️⃣ 페이지별 후처리
+      App.Fab?.setVisibility(false); // ⬅️ [추가됨] 일단 모든 페이지에서 FAB 숨김
+
       // 페이지별 후처리
       if (file.includes("navbar.html")) {
         console.log("🧭 Navbar HTML 로드 완료");
@@ -35,6 +38,7 @@
       } else if (file.includes("location-list.html")) {
         console.log("📦 시약장 목록 HTML 로드 완료");
         App.Cabinet?.loadList?.();
+        App.Fab?.setVisibility(true, () => { App.Cabinet?.createForm?.(); });
       } else if (file.includes("cabinet-form.html")) {
         console.log("🧩 시약장 등록 폼 HTML 로드 완료");
       } else if (file.includes("inventory-list.html")) {
