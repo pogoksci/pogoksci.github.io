@@ -164,6 +164,9 @@
           const errorMessage = err.message || "알 수 없는 오류";
           alert(`삭제 실패: ${errorMessage}`);
       }
+
+      // ✅ 즉시 목록 갱신
+      await loadList();
   }
 
   // ------------------------------------------------------------
