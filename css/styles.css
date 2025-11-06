@@ -135,16 +135,16 @@ button:disabled {
 
 .form-bottom-buttons {
   display: flex;
-  justify-content: center;   /* 중앙 정렬 */
-  align-items: center;
+  justify-content: space-between;   /* 중앙 정렬 */
   gap: 12px;                 /* 버튼 사이 간격 */
   margin-top: 24px;
   width: 100%;
+  box-sizing: border-box;
+  padding: 0 8px; /* 폼의 좌우 여백과 동일하게 조정 (필요시 수정) */
 }
 
 .form-bottom-buttons button {
   flex: 1;                   /* ✅ 버튼 동일한 폭 비율 */
-  max-width: 200px;          /* (선택) 너무 넓지 않게 제한 */
   padding: 12px 0;
   border: none;
   border-radius: 6px;
@@ -165,20 +165,20 @@ button:disabled {
 
 /* 등록 버튼 스타일 */
 #cabinet-submit-button {
-  background-color: #0097a7;
+  background-color: #00A6AD;
   color: #fff;
 }
 #cabinet-submit-button:hover {
-  background-color: #007f8e;
+  background-color: #008e94;
 }
 
 /* 수정 버튼 (등록 버튼과 동일 스타일) */
 #cabinet-save-btn {
-  background-color: #0097a7;
+  background-color: #00A6AD;
   color: #fff;
 }
 #cabinet-save-btn:hover {
-  background-color: #007f8e;
+  background-color: #008e94;
 }
 
 /* =================================================================
