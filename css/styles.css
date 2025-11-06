@@ -531,6 +531,7 @@ button:disabled {
     opacity: 0;
     transform: translateY(15px);
     pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .start-menu-popup.open {
@@ -547,7 +548,18 @@ button:disabled {
     color: #333;
     text-decoration: none;
     border-radius: 8px;
-    transition: background-color 0.15s;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    cursor: pointer;
+}
+
+.menu-item:hover {                 /* ✅ hover 효과 */
+    background-color: #00A6AD;   /* 메인컬러와 동일 */
+    color: #fff;                 /* 글자 흰색 */
+}
+
+.menu-item:hover i,                /* hover 시 아이콘 색상도 함께 변경 */
+.menu-item:hover svg {
+    color: #fff;
 }
 
 .menu-item.active {
@@ -565,6 +577,11 @@ button:disabled {
     border-radius: 8px;
     margin-top: 5px;
     cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.menu-footer:hover {
+    background-color: rgba(0, 166, 173, 0.1);
 }
 
 .user-icon {
@@ -577,6 +594,11 @@ button:disabled {
     font-weight: 600;
     color: #333;
 }
+
+/*------------------
+FAB
+------------------*/
+
 
 .fab {
     position: fixed;
