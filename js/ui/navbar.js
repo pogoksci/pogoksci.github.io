@@ -70,13 +70,21 @@
             console.log("🧪 App.Cabinet:", App.Cabinet);
           }
 
-          // ✅ Router 이동
-          if (App.Router && typeof App.Router.go === "function") {
-            await App.Router.go(route);
+          // ✅ 내부 라우팅 (뒤로가기 기록 포함)
+          if (App.navigateTo) {
+            App.navigateTo(page); // ← 이 한 줄이 핵심
           } else {
-            console.warn("⚠️ App.Router.go() 없음 — includeHTML 대체 실행");
-            App.includeHTML(`pages/${route}.html`, "form-container");
+            console.warn("⚠️ App.navigateTo() 없음 — fallback 실행");
+            App.includeHTML(page, "form-container");
           }
+
+          // ✅ Router 이동
+          //if (App.Router && typeof App.Router.go === "function") {
+          //  await App.Router.go(route);
+          //} else {
+          //  console.warn("⚠️ App.Router.go() 없음 — includeHTML 대체 실행");
+          //  App.includeHTML(`pages/${route}.html`, "form-container");
+          //}
 
           closeStartMenu();
           setActive(id);
