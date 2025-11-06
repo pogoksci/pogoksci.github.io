@@ -165,20 +165,20 @@ button:disabled {
 
 /* 등록 버튼 스타일 */
 #cabinet-submit-button {
-  background-color: #00A6AD;
+  background-color: #00BCD4;
   color: #fff;
 }
 #cabinet-submit-button:hover {
-  background-color: #008e94;
+  background-color: #00BFD4;
 }
 
 /* 수정 버튼 (등록 버튼과 동일 스타일) */
 #cabinet-save-btn {
-  background-color: #00A6AD;
+  background-color: #00BCD4;
   color: #fff;
 }
 #cabinet-save-btn:hover {
-  background-color: #008e94;
+  background-color: #00BFD4;
 }
 
 /* =================================================================
