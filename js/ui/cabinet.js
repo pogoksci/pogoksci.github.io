@@ -73,7 +73,7 @@
               <h3>${cab.name} <small class="area-name">${areaName}</small></h3>
             </div>
             <div class="card-image-placeholder">
-              ${photo ? `<img src="${photo}" alt="${cab.name}" style="width:100%;height:100%;object-fit:cover;">` : "사진 없음"}
+              ${photo ? `<img src="${photo}" alt="${cab.name}" class="card-image">` : `<span class="no-photo-text">사진 없음</span>`}
             </div>
             <div class="card-actions">
               <button class="edit-btn" data-id="${cab.id}">수정</button>
