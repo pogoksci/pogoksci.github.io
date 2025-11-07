@@ -18,40 +18,41 @@
 
   <div id="inventory-list-container" class="list-view">
     <p id="status-message-inventory-list" style="padding:0 15px; color:#888;">
-      재고 목록을 불러오는 중...
+      약품 목록을 불러오는 중...
     </p>
   </div>
 </div>
 
 <!-- ✅ 하단 등록 버튼 (FAB) -->
-<button class="fab" id="new-inventory-btn">＋ 새 약품 등록</button>
+<button class="fab" id="new-inventory-btn">+ 새 약품 등록</button>
 
-<script>
-  // ✅ 페이지가 includeHTML로 불러올 때도 즉시 실행 가능하도록 즉시 실행형으로 작성
-  (async function () {
-    console.log("📦 inventory-list.html 로드됨");
-    if (!window.App?.Inventory) {
-      console.warn("⚠️ App.Inventory 모듈이 아직 로드되지 않음. import 누락?");
-    }
+<script type="module">
+  import "/js/ui/inventory.js";
 
-    // ✅ 목록 로드
+  document.addEventListener("DOMContentLoaded", () => {
+    console.log("🧪 inventory-list.html 로드됨");
+
+    // 1️⃣ 재고 목록 로드
     App.Inventory?.loadList?.();
 
-    // ✅ 새로고침 버튼
+    // 2️⃣ 새로고침 버튼
     document.getElementById("refresh-btn")?.addEventListener("click", () => {
       App.Inventory?.loadList?.();
     });
 
-    // ✅ 등록 버튼 → 등록 폼 이동
-    document.getElementById("new-inventory-btn")?.addEventListener("click", async () => {
-      console.log("🧪 새 약품 등록으로 이동");
-      await includeHTML("pages/inventory-register.html", "form-container");
-      App.Forms?.initInventoryForm?.();
-    });
-
-    // ✅ 정렬 변경
-    document.getElementById("sort-select")?.addEventListener("change", (e) => {
-      App.Inventory?.loadList?.(e.target.value);
-    });
-  })();
+    // 3️⃣ 새 약품 등록 버튼
+    const newBtn = document.getElementById("new-inventory-btn");
+    if (newBtn) {
+      newBtn.addEventListener("click", async () => {
+        console.log("🧾 새 약품 등록 버튼 클릭됨");
+        const ok = await App.includeHTML("pages/inventory-form.html", "form-container");
+        if (ok) {
+          console.log("📄 inventory-form.html 로드 완료 → 폼 초기화 시작");
+          App.Forms?.initInventoryForm?.("create", null);
+        } else {
+          console.error("❌ inventory-form.html 로드 실패");
+        }
+      });
+    }
+  });
 </script>

@@ -91,33 +91,6 @@
   }
 
   // -----------------------------------------------------
-  // 4. SPA용 뒤로가기 제어 (history API)
-  // -----------------------------------------------------
-  //function navigateTo(pageFile, push = true) {
-    // pageFile 예: "pages/cabinet-list.html"
-  //  console.log(`📍 navigateTo() → ${pageFile}`);
-
-    // 내부 페이지 로드
-  //  App.includeHTML(pageFile, "form-container");
-
-    // URL 기록 (뒤로가기 히스토리)
-  //  if (push) {
-  //    history.pushState({ pageFile }, "", `#${pageFile}`);
-  //  }
-  //}
-
-  // 뒤로가기 / 앞으로가기 시 실행
-  //globalThis.addEventListener("popstate", (event) => {
-  //  if (event.state?.pageFile) {
-  //    console.log(`⬅️ popstate → ${event.state.pageFile}`);
-  //    App.includeHTML(event.state.pageFile, "form-container");
-  //  } else {
-      // 기본화면 (메인)으로 복귀
-  //    App.includeHTML("pages/main.html", "form-container");
-  //  }
-  //});
-
-  // -----------------------------------------------------
   // 3. 전역 등록 및 실행
   // -----------------------------------------------------
   globalThis.App = globalThis.App || {};
