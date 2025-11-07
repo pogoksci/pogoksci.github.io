@@ -281,7 +281,18 @@
     console.log("🧭 bindListPage() 실행됨");
 
     const refreshBtn = document.getElementById("refresh-btn");
-    if (refreshBtn) refreshBtn.onclick = () => loadList();
+    if (refreshBtn) {
+      refreshBtn.onclick = () => {
+        console.log("🔄 목록 새로고침");
+        const container = document.getElementById("inventory-list-container");
+        if (!container) {
+          console.warn("⚠️ inventory-list 요소가 아직 로드되지 않았습니다. 200ms 후 재시도합니다.");
+          setTimeout(() => App.Inventory?.loadList?.(), 200);
+          return;
+        }
+        App.Inventory.loadList();
+      };
+    }
 
     const sortSelect = document.getElementById("sort-select");
     if (sortSelect) {

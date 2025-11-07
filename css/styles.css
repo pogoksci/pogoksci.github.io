@@ -780,6 +780,31 @@ select::-ms-expand {
   border-color: #66afe9;
 }
 
+.sort-refresh-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#refresh-btn {
+  background: #f8f9fa;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#refresh-btn:hover {
+  background: #e8f4ff;
+  border-color: #66afe9;
+  color: #007bff;
+}
+
+#refresh-btn i {
+  font-size: 16px;
+}
+
 /* 인벤토리 카드 (시약장 카드 스타일 재사용) */
 .inventory-card { 
   background: #fff; border:1px solid #ddd; border-radius:8px; margin: 12px; overflow:hidden;

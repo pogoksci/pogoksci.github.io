@@ -2,17 +2,24 @@
 <div id="inventory-list-page">
   <div class="list-header">
     <h2>약품 관리</h2>
+
     <div class="header-actions">
-      <select id="sort-select" class="sort-select">
-        <option value="category_name_kor" selected>📚 한글명(분류)</option>
-        <option value="name_kor">🔠 한글명(전체)</option>
-        <option value="name_eng">🔠 영문명(전체)</option>
-        <option value="formula">🧪 화학식</option>
-        <option value="storage_location">🏷 위치</option>
-        <option value="quantity_desc">📦 재고량</option>
-        <option value="created_at_desc">🕓 등록순서</option>
-      </select>
-      <button id="refresh-btn">↻</button>
+      <div class="sort-refresh-group">
+        <select id="sort-select" class="sort-select">
+          <option value="category_name_kor" selected>📚 한글명(분류)</option>
+          <option value="name_kor">🔠 한글명(전체)</option>
+          <option value="name_eng">🔠 영문명(전체)</option>
+          <option value="formula">🧪 화학식</option>
+          <option value="storage_location">🏷 위치</option>
+          <option value="quantity_desc">📦 재고량</option>
+          <option value="created_at_desc">🕓 등록순서</option>
+        </select>
+
+        <!-- ✅ 새로고침 버튼 FontAwesome 아이콘 버전 -->
+        <button id="refresh-btn" title="목록 새로고침">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+      </div>
     </div>
   </div>
 
