@@ -749,26 +749,24 @@ body.home-active #splash-screen {
 /*--------------------------
 시약 목록
 ---------------------------*/
-/* ✅ 전체 페이지 wrapper */
 #inventory-list-page {
   display: flex;
   flex-direction: column;
-  gap: 10px; /* 제목과 리스트 간 간격 */
+  gap: 10px;
   padding: 8px 16px;
   box-sizing: border-box;
 }
 
-/* ✅ 제목 + 정렬그룹만 한 줄에 */
+/* 제목 + 정렬그룹 */
 .list-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end; /* 아래 기준 정렬 */
+  align-items: center; /* 🔹 제목 기준 수평 정렬 */
   border-bottom: 1px solid #ddd;
   padding-bottom: 8px;
   margin-bottom: 10px;
 }
 
-/* ✅ 제목 스타일 */
 .list-header h2 {
   font-size: 20px;
   font-weight: 700;
@@ -777,26 +775,20 @@ body.home-active #splash-screen {
   line-height: 1.3;
 }
 
-/* ✅ 감싸는 박스로 완전한 테두리 유지 */
+/* 감싸는 박스 (select wrapper) */
 .select-wrapper {
   border: 1px solid #c4c4c4;
   border-radius: 6px;
   background: #fff;
   box-sizing: border-box;
   overflow: hidden;
-  height: 24px; /* 🔹 세로 크기 조정 */
+  height: 28px; /* ✅ 자연스러운 텍스트 높이 */
   display: flex;
   align-items: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* ✅ 오른쪽 정렬영역 고정 */
-.header-actions {
-  display: flex;
-  align-items: flex-end; /* 텍스트 기준 아래 정렬 */
-  justify-content: flex-end;
-  gap: 8px;
-}
-
+.select-wrapper:hover,
 .select-wrapper:focus-within {
   border-color: #66afe9;
   box-shadow: 0 0 3px rgba(102,175,233,0.6);
@@ -806,14 +798,14 @@ body.home-active #splash-screen {
 .sort-select {
   border: none;
   font-family: inherit;
-  font-size: 14px; /* 🔹 폰트 살짝 축소 */
+  font-size: 14px;
   color: #333;
   background-color: transparent;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
   width: 160px;
-  padding: 6px 28px 6px 10px;
+  padding: 4px 28px 4px 10px;
   line-height: 1.2;
   cursor: pointer;
   background-image: url("data:image/svg+xml;utf8,<svg fill='%23666' height='18' viewBox='0 0 24 24' width='18'><path d='M7 10l5 5 5-5z'/></svg>");
@@ -822,16 +814,11 @@ body.home-active #splash-screen {
   background-size: 13px;
 }
 
-/* ✅ Focus / Hover 시 동일한 색감 유지 */
-.sort-select:hover {
-  border-color: #66afe9;
-}
-
 .sort-select:focus {
   outline: none;
 }
 
-/* ✅ 옵션 목록(dropdown) 디자인 일치 (브라우저 지원 범위 내) */
+/* 옵션 박스 */
 .sort-select option {
   background: #fff;
   color: #333;
@@ -839,19 +826,14 @@ body.home-active #splash-screen {
   border: none;
 }
 
-/* Edge/Chrome에서 option 박스의 외곽선 컬러를 동일하게 */
-select::-ms-expand {
-  border-color: #66afe9;
-}
-
-/* ✅ select + 버튼 수평정렬 */
+/* select + 버튼 정렬 */
 .sort-refresh-group {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-/* ✅ Refresh 버튼 */
+/* Refresh 버튼 */
 #refresh-btn {
   display: flex;
   align-items: center;
@@ -861,24 +843,19 @@ select::-ms-expand {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  width: 24px; /* 🔹 드롭다운 높이와 일치 */
-  height: 24px; /* 🔹 정사각형 */
+  width: 28px;
+  height: 28px;
   padding: 0;
 }
 
-/* ✅ hover 시 wrapper border 강조 */
 #refresh-btn:hover {
   background: #e8f4ff;
   border-color: #66afe9;
   color: #007bff;
 }
 
-#refresh-btn i {
-  font-size: 16px;
-}
-
 #refresh-btn .material-symbols-outlined {
-  font-size: 18px; /* 🔹 버튼 크기에 맞게 축소 */
+  font-size: 18px;
   color: inherit;
   vertical-align: middle;
 }
