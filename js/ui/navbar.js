@@ -4,23 +4,31 @@
 (function () {
   console.log("🧭 App.Navbar 모듈 로드됨");
 
-  // ✅ 헬퍼 함수: 페이지 로드
-  async function loadPage(htmlPath, callback) {
+  // ✅ 헬퍼 함수
+  const loadPage = async (htmlPath, callback) => {
     await includeHTML(htmlPath, "form-container");
     if (typeof callback === "function") callback();
-  }
+  };
 
-  // ✅ Start 메뉴 토글 (햄버거 버튼)
+  // ------------------------------------------------------------
+  // 1️⃣ Start 메뉴 토글 (햄버거 버튼)
+  // ------------------------------------------------------------
   function setupStartMenuToggle() {
     const toggleBtn = document.getElementById("menu-toggle-btn");
     const startMenu = document.getElementById("start-menu");
-    if (!toggleBtn || !startMenu) return;
 
+    if (!toggleBtn || !startMenu) {
+      console.warn("⚠️ Navbar: 메뉴 토글 요소를 찾을 수 없습니다.");
+      return;
+    }
+
+    // 메뉴 열기/닫기
     toggleBtn.addEventListener("click", (e) => {
       e.preventDefault();
       startMenu.classList.toggle("open");
     });
 
+    // 메뉴 외부 클릭 시 닫기
     document.addEventListener("click", (e) => {
       if (!startMenu.contains(e.target) && !toggleBtn.contains(e.target)) {
         startMenu.classList.remove("open");
@@ -28,72 +36,124 @@
     });
   }
 
-  // ✅ Start 메뉴 닫기
-  function closeStartMenu() {
-    const startMenu = document.getElementById("start-menu");
-    if (startMenu) startMenu.classList.remove("open");
+  // ✅ Navbar 메뉴 이벤트 연결
+  function setupMenuNavigation() {
+    const menuInventory = document.getElementById("menu-inventory-btn"); // 약품 관리
+    if (menuInventory) {
+      menuInventory.addEventListener("click", async () => {
+        console.log("📦 약품 관리 클릭됨");
+        await loadPage("pages/inventory-list.html", () => {
+          App.Inventory?.loadList?.();
+        });
+      });
+    }
+
+    // 🔹 다른 메뉴들 (예시)
+    const menuCabinet = document.getElementById("menu-cabinet-btn");
+    if (menuCabinet) {
+      menuCabinet.addEventListener("click", async () => {
+        await loadPage("pages/cabinet-list.html", () => App.Cabinet?.loadList?.());
+      });
+    }
+
+    const menuHome = document.getElementById("menu-home-btn");
+    if (menuHome) {
+      menuHome.addEventListener("click", async () => {
+        await loadPage("pages/home.html");
+      });
+    }
   }
 
-  // ✅ active 상태 표시
+  // ✅ Navbar 초기화
+  document.addEventListener("DOMContentLoaded", () => {
+    setupStartMenuToggle();
+    setupMenuNavigation();
+  });
+
+  // ------------------------------------------------------------
+  // 2️⃣ Navbar & Start 메뉴 항목 클릭 → Router 이동
+  // ------------------------------------------------------------
+  function setupNavLinks() {
+    const links = [
+      // 상단 Navbar 영역
+      { id: "nav-inventory", route: "inventory" },
+      { id: "nav-usage", route: "inventory" },
+      { id: "nav-waste", route: "inventory" },
+      { id: "nav-kit", route: "inventory" },
+
+      // Start 메뉴 영역
+      { id: "menu-location", route: "cabinets" },
+      { id: "menu-equipment", route: "inventory" },
+      { id: "menu-lablog", route: "inventory" },
+      { id: "menu-home", route: "main" },
+    ];
+
+    links.forEach(({ id, route }) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener("click", async (e) => {
+          e.preventDefault();
+          console.log(`➡️ Navbar 클릭: ${id} → ${route}`);
+
+          // ✅ 홈 클릭 시: 로고 화면 표시
+          if (id === "menu-home") {
+            document.body.classList.add("home-active");
+            console.log("🏠 홈 화면 복귀 — 로고 표시됨");
+          } else {
+            // ✅ 그 외 페이지 클릭 시: 로고 숨김
+            document.body.classList.remove("home-active");
+            console.log("📄 페이지 이동 — 로고 숨김");
+          }
+
+          // ✅ 시약장 설정 클릭 시 Cabinet 모듈 상태 점검
+          if (id === "menu-location") {
+            console.log("🧪 App.Cabinet:", App.Cabinet);
+          }
+
+          // ✅ Router 이동
+          if (App.Router && typeof App.Router.go === "function") {
+            await App.Router.go(route);
+          } else {
+            console.warn("⚠️ App.Router.go() 없음 — includeHTML 대체 실행");
+            App.includeHTML(`pages/${route}.html`, "form-container");
+          }
+
+          closeStartMenu();
+          setActive(id);
+        });
+      }
+    });
+  }
+
+  // ------------------------------------------------------------
+  // 3️⃣ active 상태 관리
+  // ------------------------------------------------------------
   function setActive(id) {
     document.querySelectorAll(".nav-item, .menu-item").forEach((el) => {
       el.classList.toggle("active", el.id === id);
     });
   }
 
-  // ✅ 공통 페이지 이동 함수
-  async function goToPage(id, htmlPath, onLoad) {
-    document.body.classList.remove("home-active");
-    console.log(`📄 페이지 이동: ${id} → ${htmlPath}`);
-    await loadPage(htmlPath, onLoad);
-    closeStartMenu();
-    setActive(id);
+  // ------------------------------------------------------------
+  // 4️⃣ Start 메뉴 닫기
+  // ------------------------------------------------------------
+  function closeStartMenu() {
+    const startMenu = document.getElementById("start-menu");
+    if (startMenu) startMenu.classList.remove("open");
   }
 
-  // ✅ 메뉴 이벤트 연결
-  function setupMenuNavigation() {
-    // 1️⃣ 약품 관리
-    const menuInventory = document.getElementById("menu-inventory-btn");
-    if (menuInventory) {
-      menuInventory.addEventListener("click", async () => {
-        await goToPage("menu-inventory-btn", "pages/inventory-list.html", () => {
-          App.Inventory?.loadList?.();
-        });
-      });
-    }
-
-    // 2️⃣ 시약장 관리
-    const menuCabinet = document.getElementById("menu-cabinet-btn");
-    if (menuCabinet) {
-      menuCabinet.addEventListener("click", async () => {
-        await goToPage("menu-cabinet-btn", "pages/cabinet-list.html", () => {
-          App.Cabinet?.loadList?.();
-        });
-      });
-    }
-
-    // 3️⃣ 홈 화면
-    const menuHome = document.getElementById("menu-home-btn");
-    if (menuHome) {
-      menuHome.addEventListener("click", async () => {
-        document.body.classList.add("home-active");
-        console.log("🏠 홈 화면 복귀 — 로고 표시됨");
-        closeStartMenu();
-        setActive("menu-home-btn");
-      });
-    }
-  }
-
-  // ✅ 초기화
+  // ------------------------------------------------------------
+  // 5️⃣ setup() — Navbar 초기화 진입점
+  // ------------------------------------------------------------
   function setup() {
     setupStartMenuToggle();
-    setupMenuNavigation();
-    console.log("✅ Navbar.setup() 완료 — 약품 관리 연결 포함됨");
+    setupNavLinks();
+    console.log("✅ Navbar.setup() 완료 — 홈 화면 제어 포함됨");
   }
 
-  // ✅ 전역 등록
+  // ------------------------------------------------------------
+  // 6️⃣ 전역 등록
+  // ------------------------------------------------------------
   globalThis.App = globalThis.App || {};
-  globalThis.App.Navbar = { setup, closeStartMenu, setActive };
-
-  document.addEventListener("DOMContentLoaded", setup);
+  globalThis.App.Navbar = { setup, setActive, closeStartMenu };
 })();
