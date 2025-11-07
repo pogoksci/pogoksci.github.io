@@ -751,20 +751,30 @@ body.home-active #splash-screen {
 ---------------------------*/
 /* 정렬 셀렉트 */
 .sort-select {
-  border: 1px solid #ccc;           /* 전체 테두리 균일하게 */
-  border-radius: 6px;
-  padding: 6px 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   background-color: #fff;
+  border: 1px solid #c4c4c4;
+  border-radius: 6px;
+  padding: 8px 32px 8px 12px;
+  font-size: 15px;
+  font-family: inherit;
   color: #333;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23666' height='20' viewBox='0 0 24 24' width='20'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px;
 }
 
-/* ✅ focus 시에도 오른쪽/아래 테두리 유지 */
+/* ✅ Focus / Hover 시 동일한 색감 유지 */
+.sort-select:hover,
 .sort-select:focus {
-  border-color: #66afe9;            /* 선택된 옵션과 동일한 포인트 컬러 */
-  box-shadow: 0 0 0 2px rgba(102, 175, 233, 0.3);
+  border-color: #66afe9;
+  box-shadow: 0 0 3px rgba(102,175,233,0.6);
+  outline: none;
 }
 
 /* ✅ 옵션 목록(dropdown) 디자인 일치 (브라우저 지원 범위 내) */
@@ -788,11 +798,15 @@ select::-ms-expand {
 
 #refresh-btn {
   background: #f8f9fa;
-  border: 1px solid #ccc;
+  border: 1px solid #c4c4c4;
   border-radius: 6px;
   padding: 6px 10px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
 }
 
 #refresh-btn:hover {
@@ -803,6 +817,13 @@ select::-ms-expand {
 
 #refresh-btn i {
   font-size: 16px;
+}
+
+#refresh-btn .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
+  color: inherit;
+  vertical-align: middle;
 }
 
 /* 인벤토리 카드 (시약장 카드 스타일 재사용) */
