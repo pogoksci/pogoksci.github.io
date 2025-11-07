@@ -32,7 +32,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     console.log("🧪 inventory-list.html 로드됨");
 
-    // 1️⃣ 재고 목록 로드
+    // 1️⃣ 목록 로드
     App.Inventory?.loadList?.();
 
     // 2️⃣ 새로고침 버튼
@@ -45,12 +45,17 @@
     if (newBtn) {
       newBtn.addEventListener("click", async () => {
         console.log("🧾 새 약품 등록 버튼 클릭됨");
-        const ok = await App.includeHTML("pages/inventory-form.html", "form-container");
-        if (ok) {
+        try {
+          const ok = await App.includeHTML("pages/inventory-form.html", "form-container");
+          console.log("📄 includeHTML 결과:", ok);
+          if (!ok) throw new Error("includeHTML 실패");
+
+          if (!App.Forms?.initInventoryForm) throw new Error("App.Forms.initInventoryForm 없음");
+
           console.log("📄 inventory-form.html 로드 완료 → 폼 초기화 시작");
-          App.Forms?.initInventoryForm?.("create", null);
-        } else {
-          console.error("❌ inventory-form.html 로드 실패");
+          App.Forms.initInventoryForm("create", null);
+        } catch (err) {
+          console.error("❌ 새 약품 등록 처리 중 오류:", err);
         }
       });
     }
