@@ -1,34 +1,26 @@
 // ================================================================
-// /js/ui/inventory.js — 약품(Inventory) 목록 + 정렬 + 상세 + CRUD 완전 통합
+// /js/ui/inventory.js — 약품(Inventory) 목록 + 정렬 + 버튼 바인딩
 // ================================================================
 (function () {
-  console.log("🧪 App.Inventory 모듈 로드됨 (통합버전)");
+  console.log("📦 App.Inventory 모듈 로드됨");
 
+  // ------------------------------------------------------------
+  // 공용 헬퍼
+  // ------------------------------------------------------------
   const getApp = () => globalThis.App || {};
-  const getSupabase = () => getApp().supabase;
-  const includeHTML = (file, target = "form-container") =>
-    getApp().includeHTML?.(file, target);
-
-  let currentSort = "created_at_desc"; // 기본 정렬: 최신순
+  const getSupabase = () => getApp().Supabase; // ✅ App.Supabase 인스턴스 사용
+  let currentSort = "created_at_desc"; // 기본 정렬: 등록순(최신)
 
   // ------------------------------------------------------------
   // 1️⃣ 정렬 함수
   // ------------------------------------------------------------
   function sortData(rows, key) {
-    const collateKo = (a, b) =>
-      String(a || "").localeCompare(String(b || ""), "ko");
-    const collateEn = (a, b) =>
-      String(a || "").localeCompare(String(b || ""), "en", {
-        sensitivity: "base",
-      });
+    const collateKo = (a, b) => String(a || "").localeCompare(String(b || ""), "ko");
+    const collateEn = (a, b) => String(a || "").localeCompare(String(b || ""), "en", { sensitivity: "base" });
 
     switch (key) {
       case "category_name_kor":
-        return rows.sort(
-          (a, b) =>
-            collateKo(a.classification, b.classification) ||
-            collateKo(a.name_kor, b.name_kor)
-        );
+        return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateKo(a.name_kor, b.name_kor));
       case "name_kor":
         return rows.sort((a, b) => collateKo(a.name_kor, b.name_kor));
       case "name_eng":
@@ -36,18 +28,12 @@
       case "formula":
         return rows.sort((a, b) => collateEn(a.formula, b.formula));
       case "storage_location":
-        return rows.sort((a, b) =>
-          collateKo(a.storage_location, b.storage_location)
-        );
+        return rows.sort((a, b) => collateKo(a.storage_location, b.storage_location));
       case "quantity_desc":
-        return rows.sort(
-          (a, b) => (b.current_amount ?? 0) - (a.current_amount ?? 0)
-        );
+        return rows.sort((a, b) => (b.current_amount ?? 0) - (a.current_amount ?? 0));
       case "created_at_desc":
       default:
-        return rows.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        );
+        return rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
   }
 
@@ -60,29 +46,26 @@
       container.innerHTML = "";
       return;
     }
-
     status.textContent = "";
     container.innerHTML = mapped
       .map((it) => {
         const img = it.photo_url_320 || "/img/no-image.png";
         return `
-        <div class="inventory-card" data-id="${it.id}">
-          <div class="card-image-placeholder">
-            <img class="card-image" src="${img}" alt="${it.name_kor || it.cas_rn}" />
+          <div class="inventory-card">
+            <div class="card-image-placeholder">
+              <img class="card-image" src="${img}" alt="${it.name_kor || it.cas_rn}" />
+            </div>
+            <div class="card-info">
+              <h3>${it.name_kor || "-"}</h3>
+              <p class="area-name">${it.storage_location || "위치: 미지정"}</p>
+              <p class="cabinet-specs">재고: ${it.current_amount ?? 0}${it.unit || ""} · 등록일 ${new Date(it.created_at).toLocaleDateString()}</p>
+            </div>
+            <div class="card-actions">
+              <button class="edit-btn" data-id="${it.id}">수정</button>
+              <button class="delete-btn" data-id="${it.id}">삭제</button>
+            </div>
           </div>
-          <div class="card-info">
-            <h3>${it.name_kor || "-"}</h3>
-            <p class="area-name">${it.storage_location || "위치: 미지정"}</p>
-            <p class="cabinet-specs">재고: ${it.current_amount ?? 0}${it.unit || ""} · 등록일 ${new Date(
-          it.created_at
-        ).toLocaleDateString()}</p>
-          </div>
-          <div class="card-actions">
-            <button class="view-btn" data-id="${it.id}">상세</button>
-            <button class="edit-btn" data-id="${it.id}">수정</button>
-            <button class="delete-btn" data-id="${it.id}">삭제</button>
-          </div>
-        </div>`;
+        `;
       })
       .join("");
 
@@ -99,26 +82,29 @@
     container.querySelectorAll(".edit-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = Number(btn.dataset.id);
-        const supabase = getSupabase();
-        const { data, error } = await supabase
-          .from("Inventory")
-          .select("*")
-          .eq("id", id)
-          .single();
-        if (error) return alert("데이터를 불러오지 못했습니다.");
-        await includeHTML("pages/inventory-form.html");
-        getApp().Forms?.initInventoryForm?.("edit", data);
+        console.log(`✏️ 약품 수정 클릭: ID=${id}`);
+        const ok = await App.includeHTML("pages/inventory-form.html", "form-container");
+        if (ok) App.Forms?.initInventoryForm?.("edit", { id });
       });
     });
-
     // 삭제 버튼
     container.querySelectorAll(".delete-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = Number(btn.dataset.id);
         if (!confirm("정말 삭제하시겠습니까?")) return;
-        await deleteInventory(id);
-        alert("삭제되었습니다.");
-        loadList();
+
+        try {
+          const supabase = getSupabase();
+          // Edge Function 직접 호출
+          const fnUrl = `${App.projectFunctionsBaseUrl || "/functions/v1"}/casimport?type=inventory&id=${id}`;
+          const res = await fetch(fnUrl, { method: "DELETE" });
+          if (!res.ok) throw new Error(await res.text());
+          alert("✅ 삭제되었습니다.");
+          loadList();
+        } catch (err) {
+          console.error("❌ 삭제 오류:", err);
+          alert("삭제 중 오류 발생");
+        }
       });
     });
   }
@@ -223,7 +209,7 @@
     const noMsds = document.getElementById("no-msds-pdf");
     if (data.msds_pdf_url) {
       msdsBtn.style.display = "block";
-      msdsBtn.onclick = () => window.open(data.msds_pdf_url, "_blank");
+      msdsBtn.onclick = () => globalThis.open(data.msds_pdf_url, "_blank");
     } else {
       noMsds.style.display = "block";
     }
@@ -300,6 +286,43 @@
     });
   }
 
+  function bindListPage() {
+    console.log("🧭 bindListPage() 실행됨");
+
+    // 새로고침
+    const refreshBtn = document.getElementById("refresh-btn");
+    if (refreshBtn) {
+      refreshBtn.onclick = () => {
+        console.log("🔄 목록 새로고침");
+        loadList();
+      };
+    }
+
+    // 정렬 선택
+    const sortSelect = document.getElementById("sort-select");
+    if (sortSelect) {
+      sortSelect.onchange = () => {
+        currentSort = sortSelect.value;
+        loadList();
+      };
+    }
+
+    // 새 약품 등록 버튼
+    const newBtn = document.getElementById("new-inventory-btn");
+    if (newBtn) {
+      newBtn.onclick = async () => {
+        console.log("🧾 새 약품 등록 버튼 클릭됨");
+        const ok = await App.includeHTML("pages/inventory-form.html", "form-container");
+        if (ok) {
+          console.log("📄 inventory-form.html 로드 완료 → 폼 초기화 시작");
+          App.Forms?.initInventoryForm?.("create", null);
+        } else {
+          console.error("❌ inventory-form.html 로드 실패");
+        }
+      };
+    }
+  }
+  
   // ------------------------------------------------------------
   // 7️⃣ 초기화
   // ------------------------------------------------------------
@@ -314,6 +337,7 @@
   globalThis.App = getApp();
   globalThis.App.Inventory = {
     loadList,
+    bindListPage,
     loadDetail,
     createInventory,
     updateInventory,

@@ -17,36 +17,67 @@
     try {
       const res = await fetch(file);
       if (!res.ok) throw new Error(`HTTP ${res.status} (${res.statusText})`);
-
       const html = await res.text();
+
+      // ✅ innerHTML로 삽입
       container.innerHTML = html;
       console.log(`✅ includeHTML 완료 → ${file}`);
 
+      // ✅ 브라우저 렌더링 완료 보장 (2프레임 대기)
       await new Promise((resolve) =>
         requestAnimationFrame(() => requestAnimationFrame(resolve))
       );
 
-      // 4️⃣ 페이지별 후처리
-      App.Fab?.setVisibility(false); // ⬅️ [추가됨] 일단 모든 페이지에서 FAB 숨김
+      // ✅ innerHTML로 삽입된 <script> 수동 실행 (필요 시)
+      const scripts = container.querySelectorAll("script");
+      for (const old of scripts) {
+        const s = document.createElement("script");
+        if (old.type) s.type = old.type;
+        if (old.src) {
+          s.src = old.src;
+        } else {
+          s.textContent = old.textContent || "";
+        }
+        old.parentNode.replaceChild(s, old);
+      }
 
+      // -------------------------------------------------
       // 페이지별 후처리
+      // -------------------------------------------------
+      App.Fab?.setVisibility(false); // 모든 페이지에서 기본 비활성화
+
       if (file.includes("navbar.html")) {
         console.log("🧭 Navbar HTML 로드 완료");
+
       } else if (file.includes("main.html")) {
         console.log("🏠 Main 화면 HTML 로드 완료");
         App.Fab?.setVisibility(false);
+
       } else if (file.includes("location-list.html")) {
         console.log("📦 시약장 목록 HTML 로드 완료");
         App.Cabinet?.loadList?.();
-        App.Fab?.setVisibility(true, "새 시약장 등록", () => { App.Cabinet?.createForm?.(); });
+        App.Fab?.setVisibility(true, "새 시약장 등록", () => {
+          App.Cabinet?.createForm?.();
+        });
+
       } else if (file.includes("cabinet-form.html")) {
         console.log("🧩 시약장 등록 폼 HTML 로드 완료");
+
       } else if (file.includes("inventory-list.html")) {
         console.log("🧪 재고 목록 HTML 로드 완료");
+        // ✅ 목록 표시 및 버튼 이벤트 바인딩
         App.Inventory?.loadList?.();
+        App.Inventory?.bindListPage?.();
+        App.Fab?.setVisibility(true, "새 약품 등록", () => {
+          App.includeHTML("pages/inventory-form.html", "form-container").then((ok) => {
+            if (ok) App.Forms?.initInventoryForm?.("create", null);
+          });
+        });
+
       } else if (file.includes("inventory-detail.html")) {
         console.log("🧬 재고 상세 HTML 로드 완료");
         App.Inventory?.loadDetail?.();
+
       } else if (file.includes("inventory-form.html")) {
         console.log("🧾 재고 등록 폼 HTML 로드 완료");
         App.Forms?.initInventoryForm?.("create", null);
@@ -82,12 +113,12 @@
 
     App.Fab?.setVisibility(false);
 
-    // ✅ 1초(또는 원하는 시간) 정도 후에 splash 사라지게
+    // ✅ splash 해제
     setTimeout(() => {
       document.body.classList.remove("home-active");
       document.body.classList.add("loaded");
       console.log("✅ Bootstrap 완료 — Splash 숨김, 메인화면 전환");
-    }, 1000); // ← 필요 시 1500~2000으로 늘릴 수도 있음
+    }, 1000);
   }
 
   // -----------------------------------------------------
@@ -97,9 +128,5 @@
   globalThis.App.includeHTML = includeHTML;
   globalThis.addEventListener("DOMContentLoaded", bootstrap);
 
-  //App.navigateTo = navigateTo;
   console.log("✅ AppBootstrap 초기화 완료 — includeHTML 전역 등록됨");
-
-
-
 })();
