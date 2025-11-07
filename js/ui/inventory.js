@@ -51,16 +51,19 @@
       .map((it) => {
         const img = it.photo_url_320 || "/img/no-image.png";
         return `
-          <div class="inventory-card">
+          <div class="inventory-card" data-id="${it.id}">
             <div class="card-image-placeholder">
               <img class="card-image" src="${img}" alt="${it.name_kor || it.cas_rn}" />
             </div>
             <div class="card-info">
               <h3>${it.name_kor || "-"}</h3>
               <p class="area-name">${it.storage_location || "위치: 미지정"}</p>
-              <p class="cabinet-specs">재고: ${it.current_amount ?? 0}${it.unit || ""} · 등록일 ${new Date(it.created_at).toLocaleDateString()}</p>
+              <p class="cabinet-specs">
+                재고: ${it.current_amount ?? 0}${it.unit || ""} · ${new Date(it.created_at).toLocaleDateString()}
+              </p>
             </div>
             <div class="card-actions">
+              <button class="detail-btn" data-id="${it.id}">상세</button>
               <button class="edit-btn" data-id="${it.id}">수정</button>
               <button class="delete-btn" data-id="${it.id}">삭제</button>
             </div>
@@ -69,36 +72,33 @@
       })
       .join("");
 
-    // 상세 버튼
-    container.querySelectorAll(".view-btn").forEach((btn) => {
+    // ✅ 각 카드 버튼 이벤트
+    container.querySelectorAll(".detail-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = Number(btn.dataset.id);
-        await includeHTML("pages/inventory-detail.html");
-        await loadDetail(id);
+        console.log(`🔍 상세 보기 클릭: ID=${id}`);
+        const ok = await App.includeHTML("pages/inventory-detail.html", "form-container");
+        if (ok) App.Inventory?.loadDetail?.(id);
       });
     });
 
-    // 수정 버튼
     container.querySelectorAll(".edit-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = Number(btn.dataset.id);
-        console.log(`✏️ 약품 수정 클릭: ID=${id}`);
+        console.log(`✏️ 수정 클릭: ID=${id}`);
         const ok = await App.includeHTML("pages/inventory-form.html", "form-container");
         if (ok) App.Forms?.initInventoryForm?.("edit", { id });
       });
     });
-    // 삭제 버튼
+
     container.querySelectorAll(".delete-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = Number(btn.dataset.id);
         if (!confirm("정말 삭제하시겠습니까?")) return;
-
         try {
           const supabase = getSupabase();
-          // Edge Function 직접 호출
-          const fnUrl = `${App.projectFunctionsBaseUrl || "/functions/v1"}/casimport?type=inventory&id=${id}`;
-          const res = await fetch(fnUrl, { method: "DELETE" });
-          if (!res.ok) throw new Error(await res.text());
+          const { error } = await supabase.from("Inventory").delete().eq("id", id);
+          if (error) throw error;
           alert("✅ 삭제되었습니다.");
           loadList();
         } catch (err) {
@@ -178,18 +178,44 @@
     const { data, error } = await supabase
       .from("Inventory")
       .select(`
-        id, name_kor, cas_rn, storage_location, photo_url_320, msds_pdf_url,
-        MSDS(*),
-        HazardClassifications(*)
-      `)
+          id, current_amount, unit, classification, created_at, photo_url_320,
+          door_vertical, door_horizontal, internal_shelf_level, storage_column,
+          Substance ( name, cas_rn, molecular_formula, molecular_weight ),
+          Cabinet ( name, Area ( name ) )
+        `)
       .eq("id", id)
       .maybeSingle();
 
-    if (error || !data) {
-      console.error("❌ 상세 보기 오류:", error);
-      alert("상세 정보를 불러오지 못했습니다.");
-      return;
-    }
+    if (error || !data) throw error || new Error("데이터 없음");
+
+      const info = data;
+      const area = info.Cabinet?.Area?.name || "-";
+      const cab = info.Cabinet?.name || "-";
+      const photo = info.photo_url_320 || "/img/no-image.png";
+
+      container.innerHTML = `
+        <div class="inventory-detail">
+          <div class="detail-header">
+            <h2>${info.Substance?.name || "(이름 없음)"}</h2>
+            <p>CAS: ${info.Substance?.cas_rn || "-"}</p>
+          </div>
+          <div class="detail-body">
+            <img src="${photo}" alt="약품 이미지" class="detail-photo">
+            <ul>
+              <li><strong>화학식:</strong> ${info.Substance?.molecular_formula || "-"}</li>
+              <li><strong>분자량:</strong> ${info.Substance?.molecular_weight || "-"}</li>
+              <li><strong>분류:</strong> ${info.classification || "-"}</li>
+              <li><strong>재고:</strong> ${info.current_amount ?? 0}${info.unit || ""}</li>
+              <li><strong>보관 위치:</strong> ${area} · ${cab}</li>
+              <li><strong>등록일:</strong> ${new Date(info.created_at).toLocaleDateString()}</li>
+            </ul>
+          </div>
+          <div class="detail-actions">
+            <button id="detail-edit-btn">수정</button>
+            <button id="detail-back-btn">목록으로</button>
+          </div>
+        </div>
+      `;
 
     document.getElementById("detail-name").textContent =
       data.name_kor || "이름 없음";
@@ -323,14 +349,6 @@
     }
   }
   
-  // ------------------------------------------------------------
-  // 7️⃣ 초기화
-  // ------------------------------------------------------------
-  document.addEventListener("DOMContentLoaded", () => {
-    setupSortUI();
-    loadList();
-  });
-
   // ------------------------------------------------------------
   // 8️⃣ 전역 등록
   // ------------------------------------------------------------
