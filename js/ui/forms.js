@@ -2,377 +2,313 @@
 // /js/ui/forms.js — 폼 상태/UI 관리 (App.Forms)
 // ================================================================
 (function () {
-    // ⬇️ 필요한 함수들을 전역 App 객체에서 가져옵니다.
-    const { setupButtonGroup, makePayload } = App.Utils;
-    const { set, get, reset, dump } = App.State;
-    // ⬇️ 카메라 함수들을 App.Camera에서 가져옵니다.
-    const { start: startCamera, setupModalListeners, processImage, updatePreview } = App.Camera;
+  console.log("🧾 App.Forms 모듈 로드됨");
 
-    // -------------------------------------------------
-    // 💾 저장 버튼 클릭 시
-    // -------------------------------------------------
-    async function handleSave() {
-        try {
-            const state = App.State.dump(); // ✅ App.State에서 가져오는 게 명확
-            const payload = await App.Utils.makePayload(state); // ✅ await 필수
-            console.log("💾 payload 확인:", payload);
+  // -------------------------------------------------
+  // 전역 유틸 및 모듈 참조
+  // -------------------------------------------------
+  const { setupButtonGroup, makePayload } = App.Utils;
+  const { set, get, reset, dump } = App.State;
+  const { start: startCamera, setupModalListeners, processImage, updatePreview } = App.Camera;
+  const supabase = App.Supabase; // ✅ Supabase 인스턴스
 
-            // 유효성 검사
-            if (!payload.cabinet_name) return alert("시약장 이름을 선택하거나 입력하세요.");
-            if (!payload.area_name) return alert("시약장 위치를 선택하세요.");
+  // -------------------------------------------------
+  // 💾 시약장 저장 (등록/수정)
+  // -------------------------------------------------
+  async function handleSave() {
+    try {
+      const state = dump();
+      const payload = await makePayload(state);
+      console.log("💾 시약장 payload:", payload);
 
-            if (state.mode === "create") {
-                await App.Cabinet.createCabinet(payload);
-                alert("✅ 시약장이 등록되었습니다.");
-            } else {
-                await App.Cabinet.updateCabinet(state.cabinetId, payload);
-                alert("✅ 시약장 정보가 수정되었습니다.");
-            }
-            await App.includeHTML("pages/location-list.html"); // 완료 후 목록으로 복귀
-        } catch (err) {
-            console.error("❌ handleSave 오류:", err);
-            alert("저장 중 오류가 발생했습니다.");
-        }
+      if (!payload.cabinet_name) return alert("시약장 이름을 선택하거나 입력하세요.");
+      if (!payload.area_name) return alert("시약장 위치를 선택하세요.");
+
+      if (state.mode === "create") {
+        await App.Cabinet.createCabinet(payload);
+        alert("✅ 시약장이 등록되었습니다.");
+      } else {
+        await App.Cabinet.updateCabinet(state.cabinetId, payload);
+        alert("✅ 시약장 정보가 수정되었습니다.");
+      }
+
+      await App.includeHTML("pages/location-list.html", "form-container");
+      App.Cabinet.loadList?.();
+    } catch (err) {
+      console.error("❌ handleSave 오류:", err);
+      alert("저장 중 오류가 발생했습니다.");
+    }
+  }
+
+  // -------------------------------------------------
+  // 🧭 시약장 폼 초기화 (등록/수정 공용)
+  // -------------------------------------------------
+  async function initCabinetForm(mode = "create", detail = null) {
+    console.log("🧭 initCabinetForm()", mode, detail);
+
+    await App.includeHTML("pages/cabinet-form.html", "form-container");
+
+    reset();
+    set("mode", mode);
+    if (detail) {
+      Object.entries(detail).forEach(([k, v]) => set(k, v));
+      set("cabinetId", detail.id);
+      set("area_id", detail.area_id?.id || null);
+      set("area_custom_name", detail.area_id?.name || null);
+      set("cabinet_name", detail.name);
     }
 
-    // -------------------------------------------------
-    // 🧭 시약장 폼 초기화 (등록/수정 공용 진입점)
-    // -------------------------------------------------
-    async function initCabinetForm(mode = "create", detail = null) {
-        console.log("🧭 initCabinetForm()", mode, detail);
+    const title = document.querySelector("#cabinet-creation-form h2");
+    const submitBtn = document.getElementById("cabinet-submit-button");
+    const saveBtn = document.getElementById("cabinet-save-btn");
+    const cancelBtn = document.getElementById("cancel-form-btn");
 
-        // ✅ 1️⃣ 폼 HTML을 먼저 로드
-        await App.includeHTML("pages/cabinet-form.html", "form-container");
+    if (title) title.textContent = mode === "edit" ? `${detail?.name || "시약장"} 정보 수정` : "시약장 등록";
 
-        // ✅ 2️⃣ 상태 객체(state) 초기화
-        reset();
-        set("mode", mode);
-        if (detail) {
-            Object.entries(detail).forEach(([k, v]) => set(k, v));
-            set("cabinetId", detail.id);
-            set("area_id", detail.area_id?.id || null);
-            set("area_custom_name", detail.area_id?.name || null);
-            // ⬇️ [수정됨] 'makePayload'가 찾는 'cabinet_name'에도 값을 설정합니다.
-            set("cabinet_name", detail.name);
-        }
+    if (mode === "edit") {
+      if (submitBtn) submitBtn.style.display = "none";
+      if (saveBtn) {
+        saveBtn.style.display = "inline-block";
+        saveBtn.onclick = (e) => {
+          e.preventDefault();
+          handleSave();
+        };
+      }
+    } else {
+      if (submitBtn) {
+        submitBtn.style.display = "inline-block";
+        submitBtn.onclick = (e) => {
+          e.preventDefault();
+          handleSave();
+        };
+      }
+      if (saveBtn) saveBtn.style.display = "none";
+    }
 
-        // ✅ 3️⃣ DOM 요소 가져오기
-        const title = document.querySelector("#cabinet-creation-form h2");
-        const submitBtn = document.getElementById("cabinet-submit-button");
-        const saveBtn = document.getElementById("cabinet-save-btn");
-        const cancelBtn = document.getElementById("cancel-form-btn");
+    if (cancelBtn) cancelBtn.onclick = () => App.includeHTML("pages/location-list.html");
 
-        // ✅ 4️⃣ 제목, 버튼 텍스트, 이벤트 핸들러
-        if (title) title.textContent = mode === "edit" ? `${detail?.name || "시약장"} 정보 수정` : "시약장 등록";
+    // ✅ 버튼 그룹 초기화
+    (function initButtonGroups() {
+      const areaGroupEl = document.getElementById("area-button-group");
+      const cabGroupEl = document.getElementById("cabinet_name_buttons");
+      if (!areaGroupEl || !cabGroupEl) return;
 
-        if (mode === "edit") {
-            if (submitBtn) submitBtn.style.display = "none";
-            if (saveBtn) {
-                saveBtn.style.display = "inline-block";
-                saveBtn.onclick = (e) => { e.preventDefault(); handleSave(); };
-            }
-            document.querySelectorAll("#cabinet_name_buttons button").forEach(b => b.disabled = true);
-            const otherInput = document.getElementById("cabinet-other-input") || document.getElementById("cabinet_other_input");
-            if (otherInput) otherInput.disabled = true;
+      setupButtonGroup("area-button-group", (btn) => {
+        areaGroupEl.querySelectorAll("button").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const val = btn.dataset.value;
+        const id = btn.dataset.id ? parseInt(btn.dataset.id) : null;
+
+        if (val === "기타") {
+          App.State.set("area_id", null);
+          App.State.set("area", "기타");
+          document.getElementById("area-other-group")?.classList.add("show");
+          setTimeout(() => document.getElementById("area-other-input")?.focus(), 0);
         } else {
-            if (submitBtn) {
-                submitBtn.style.display = "inline-block";
-                submitBtn.onclick = (e) => { e.preventDefault(); handleSave(); };
-            }
-            if (saveBtn) saveBtn.style.display = "none";
+          App.State.set("area_id", id);
+          App.State.set("area", val);
+          App.State.set("area_custom_name", null);
+          document.getElementById("area-other-group").style.display = "none";
         }
+      });
 
-        if (cancelBtn)
-            cancelBtn.onclick = () => App.includeHTML("pages/location-list.html");
+      setupButtonGroup("cabinet_name_buttons", (btn) => {
+        cabGroupEl.querySelectorAll("button").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const val = btn.dataset.value;
 
-        // ✅ 5️⃣ 버튼 그룹 초기화 (수정된 버전)
-        (function initButtonGroups() {
-        // 미리 DOM 캐시
-        const areaGroupEl = document.getElementById("area-button-group");
-        const areaOtherGroup = document.getElementById("area-other-group");
-        const areaOtherInput = document.getElementById("area-other-input");
+        if (val === "기타") {
+          App.State.set("cabinet_name_buttons", "기타");
+          document.getElementById("cabinet-other-group")?.classList.add("show");
+          setTimeout(() => document.getElementById("cabinet-other-input")?.focus(), 0);
+        } else {
+          App.State.set("cabinet_name_buttons", val);
+          document.getElementById("cabinet-other-group")?.classList.remove("show");
+        }
+      });
 
-        const cabGroupEl = document.getElementById("cabinet_name_buttons");
-        const cabOtherGroup = document.getElementById("cabinet-other-group") || document.getElementById("cabinet_other-group");
-        const cabOtherInput = document.getElementById("cabinet-other-input") || document.getElementById("cabinet_other_input");
-
-        // 🔹 1) 장소 버튼 그룹 -------------------------------------------------
-        setupButtonGroup("area-button-group", (btn) => {
-            // 1-1. active 표시를 우리가 확실히 관리 (부수효과 최소화)
-            areaGroupEl.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-
-            const val = btn.dataset.value;
-            const id = btn.dataset.id ? parseInt(btn.dataset.id) : null; // ⬅️ [수정됨] id 가져오기
-
-            if (val === "기타") {
-            // 기타 선택 상태 기록
-            App.State.set("area_id", null);
-                App.State.set("area", "기타"); // ⬅️ [수정됨] 'area' 키에도 저장
-                App.State.set("area_custom_name", areaOtherInput.value.trim());
-
-                // "기타 입력칸 보이기": display 직접 만지지 말고 class만
-                areaOtherGroup.classList.add("show");
-                // focus는 즉시 주지 말고, 살짝 늦게 줘서 레이아웃 흔들지 않게
-                setTimeout(() => {
-                    areaOtherInput.focus();
-                }, 0);
-            } else {
-            // 일반 장소 선택: 입력란 숨기기
-            App.State.set("area_id", id); // ⬅️ [수정됨] 올바른 id 저장
-            App.State.set("area", val); // ⬅️ [수정됨] 'area' 키에 저장
-            App.State.set("area_custom_name", null);
-            areaOtherGroup.style.display = "none";
-            //areaOtherInput.value = ""; // 입력값 초기화 (선택사항)
-            }
+      ["door_vertical_split_buttons", "door_horizontal_split_buttons", "shelf_height_buttons", "storage_columns_buttons"].forEach((id) => {
+        setupButtonGroup(id, (btn) => {
+          const key = id.replace("_buttons", "");
+          App.State.set(key, btn.dataset.value);
         });
+      });
+    })();
 
-        // 기타 입력칸에 대한 input 리스너는 한 번만
-        if (areaOtherInput && !areaOtherInput._bound) {
-            areaOtherInput.addEventListener("input", (e) => {
-            App.State.set("area_custom_name", e.target.value.trim());
-            });
-            areaOtherInput._bound = true;
-        }
+    // ✅ 사진/카메라
+    const photoInput = document.getElementById("cabinet-photo-input");
+    const cameraInput = document.getElementById("cabinet-camera-input");
+    const previewBox = document.getElementById("cabinet-photo-preview");
+    const cameraBtn = document.getElementById("cabinet-camera-btn");
+    const photoBtn = document.getElementById("cabinet-photo-btn");
 
-        // 🔹 2) 시약장 이름 버튼 그룹 -----------------------------------------
-        setupButtonGroup("cabinet_name_buttons", (btn) => {
-            // active 확실히 관리
-            cabGroupEl.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-
-            const val = btn.dataset.value;
-
-            if (val === "기타") {
-                // 기타 상태 저장
-                App.State.set("cabinet_name_buttons", "기타");
-                App.State.set("cabinet_custom_name", cabOtherInput.value.trim());
-
-                // 기타 입력박스 보여주기 (class로)
-                if (cabOtherGroup) cabOtherGroup.classList.add("show");
-
-                // 마찬가지로 focus는 다음 tick
-                if (cabOtherInput) {
-                    setTimeout(() => {
-                    cabOtherInput.focus();
-                    }, 0);
-                }
-            } else {
-                // 일반 이름
-                App.State.set("cabinet_name_buttons", val);
-                App.State.set("cabinet_custom_name", null);
-
-                // 기타 입력칸 숨김
-                if (cabOtherGroup) cabOtherGroup.classList.remove("show");
-            }
+    const handleFile = (file) => {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        processImage(e.target.result, (resized) => {
+          App.State.set("photo_320_base64", resized.base64_320);
+          App.State.set("photo_160_base64", resized.base64_160);
+          previewBox.innerHTML = `<img src="${resized.base64_320}" alt="Preview">`;
         });
-
-        // 기타 입력칸 리스너도 한 번만
-        if (cabOtherInput && !cabOtherInput._bound) {
-            cabOtherInput.addEventListener("input", (e) => {
-            App.State.set("cabinet_custom_name", e.target.value.trim());
-            });
-            cabOtherInput._bound = true;
-        }
-
-        // 🔹 3) 나머지 그룹들 (도어/선반/열) ----------------------------------
-        ["door_vertical_split_buttons", "door_horizontal_split_buttons", "shelf_height_buttons", "storage_columns_buttons"]
-            .forEach((id) => {
-                setupButtonGroup(id, (btn) => {
-                const key = id.replace("_buttons", "");
-                App.State.set(key, btn.dataset.value);
-                });
-            });
-        })();
-
-        // ✅ 기타 입력칸 표시 로직 (명시적 표시)
-        const areaOtherBtn = document.getElementById("area-other-btn");
-        const areaOtherGroup = document.getElementById("area-other-group");
-        const areaOtherInput = document.getElementById("area-other-input");
-
-        if (areaOtherBtn && areaOtherGroup && areaOtherInput) {
-        areaOtherBtn.addEventListener("click", () => {
-            document.querySelectorAll("#area-button-group button").forEach(b => b.classList.remove("active"));
-            areaOtherBtn.classList.add("active");
-            areaOtherGroup.style.display = "block";
-            areaOtherInput.focus();
-            App.State.set("area_id", null);
-        });
-        areaOtherInput.addEventListener("input", e => {
-            App.State.set("area_custom_name", e.target.value.trim());
-        });
-        }
-
-        const cabOtherBtn = document.getElementById("cabinet-other-btn");
-        const cabOtherGroup = document.getElementById("cabinet-other-group") || document.getElementById("cabinet_other-group");
-        const cabOtherInput = document.getElementById("cabinet-other-input") || document.getElementById("cabinet_other_input");
-
-        if (cabOtherBtn && cabOtherGroup && cabOtherInput) {
-        cabOtherBtn.addEventListener("click", () => {
-            document.querySelectorAll("#cabinet_name_buttons button").forEach(b => b.classList.remove("active"));
-            cabOtherBtn.classList.add("active");
-            cabOtherGroup.style.display = "block";
-            cabOtherInput.focus();
-            App.State.set("cabinet_name", "기타");
-        });
-        cabOtherInput.addEventListener("input", e => {
-            App.State.set("cabinet_custom_name", e.target.value.trim());
-        });
-        }
-
-        // ⬇️ [수정됨] 6️⃣ 사진/카메라 기능 초기화 (올바른 ID 사용)
-        const photoInput = document.getElementById("cabinet-photo-input");
-        const cameraInput = document.getElementById("cabinet-camera-input");
-        const previewBox = document.getElementById("cabinet-photo-preview");
-        const cameraBtn = document.getElementById("cabinet-camera-btn");
-        const photoBtn = document.getElementById("cabinet-photo-btn");
-
-        if (photoBtn && photoInput) {
-            photoBtn.onclick = () => photoInput.click();
-        }
-        if (cameraBtn && typeof startCamera === "function") {
-            cameraBtn.onclick = () => startCamera();
-        }
-        if (typeof setupModalListeners === "function") {
-            setupModalListeners();
-        }
-
-        const handleFile = (file) => {
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                processImage(e.target.result, (resized) => {
-                    App.State.set("photo_320_base64", resized.base64_320);
-                    App.State.set("photo_160_base64", resized.base64_160);
-                    if (previewBox) {
-                        previewBox.innerHTML = `<img src="${resized.base64_320}" alt="Preview">`;
-                    }
-                });
-            };
-            reader.readAsDataURL(file);
-        };
-
-        if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
-        if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
-
-        // ✅ 7️⃣ '기타' 버튼 로직 연결
-        //setupOtherButtonLogic("area-other-btn", "area-other-group", "area-other-input", "area-button-group", "area_custom_name");
-        //setupOtherButtonLogic("cabinet-other-btn", "cabinet-other-group", "cabinet-other-input", "cabinet_name_buttons", "cabinet_custom_name");
-
-        // ✅ 8️⃣ [수정됨] edit 모드일 경우 기존 선택 반영 (마지막에 호출)
-        if (mode === "edit" && detail) {
-            applyExistingSelection(detail);
-            if (detail.photo_url_320) {
-                updatePreview(detail.photo_url_320, 'cabinet-photo-preview');
-            }
-        }
-        
-        console.log(`✅ 시약장 폼 초기화 완료 (${mode})`);
-    }
-
-    // -------------------------------------------------
-    // ✍️ 폼 데이터 채우기 (수정 모드)
-    // -------------------------------------------------
-    function applyExistingSelection(detail) {
-        console.log("🎯 applyExistingSelection", detail);
-        
-        // 맵핑 정보
-        const verticalMap = { 3: "상중하도어", 2: "상하도어", 1: "단일도어(상하분리없음)" };
-        const horizontalMap = { 2: "좌우분리도어", 1: "단일도어" };
-        
-        const preselect = (groupId, value) => {
-            if (value == null) return;
-            const btn = document.querySelector(`#${groupId} button[data-value="${value}"]`);
-            if (btn) btn.classList.add("active");
-        };
-
-        // ① 장소 버튼
-        const areaBtn = document.querySelector(`#area-button-group button[data-value="${detail.area_id?.name}"]`);
-        if (areaBtn) {
-            areaBtn.classList.add("active");
-        } else { // '기타' 항목 처리
-            const otherBtn = document.getElementById("cabinet-other-btn");
-            if (otherBtn) otherBtn.classList.add("active");
-            const otherGroup = document.getElementById("cabinet-other-group") || document.getElementById("cabinet_other-group");
-            const otherInput = document.getElementById("cabinet-other-input") || document.getElementById("cabinet_other_input");
-            if (otherGroup && otherInput) {
-                // ✅ 기타 입력칸 항상 표시
-                otherGroup.style.display = "block";
-                // ✅ 기존 입력값 복원
-                otherInput.value = detail.cabinet_custom_name || detail.name || "";
-                // ✅ 수정 금지
-                otherInput.disabled = true;
-            }
-        }
-        //document.querySelectorAll("#area-button-group button").forEach((b) => (b.disabled = true));
-
-        // ② 시약장 이름 버튼
-        const nameBtn = document.querySelector(`#cabinet_name_buttons button[data-value="${detail.name}"]`);
-        if (nameBtn) {
-            nameBtn.classList.add("active");
-        } else { // '기타' 항목 처리
-            const otherBtn = document.getElementById("cabinet-other-btn");
-            if (otherBtn) otherBtn.classList.add("active");
-            const otherGroup = document.getElementById("cabinet-other-group");
-            const otherInput = document.getElementById("cabinet-other-input");
-            if (otherGroup && otherInput) {
-                otherGroup.style.display = "block";
-                otherInput.value = detail.name || ""; // 기타 이름 표시
-                otherInput.disabled = true; // 수정 불가
-            }
-        }
-        document.querySelectorAll("#cabinet_name_buttons button").forEach((b) => (b.disabled = true));
-        //document.querySelectorAll("#cabinet_name_buttons button").forEach((b) => (b.disabled = true));
-        //document.querySelectorAll("#cabinet_other_input").forEach((input) => (input.disabled = true));
-
-
-        // ⬇️ [수정됨] ③ 나머지 선택 항목 자동 반영
-        preselect("door_vertical_split_buttons", verticalMap[detail.door_vertical_count]);
-        preselect("door_horizontal_split_buttons", horizontalMap[detail.door_horizontal_count]);
-        preselect("shelf_height_buttons", detail.shelf_height?.toString());
-        preselect("storage_columns_buttons", detail.storage_columns?.toString());
-    }
-
-    // -------------------------------------------------
-    // 📎 '기타' 버튼 로직 헬퍼
-    // -------------------------------------------------
-    //function setupOtherButtonLogic(btnId, groupId, inputId, buttonGroupId, stateKey) {
-    //    const otherBtn = document.getElementById(btnId);
-    //    const otherGroup = document.getElementById(groupId);
-    //    const otherInput = document.getElementById(inputId);
-    //    const buttonGroup = document.getElementById(buttonGroupId);
-//
-//        if (!otherBtn || !otherGroup || !otherInput || !buttonGroup) return;
-
-//        otherBtn.addEventListener("click", () => {
-//            buttonGroup.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
-//            otherBtn.classList.add("active");
-//            otherGroup.style.display = "block";
-//            otherInput.focus();
-//            App.State.set(stateKey, otherInput.value.trim() || "기타");
-//        });
-
-//        otherInput.addEventListener("input", (e) => {
-//            App.State.set(stateKey, e.target.value.trim());
-//        });
-//    }
-
-    // -------------------------------------------------
-    // (다른 종류 폼을 위한 임시 함수)
-    // -------------------------------------------------
-    function initInventoryForm() {
-        console.log("🧪 initInventoryForm() (placeholder)");
-        // 나중에 이 함수도 initCabinetForm처럼 구현됩니다.
-    }
-
-    // -------------------------------------------------
-    // 전역 등록
-    // -------------------------------------------------
-    globalThis.App = globalThis.App || {};
-    globalThis.App.Forms = {
-        initCabinetForm,
-        initInventoryForm,
-        handleSave,
-        applyExistingSelection
+      };
+      reader.readAsDataURL(file);
     };
+
+    if (photoBtn && photoInput) photoBtn.onclick = () => photoInput.click();
+    if (cameraBtn && typeof startCamera === "function") cameraBtn.onclick = () => startCamera();
+    setupModalListeners?.();
+    if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
+    if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
+
+    if (mode === "edit" && detail?.photo_url_320) updatePreview(detail.photo_url_320, "cabinet-photo-preview");
+
+    console.log(`✅ 시약장 폼 초기화 완료 (${mode})`);
+  }
+
+  // -------------------------------------------------
+  // 🧪 약품 등록/수정 폼 초기화
+  // -------------------------------------------------
+  async function initInventoryForm(mode = "create", detail = null) {
+    console.log("🧪 initInventoryForm()", mode, detail);
+    App.State.reset();
+    App.State.set("mode", mode);
+
+    const title = document.querySelector("#inventory-form h1");
+    const submitBtn = document.getElementById("inventory-submit-button");
+    const statusMsg = document.getElementById("statusMessage");
+    if (title) title.textContent = mode === "edit" ? "약품 정보 수정" : "약품 입고 정보 입력";
+
+    // ✅ 수정 모드 시 기존 값 반영
+    if (mode === "edit" && detail) {
+      for (const [key, val] of Object.entries(detail)) {
+        const el = document.querySelector(`[name='${key}']`);
+        if (el) el.value = val ?? "";
+      }
+      if (detail.photo_url_320) {
+        const preview = document.getElementById("photo-preview");
+        preview.innerHTML = `<img src="${detail.photo_url_320}" alt="Preview">`;
+      }
+    }
+
+    // ✅ 저장 버튼
+    if (submitBtn) {
+      submitBtn.onclick = async (e) => {
+        e.preventDefault();
+        statusMsg.textContent = "💾 저장 중...";
+        try {
+          const payload = await App.Utils.makePayload(App.State.dump());
+          console.log("💾 약품 payload:", payload);
+
+          if (mode === "edit" && detail?.id) {
+            await App.Inventory.updateInventory(detail.id, payload);
+            alert("✅ 약품 정보가 수정되었습니다.");
+          } else {
+            await App.Inventory.createInventory(payload);
+            alert("✅ 새 약품이 등록되었습니다.");
+          }
+
+          await App.includeHTML("pages/inventory-list.html", "form-container");
+          App.Inventory.loadList();
+        } catch (err) {
+          console.error("❌ 저장 오류:", err);
+          statusMsg.textContent = "❌ 저장 실패. 콘솔을 확인하세요.";
+        }
+      };
+    }
+
+    // ✅ 버튼 그룹 (분류, 상태, 단위 등)
+    ["classification_buttons", "state_buttons", "unit_buttons", "concentration_unit_buttons", "manufacturer_buttons"].forEach((id) => {
+      App.Utils.setupButtonGroup(id, (btn) => {
+        const key = id.replace("_buttons", "");
+        App.State.set(key, btn.dataset.value);
+        if (id === "manufacturer_buttons") {
+          const otherGroup = document.getElementById("other_manufacturer_group");
+          if (btn.dataset.value === "기타") {
+            otherGroup.style.display = "block";
+            document.getElementById("manufacturer_other").focus();
+          } else {
+            otherGroup.style.display = "none";
+          }
+        }
+      });
+    });
+
+    // ✅ 사진 업로드
+    const photoInput = document.getElementById("photo-input");
+    const cameraInput = document.getElementById("camera-input");
+    const preview = document.getElementById("photo-preview");
+    const photoBtn = document.getElementById("photo-btn");
+    const cameraBtn = document.getElementById("camera-btn");
+
+    const handleFile = (file) => {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const src = e.target.result;
+        preview.innerHTML = `<img src="${src}" alt="Preview">`;
+        App.State.set("photo_base64", src);
+      };
+      reader.readAsDataURL(file);
+    };
+
+    if (photoBtn && photoInput) photoBtn.onclick = () => photoInput.click();
+    if (cameraBtn && cameraInput) cameraBtn.onclick = () => cameraInput.click();
+    if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
+    if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
+
+    // ✅ 위치 선택 (Area / Cabinet)
+    const areaSelect = document.getElementById("location_area_select");
+    const cabSelect = document.getElementById("location_cabinet_select");
+
+    if (areaSelect && supabase) {
+      const { data: areas } = await supabase.from("Area").select("id, name").order("name");
+      if (areas?.length) {
+        areaSelect.innerHTML += areas.map((a) => `<option value="${a.id}">${a.name}</option>`).join("");
+      }
+
+      areaSelect.onchange = async (e) => {
+        const areaId = e.target.value;
+        App.State.set("area_id", areaId);
+        cabSelect.disabled = !areaId;
+        if (!areaId) return;
+        const { data: cabs } = await supabase.from("Cabinet").select("id, name").eq("area_id", areaId);
+        cabSelect.innerHTML =
+          `<option value="">-- 선택 안 함 --</option>` +
+          (cabs || []).map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+      };
+    }
+
+    if (cabSelect) {
+      cabSelect.onchange = (e) => App.State.set("cabinet_id", e.target.value);
+    }
+
+    console.log(`✅ 약품 폼 초기화 완료 (${mode})`);
+  }
+
+  // -------------------------------------------------
+  // ✍️ 시약장 폼 데이터 복원
+  // -------------------------------------------------
+  function applyExistingSelection(detail) {
+    const preselect = (groupId, value) => {
+      if (value == null) return;
+      const btn = document.querySelector(`#${groupId} button[data-value="${value}"]`);
+      btn?.classList.add("active");
+    };
+    preselect("door_vertical_split_buttons", detail.door_vertical_count);
+    preselect("door_horizontal_split_buttons", detail.door_horizontal_count);
+  }
+
+  // -------------------------------------------------
+  // 전역 등록
+  // -------------------------------------------------
+  globalThis.App = globalThis.App || {};
+  globalThis.App.Forms = {
+    initCabinetForm,
+    initInventoryForm,
+    handleSave,
+    applyExistingSelection,
+  };
+
+  console.log("✅ App.Forms 모듈 초기화 완료");
 })();
