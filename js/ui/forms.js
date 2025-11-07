@@ -7,7 +7,7 @@
   const { setupButtonGroup, makePayload } = App.Utils;
   const { set, reset, dump } = App.State;
   const { start: startCamera, setupModalListeners, processImage, updatePreview } = App.Camera;
-  const supabase = App.Supabase;
+  const supabase = App.supabase;
 
   // -------------------------------------------------
   // 💾 시약장 저장
