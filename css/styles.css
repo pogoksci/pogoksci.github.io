@@ -762,29 +762,39 @@ body.home-active #splash-screen {
 .list-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  border-bottom: 1px solid #ddd; /* 시각적 구분 */
+  align-items: flex-end; /* 아래 기준 정렬 */
+  border-bottom: 1px solid #ddd;
   padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+/* ✅ 제목 스타일 */
+.list-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #222;
+  margin: 0;
+  line-height: 1.3;
 }
 
 /* ✅ 감싸는 박스로 완전한 테두리 유지 */
 .select-wrapper {
-  position: relative;
   border: 1px solid #c4c4c4;
   border-radius: 6px;
-  overflow: hidden;
   background: #fff;
   box-sizing: border-box;
-  flex-shrink: 0; /* ✅ flex 줄어듦 방지 */
+  overflow: hidden;
+  height: 24px; /* 🔹 세로 크기 조정 */
+  display: flex;
+  align-items: center;
 }
 
 /* ✅ 오른쪽 정렬영역 고정 */
 .header-actions {
   display: flex;
-  align-items: center;
+  align-items: flex-end; /* 텍스트 기준 아래 정렬 */
   justify-content: flex-end;
   gap: 8px;
-  min-width: 250px;
 }
 
 .select-wrapper:focus-within {
@@ -795,20 +805,30 @@ body.home-active #splash-screen {
 /* 정렬 셀렉트 */
 .sort-select {
   border: none;
-  width: 180px;
-  padding: 8px 32px 8px 12px;
-  font-size: 15px;
-  background: transparent;
+  font-family: inherit;
+  font-size: 14px; /* 🔹 폰트 살짝 축소 */
+  color: #333;
+  background-color: transparent;
   appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg fill='%23666' height='20' viewBox='0 0 24 24' width='20'><path d='M7 10l5 5 5-5z'/></svg>");
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 160px;
+  padding: 6px 28px 6px 10px;
+  line-height: 1.2;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23666' height='18' viewBox='0 0 24 24' width='18'><path d='M7 10l5 5 5-5z'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 14px;
+  background-position: right 6px center;
+  background-size: 13px;
 }
 
 /* ✅ Focus / Hover 시 동일한 색감 유지 */
 .sort-select:hover {
   border-color: #66afe9;
+}
+
+.sort-select:focus {
+  outline: none;
 }
 
 /* ✅ 옵션 목록(dropdown) 디자인 일치 (브라우저 지원 범위 내) */
@@ -828,26 +848,29 @@ select::-ms-expand {
 .sort-refresh-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 /* ✅ Refresh 버튼 */
 #refresh-btn {
-  border: 1px solid #c4c4c4;
-  border-radius: 6px;
-  background: #f8f9fa;
-  cursor: pointer;
-  padding: 6px 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0; /* ✅ 크기 자동 축소 방지 */
+  background: #f8f9fa;
+  border: 1px solid #c4c4c4;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 24px; /* 🔹 드롭다운 높이와 일치 */
+  height: 24px; /* 🔹 정사각형 */
+  padding: 0;
 }
 
 /* ✅ hover 시 wrapper border 강조 */
 #refresh-btn:hover {
   background: #e8f4ff;
   border-color: #66afe9;
+  color: #007bff;
 }
 
 #refresh-btn i {
@@ -855,8 +878,7 @@ select::-ms-expand {
 }
 
 #refresh-btn .material-symbols-outlined {
-  font-size: 20px;
-  line-height: 1;
+  font-size: 18px; /* 🔹 버튼 크기에 맞게 축소 */
   color: inherit;
   vertical-align: middle;
 }
