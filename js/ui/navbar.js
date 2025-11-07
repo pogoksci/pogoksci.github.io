@@ -65,7 +65,7 @@
       menuCabinet.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
-        await loadPage("pages/cabinet-list.html", () => App.Cabinet?.loadList?.());
+        await loadPage("pages/location-list.html", () => App.Cabinet?.loadList?.());
         closeStartMenu();
         setActive("menu-cabinet-btn");
       });
@@ -132,7 +132,7 @@
       menuLocation.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
-        await loadPage("pages/cabinet-list.html", () => App.Cabinet?.loadList?.());
+        await loadPage("pages/location-list.html", () => App.Cabinet?.loadList?.());
         closeStartMenu();
         setActive("menu-location");
       });
