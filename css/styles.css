@@ -745,3 +745,22 @@ body:not(.home-active) #splash-screen {
 body.home-active #splash-screen {
   animation: splashFadeIn 0.4s ease-out;
 }
+
+/*--------------------------
+시약 목록
+---------------------------*/
+/* 정렬 셀렉트 */
+.sort-select {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+/* 인벤토리 카드 (시약장 카드 스타일 재사용) */
+.inventory-card { 
+  background: #fff; border:1px solid #ddd; border-radius:8px; margin: 12px; overflow:hidden;
+}

@@ -1,15 +1,57 @@
-<!-- /pages/inveltory-list.html -->
-
+<!-- /pages/inventory-list.html -->
 <div id="inventory-list-page">
-    <div class="list-header">
-        <h2>약품 관리</h2>
-        <div class="header-actions">
-            <button id="search-btn">🔍</button>
-            <button id="refresh-btn">↻</button>
-        </div>
+  <div class="list-header">
+    <h2>약품 관리</h2>
+    <div class="header-actions">
+      <select id="sort-select" class="sort-select">
+        <option value="category_name_kor">📚 분류별 가나다</option>
+        <option value="name_kor">🔠 전체 가나다</option>
+        <option value="name_eng">🔠 전체 영문명</option>
+        <option value="formula">🧪 화학식순</option>
+        <option value="storage_location">🏷 위치순</option>
+        <option value="quantity_desc">📦 재고순</option>
+        <option value="created_at_desc" selected>🕓 등록순(최신)</option>
+      </select>
+      <button id="refresh-btn">↻</button>
     </div>
-    
-    <div id="inventory-list-container" class="list-view">
-        <p id="status-message-inventory-list" style="padding: 0 15px; color:#888;">재고 목록을 불러오는 중...</p>
-    </div>
+  </div>
+
+  <div id="inventory-list-container" class="list-view">
+    <p id="status-message-inventory-list" style="padding:0 15px; color:#888;">
+      재고 목록을 불러오는 중...
+    </p>
+  </div>
 </div>
+
+<!-- ✅ 하단 등록 버튼 (FAB) -->
+<button class="fab" id="new-inventory-btn">＋ 새 약품 등록</button>
+
+<script>
+  // ✅ 페이지가 includeHTML로 불러올 때도 즉시 실행 가능하도록 즉시 실행형으로 작성
+  (async function () {
+    console.log("📦 inventory-list.html 로드됨");
+    if (!window.App?.Inventory) {
+      console.warn("⚠️ App.Inventory 모듈이 아직 로드되지 않음. import 누락?");
+    }
+
+    // ✅ 목록 로드
+    App.Inventory?.loadList?.();
+
+    // ✅ 새로고침 버튼
+    document.getElementById("refresh-btn")?.addEventListener("click", () => {
+      App.Inventory?.loadList?.();
+    });
+
+    // ✅ 등록 버튼 → 등록 폼 이동
+    document.getElementById("new-inventory-btn")?.addEventListener("click", async () => {
+      console.log("🧪 새 약품 등록으로 이동");
+      await includeHTML("pages/inventory-register.html", "form-container");
+      App.Forms?.initInventoryForm?.();
+    });
+
+    // ✅ 정렬 변경
+    document.getElementById("sort-select")?.addEventListener("change", (e) => {
+      App.Inventory?.loadList?.(e.target.value);
+    });
+  })();
+</script>
