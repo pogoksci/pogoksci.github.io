@@ -30,6 +30,8 @@ function setupButtonGroup(groupId, onSelect) {
     // ✅ 선택된 버튼을 App.State에 반영 (핵심 추가)
     if (groupId.includes("area_name")) {
       App.State.set("area_buttons", btn.textContent.trim());
+      App.State.set("area_custom_name", null); // 기타 입력 값이 남아 우선 적용되는 것 방지
+      console.log("🧭 area_buttons 업데이트:", App.State.get?.("area_buttons"));
     } else if (groupId.includes("cabinet_name")) {
       App.State.set("cabinet_name_buttons", btn.textContent.trim());
     } else if (groupId.includes("door_vertical")) {
@@ -78,6 +80,12 @@ function makePayload(state) {
   const storageColumns = state.storage_columns_buttons
                           ? parseInt(state.storage_columns_buttons, 10) // 1. 클릭한 값 (텍스트)
                           : (state.storage_columns || null); // 2. 'edit' 모드의 초기 값 (숫자)
+
+  console.log("🧪 makePayload() area pick =>", {
+      area_custom_name: state.area_custom_name,
+      area_buttons: state.area_buttons,
+      area_name: state.area_name,
+  });
 
   // 3. 최종 반환 (Edge Function 입력 구조에 맞춤)
   return {

@@ -63,6 +63,7 @@
         saveBtn.style.display = "inline-block";
         saveBtn.onclick = (e) => {
           e.preventDefault();
+          console.log("📌 State before payload:", App.State.dump());
           handleSave();
         };
       }
@@ -71,6 +72,7 @@
         submitBtn.style.display = "inline-block";
         submitBtn.onclick = (e) => {
           e.preventDefault();
+          console.log("📌 State before payload:", App.State.dump());
           handleSave();
         };
       }
@@ -298,7 +300,7 @@
     const sBox = document.getElementById("location_internal_shelf_group");
     const cBox = document.getElementById("location_storage_column_group");
 
-    const makeBtns = (n, key) =>
+    const makeBtns = (n) =>
       Array.from({ length: n }, (_, i) => `<button type="button" data-value="${i + 1}">${i + 1}</button>`).join("");
 
     if (vBox && data.door_vertical) {
