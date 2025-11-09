@@ -102,7 +102,7 @@
   }
 
   // ------------------------------------------------------------
-  // ✏️ 2️⃣ 시약장 수정
+  // ✏️ 2️⃣ 시약장 수정: 수정 버튼 클릭 시 수정할 시약장의 정보를 불러와서 폼에 표시
   // ------------------------------------------------------------
   async function editCabinet(id) {
       const supabase = getSupabase();
@@ -138,7 +138,7 @@
           body: payload
       });
   }
-
+  // 사용자가 폼을 수정하고 저장 클릭 시, DB에 수정사항 반영 (editCabinet과 역할이 다름)
   async function updateCabinet(id, payload) {
       const API = getAPI();
       // ⬇️ [수정됨] DB 직접 update 대신 Edge Function 호출
