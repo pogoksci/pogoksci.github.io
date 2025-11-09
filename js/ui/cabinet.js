@@ -5,9 +5,8 @@
   // ✅ 전역 App 안전하게 가져오기
   const getApp = () => globalThis.App || {};
 
-  // ✅ supabase, utils 접근용 헬퍼
+  // ✅ supabase 접근용 헬퍼
   const getSupabase = () => getApp().supabase || {};
-  const getUtils = () => getApp().Utils || {};
   const getAPI = () => getApp().API || {};
   
   // ------------------------------------------------------------
@@ -176,7 +175,6 @@
   // 🆕 5️⃣ 신규 등록 폼 표시
   // ------------------------------------------------------------
   function createForm() {
-    const supabase = getSupabase();
     // ⬇️ [수정됨] edit 함수와 동일하게 initCabinetForm만 호출합니다.
     if (App.Forms && typeof App.Forms.initCabinetForm === "function") {
      App.Forms.initCabinetForm("create", null);

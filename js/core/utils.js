@@ -14,27 +14,40 @@
     return data;
   }
 
-  function setupButtonGroup(groupId, onSelect) {
-    const group = document.getElementById(groupId);
-    if (!group) return;
+function setupButtonGroup(groupId, onSelect) {
+  const group = document.getElementById(groupId);
+  if (!group) return;
 
-    // ✅ [수정됨] newGroup.addEventListener -> group.addEventListener
-    group.addEventListener("click", (e) => {
-        const btn = e.target.closest("button");
-        if (!btn) return;
+  group.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    if (btn.disabled) return;
 
-        // '수정' 모드에서 비활성화된 버튼은 클릭되지 않도록 방지
-        if (btn.disabled) return;
+    // 기존 active 표시 처리
+    group.querySelectorAll(".active").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
 
-        // ✅ [수정됨] newGroup.querySelectorAll -> group.querySelectorAll
-        group.querySelectorAll(".active").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
+    // ✅ 선택된 버튼을 App.State에 반영 (핵심 추가)
+    if (groupId.includes("area_name")) {
+      App.State.set("area_buttons", btn.textContent.trim());
+    } else if (groupId.includes("cabinet_name")) {
+      App.State.set("cabinet_name_buttons", btn.textContent.trim());
+    } else if (groupId.includes("door_vertical")) {
+      App.State.set("door_vertical_split", btn.textContent.trim());
+    } else if (groupId.includes("door_horizontal")) {
+      App.State.set("door_horizontal_split", btn.textContent.trim());
+    } else if (groupId.includes("shelf_height")) {
+      App.State.set("shelf_height_buttons", btn.textContent.trim());
+    } else if (groupId.includes("storage_columns")) {
+      App.State.set("storage_columns_buttons", btn.textContent.trim());
+    }
 
-        if (typeof onSelect === "function") {
-            onSelect(btn);
-        }
-    });
-  }
+    // 기존 콜백(onSelect)
+    if (typeof onSelect === "function") {
+      onSelect(btn);
+    }
+  });
+}
 
 function makePayload(state) {
   const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
