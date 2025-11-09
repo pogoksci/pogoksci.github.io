@@ -1,4 +1,4 @@
-<!-- /pages/form-input.html -->
+<!-- /pages/inventory-form.html -->
 
 <form id="inventory-form">
     <h1>약품 입고 정보 입력</h1>
@@ -7,6 +7,23 @@
         <label for="cas_rn">CAS *</label>
         <input type="text" id="cas_rn" name="cas_rn" placeholder="CAS Registry Number (예: 7647-01-0)" required>
     </div>
+
+    <div class="form-group">
+        <label for="purchase_volume">구입용량 (숫자) *</label>
+        <input type="number" id="purchase_volume" name="purchase_volume" placeholder="구입 용량" min="0" step="any">
+    </div>
+    
+    <div class="form-group">
+        <label>단위 *</label>
+        <div class="button-group" id="unit_buttons">
+            <button type="button" data-value="g">g</button>
+            <button type="button" data-value="mL">mL</button>
+            <button type="button" data-value="개">개</button>
+            <button type="button" data-value="조각">조각</button>
+            <button type="button" data-value="장">장</button>
+            <button type="button" data-value="세트">세트</button>
+        </div>
+    </div>    
 
     <div class="form-group">
         <label>시약병 사진</label>
@@ -76,23 +93,6 @@
             <button type="button" data-value="막대">막대</button>
             <button type="button" data-value="벌크">벌크</button>
             <button type="button" data-value="기체">기체</button>
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label for="purchase_volume">구입용량 (숫자)</label>
-        <input type="number" id="purchase_volume" name="purchase_volume" placeholder="구입 용량" min="0" step="any">
-    </div>
-    
-    <div class="form-group">
-        <label>단위</label>
-        <div class="button-group" id="unit_buttons">
-            <button type="button" data-value="g">g</button>
-            <button type="button" data-value="mL">mL</button>
-            <button type="button" data-value="개">개</button>
-            <button type="button" data-value="조각">조각</button>
-            <button type="button" data-value="장">장</button>
-            <button type="button" data-value="세트">세트</button>
         </div>
     </div>
 

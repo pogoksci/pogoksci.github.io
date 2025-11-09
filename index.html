@@ -17,6 +17,18 @@
   <!-- ✅ 메인 스타일 -->
   <link rel="stylesheet" href="css/styles.css" />
 
+  <script>
+    // GitHub Pages: 사용자/조직 사이트(루트) vs 프로젝트 사이트(/scimanager/) 모두 대응
+    (function () {
+      // 자동 추론: 현재 경로에 /scimanager/가 포함되면 그걸 베이스로 사용
+      var guessed = location.pathname.includes('/scimanager/')
+        ? '/scimanager/'
+        : '/';
+
+        window.APP_BASE_PATH = guessed.replace(/\/+$/, '/')  // 끝에 / 하나만
+    })();
+  </script>
+
   <!-- ✅ 앱 진입 스크립트 -->
   <script src="js/index.js" defer></script>
 </head>

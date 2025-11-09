@@ -28,6 +28,10 @@
     "./js/ui/inventory-detail.js",
     "./js/ui/navbar.js",
   ];
+  const componentModules = [
+    "./js/components/sort-dropdown.js", // 🔹 여기 추가됨
+  ];
+
   const routerModules = ["./js/router/router.js"];
 
   // ------------------------------------------------------------
@@ -93,6 +97,7 @@
     await loadModulesSequentially(baseModules, "Base");
     await loadModulesSequentially(coreModules, "Core");
     await loadModulesSequentially(uiModules, "UI");
+    await loadModulesSequentially(componentModules, "Components");
     await loadModulesSequentially(routerModules, "Router");
     console.log("🧩 모든 모듈 로드 완료!");
 

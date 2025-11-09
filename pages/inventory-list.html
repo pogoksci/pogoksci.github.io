@@ -4,27 +4,54 @@
     <h2>약품 관리</h2>
 
     <div class="header-actions">
-      <div class="sort-refresh-group">
-        <div class="select-wrapper">
-          <select id="sort-select" class="sort-select">
-            <option value="category_name_kor" selected>📚 한글명(분류)</option>
-            <option value="name_kor">🔠 한글명(전체)</option>
-            <option value="name_eng">🔠 영문명(전체)</option>
-            <option value="formula">🧪 화학식</option>
-            <option value="storage_location">🏷 위치</option>
-            <option value="quantity_desc">📦 재고량</option>
-            <option value="created_at_desc">🕓 등록순서</option>
-          </select>
-        </div>
-
-        <!-- ✅ Google Material Symbols 사용 -->
-        <button id="refresh-btn" title="목록 새로고침">
-          <span class="material-symbols-outlined">refresh</span>
+      <!-- ✅ 공용 SortDropdown 컴포넌트 (App.SortDropdown.init에서 제어) -->
+      <div class="custom-dropdown" id="sort-dropdown">
+        <button class="dropdown-toggle" id="sort-toggle" aria-haspopup="true" aria-expanded="false">
+          <span class="material-symbols-outlined">sort</span>
+          <span id="sort-label" data-value="category_name_kor">한글명(분류)</span>
+          <span class="material-symbols-outlined arrow">expand_more</span>
         </button>
+
+        <div class="dropdown-menu" id="sort-menu" role="menu">
+          <div class="dropdown-item" data-value="category_name_kor">
+            <span class="material-symbols-outlined">category</span>
+            한글명(분류)
+          </div>
+          <div class="dropdown-item" data-value="name_kor">
+            <span class="material-symbols-outlined">text_fields</span>
+            한글명(전체)
+          </div>
+          <div class="dropdown-item" data-value="name_eng">
+            <span class="material-symbols-outlined">translate</span>
+            영문명(전체)
+          </div>
+          <div class="dropdown-item" data-value="formula">
+            <span class="material-symbols-outlined">science</span>
+            화학식
+          </div>
+          <div class="dropdown-item" data-value="storage_location">
+            <span class="material-symbols-outlined">location_on</span>
+            위치
+          </div>
+          <div class="dropdown-item" data-value="quantity_desc">
+            <span class="material-symbols-outlined">inventory_2</span>
+            재고량
+          </div>
+          <div class="dropdown-item" data-value="created_at_desc">
+            <span class="material-symbols-outlined">schedule</span>
+            등록순서
+          </div>
+        </div>
       </div>
+
+      <!-- ✅ Material Symbols 기반 새로고침 버튼 -->
+      <button id="refresh-btn" title="목록 새로고침" aria-label="새로고침">
+        <span class="material-symbols-outlined">refresh</span>
+      </button>
     </div>
   </div>
 
+  <!-- ✅ 약품 목록 영역 -->
   <div id="inventory-list-container" class="list-view">
     <p id="status-message-inventory-list" style="padding:0 15px; color:#888;">
       약품 목록을 불러오는 중...
@@ -33,4 +60,6 @@
 </div>
 
 <!-- ✅ 하단 등록 버튼 (FAB) -->
-<button class="fab" id="new-inventory-btn">+ 새 약품 등록</button>
+<button class="fab" id="new-inventory-btn">
+  <span class="material-symbols-outlined">add</span> 새 약품 등록
+</button>
