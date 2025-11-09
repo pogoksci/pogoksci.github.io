@@ -31,7 +31,7 @@ function setupButtonGroup(groupId, onSelect) {
     if (groupId.includes("area_name")) {
       App.State.set("area_buttons", btn.textContent.trim());
       App.State.set("area_custom_name", null); // 기타 입력 값이 남아 우선 적용되는 것 방지
-      console.log("🧭 area_buttons 업데이트:", App.State.get?.("area_buttons"));
+      console.log("🧭 area_buttons 업데이트:", btn.textContent.trim());
     } else if (groupId.includes("cabinet_name")) {
       App.State.set("cabinet_name_buttons", btn.textContent.trim());
     } else if (groupId.includes("door_vertical")) {
@@ -61,7 +61,7 @@ function makePayload(state) {
   
   // 2. 장소 이름 결정
   // '기타' 입력값 > '등록'/'수정' 시 클릭한 버튼 값 > '수정' 시 폼에 저장된 초기 이름 값
-  const areaName = state.area_custom_name || state.area_buttons || state.area_name;
+  const areaName = state.area_buttons || state.area_custom_name || state.area_name;
 
   // 3. ⬇️ [수정됨] 폼 값을 DB 값으로 변환
   // '수정' 모드에서 클릭 안하면 state.door_vertical_split이 없으므로, state.door_vertical_count를 대신 사용
