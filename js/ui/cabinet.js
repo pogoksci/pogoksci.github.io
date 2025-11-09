@@ -153,20 +153,23 @@
   }
 
   async function deleteCabinet(id) {
-      const API = getAPI();
-      // ⬇️ [수정됨] DB 직접 delete 대신 Edge Function 호출
-      if (!confirm("정말 삭제하시겠습니까?")) return;
-      try {
-          await API.callEdge(`${API.EDGE.CABINET}?id=${id}`, { method: 'DELETE' });
-          alert("삭제되었습니다.");
-          loadList(); // 삭제 후 목록 새로고침
-      } catch (err) {
-          const errorMessage = err.message || "알 수 없는 오류";
-          alert(`삭제 실패: ${errorMessage}`);
-      }
+    const API = getAPI();
 
-      // ✅ 즉시 목록 갱신
-      await loadList();
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+
+    try {
+      // ✅ 공용 delete-area Edge Function 호출
+      await API.callEdge(`/functions/delete-area?id=${id}&table=Cabinet`, {
+        method: "DELETE",
+      });
+
+      alert("✅ 시약장이 삭제되었습니다.");
+      await loadList(); // 삭제 후 목록 새로고침
+    } catch (err) {
+      console.error("❌ 시약장 삭제 중 오류:", err);
+      const message = err?.message || "삭제 중 오류가 발생했습니다.";
+      alert(message);
+    }
   }
 
   // ------------------------------------------------------------
