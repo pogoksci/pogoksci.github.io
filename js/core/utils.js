@@ -28,7 +28,7 @@ function setupButtonGroup(groupId, onSelect) {
     btn.classList.add("active");
 
     // ✅ 선택된 버튼을 App.State에 반영 (핵심 추가)
-    if (groupId.includes("area_name")) {
+    if (groupId.includes("area")) {
       App.State.set("area_buttons", btn.textContent.trim());
       App.State.set("area_custom_name", null); // 기타 입력 값이 남아 우선 적용되는 것 방지
       console.log("🧭 area_buttons 업데이트:", btn.textContent.trim());
