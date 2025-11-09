@@ -6,7 +6,7 @@
     mode: "create",
     cabinetId: null,
     area_id: null,
-    name: null,
+    cabinet_name: null,
     door_vertical_count: null,
     door_horizontal_count: null,
     shelf_height: null,

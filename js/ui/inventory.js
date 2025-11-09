@@ -135,8 +135,8 @@
       .select(`
         id, current_amount, unit, classification, created_at, photo_url_320,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( name, cas_rn, molecular_formula ),
-        Cabinet ( name, Area ( name ) )
+        Substance ( substance_name, cas_rn, molecular_formula ),
+        Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .order("created_at", { ascending: false });
 
@@ -147,8 +147,8 @@
     }
 
     const mapped = (data || []).map((row) => {
-      const area = row.Cabinet?.Area?.name || "";
-      const cab = row.Cabinet?.name || "";
+      const area = row.Cabinet?.Area?.area_name || "";
+      const cab = row.Cabinet?.cabinet_name || "";
       const v = row.door_vertical || "";
       const h = row.door_horizontal || "";
       const shelf =
@@ -195,8 +195,8 @@
       .select(`
         id, current_amount, unit, classification, created_at, photo_url_320,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( name, cas_rn, molecular_formula, molecular_weight ),
-        Cabinet ( name, Area ( name ) )
+        Substance ( substance_name, cas_rn, molecular_formula, molecular_weight ),
+        Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .eq("id", id)
       .maybeSingle();
@@ -208,14 +208,14 @@
     }
 
     const info = data;
-    const area = info.Cabinet?.Area?.name || "-";
-    const cab = info.Cabinet?.name || "-";
+    const area = info.Cabinet?.Area?.area_name || "-";
+    const cab = info.Cabinet?.cabinet_name || "-";
     const photo = info.photo_url_320 || "/img/no-image.png";
 
     container.innerHTML = `
       <div class="inventory-detail">
         <div class="detail-header">
-          <h2>${info.Substance?.name || "(이름 없음)"}</h2>
+          <h2>${info.Substance?.substance_name || "(이름 없음)"}</h2>
           <p>CAS: ${info.Substance?.cas_rn || "-"}</p>
         </div>
         <div class="detail-body">
@@ -261,15 +261,6 @@
   // ------------------------------------------------------------
   // 6️⃣ 정렬 & 버튼 UI
   // ------------------------------------------------------------
-  function setupSortUI() {
-    const select = document.getElementById("sort-select");
-    if (!select) return;
-    select.addEventListener("change", () => {
-      currentSort = select.value;
-      loadList();
-    });
-  }
-
   function bindListPage() {
     console.log("🧭 bindListPage() 실행됨");
 

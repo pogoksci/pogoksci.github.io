@@ -46,8 +46,8 @@
       Object.entries(detail).forEach(([k, v]) => set(k, v));
       set("cabinetId", detail.id);
       set("area_id", detail.area_id?.id || null);
-      set("area_custom_name", detail.area_id?.name || null);
-      set("cabinet_name", detail.name);
+      set("area_custom_name", detail.area_id?.area_name || null);
+      set("cabinet_name", detail.cabinet_name);
     }
 
     const title = document.querySelector("#cabinet-creation-form h2");
@@ -55,7 +55,7 @@
     const saveBtn = document.getElementById("cabinet-save-btn");
     const cancelBtn = document.getElementById("cancel-form-btn");
 
-    if (title) title.textContent = mode === "edit" ? `${detail?.name || "시약장"} 정보 수정` : "시약장 등록";
+    if (title) title.textContent = mode === "edit" ? `${detail?.cabinet_name || "시약장"} 정보 수정` : "시약장 등록";
 
     if (mode === "edit") {
       if (submitBtn) submitBtn.style.display = "none";
@@ -187,9 +187,9 @@
     const cabSelect = document.getElementById("location_cabinet_select");
 
     if (areaSelect && supabase) {
-      const { data: areas } = await supabase.from("Area").select("id, name").order("name");
+      const { data: areas } = await supabase.from("Area").select("id, area_name").order("area_name");
       if (areas?.length) {
-        areaSelect.innerHTML += areas.map((a) => `<option value="${a.id}">${a.name}</option>`).join("");
+        areaSelect.innerHTML += areas.map((a) => `<option value="${a.id}">${a.area_name}</option>`).join("");
       }
 
       // 수정모드: area/cabinet 복원
@@ -198,7 +198,7 @@
         const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", detail.area_id);
         cabSelect.innerHTML =
           `<option value="">-- 선택 안 함 --</option>` +
-          (cabs || []).map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+          (cabs || []).map((c) => `<option value="${c.id}">${c.cabinet_name}</option>`).join("");
         cabSelect.disabled = false;
         if (detail.cabinet_id) cabSelect.value = detail.cabinet_id;
         await renderCabinetButtons(detail.cabinet_id, detail);
@@ -215,7 +215,7 @@
         const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", areaId);
         cabSelect.innerHTML =
           `<option value="">-- 선택 안 함 --</option>` +
-          (cabs || []).map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+          (cabs || []).map((c) => `<option value="${c.id}">${c.cabinet_name}</option>`).join("");
       };
     }
 

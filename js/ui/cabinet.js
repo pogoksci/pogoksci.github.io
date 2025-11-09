@@ -37,7 +37,7 @@
       const { data, error } = await supabase
         .from("Cabinet")
         .select(
-          "id,name,area_id(id,name),door_vertical_count,door_horizontal_count,shelf_height,storage_columns,photo_url_320,photo_url_160"
+          "id,cabinet_name,area_id(id,area_name),door_vertical_count,door_horizontal_count,shelf_height,storage_columns,photo_url_320,photo_url_160"
         )
         .order("id", { ascending: true });
 
@@ -66,14 +66,14 @@
 
       container.innerHTML = cabinets.map((cab) => {
           const photo = cab.photo_url_320 || cab.photo_url_160 || null;
-          const areaName = cab.area_id?.name || "위치 없음";
+          const areaName = cab.area_id?.area_name || "위치 없음";
           return `
           <div class="cabinet-card">
             <div class="card-info">
-              <h3>${cab.name} <small class="area-name">${areaName}</small></h3>
+              <h3>${cab.cabinet_name} <small class="area-name">${areaName}</small></h3>
             </div>
             <div class="card-image-placeholder">
-              ${photo ? `<img src="${photo}" alt="${cab.name}" class="card-image">` : `<span class="no-photo-text">사진 없음</span>`}
+              ${photo ? `<img src="${photo}" alt="${cab.cabinet_name}" class="card-image">` : `<span class="no-photo-text">사진 없음</span>`}
             </div>
             <div class="card-actions">
               <button class="edit-btn" data-id="${cab.id}">수정</button>
@@ -110,7 +110,7 @@
         const { data: detail, error } = await supabase
         .from("Cabinet")
         .select(
-          "id,name,area_id(id,name),photo_url_320,photo_url_160,door_vertical_count,door_horizontal_count,shelf_height,storage_columns"
+          "id,cabinet_name,area_id(id,area_name),photo_url_320,photo_url_160,door_vertical_count,door_horizontal_count,shelf_height,storage_columns"
         )
         .eq("id", id)
         .maybeSingle();

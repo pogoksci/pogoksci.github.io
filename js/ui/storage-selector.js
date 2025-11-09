@@ -24,8 +24,8 @@
     options.forEach((opt) => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.textContent = opt.label || opt.name || opt;
-      btn.dataset.value = opt.id || opt.value || opt;
+      btn.textContent = opt.label || opt.area_name || opt.cabinet_name || opt.name || opt;
+      btn.dataset.value = opt.value || opt.id || opt.area_name || opt.cabinet_name;
       btn.className = "btn-location";
       if (String(btn.dataset.value) === String(activeValue)) btn.classList.add("active");
       btn.addEventListener("click", () => onClick(btn.dataset.value));
@@ -53,7 +53,7 @@
   // 🔹 1단계: Area 목록 불러오기
   async function loadAreas(container) {
     const supabase = getSupabase();
-    const { data, error } = await supabase.from("Area").select("id, name").order("name");
+    const { data, error } = await supabase.from("Area").select("id, area_name").order("area_name");
     if (error) {
       console.error("Area 불러오기 오류:", error);
       return;
@@ -76,9 +76,9 @@
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from("Cabinet")
-      .select("id, name")
+      .select("id, cabinet_name")
       .eq("area_id", areaId)
-      .order("name");
+      .order("cabinet_name");
     if (error) {
       console.error("Cabinet 불러오기 오류:", error);
       return;

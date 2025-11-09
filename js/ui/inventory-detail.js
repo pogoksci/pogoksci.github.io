@@ -17,8 +17,8 @@
         .select(`
           id, state, current_amount, unit, classification, manufacturer, purchase_date, photo_url_320,
           door_vertical, door_horizontal, internal_shelf_level, storage_column,
-          Substance ( id, name, cas_rn, molecular_formula ),
-          Cabinet ( id, name, Area ( name ) )
+          Substance ( id, substance_name, cas_rn, molecular_formula ),
+          Cabinet ( id, cabinet_name, Area ( area_name ) )
         `)
         .eq("id", inventoryId)
         .single();
@@ -32,12 +32,12 @@
         : `<span>사진 없음</span>`;
 
       // 이름/CAS
-      document.getElementById("detail-name").textContent = data.Substance?.name || "이름 없음";
+      document.getElementById("detail-name").textContent = data.Substance?.substance_name || "이름 없음";
       document.getElementById("detail-cas").textContent = `CAS: ${data.Substance?.cas_rn || "-"}`;
 
       // 위치 요약
-      const area = data.Cabinet?.Area?.name || "";
-      const cab = data.Cabinet?.name || "";
+      const area = data.Cabinet?.Area?.area_name || "";
+      const cab = data.Cabinet?.cabinet_name || "";
       const v = data.door_vertical || "";
       const h = data.door_horizontal || "";
       const shelf = data.internal_shelf_level != null ? `${data.internal_shelf_level}층` : "";
