@@ -194,5 +194,10 @@
     createForm, // ⬅️ '새 시약장 등록' 버튼이 호출할 함수
   };
 
+  // ✅ 페이지 로드 완료 후 자동 실행
+  document.addEventListener("DOMContentLoaded", () => {
+    App.Cabinet?.loadList?.();
+  });
+
   console.log("✅ App.Cabinet 모듈 로드 완료");
 })();

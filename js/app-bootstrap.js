@@ -55,7 +55,7 @@
 
       } else if (file.includes("location-list.html")) {
         console.log("📦 시약장 목록 HTML 로드 완료");
-        App.Cabinet?.loadList?.();
+        //App.Cabinet?.loadList?.();
         App.Fab?.setVisibility(true, "새 시약장 등록", () => {
           App.Cabinet?.createForm?.();
         });
