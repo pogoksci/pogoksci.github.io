@@ -201,6 +201,10 @@
             areaOtherInput.value = areaName || "";
           }
 
+          // ✅ 기타 버튼도 눌린 상태로 표시
+          const areaOtherBtn = document.querySelector("#area-button-group button[data-value='기타']");
+          if (areaOtherBtn) areaOtherBtn.classList.add("active");
+
           // 🏷 시약장 이름 복원
           const cabBtns = document.querySelectorAll("#cabinet_name_buttons button");
           let cabMatched = false;
@@ -214,6 +218,10 @@
             cabOtherGroup.style.display = "block";
             cabOtherInput.value = detail.cabinet_name || "";
           }
+
+          // ✅ 시약장 이름의 기타 버튼도 눌린 상태로 표시
+          const cabOtherBtn = document.querySelector("#cabinet_name_buttons button[data-value='기타']");
+          if (cabOtherBtn) cabOtherBtn.classList.add("active");
 
           // 🧱 도어/선반/열 복원 (edit 모드)
           const vLabelByNum = { 1: "단일도어(상하분리없음)", 2: "상하도어", 3: "상중하도어" };
