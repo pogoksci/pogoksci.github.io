@@ -215,17 +215,35 @@
             cabOtherInput.value = detail.cabinet_name || "";
           }
 
-          // 🧱 도어, 선반, 열 복원
-          const setActive = (selector, value) => {
-            document.querySelectorAll(selector + " button").forEach((btn) => {
-              const val = parseInt(btn.dataset.value, 10);
-              if (val === Number(value)) btn.classList.add("active");
-            });
-          };
-          setActive("#door_vertical_split_buttons", detail.door_vertical_count);
-          setActive("#door_horizontal_split_buttons", detail.door_horizontal_count);
-          setActive("#shelf_height_buttons", detail.shelf_height);
-          setActive("#storage_columns_buttons", detail.storage_columns);
+          // 🧱 도어/선반/열 복원 (edit 모드)
+          const vLabelByNum = { 1: "단일도어(상하분리없음)", 2: "상하도어", 3: "상중하도어" };
+          const hLabelByNum = { 1: "단일도어", 2: "좌우분리도어" };
+
+          // 4️⃣ 외부 도어의 상하분리 형태
+          document.querySelectorAll("#door_vertical_split_buttons button").forEach((btn) => {
+            const label = (btn.dataset.value || btn.textContent).trim();
+            const need = vLabelByNum[Number(detail.door_vertical_count)];
+            if (label === need) btn.classList.add("active");
+          });
+
+          // 5️⃣ 외부 도어의 좌우분리 형태
+          document.querySelectorAll("#door_horizontal_split_buttons button").forEach((btn) => {
+            const label = (btn.dataset.value || btn.textContent).trim();
+            const need = hLabelByNum[Number(detail.door_horizontal_count)];
+            if (label === need) btn.classList.add("active");
+          });
+
+          // 6️⃣ 선반 층수
+          document.querySelectorAll("#shelf_height_buttons button").forEach((btn) => {
+            const val = Number(btn.dataset.value);
+            if (val === Number(detail.shelf_height)) btn.classList.add("active");
+          });
+
+          // 7️⃣ 수납 열 수
+          document.querySelectorAll("#storage_columns_buttons button").forEach((btn) => {
+            const val = Number(btn.dataset.value);
+            if (val === Number(detail.storage_columns)) btn.classList.add("active");
+          });
 
           // 🖼 사진 복원 (비율 유지)
           if (detail.photo_url_320 || detail.photo_url_160) {
