@@ -144,6 +144,35 @@
     if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
     if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
 
+    // ✅ "기타" 버튼 클릭 시 입력칸 표시 / 숨김 (공용 적용)
+    requestAnimationFrame(() => {
+      const areaGroup = document.getElementById("area-button-group");
+      const areaInput = document.getElementById("area-custom-input");
+      if (!areaGroup || !areaInput) return;
+
+      // 클릭 이벤트 — "기타" 선택 시 입력칸 표시
+      areaGroup.addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        const value = btn.textContent.trim();
+
+        if (value === "기타") {
+          areaInput.style.display = "block";
+          areaInput.focus();
+          App.State.set("area_custom_name", "");
+        } else {
+          areaInput.style.display = "none";
+          App.State.set("area_buttons", value);
+        }
+      });
+
+      // edit 모드에서 이미 "기타"로 저장되어 있으면 자동 표시
+      if (App.State.get("mode") === "edit" && App.State.get("area_custom_name")) {
+        areaInput.style.display = "block";
+        areaInput.value = App.State.get("area_custom_name");
+      }
+    });
+
     // ✅ edit 모드 — 값 복원 (DOM 렌더 완료 후 실행)
     if (mode === "edit" && detail) {
       requestAnimationFrame(() => {
@@ -169,23 +198,49 @@
           }
 
           // 🏷 시약장 이름 버튼 복원
-          const cabBtns = document.querySelectorAll("#cabinet-name-group button");
+          const cabBtns = document.querySelectorAll("#cabinet-name-buttons button");
           cabBtns.forEach((btn) => {
             if (btn.textContent.trim() === detail.cabinet_name)
               btn.classList.add("active");
           });
 
-          // 🧱 도어 버튼 복원
+          // ✅ "기타" 시약장 이름 입력칸 표시
+          const cabGroup = document.getElementById("cabinet_name_buttons");
+          const cabInput = document.getElementById("cabinet-name-custom-input");
+          if (cabGroup && cabInput) {
+            cabGroup.addEventListener("click", (e) => {
+              const btn = e.target.closest("button");
+              if (!btn) return;
+              const value = btn.textContent.trim();
+
+              if (value === "기타") {
+                cabInput.style.display = "block";
+                cabInput.focus();
+                App.State.set("cabinet_custom_name", "");
+              } else {
+                cabInput.style.display = "none";
+                App.State.set("cabinet_name_buttons", value);
+              }
+            });
+
+            // edit 모드에서 기타값 복원
+            if (App.State.get("mode") === "edit" && App.State.get("cabinet_custom_name")) {
+              cabInput.style.display = "block";
+              cabInput.value = App.State.get("cabinet_custom_name");
+            }
+          }
+
+          // 🧱 도어 버튼 복원 (edit 모드)
           const vBtns = document.querySelectorAll("#door_vertical_split_buttons button");
           vBtns.forEach((btn) => {
             const val = parseInt(btn.dataset.value, 10);
-            if (val === detail.door_vertical_count) btn.classList.add("active");
+            if (val === Number(detail.door_vertical_count)) btn.classList.add("active");
           });
 
           const hBtns = document.querySelectorAll("#door_horizontal_split_buttons button");
           hBtns.forEach((btn) => {
             const val = parseInt(btn.dataset.value, 10);
-            if (val === detail.door_horizontal_count) btn.classList.add("active");
+            if (val === Number(detail.door_horizontal_count)) btn.classList.add("active");
           });
 
           // 🧱 선반 높이 / 열 수 버튼 복원
