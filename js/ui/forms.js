@@ -167,8 +167,7 @@
         processImage(e.target.result, (resized) => {
           set("photo_320_base64", resized.base64_320);
           set("photo_160_base64", resized.base64_160);
-          previewBox.innerHTML = `
-            <img src="${resized.base64_320}" alt="Preview" style="width:100%; height:100%; object-fit:contain; object-position:center center;">`;
+          previewBox.innerHTML = `<img src="${resized.base64_320}" alt="시약장 사진">`;
         });
       };
       reader.readAsDataURL(file);
@@ -257,7 +256,7 @@
           // 🖼 사진 복원 (비율 유지)
           if (detail.photo_url_320 || detail.photo_url_160) {
             const url = detail.photo_url_320 || detail.photo_url_160;
-            previewBox.innerHTML = `<img src="${url}" alt="시약장 사진" style="width:100%; height:100%; object-fit:contain; object-position:center center;">`;
+            previewBox.innerHTML = `<img src="${url}" alt="시약장 사진">`;
           }
 
           // ✅ edit 모드에서도 버튼 클릭이 가능하도록 이벤트 재연결
