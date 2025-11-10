@@ -258,6 +258,22 @@
             const url = detail.photo_url_320 || detail.photo_url_160;
             previewBox.innerHTML = `<img src="${url}" alt="기존 사진" style="object-fit:contain; width:100%; height:100%;">`;
           }
+
+          // ✅ edit 모드에서도 버튼 클릭이 가능하도록 이벤트 재연결
+          [
+            "door_vertical_split_buttons",
+            "door_horizontal_split_buttons",
+            "shelf_height_buttons",
+            "storage_columns_buttons"
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) {
+              setupButtonGroup(id, (btn) => {
+                const value = btn.dataset.value || btn.textContent.trim();
+                set(id.replace("_buttons", ""), value);
+              });
+            }
+          });
         });
       });
     }
