@@ -257,7 +257,9 @@
           if (detail.photo_url_320 || detail.photo_url_160) {
             const url = detail.photo_url_320 || detail.photo_url_160;
             previewBox.innerHTML = `<img src="${url}" alt="시약장 사진">`;
-          }
+          } else {
+            previewBox.innerHTML = `<span>사진 없음</span>`;
+}
 
           // ✅ edit 모드에서도 버튼 클릭이 가능하도록 이벤트 재연결
           [
