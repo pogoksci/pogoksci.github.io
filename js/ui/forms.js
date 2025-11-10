@@ -167,7 +167,8 @@
         processImage(e.target.result, (resized) => {
           set("photo_320_base64", resized.base64_320);
           set("photo_160_base64", resized.base64_160);
-          previewBox.innerHTML = `<img src="${resized.base64_320}" alt="Preview" style="object-fit:contain; width:100%; height:100%;">`;
+          previewBox.innerHTML = `
+            <img src="${resized.base64_320}" alt="Preview" style="width:100%; height:100%; object-fit:contain; object-position:center center;">`;
         });
       };
       reader.readAsDataURL(file);
@@ -200,9 +201,9 @@
             areaOtherGroup.style.display = "block";
             areaOtherInput.value = areaName || "";
           
-            // ✅ 기타 버튼도 눌린 상태로 표시
-            const areaOtherBtn = document.querySelector("#area-button-group button[data-value='기타']");
-            if (areaOtherBtn) areaOtherBtn.classList.add("active");
+          // ✅ 기타 버튼도 눌린 상태로 표시
+          const areaOtherBtn = document.querySelector("#area-button-group button[data-value='기타']");
+          if (areaOtherBtn) areaOtherBtn.classList.add("active");
           }
 
           // 🏷 시약장 이름 복원
@@ -256,7 +257,7 @@
           // 🖼 사진 복원 (비율 유지)
           if (detail.photo_url_320 || detail.photo_url_160) {
             const url = detail.photo_url_320 || detail.photo_url_160;
-            previewBox.innerHTML = `<img src="${url}" alt="기존 사진" style="object-fit:contain; width:100%; height:100%;">`;
+            previewBox.innerHTML = `<img src="${url}" alt="시약장 사진" style="width:100%; height:100%; object-fit:contain; object-position:center center;">`;
           }
 
           // ✅ edit 모드에서도 버튼 클릭이 가능하도록 이벤트 재연결
