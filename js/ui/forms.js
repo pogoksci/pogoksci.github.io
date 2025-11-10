@@ -36,14 +36,13 @@
   }
 
   // -------------------------------------------------
-  // 🧭 시약장 폼 초기화 (create / edit 모드)
+  // 🧭 시약장 폼 초기화 (create / edit 모드 완전 복원)
   // -------------------------------------------------
   async function initCabinetForm(mode = "create", detail = null) {
     await App.includeHTML("pages/cabinet-form.html", "form-container");
     reset();
     set("mode", mode);
 
-    // ✅ 1️⃣ 기본 상태 세팅
     if (detail) {
       Object.entries(detail).forEach(([k, v]) => set(k, v));
       set("cabinetId", detail.id);
@@ -52,7 +51,6 @@
       set("cabinet_name", detail.cabinet_name);
     }
 
-    // ✅ 2️⃣ 제목 및 버튼 표시 설정
     const title = document.querySelector("#cabinet-creation-form h2");
     const submitBtn = document.getElementById("cabinet-submit-button");
     const saveBtn = document.getElementById("cabinet-save-btn");
@@ -90,7 +88,7 @@
       cancelBtn.onclick = () =>
         App.includeHTML("pages/location-list.html");
 
-    // ✅ 3️⃣ 버튼 그룹 초기화
+    // ✅ 버튼 그룹 초기화
     [
       "area-button-group",
       "cabinet-name-group",
@@ -101,12 +99,25 @@
     ].forEach((id) => {
       const el = document.getElementById(id);
       if (el)
-        setupButtonGroup(id, (btn) =>
-          set(id.replace("_buttons", ""), btn.dataset.value)
-        );
+        setupButtonGroup(id, (btn) => {
+          const value = btn.dataset.value || btn.textContent.trim();
+
+          // 🧭 area 그룹 처리 (기타 버튼일 때 입력란 표시)
+          if (id.includes("area") && value === "기타") {
+            const input = document.getElementById("area-custom-input");
+            if (input) input.style.display = "block";
+            set("area_custom_name", "");
+          } else if (id.includes("area")) {
+            const input = document.getElementById("area-custom-input");
+            if (input) input.style.display = "none";
+            set("area_buttons", value);
+          }
+
+          set(id.replace("_buttons", ""), value);
+        });
     });
 
-    // ✅ 4️⃣ 사진 업로드 & 미리보기 처리
+    // ✅ 사진 업로드
     const photoInput = document.getElementById("cabinet-photo-input");
     const cameraInput = document.getElementById("cabinet-camera-input");
     const previewBox = document.getElementById("cabinet-photo-preview");
@@ -133,58 +144,69 @@
     if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
     if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
 
-    // ✅ [수정됨] edit 모드에서는 기존 사진 미리보기 표시
-    if (mode === "edit" && detail?.photo_url_320) {
-      updatePreview(detail.photo_url_320, "cabinet-photo-preview");
-    } else if (mode === "edit" && detail?.photo_url_160) {
-      updatePreview(detail.photo_url_160, "cabinet-photo-preview");
-    }
-
-    // ✅ 5️⃣ [신규 추가] — edit 모드 값 복원
+    // ✅ edit 모드 — 값 복원 (DOM 렌더 완료 후 실행)
     if (mode === "edit" && detail) {
-      // 📌 시약장명 버튼 선택 복원
-      const cabBtns = document.querySelectorAll("#cabinet-name-group button");
-      cabBtns.forEach((btn) => {
-        if (btn.textContent.trim() === detail.cabinet_name)
-          btn.classList.add("active");
-      });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // 🏷 위치 버튼 복원
+          const areaBtns = document.querySelectorAll("#area-button-group button");
+          const areaName = detail.area_id?.area_name;
+          let matched = false;
+          areaBtns.forEach((btn) => {
+            if (btn.textContent.trim() === areaName) {
+              btn.classList.add("active");
+              matched = true;
+            }
+          });
 
-      // 📌 위치 버튼 선택 복원
-      const areaBtns = document.querySelectorAll("#area-button-group button");
-      areaBtns.forEach((btn) => {
-        if (btn.textContent.trim() === detail.area_id?.area_name)
-          btn.classList.add("active");
-      });
+          // 기타일 경우 입력칸 표시
+          if (!matched) {
+            const input = document.getElementById("area-custom-input");
+            if (input) {
+              input.style.display = "block";
+              input.value = areaName || "";
+            }
+          }
 
-      // 📌 기타 입력란 복원
-      const areaInput = document.getElementById("area-custom-input");
-      if (areaInput) {
-        areaInput.value = detail.area_id?.area_name || "";
-      }
+          // 🏷 시약장 이름 버튼 복원
+          const cabBtns = document.querySelectorAll("#cabinet-name-group button");
+          cabBtns.forEach((btn) => {
+            if (btn.textContent.trim() === detail.cabinet_name)
+              btn.classList.add("active");
+          });
 
-      // 📌 도어 및 선반 버튼 복원
-      const vBtns = document.querySelectorAll("#door_vertical_split_buttons button");
-      vBtns.forEach((btn) => {
-        const val = parseInt(btn.dataset.value, 10);
-        if (val === detail.door_vertical_count) btn.classList.add("active");
-      });
+          // 🧱 도어 버튼 복원
+          const vBtns = document.querySelectorAll("#door_vertical_split_buttons button");
+          vBtns.forEach((btn) => {
+            const val = parseInt(btn.dataset.value, 10);
+            if (val === detail.door_vertical_count) btn.classList.add("active");
+          });
 
-      const hBtns = document.querySelectorAll("#door_horizontal_split_buttons button");
-      hBtns.forEach((btn) => {
-        const val = parseInt(btn.dataset.value, 10);
-        if (val === detail.door_horizontal_count) btn.classList.add("active");
-      });
+          const hBtns = document.querySelectorAll("#door_horizontal_split_buttons button");
+          hBtns.forEach((btn) => {
+            const val = parseInt(btn.dataset.value, 10);
+            if (val === detail.door_horizontal_count) btn.classList.add("active");
+          });
 
-      const sBtns = document.querySelectorAll("#shelf_height_buttons button");
-      sBtns.forEach((btn) => {
-        const val = parseInt(btn.dataset.value, 10);
-        if (val === detail.shelf_height) btn.classList.add("active");
-      });
+          // 🧱 선반 높이 / 열 수 버튼 복원
+          const sBtns = document.querySelectorAll("#shelf_height_buttons button");
+          sBtns.forEach((btn) => {
+            const val = parseInt(btn.dataset.value, 10);
+            if (val === detail.shelf_height) btn.classList.add("active");
+          });
 
-      const cBtns = document.querySelectorAll("#storage_columns_buttons button");
-      cBtns.forEach((btn) => {
-        const val = parseInt(btn.dataset.value, 10);
-        if (val === detail.storage_columns) btn.classList.add("active");
+          const cBtns = document.querySelectorAll("#storage_columns_buttons button");
+          cBtns.forEach((btn) => {
+            const val = parseInt(btn.dataset.value, 10);
+            if (val === detail.storage_columns) btn.classList.add("active");
+          });
+
+          // 🖼 기존 사진 표시
+          if (detail.photo_url_320 || detail.photo_url_160) {
+            const url = detail.photo_url_320 || detail.photo_url_160;
+            previewBox.innerHTML = `<img src="${url}" alt="기존 사진">`;
+          }
+        });
       });
     }
 
