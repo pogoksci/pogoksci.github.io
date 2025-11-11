@@ -163,11 +163,17 @@
       });
 
       alert("✅ 시약장이 삭제되었습니다.");
-      await loadList(); // 삭제 후 목록 새로고침
+
+      // ✅ 목록 화면 먼저 로드
+      await App.includeHTML("pages/location-list.html");
+      // ✅ HTML이 완전히 로드된 뒤에 목록 불러오기 실행
+      requestAnimationFrame(() => {
+        App.Cabinet?.loadList?.();
+      });
     } catch (err) {
       console.error("❌ 시약장 삭제 중 오류:", err);
       const message = err?.message || "삭제 중 오류가 발생했습니다.";
-      alert(message);
+      alert(err?.message || "삭제 중 오류가 발생했습니다.");
     }
   }
 
