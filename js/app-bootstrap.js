@@ -161,8 +161,13 @@
             ? APP_CONFIG.SCHOOL
             : "학교명 미정";
       }
+      
+      console.log("✅ APP_CONFIG 적용 완료:", {
+        name: APP_CONFIG.APPNAME,
+        version: APP_CONFIG.VERSION,
+        school: APP_CONFIG.SCHOOL,
+      });
     });
-
     // ✅ splash 해제
     setTimeout(() => {
       document.body.classList.remove("home-active");
