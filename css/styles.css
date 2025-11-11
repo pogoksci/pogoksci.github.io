@@ -585,7 +585,7 @@ button:disabled {
 }
 
 .menu-item:hover {                 /* ✅ hover 효과 */
-    background-color: #00A6AD;   /* 메인컬러와 동일 */
+    background-color: #00BCD4;   /* 메인컬러와 동일 */
     color: #fff;                 /* 글자 흰색 */
 }
 
