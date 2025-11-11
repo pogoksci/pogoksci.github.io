@@ -158,7 +158,7 @@
 
     try {
       // ✅ 공용 delete-area Edge Function 호출
-      await API.callEdge(API.EDGE.DELETEAREA, {
+      await API.callEdge(`${API.EDGE.DELETEAREA}?id=${id}&table=Cabinet`, {
         method: "DELETE",
       });
 
