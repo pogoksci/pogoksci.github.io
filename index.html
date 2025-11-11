@@ -36,10 +36,17 @@
 <body class="home-active">
   <!-- 🧪 스플래시(로딩) 화면 -->
   <div id="splash-screen">
-    <img src="css/logo.png" alt="로고" class="main-logo" />
-    <h1>SciManager</h1>
-    <p>GOE학교</p>
-  </div>
+      <img src="css/logo.png" alt="SciManager Logo" class="main-logo" />
+
+      <!-- ✅ 앱 이름: APP_CONFIG.APPNAME -->
+      <h1 id="app-title" class="app-title"></h1>
+
+      <!-- ✅ 버전: APP_CONFIG.VERSION -->
+      <p id="app-version" class="app-version"></p>
+
+      <!-- ✅ 학교 이름: APP_CONFIG.SCHOOL -->
+      <p id="school-name" class="schoolName">잠시만 기다리세요.</p>
+    </div>
 
   <!-- 🔹 메인 컨텐츠 -->
   <div id="form-container"></div>

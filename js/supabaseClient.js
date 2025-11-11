@@ -10,6 +10,13 @@
   const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11cHJtemt2cmphY3FhdHF4YXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjYwNzAsImV4cCI6MjA3NTEwMjA3MH0.K2MO-l6QG5nztCPlT3_zqYOrMt-bqM-O5ZYLQpV1L9Y";
 
+  // ✅ 전역 앱 환경 설정
+  const APP_CONFIG = {
+    APPNAME: "SciManager",   // 앱 이름
+    SCHOOL: "GOE학교",     // 학교명
+    VERSION: "v0.11.11",     // 버전
+  };
+
   // ------------------------------------------------------------
   // 2️⃣ 전역 네임스페이스 보장
   // ------------------------------------------------------------
@@ -38,5 +45,6 @@
   // ------------------------------------------------------------
   if (typeof globalThis !== "undefined") {
     globalThis.supabaseClient = globalThis.App.supabase;
+    globalThis.APP_CONFIG = APP_CONFIG;
   }
 })();

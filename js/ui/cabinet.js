@@ -172,7 +172,6 @@
       });
     } catch (err) {
       console.error("❌ 시약장 삭제 중 오류:", err);
-      const message = err?.message || "삭제 중 오류가 발생했습니다.";
       alert(err?.message || "삭제 중 오류가 발생했습니다.");
     }
   }
