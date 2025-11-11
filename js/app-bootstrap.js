@@ -136,28 +136,32 @@
     App.Fab?.setVisibility(false);
 
     // ✅ 스크립트 로드 완료 후 로고 텍스트 변경
-    const appTitle = document.getElementById("app-title");
-    const appVersion = document.getElementById("app-version");
-    const schoolName = document.getElementById("school-name");
+    globalThis.addEventListener("DOMContentLoaded", () => {
+      const appTitle = document.getElementById("app-title");
+      const appVersion = document.getElementById("app-version");
+      const schoolName = document.getElementById("school-name");
 
-    if (appTitle) {
-      appTitle.textContent =
-        typeof APP_CONFIG !== "undefined" && APP_CONFIG.APPNAME
-          ? APP_CONFIG.APPNAME
-          : "앱명 미정";
-    }
-    if (appVersion) {
-      appVersion.textContent =
-        typeof APP_CONFIG !== "undefined" && APP_CONFIG.VERSION
-          ? APP_CONFIG.VERSION
-          : "버전 미정";
-    }
-    if (schoolName) {
-      schoolName.textContent =
-        typeof APP_CONFIG !== "undefined" && APP_CONFIG.SCHOOL
-          ? APP_CONFIG.SCHOOL
-          : "학교명 미정";
-    }
+      if (appTitle) {
+        appTitle.textContent =
+          typeof APP_CONFIG !== "undefined" && APP_CONFIG.APPNAME
+            ? APP_CONFIG.APPNAME
+            : "앱명 미정";
+      }
+
+      if (appVersion) {
+        appVersion.textContent =
+          typeof APP_CONFIG !== "undefined" && APP_CONFIG.VERSION
+            ? APP_CONFIG.VERSION
+            : "버전 미정";
+      }
+
+      if (schoolName) {
+        schoolName.textContent =
+          typeof APP_CONFIG !== "undefined" && APP_CONFIG.SCHOOL
+            ? APP_CONFIG.SCHOOL
+            : "학교명 미정";
+      }
+    });
 
     // ✅ splash 해제
     setTimeout(() => {
