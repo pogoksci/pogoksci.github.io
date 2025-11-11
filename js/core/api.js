@@ -8,6 +8,7 @@
     CASIMPORT: `${SUPABASE_URL}/functions/v1/casimport`,
     CABINET: `${SUPABASE_URL}/functions/v1/cabinet-register`,
     INVENTORY: `${SUPABASE_URL}/functions/v1/inventory`,
+    DELETEAREA: `${SUPABASE_URL}/functions/v1/delete-area`,
   };
 
   /**
