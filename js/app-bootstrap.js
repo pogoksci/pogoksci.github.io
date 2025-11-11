@@ -53,6 +53,24 @@
         console.log("🏠 Main 화면 HTML 로드 완료");
         App.Fab?.setVisibility(false);
 
+        // ✅ 렌더링 완료 후 실행 (1프레임 대기)
+        requestAnimationFrame(() => {
+          const appTitle = document.getElementById("app-title");
+          const appVersion = document.getElementById("app-version");
+          const schoolName = document.getElementById("school-name");
+
+          if (appTitle)
+            appTitle.textContent = APP_CONFIG?.APPNAME || "앱명 미정";
+
+          if (appVersion)
+            appVersion.textContent = APP_CONFIG?.VERSION || "버전 미정";
+
+          if (schoolName)
+            schoolName.textContent = APP_CONFIG?.SCHOOL || "학교명 미정";
+
+          console.log("🪄 APP_CONFIG 적용 완료:", APP_CONFIG);
+        });
+
       } else if (file.includes("location-list.html")) {
         console.log("📦 시약장 목록 HTML 로드 완료");
         App.Cabinet?.loadList?.();
@@ -135,39 +153,6 @@
 
     App.Fab?.setVisibility(false);
 
-    // ✅ 스크립트 로드 완료 후 로고 텍스트 변경
-    globalThis.addEventListener("DOMContentLoaded", () => {
-      const appTitle = document.getElementById("app-title");
-      const appVersion = document.getElementById("app-version");
-      const schoolName = document.getElementById("school-name");
-
-      if (appTitle) {
-        appTitle.textContent =
-          typeof APP_CONFIG !== "undefined" && APP_CONFIG.APPNAME
-            ? APP_CONFIG.APPNAME
-            : "앱명 미정";
-      }
-
-      if (appVersion) {
-        appVersion.textContent =
-          typeof APP_CONFIG !== "undefined" && APP_CONFIG.VERSION
-            ? APP_CONFIG.VERSION
-            : "버전 미정";
-      }
-
-      if (schoolName) {
-        schoolName.textContent =
-          typeof APP_CONFIG !== "undefined" && APP_CONFIG.SCHOOL
-            ? APP_CONFIG.SCHOOL
-            : "학교명 미정";
-      }
-      
-      console.log("✅ APP_CONFIG 적용 완료:", {
-        name: APP_CONFIG.APPNAME,
-        version: APP_CONFIG.VERSION,
-        school: APP_CONFIG.SCHOOL,
-      });
-    });
     // ✅ splash 해제
     setTimeout(() => {
       document.body.classList.remove("home-active");

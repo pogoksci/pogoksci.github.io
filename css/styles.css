@@ -770,7 +770,7 @@ body:not(.home-active) #splash-screen {
 }
 
 #splash-screen .school-name,
-#splash-screen .school-nam {
+#splash-screen .app-version {
   font-size: 18px;
   color: #666;
   margin-top: 8px;

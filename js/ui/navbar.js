@@ -76,6 +76,7 @@
       menuHomeBtn.addEventListener("click", (e) => {
         e.preventDefault();
         document.body.classList.add("home-active"); // 로고 화면
+        App.Fab?.setVisibility(false);
         closeStartMenu();
         setActive("menu-home-btn");
       });
