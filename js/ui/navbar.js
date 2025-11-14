@@ -1,33 +1,82 @@
 // ================================================================
-// /js/ui/navbar.js — 네비게이션 & Start 메뉴 제어 (ID 정확 매칭, 단일 바인딩)
+// /js/ui/navbar.js — 홈 버튼 최소 동작 버전
 // ================================================================
 (function () {
   console.log("🧭 App.Navbar 모듈 로드됨");
 
-  // ---- 공통: 페이지 로드 헬퍼 ----
-  async function loadPage(htmlPath, after) {
-    if (typeof includeHTML === "function") {
-      await includeHTML(htmlPath, "form-container");
-    } else if (typeof App?.includeHTML === "function") {
-      await App.includeHTML(htmlPath, "form-container");
-    } else {
-      console.warn("⚠️ includeHTML 함수가 없습니다.");
-    }
-    if (typeof after === "function") after();
+  const getApp = () => globalThis.App || {};
+
+  function closeStartMenu() {
+    const menu = document.getElementById("start-menu");
+    if (menu) menu.classList.remove("open");
   }
 
-  // ---- Start 메뉴 열기/닫기 ----
+  /** 메뉴 active 표시 */
+  function setActive(id) {
+    document.querySelectorAll(".nav-item").forEach((el) => {
+      el.classList.remove("active");
+    });
+    const btn = document.getElementById(id);
+    if (btn) btn.classList.add("active");
+  }
+
+  // --------------------------------------------------------
+  // 🌟 1️⃣ 홈 버튼 — 화면만 로고 화면으로 전환
+  // --------------------------------------------------------
+  function setupHomeButton() {
+    const menuHomeBtn = document.getElementById("menu-home-btn");
+    if (!menuHomeBtn) return;
+
+    menuHomeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      console.log("🏠 홈 버튼 클릭됨 — 화면만 로고화면으로 복귀");
+
+      // ① 로고 화면을 보이게 업데이트
+      document.body.classList.add("home-active");
+      document.body.classList.remove("loaded");
+
+      // ② form-container 비우기 (이전 페이지 흔적 제거)
+      const container = document.getElementById("form-container");
+      if (container) container.innerHTML = "";
+
+      // ③ FAB 숨김
+      getApp().Fab?.setVisibility(false);
+
+      // ④ Start 메뉴 닫기
+      closeStartMenu();
+
+      // ⑤ 메뉴 active 표시
+      setActive("menu-home-btn");
+
+      // ⑥ 로고 화면의 텍스트 갱신 (스크립트 재로드 없음)
+      const { APPNAME, VERSION, SCHOOL } = globalThis.APP_CONFIG || {};
+
+      const titleEl = document.getElementById("app-title");
+      const verEl = document.getElementById("app-version");
+      const schoolEl = document.getElementById("school-name");
+
+      if (titleEl) titleEl.textContent = APPNAME || "앱명";
+      if (verEl) verEl.textContent = VERSION || "";
+      if (schoolEl) schoolEl.textContent = SCHOOL || "";
+
+      console.log("✨ 홈 화면 텍스트 갱신 완료");
+    });
+  }
+
+  // --------------------------------------------------------
+  // 2️⃣ Start 메뉴 토글 기능
+  // --------------------------------------------------------
   function setupStartMenuToggle() {
     const toggleBtn = document.getElementById("menu-toggle-btn");
     const startMenu = document.getElementById("start-menu");
-    if (!toggleBtn || !startMenu) {
-      console.warn("⚠️ Navbar: 메뉴 토글 요소를 찾을 수 없습니다.");
-      return;
-    }
+
+    if (!toggleBtn || !startMenu) return;
+
     toggleBtn.addEventListener("click", (e) => {
       e.preventDefault();
       startMenu.classList.toggle("open");
     });
+
     document.addEventListener("click", (e) => {
       if (!startMenu.contains(e.target) && !toggleBtn.contains(e.target)) {
         startMenu.classList.remove("open");
@@ -35,153 +84,15 @@
     });
   }
 
-  function closeStartMenu() {
-    const startMenu = document.getElementById("start-menu");
-    if (startMenu) startMenu.classList.remove("open");
-  }
-
-  function setActive(id) {
-    document.querySelectorAll(".nav-item, .menu-item").forEach((el) => {
-      el.classList.toggle("active", el.id === id);
-    });
-  }
-
-  // ---- 단일 바인딩: 정확한 ID들만 연결 ----
-  function setupExactIdLinks() {
-    // 1) Start 메뉴 안의 버튼들
-    const menuInventory = document.getElementById("menu-inventory-btn");
-    if (menuInventory) {
-      menuInventory.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.());
-        closeStartMenu();
-        setActive("menu-inventory-btn");
-      });
-    }
-
-    const menuCabinet = document.getElementById("menu-cabinet-btn");
-    if (menuCabinet) {
-      menuCabinet.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await loadPage("pages/location-list.html", () => App.Cabinet?.loadList?.());
-        closeStartMenu();
-        setActive("menu-cabinet-btn");
-      });
-    }
-
-    const menuHomeBtn = document.getElementById("menu-home-btn");
-    if (menuHomeBtn) {
-      menuHomeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        document.body.classList.add("home-active"); // 로고 화면
-        App.Fab?.setVisibility(false);
-        closeStartMenu();
-        setActive("menu-home-btn");
-      });
-    }
-
-    // 2) 상단 Navbar 영역(정확 ID)
-    const navInventory = document.getElementById("nav-inventory");
-    if (navInventory) {
-      navInventory.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.());
-        closeStartMenu();
-        setActive("nav-inventory");
-      });
-    }
-
-    const navUsage = document.getElementById("nav-usage");
-    if (navUsage) {
-      navUsage.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.()); // 임시 동일 페이지
-        closeStartMenu();
-        setActive("nav-usage");
-      });
-    }
-
-    const navWaste = document.getElementById("nav-waste");
-    if (navWaste) {
-      navWaste.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.()); // 임시 동일 페이지
-        closeStartMenu();
-        setActive("nav-waste");
-      });
-    }
-
-    const navKit = document.getElementById("nav-kit");
-    if (navKit) {
-      navKit.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.()); // 임시 동일 페이지
-        closeStartMenu();
-        setActive("nav-kit");
-      });
-    }
-
-    // 3) Start 메뉴의 기타 항목(정확 ID)
-    const menuLocation = document.getElementById("menu-location");
-    if (menuLocation) {
-      menuLocation.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await loadPage("pages/location-list.html", () => App.Cabinet?.loadList?.());
-        closeStartMenu();
-        setActive("menu-location");
-      });
-    }
-
-    const menuEquipment = document.getElementById("menu-equipment");
-    if (menuEquipment) {
-      menuEquipment.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.()); // 임시
-        closeStartMenu();
-        setActive("menu-equipment");
-      });
-    }
-
-    const menuLablog = document.getElementById("menu-lablog");
-    if (menuLablog) {
-      menuLablog.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.()); // 임시
-        closeStartMenu();
-        setActive("menu-lablog");
-      });
-    }
-
-    const menuHome = document.getElementById("menu-home");
-    if (menuHome) {
-      menuHome.addEventListener("click", (e) => {
-        e.preventDefault();
-        document.body.classList.add("home-active");
-        closeStartMenu();
-        setActive("menu-home");
-      });
-    }
-  }
-
-  // ---- 초기화 ----
+  // --------------------------------------------------------
+  // 3️⃣ 초기화
+  // --------------------------------------------------------
   function setup() {
+    setupHomeButton();
     setupStartMenuToggle();
-    setupExactIdLinks(); // ✅ 단일 바인딩 (정확 ID)
-    console.log("✅ Navbar.setup() 완료 — 정확 ID 바인딩/Start 메뉴 토글");
+    console.log("✅ Navbar.setup() 완료");
   }
 
-  // ---- 전역 등록 ----
   globalThis.App = globalThis.App || {};
-  globalThis.App.Navbar = { setup, setActive, closeStartMenu };
-
-  document.addEventListener("DOMContentLoaded", setup);
+  globalThis.App.Navbar = { setup };
 })();
