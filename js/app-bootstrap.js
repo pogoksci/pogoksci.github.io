@@ -53,24 +53,6 @@
         console.log("🏠 Main 화면 HTML 로드 완료");
         App.Fab?.setVisibility(false);
 
-        // ✅ 렌더링 완료 후 실행 (1프레임 대기)
-        requestAnimationFrame(() => {
-          const appTitle = document.getElementById("app-title");
-          const appVersion = document.getElementById("app-version");
-          const schoolName = document.getElementById("school-name");
-
-          if (appTitle)
-            appTitle.textContent = APP_CONFIG?.APPNAME || "앱명 미정";
-
-          if (appVersion)
-            appVersion.textContent = APP_CONFIG?.VERSION || "버전 미정";
-
-          if (schoolName)
-            schoolName.textContent = APP_CONFIG?.SCHOOL || "학교명 미정";
-
-          console.log("🪄 APP_CONFIG 적용 완료:", APP_CONFIG);
-        });
-
       } else if (file.includes("location-list.html")) {
         console.log("📦 시약장 목록 HTML 로드 완료");
         App.Cabinet?.loadList?.();
@@ -160,6 +142,21 @@
       console.log("✅ Bootstrap 완료 — Splash 숨김, 메인화면 전환");
     }, 1000);
   }
+
+  // -----------------------------------------------------
+  // ✅ index.html의 splash 화면에 APP_CONFIG 반영
+  // -----------------------------------------------------
+  document.addEventListener("DOMContentLoaded", () => {
+    const appTitle = document.getElementById("app-title");
+    const appVersion = document.getElementById("app-version");
+    const schoolName = document.getElementById("school-name");
+
+    if (appTitle) appTitle.textContent = APP_CONFIG?.APPNAME || "앱명 미정";
+    if (appVersion) appVersion.textContent = APP_CONFIG?.VERSION || "버전 미정";
+    if (schoolName) schoolName.textContent = APP_CONFIG?.SCHOOL || "학교명 미정";
+
+    console.log("🪄 초기 Splash(APP_CONFIG) 적용 완료:", APP_CONFIG);
+  });
 
   // -----------------------------------------------------
   // 3. 전역 등록 및 실행
