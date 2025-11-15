@@ -1,97 +1,83 @@
-// ================================================================
-// /js/ui/navbar.js — 홈 버튼 최소 동작 버전
-// ================================================================
 (function () {
   console.log("🧭 App.Navbar 모듈 로드됨");
 
   const getApp = () => globalThis.App || {};
 
   function closeStartMenu() {
-    const menu = document.getElementById("start-menu");
-    if (menu) menu.classList.remove("open");
+    const startMenu = document.getElementById("start-menu");
+    if (startMenu) startMenu.classList.remove("open");
   }
 
-  /** 메뉴 active 표시 */
-  function setActive(id) {
-    document.querySelectorAll(".nav-item").forEach((el) => {
-      el.classList.remove("active");
-    });
-    const btn = document.getElementById(id);
-    if (btn) btn.classList.add("active");
-  }
+  function setup() {
+    console.log("🧭 Navbar.setup() 실행");
 
-  // --------------------------------------------------------
-  // 🌟 1️⃣ 홈 버튼 — 화면만 로고 화면으로 전환
-  // --------------------------------------------------------
-  function setupHomeButton() {
-    // 🏠 홈 버튼 (Start 메뉴 내부)
-    const menuHomeBtn = document.getElementById("menu-home");
-    if (menuHomeBtn) {
-      menuHomeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        console.log("🏠 홈 버튼 클릭됨 — 화면만 로고화면으로 복귀");
-
-        // ① 로고 화면 활성화
-        document.body.classList.add("home-active");
-        document.body.classList.remove("loaded");
-
-        // ② form-container 비우기 (이전 페이지 흔적 제거)
-        const container = document.getElementById("form-container");
-        if (container) container.innerHTML = "";
-
-        // ③ FAB 숨김
-        getApp().Fab?.setVisibility(false);
-
-        // ④ Start 메뉴 닫기
-        closeStartMenu();
-
-        // ⑤ 메뉴 active 처리
-        setActive("menu-home");
-
-        // ⑥ splash-screen 텍스트 갱신
-        const { APPNAME, VERSION, SCHOOL } = globalThis.APP_CONFIG || {};
-
-        const titleEl = document.getElementById("app-title");
-        const verEl = document.getElementById("app-version");
-        const schoolEl = document.getElementById("school-name");
-
-        if (titleEl) titleEl.textContent = APPNAME || "앱명";
-        if (verEl) verEl.textContent = VERSION || "";
-        if (schoolEl) schoolEl.textContent = SCHOOL || "";
-
-        console.log("✨ 홈 화면 텍스트 갱신 완료");
-      });
-    }
-
-  }
-
-  // --------------------------------------------------------
-  // 2️⃣ Start 메뉴 토글 기능
-  // --------------------------------------------------------
-  function setupStartMenuToggle() {
+    // ----------------------
+    // 📌 Start 메뉴 토글 버튼
+    // ----------------------
     const toggleBtn = document.getElementById("menu-toggle-btn");
     const startMenu = document.getElementById("start-menu");
 
-    if (!toggleBtn || !startMenu) return;
+    if (toggleBtn && startMenu) {
+      toggleBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        startMenu.classList.toggle("open");
+      });
+    }
 
-    toggleBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      startMenu.classList.toggle("open");
-    });
+    // ----------------------
+    // 📌 홈 버튼 (Start 메뉴 내부)
+    // ----------------------
+    const menuHomeBtn = document.getElementById("menu-home");
+    if (menuHomeBtn) {
+      menuHomeBtn.addEventListener("click", async (e) => {
+        e.preventDefault();
 
-    document.addEventListener("click", (e) => {
-      if (!startMenu.contains(e.target) && !toggleBtn.contains(e.target)) {
-        startMenu.classList.remove("open");
-      }
-    });
-  }
+        console.log("🏠 홈 버튼 클릭됨");
 
-  // --------------------------------------------------------
-  // 3️⃣ 초기화
-  // --------------------------------------------------------
-  function setup() {
-    setupHomeButton();
-    setupStartMenuToggle();
+        // Start 메뉴 닫기
+        closeStartMenu();
+
+        // FAB 숨김
+        getApp().Fab?.setVisibility(false);
+
+        // form-container 비우기
+        const container = document.getElementById("form-container");
+        if (container) container.innerHTML = "";
+
+        // 메인 화면 로드
+        await App.Router.go("main");
+
+        // 로고 화면 활성화
+        document.body.classList.add("home-active");
+        document.body.classList.remove("loaded");
+
+        console.log("🏠 홈 화면으로 전환 완료");
+      });
+    }
+
+    // ----------------------
+    // 📌 시약장 설정 버튼
+    // ----------------------
+    const menuLocationBtn = document.getElementById("menu-location");
+    if (menuLocationBtn) {
+      menuLocationBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        closeStartMenu();
+        App.Router.go("cabinets");
+      });
+    }
+
+    // ----------------------
+    // 📌 약품 관리
+    // ----------------------
+    const inventoryBtn = document.getElementById("nav-inventory");
+    if (inventoryBtn) {
+      inventoryBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        App.Router.go("inventory");
+      });
+    }
+
     console.log("✅ Navbar.setup() 완료");
   }
 
