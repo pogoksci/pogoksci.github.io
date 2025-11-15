@@ -82,13 +82,15 @@
         const container = document.getElementById("form-container");
         if (container) container.innerHTML = "";
 
-        // 3️⃣ FAB 숨기기 (예: '새 시약장 등록' 버튼)
-        if (globalThis.App && App.Fab && typeof App.Fab.setVisibility === "function") {
-          App.Fab.setVisibility(false);
-        }
-
+        App.Fab?.setVisibility(false);
         closeStartMenu();
         setActive("menu-home");
+
+        // 🔥 school-name, app-title, version 갱신
+        const { APPNAME, VERSION, SCHOOL } = globalThis.APP_CONFIG || {};
+        document.getElementById("app-title").textContent = APPNAME;
+        document.getElementById("app-version").textContent = VERSION;
+        document.getElementById("school-name").textContent = SCHOOL;
       });
     }
 

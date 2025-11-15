@@ -57,7 +57,7 @@
         requestAnimationFrame(() => {
           const appTitle = document.getElementById("app-title");
           const appVersion = document.getElementById("app-version");
-          const schoolName = document.getElementById("school-name");
+        //  const schoolName = document.getElementById("school-name");
 
           if (appTitle)
             appTitle.textContent = APP_CONFIG?.APPNAME || "앱명 미정";
@@ -65,8 +65,8 @@
           if (appVersion)
             appVersion.textContent = APP_CONFIG?.VERSION || "버전 미정";
 
-          if (schoolName)
-            schoolName.textContent = APP_CONFIG?.SCHOOL || "학교명 미정";
+        //  if (schoolName)
+        //    schoolName.textContent = APP_CONFIG?.SCHOOL || "학교명 미정";
 
           console.log("🪄 APP_CONFIG 적용 완료:", APP_CONFIG);
         });
