@@ -90,6 +90,28 @@
     console.log("🏠 홈 로고 화면 유지 중 (home-active 상태 지속)");
   }
 
+  // ---------------------------------------------------
+  // Splash 화면 텍스트 즉시 반영 (index.html 기반)
+  // ---------------------------------------------------
+  function updateSplashScreenText() {
+    const { APPNAME, VERSION, SCHOOL } = globalThis.APP_CONFIG || {};
+
+    const titleEl = document.getElementById("app-title");
+    const verEl = document.getElementById("app-version");
+    const schoolEl = document.getElementById("school-name");
+
+    if (titleEl) titleEl.textContent = APPNAME || "";
+    if (verEl) verEl.textContent = VERSION || "";
+    if (schoolEl) schoolEl.textContent = SCHOOL || "";
+    
+    console.log("🔄 Splash 화면 텍스트 업데이트 완료");
+  }
+
+  // DOMContentLoaded 또는 initApp에서 실행
+  document.addEventListener("DOMContentLoaded", () => {
+    updateSplashScreenText();
+  });
+
   // ------------------------------------------------------------
   // 4️⃣ 실행 순서
   // ------------------------------------------------------------

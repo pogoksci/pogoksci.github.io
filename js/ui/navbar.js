@@ -24,43 +24,45 @@
   // 🌟 1️⃣ 홈 버튼 — 화면만 로고 화면으로 전환
   // --------------------------------------------------------
   function setupHomeButton() {
-    const menuHomeBtn = document.getElementById("menu-home-btn");
-    if (!menuHomeBtn) return;
+    // 🏠 홈 버튼 (Start 메뉴 내부)
+    const menuHomeBtn = document.getElementById("menu-home");
+    if (menuHomeBtn) {
+      menuHomeBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        console.log("🏠 홈 버튼 클릭됨 — 화면만 로고화면으로 복귀");
 
-    menuHomeBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      console.log("🏠 홈 버튼 클릭됨 — 화면만 로고화면으로 복귀");
+        // ① 로고 화면 활성화
+        document.body.classList.add("home-active");
+        document.body.classList.remove("loaded");
 
-      // ① 로고 화면을 보이게 업데이트
-      document.body.classList.add("home-active");
-      document.body.classList.remove("loaded");
+        // ② form-container 비우기 (이전 페이지 흔적 제거)
+        const container = document.getElementById("form-container");
+        if (container) container.innerHTML = "";
 
-      // ② form-container 비우기 (이전 페이지 흔적 제거)
-      const container = document.getElementById("form-container");
-      if (container) container.innerHTML = "";
+        // ③ FAB 숨김
+        getApp().Fab?.setVisibility(false);
 
-      // ③ FAB 숨김
-      getApp().Fab?.setVisibility(false);
+        // ④ Start 메뉴 닫기
+        closeStartMenu();
 
-      // ④ Start 메뉴 닫기
-      closeStartMenu();
+        // ⑤ 메뉴 active 처리
+        setActive("menu-home");
 
-      // ⑤ 메뉴 active 표시
-      setActive("menu-home-btn");
+        // ⑥ splash-screen 텍스트 갱신
+        const { APPNAME, VERSION, SCHOOL } = globalThis.APP_CONFIG || {};
 
-      // ⑥ 로고 화면의 텍스트 갱신 (스크립트 재로드 없음)
-      const { APPNAME, VERSION, SCHOOL } = globalThis.APP_CONFIG || {};
+        const titleEl = document.getElementById("app-title");
+        const verEl = document.getElementById("app-version");
+        const schoolEl = document.getElementById("school-name");
 
-      const titleEl = document.getElementById("app-title");
-      const verEl = document.getElementById("app-version");
-      const schoolEl = document.getElementById("school-name");
+        if (titleEl) titleEl.textContent = APPNAME || "앱명";
+        if (verEl) verEl.textContent = VERSION || "";
+        if (schoolEl) schoolEl.textContent = SCHOOL || "";
 
-      if (titleEl) titleEl.textContent = APPNAME || "앱명";
-      if (verEl) verEl.textContent = VERSION || "";
-      if (schoolEl) schoolEl.textContent = SCHOOL || "";
+        console.log("✨ 홈 화면 텍스트 갱신 완료");
+      });
+    }
 
-      console.log("✨ 홈 화면 텍스트 갱신 완료");
-    });
   }
 
   // --------------------------------------------------------
