@@ -12,6 +12,7 @@
   let currentSort = "category_name_kor"; // 기본 정렬: 한글순(분류)
   let awaitingListDom = false;
 
+
   // ------------------------------------------------------------
   // 1️⃣ 정렬 함수
   // ------------------------------------------------------------
@@ -130,7 +131,14 @@
         awaitingListDom = true;
         console.log("📎 inventory-list DOM 미검출 → HTML 다시 로드 시도");
         try {
-          await globalThis.App.includeHTML("pages/inventory-list.html", "form-container");
+          const ok = await globalThis.App.includeHTML("pages/inventory-list.html", "form-container");
+          if (ok) {
+            await new Promise((resolve) =>
+              requestAnimationFrame(() => requestAnimationFrame(resolve))
+            );
+            awaitingListDom = false;
+            return loadList();
+          }
         } finally {
           awaitingListDom = false;
         }
