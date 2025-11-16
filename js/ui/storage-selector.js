@@ -11,10 +11,12 @@
     cabinet_id: null,
 
     door_vertical_count: null,
+    door_horizontal_count: null,
     shelf_height: null,
     storage_columns: null,
 
     door_vertical: null,
+    door_horizontal: null,
     internal_shelf_level: null,
     storage_column: null,
   };
@@ -73,7 +75,7 @@
 
     const { data, error } = await supabase
       .from("Cabinet")
-      .select("door_vertical_count, shelf_height, storage_columns")
+      .select("door_vertical_count, door_horizontal_count, shelf_height, storage_columns")
       .eq("id", cabinetId)
       .maybeSingle();
 
@@ -111,8 +113,15 @@
         // 초기화
         state.cabinet_id =
           state.door_vertical =
+          state.door_horizontal =
           state.internal_shelf_level =
           state.storage_column =
+            null;
+
+        state.door_vertical_count =
+          state.door_horizontal_count =
+          state.shelf_height =
+          state.storage_columns =
             null;
 
         clearNextSteps(container, 1);
@@ -158,15 +167,17 @@
         const structure = await loadCabinetStructure(state.cabinet_id);
         if (structure) {
           state.door_vertical_count = structure.door_vertical_count;
+          state.door_horizontal_count = structure.door_horizontal_count;
           state.shelf_height = structure.shelf_height;
           state.storage_columns = structure.storage_columns;
         }
 
         // 초기화
         state.door_vertical =
-          state.internal_shelf_level =
-          state.storage_column =
-            null;
+        state.door_horizontal =
+        state.internal_shelf_level =
+        state.storage_column =
+        null;
 
         clearNextSteps(container, 2);
         loadDoorVertical(container);
