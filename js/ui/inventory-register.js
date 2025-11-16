@@ -1,4 +1,4 @@
-// /js/ui/inventory-register.js
+﻿// /js/ui/inventory-register.js
 (function () {
   const getApp = () => globalThis.App || {};
   const getSupabase = () => getApp().supabase;
@@ -13,7 +13,7 @@
     });
   }
 
-  // ✅ 사진 업로드 핸들러
+  // 사진 업로드 핸들러
   function setupPhotoUpload() {
     const uploadBtn = document.getElementById("photo-upload-btn");
     const input = document.getElementById("photo-input");
@@ -29,52 +29,44 @@
     });
   }
 
-  // ✅ 폼 초기화
   async function initForm() {
     setupPhotoUpload();
-
-    // storage-selector 초기화
     await App.StorageSelector.init("storage-selector");
 
-    // 폼 제출
     const form = document.getElementById("inventory-form");
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       await handleSubmit();
     });
 
-    // 취소 버튼
-    document.getElementById("cancel-form-btn").addEventListener("click", () => {
-      if (getApp().Router?.go)
-        getApp().Router.go("inventoryList", "form-container", () => getApp().Inventory.loadList());
+    document.getElementById("cancel-form-btn").addEventListener("click", async () => {
+      if (getApp().Inventory?.showListPage)
+        await getApp().Inventory.showListPage();
       else location.reload();
     });
   }
 
-  // ✅ Edge Function 호출
+  // Edge Function 호출
   async function handleSubmit() {
     const supabase = getSupabase();
     const cas = document.getElementById("cas-input").value.trim();
     const volume = parseFloat(document.getElementById("purchase-volume-input").value);
     const unit = document.getElementById("unit-select").value;
     if (!cas || !volume || !unit) {
-      alert("CAS, 구입용량, 단위를 입력해주세요.");
+      alert("CAS, 구입용량, 단위를 입력해 주세요.");
       return;
     }
 
     const inventoryDetails = {
       purchase_volume: volume,
-      unit: unit,
+      unit,
       state: document.getElementById("state-input").value.trim() || null,
       classification: document.getElementById("classification-input").value.trim() || null,
       manufacturer: document.getElementById("manufacturer-input").value.trim() || null,
       purchase_date: document.getElementById("purchase-date-input").value || null,
+      ...App.StorageSelector.getSelection(),
     };
 
-    // 보관위치 추가
-    Object.assign(inventoryDetails, App.StorageSelector.getSelection());
-
-    // 사진
     const preview = document.getElementById("photo-preview");
     if (preview.dataset.base64) {
       inventoryDetails.photo_320_base64 = preview.dataset.base64;
@@ -91,10 +83,10 @@
       });
 
       if (error) throw error;
-      alert("등록 완료 ✅");
+      alert("등록 완료!");
       console.log("📦 등록 결과:", data);
-      if (getApp().Router?.go)
-        getApp().Router.go("inventoryList", "form-container", () => getApp().Inventory.loadList());
+      if (getApp().Inventory?.showListPage)
+        await getApp().Inventory.showListPage();
     } catch (err) {
       console.error("등록 실패:", err);
       alert("등록 중 오류가 발생했습니다.");

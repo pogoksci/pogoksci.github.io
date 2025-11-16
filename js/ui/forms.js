@@ -399,199 +399,102 @@
     }
 
     // ✅ 저장 로직
-
     if (submitBtn) {
-
       submitBtn.onclick = async (e) => {
-
         e.preventDefault();
-
         statusMsg.textContent = "💾 저장 중...";
 
-
-
         try {
-
           const state = dump();
-
           const cas = document.getElementById("cas_rn").value.trim();
-
           const volumeValue = document.getElementById("purchase_volume").value;
-
           const volume = Number.parseFloat(volumeValue);
-
           const unit = state.unit;
 
-
-
           if (!cas) {
-
             alert("CAS 번호는 필수 입력 항목입니다.");
-
             statusMsg.textContent = "";
-
             return;
-
           }
 
           if (!Number.isFinite(volume) || volume <= 0) {
-
             alert("구입용량을 바르게 입력해 주세요.");
-
             statusMsg.textContent = "";
-
             return;
-
           }
 
           if (!unit) {
-
             alert("구입용량 단위를 선택해 주세요.");
-
             statusMsg.textContent = "";
-
             return;
-
           }
-
-
 
           const manufacturerValue =
-
             state.manufacturer === "기타"
-
               ? document.getElementById("manufacturer_other").value.trim() || null
-
               : state.manufacturer || null;
-
           const purchaseDate = document.getElementById("purchase_date").value || null;
-
-
-
           const inventoryDetails = {
-
             purchase_volume: volume,
-
             unit,
-
             state: state.state || null,
-
             classification: state.classification || null,
-
             manufacturer: manufacturerValue,
-
             purchase_date: purchaseDate,
-
             area_id: state.area_id || null,
-
             cabinet_id: state.cabinet_id || null,
-
             door_vertical: state.door_vertical || null,
-
             door_horizontal: state.door_horizontal || null,
-
             internal_shelf_level: state.internal_shelf_level || null,
-
             storage_column: state.storage_column || null,
-
           };
 
-
-
           if (state.photo_base64) {
-
             inventoryDetails.photo_320_base64 = state.photo_base64;
-
             inventoryDetails.photo_160_base64 = state.photo_base64;
-
           }
 
-
-
           if (mode === "edit" && detail?.id) {
-
             const updatePayload = {
-
               current_amount: volume,
-
               unit,
-
               state: state.state || null,
-
               classification: state.classification || null,
-
               manufacturer: manufacturerValue,
-
               purchase_date: purchaseDate,
-
               cabinet_id: state.cabinet_id || null,
-
               door_vertical: state.door_vertical || null,
-
               door_horizontal: state.door_horizontal || null,
-
               internal_shelf_level: state.internal_shelf_level || null,
-
               storage_column: state.storage_column || null,
-
               photo_url_320: state.photo_base64 || null,
-
               photo_url_160: state.photo_base64 || null,
-
             };
 
-
-
             const { error } = await supabase.from("Inventory").update(updatePayload).eq("id", detail.id);
-
             if (error) throw error;
-
             alert("✅ 약품 정보가 수정되었어요.");
-
           } else {
-
             const { data, error } = await supabase.functions.invoke("casimport", {
-
               method: "POST",
-
               body: {
-
                 casRns: [cas],
-
                 inventoryDetails,
-
               },
-
             });
 
             if (error) throw error;
-
             console.log("📦 등록 결과:", data);
-
             alert("✅ 약품이 성공적으로 등록되었어요.");
-
           }
 
-
-
-          await App.includeHTML("pages/inventory-list.html", "form-container");
-
-          App.Inventory.loadList();
-
+          await App.Inventory?.showListPage?.();
         } catch (err) {
-
           console.error("❌ 저장 오류:", err);
-
           statusMsg.textContent = "❌ 저장 실패. 콘솔을 확인해 주세요.";
-
         }
-
       };
-
     }
-
-
-
     console.log(`✅ 약품 폼 초기화 완료 (${mode})`);
   }
 

@@ -82,36 +82,27 @@
         console.log("🧩 시약장 등록 폼 HTML 로드 완료");
 
       } else if (file.includes("inventory-list.html")) {
-        console.log("🧪 재고 목록 HTML 로드 완료");
+        console.log("📦 재고 목록 HTML 로드 완료");
 
-        // ✅ 목록 불러오기
-        App.Inventory?.loadList?.();
-
-        // ✅ 공용 정렬 드롭다운 초기화 (App.SortDropdown 모듈)
-        App.SortDropdown?.init?.({
-          onChange: (value) => {
-            console.log("🔽 정렬 변경:", value);
-            App.Inventory?.loadList?.(value);
-          },
-          onRefresh: () => {
-            console.log("🔄 새로고침 클릭됨");
-            App.Inventory?.loadList?.();
-          },
-          defaultLabel: "한글명(분류)",
-          defaultValue: "category_name_kor",
-        });
-
-        // ✅ 새 약품 등록 버튼 처리
-        const newBtn = document.getElementById("new-inventory-btn");
-        if (newBtn) {
-          newBtn.addEventListener("click", async () => {
-            console.log("🧾 새 약품 등록 버튼 클릭됨");
-            const ok = await App.includeHTML("pages/inventory-form.html", "form-container");
-            if (ok) App.Forms?.initInventoryForm?.("create", null);
+        if (!App.Inventory?.__manualMount) {
+          App.Inventory?.bindListPage?.();
+          App.SortDropdown?.init?.({
+            onChange: (value) => {
+              console.log("🔀 정렬 변경", value);
+              App.Inventory?.loadList?.(value);
+            },
+            onRefresh: () => {
+              console.log("🔄 새로고침 클릭됨");
+              App.Inventory?.loadList?.();
+            },
+            defaultLabel: "카테고리(한글)",
+            defaultValue: "category_name_kor",
           });
+          App.Inventory?.loadList?.();
+        } else {
+          delete App.Inventory.__manualMount;
         }
 
-        // ✅ Floating Action Button (FAB) 표시 비활성화
         App.Fab?.setVisibility(false);
 
       } else if (file.includes("inventory-detail.html")) {

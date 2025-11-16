@@ -61,9 +61,8 @@
         }
         alert("삭제되었습니다.");
         // 목록으로 복귀
-        if (getApp().Inventory?.loadList) {
-          await includeHTML("pages/inventory-list.html", "form-container");
-          getApp().Inventory.loadList();
+        if (getApp().Inventory?.showListPage) {
+          await getApp().Inventory.showListPage();
         }
       });
 

@@ -54,7 +54,7 @@
       menuInventory.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.());
+        await App.Inventory?.showListPage?.();
         closeStartMenu();
         setActive("menu-inventory-btn");
       });
@@ -100,7 +100,7 @@
       navInventory.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.());
+        await App.Inventory?.showListPage?.();
         closeStartMenu();
         setActive("nav-inventory");
       });
@@ -111,7 +111,7 @@
       navUsage.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.()); // 임시 동일 페이지
+        await App.Inventory?.showListPage?.(); // 임시 동일 페이지
         closeStartMenu();
         setActive("nav-usage");
       });
@@ -122,7 +122,7 @@
       navWaste.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.()); // 임시 동일 페이지
+        await App.Inventory?.showListPage?.(); // 임시 동일 페이지
         closeStartMenu();
         setActive("nav-waste");
       });
@@ -133,7 +133,7 @@
       navKit.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.()); // 임시 동일 페이지
+        await App.Inventory?.showListPage?.(); // 임시 동일 페이지
         closeStartMenu();
         setActive("nav-kit");
       });
@@ -156,7 +156,7 @@
       menuEquipment.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.()); // 임시
+        await App.Inventory?.showListPage?.(); // 임시
         closeStartMenu();
         setActive("menu-equipment");
       });
@@ -167,7 +167,7 @@
       menuLablog.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
-        await loadPage("pages/inventory-list.html", () => App.Inventory?.loadList?.()); // 임시
+        await App.Inventory?.showListPage?.(); // 임시
         closeStartMenu();
         setActive("menu-lablog");
       });
