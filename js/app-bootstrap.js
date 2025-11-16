@@ -120,7 +120,7 @@
 
       } else if (file.includes("inventory-form.html")) {
         console.log("🧾 재고 등록 폼 HTML 로드 완료");
-        App.Forms?.initInventoryForm?.("create", null);
+        //App.Forms?.initInventoryForm?.("create", null);
       }
 
       return true;
