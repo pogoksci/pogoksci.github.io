@@ -581,7 +581,8 @@
         return;
       }
 
-      const horizontalLabels = ["왼쪽", "오른쪽"];
+      const horizontalLabels =
+        horizontalCount === 1 ? ["문"] : ["왼쪽", "오른쪽"];
       hBox.innerHTML = Array.from({ length: horizontalCount }, (_, idx) => {
         const value = idx + 1;
         const label = horizontalLabels[idx] || `${value}구역`;
