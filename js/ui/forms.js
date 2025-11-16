@@ -418,7 +418,6 @@
               ? document.getElementById("manufacturer_other").value.trim()
               : state.manufacturer,
             purchase_date: document.getElementById("purchase_date").value || null,
-            area_id: state.area_id || null,
             cabinet_id: state.cabinet_id || null,
             door_vertical: state.door_vertical || null,
             door_horizontal: state.door_horizontal || null,
