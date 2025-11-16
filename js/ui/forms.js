@@ -464,65 +464,183 @@
     const sBox = document.getElementById("location_internal_shelf_group");
     const cBox = document.getElementById("location_storage_column_group");
 
-    const setPlaceholder = (box) => {
-      if (box)
-        box.innerHTML = `<span style="color:#888;">수납함 선택 후 표시됩니다.</span>`;
+    const showMessage = (box, msg) => {
+      if (box) box.innerHTML = `<span style="color:#888;">${msg}</span>`;
+    };
+
+    const resetSteps = () => {
+      showMessage(vBox, "수납함 선택 후 표시됩니다.");
+      showMessage(hBox, "3번 항목 선택 후 표시됩니다.");
+      showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+      showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
     };
 
     if (!cabinetId) {
-      setPlaceholder(vBox);
-      setPlaceholder(hBox);
-      setPlaceholder(sBox);
-      setPlaceholder(cBox);
+      resetSteps();
       return;
     }
 
     const { data, error } = await supabase.from("Cabinet").select("*").eq("id", cabinetId).maybeSingle();
-    if (error || !data) return console.warn("⚠️ 캐비닛 정보 없음");
+    if (error || !data) {
+      resetSteps();
+      return console.warn("⚠️ 캐비닛 정보 없음");
+    }
 
     const verticalCount = Number(data.door_vertical_count || data.door_vertical) || 0;
     const horizontalCount = Number(data.door_horizontal_count || data.door_horizontal) || 0;
     const shelfCount = Number(data.shelf_height || data.internal_shelf_level) || 0;
     const columnCount = Number(data.storage_columns || data.storage_column) || 0;
 
-    const makeBtns = (n) =>
-      Array.from({ length: n }, (_, i) => `<button type="button" data-value="${i + 1}">${i + 1}</button>`).join("");
+    const defaults = {
+      door_vertical: detail?.door_vertical || null,
+      door_horizontal: detail?.door_horizontal || null,
+      internal_shelf_level: detail?.internal_shelf_level || null,
+      storage_column: detail?.storage_column || null,
+    };
 
-    if (vBox && verticalCount > 0) {
-      vBox.innerHTML = makeBtns(verticalCount);
-      setupButtonGroup("location_door_vertical_group", (btn) => set("door_vertical", btn.dataset.value));
-      if (detail?.door_vertical)
-        vBox.querySelector(`button[data-value="${detail.door_vertical}"]`)?.classList.add("active");
-    } else {
-      setPlaceholder(vBox);
-    }
+    const renderColumns = () => {
+      if (!cBox) return;
+      const state = dump();
+      if (!state.internal_shelf_level) {
+        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+        return;
+      }
+      if (!columnCount) {
+        showMessage(cBox, "열 정보가 없습니다.");
+        return;
+      }
 
-    if (hBox && horizontalCount > 0) {
-      hBox.innerHTML = makeBtns(horizontalCount);
-      setupButtonGroup("location_door_horizontal_group", (btn) => set("door_horizontal", btn.dataset.value));
-      if (detail?.door_horizontal)
-        hBox.querySelector(`button[data-value="${detail.door_horizontal}"]`)?.classList.add("active");
-    } else {
-      setPlaceholder(hBox);
-    }
+      cBox.innerHTML = Array.from({ length: columnCount }, (_, i) => {
+        const value = i + 1;
+        return `<button type="button" data-value="${value}">${value}열</button>`;
+      }).join("");
 
-    if (sBox && shelfCount > 0) {
-      sBox.innerHTML = makeBtns(shelfCount);
-      setupButtonGroup("location_internal_shelf_group", (btn) => set("internal_shelf_level", btn.dataset.value));
-      if (detail?.internal_shelf_level)
-        sBox.querySelector(`button[data-value="${detail.internal_shelf_level}"]`)?.classList.add("active");
-    } else {
-      setPlaceholder(sBox);
-    }
+      setupButtonGroup("location_storage_column_group", (btn) => {
+        set("storage_column", btn.dataset.value);
+      });
 
-    if (cBox && columnCount > 0) {
-      cBox.innerHTML = makeBtns(columnCount);
-      setupButtonGroup("location_storage_column_group", (btn) => set("storage_column", btn.dataset.value));
-      if (detail?.storage_column)
-        cBox.querySelector(`button[data-value="${detail.storage_column}"]`)?.classList.add("active");
-    } else {
-      setPlaceholder(cBox);
-    }
+      const selected = defaults.storage_column || state.storage_column;
+      if (selected) {
+        cBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
+        defaults.storage_column = null;
+      }
+    };
+
+    const renderShelves = () => {
+      if (!sBox) return;
+      const state = dump();
+      if (!state.door_horizontal) {
+        showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+        return;
+      }
+      if (!shelfCount) {
+        showMessage(sBox, "선반 정보가 없습니다.");
+        showMessage(cBox, "선반 정보가 없습니다.");
+        return;
+      }
+
+      sBox.innerHTML = Array.from({ length: shelfCount }, (_, idx) => {
+        const value = idx + 1;
+        const label = `${shelfCount - idx}단`;
+        return `<button type="button" data-value="${value}">${label}</button>`;
+      }).join("");
+
+      setupButtonGroup("location_internal_shelf_group", (btn) => {
+        set("internal_shelf_level", btn.dataset.value);
+        set("storage_column", null);
+        renderColumns();
+      });
+
+      const selected = defaults.internal_shelf_level || state.internal_shelf_level;
+      if (selected) {
+        sBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
+        set("internal_shelf_level", selected);
+        defaults.internal_shelf_level = null;
+        renderColumns();
+      } else {
+        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+      }
+    };
+
+    const renderHorizontal = () => {
+      if (!hBox) return;
+      const state = dump();
+      if (!state.door_vertical) {
+        showMessage(hBox, "3번 항목 선택 후 표시됩니다.");
+        showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+        return;
+      }
+      if (!horizontalCount) {
+        showMessage(hBox, "좌우 정보가 없습니다.");
+        showMessage(sBox, "좌우 정보가 없습니다.");
+        showMessage(cBox, "좌우 정보가 없습니다.");
+        return;
+      }
+
+      const horizontalLabels = ["왼쪽", "오른쪽"];
+      hBox.innerHTML = Array.from({ length: horizontalCount }, (_, idx) => {
+        const value = idx + 1;
+        const label = horizontalLabels[idx] || `${value}구역`;
+        return `<button type="button" data-value="${value}">${label}</button>`;
+      }).join("");
+
+      setupButtonGroup("location_door_horizontal_group", (btn) => {
+        set("door_horizontal", btn.dataset.value);
+        set("internal_shelf_level", null);
+        set("storage_column", null);
+        renderShelves();
+      });
+
+      const selected = defaults.door_horizontal || state.door_horizontal;
+      if (selected) {
+        hBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
+        set("door_horizontal", selected);
+        defaults.door_horizontal = null;
+        renderShelves();
+      } else {
+        showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+      }
+    };
+
+    const renderVertical = () => {
+      if (!vBox) return;
+      if (!verticalCount) {
+        showMessage(vBox, "문 정보가 없습니다.");
+        resetSteps();
+        return;
+      }
+
+      vBox.innerHTML = Array.from({ length: verticalCount }, (_, idx) => {
+        const value = idx + 1;
+        const label = `${verticalCount - idx}층`;
+        return `<button type="button" data-value="${value}">${label}</button>`;
+      }).join("");
+
+      setupButtonGroup("location_door_vertical_group", (btn) => {
+        set("door_vertical", btn.dataset.value);
+        set("door_horizontal", null);
+        set("internal_shelf_level", null);
+        set("storage_column", null);
+        renderHorizontal();
+      });
+
+      const selected = defaults.door_vertical;
+      if (selected) {
+        vBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
+        set("door_vertical", selected);
+        defaults.door_vertical = null;
+        renderHorizontal();
+      } else {
+        showMessage(hBox, "3번 항목 선택 후 표시됩니다.");
+        showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+      }
+    };
+
+    renderVertical();
   }
 
   // -------------------------------------------------
