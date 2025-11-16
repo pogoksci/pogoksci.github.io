@@ -10,10 +10,10 @@
     area_id: null,
     cabinet_id: null,
 
-    door_vertical_count: null,
-    door_horizontal_count: null,
-    shelf_height: null,
-    storage_columns: null,
+    door_vertical_total: null,
+    door_horizontal_total: null,
+    shelf_level_total: null,
+    storage_column_total: null,
 
     door_vertical: null,
     door_horizontal: null,
@@ -75,7 +75,7 @@
 
     const { data, error } = await supabase
       .from("Cabinet")
-      .select("door_vertical_count, door_horizontal_count, shelf_height, storage_columns")
+      .select("door_vertical, door_horizontal, internal_shelf_level, storage_column")
       .eq("id", cabinetId)
       .maybeSingle();
 
@@ -118,10 +118,10 @@
           state.storage_column =
             null;
 
-        state.door_vertical_count =
-          state.door_horizontal_count =
-          state.shelf_height =
-          state.storage_columns =
+        state.door_vertical_total =
+          state.door_horizontal_total =
+          state.shelf_level_total =
+          state.storage_column_total =
             null;
 
         clearNextSteps(container, 1);
@@ -166,10 +166,10 @@
         // Cabinet 구조 읽기
         const structure = await loadCabinetStructure(state.cabinet_id);
         if (structure) {
-          state.door_vertical_count = structure.door_vertical_count;
-          state.door_horizontal_count = structure.door_horizontal_count;
-          state.shelf_height = structure.shelf_height;
-          state.storage_columns = structure.storage_columns;
+          state.door_vertical_total = structure.door_vertical;
+          state.door_horizontal_total = structure.door_horizontal;
+          state.shelf_level_total = structure.internal_shelf_level;
+          state.storage_column_total = structure.storage_column;
         }
 
         // 초기화
@@ -189,84 +189,215 @@
     container.appendChild(step);
   }
 
+
+  // 🔹 3. 문 상/중/하 선택
+
   // -------------------------------------------------------------
-  // 🔹 3. 문 선택 (door_vertical_count)
-  // -------------------------------------------------------------
+
   function loadDoorVertical(container) {
-    const step = createStep("3️⃣ 수직문 선택");
 
-    const count = state.door_vertical_count || 1;
+    const step = createStep("3️⃣ 문 상/중/하 선택");
+
+
+
+    const count = state.door_vertical_total || 1;
+
+
 
     const options = Array.from({ length: count }, (_, i) => ({
-      label: `${i + 1}번 문`,
+
+      label: `${i + 1}번`,
+
       value: i + 1,
+
     }));
 
+
+
     const group = createButtonGroup(
+
       options,
+
       (val) => {
+
         state.door_vertical = Number(val);
+
         clearNextSteps(container, 3);
-        loadShelfLevels(container);
+
+        loadDoorHorizontal(container);
+
       },
+
       state.door_vertical
+
     );
 
+
+
     step.appendChild(group);
+
     container.appendChild(step);
+
   }
 
-  // -------------------------------------------------------------
-  // 🔹 4. 선반 선택 (shelf_height)
-  // -------------------------------------------------------------
-  function loadShelfLevels(container) {
-    const step = createStep("4️⃣ 내부 선반 선택");
 
-    const count = state.shelf_height || 1;
+
+  // -------------------------------------------------------------
+
+  // 🔹 4. 문 좌/우 선택
+
+  // -------------------------------------------------------------
+
+  function loadDoorHorizontal(container) {
+
+    const step = createStep("4️⃣ 문 좌/우 선택");
+
+
+
+    const count = state.door_horizontal_total || 1;
+
+
 
     const options = Array.from({ length: count }, (_, i) => ({
-      label: `${i + 1}층`,
+
+      label: `${i + 1}번`,
+
       value: i + 1,
+
     }));
 
+
+
     const group = createButtonGroup(
+
       options,
+
       (val) => {
-        state.internal_shelf_level = Number(val);
+
+        state.door_horizontal = Number(val);
+
         clearNextSteps(container, 4);
-        loadColumns(container);
+
+        loadShelfLevels(container);
+
       },
-      state.internal_shelf_level
+
+      state.door_horizontal
+
     );
 
+
+
     step.appendChild(group);
+
     container.appendChild(step);
+
   }
 
-  // -------------------------------------------------------------
-  // 🔹 5. 칸 선택 (storage_columns)
-  // -------------------------------------------------------------
-  function loadColumns(container) {
-    const step = createStep("5️⃣ 칸(열) 선택");
 
-    const count = state.storage_columns || 1;
+
+  // -------------------------------------------------------------
+
+  // 🔹 5. 내부 선반 선택
+
+  // -------------------------------------------------------------
+
+  function loadShelfLevels(container) {
+
+    const step = createStep("5️⃣ 내부 선반 선택");
+
+
+
+    const count = state.shelf_level_total || 1;
+
+
 
     const options = Array.from({ length: count }, (_, i) => ({
-      label: `${i + 1}열`,
+
+      label: `${i + 1}층`,
+
       value: i + 1,
+
     }));
 
+
+
     const group = createButtonGroup(
+
       options,
+
       (val) => {
-        state.storage_column = Number(val);
-        console.log("🎯 최종 선택:", { ...state });
+
+        state.internal_shelf_level = Number(val);
+
+        clearNextSteps(container, 5);
+
+        loadColumns(container);
+
       },
-      state.storage_column
+
+      state.internal_shelf_level
+
     );
 
+
+
     step.appendChild(group);
+
     container.appendChild(step);
+
+  }
+
+
+
+  // -------------------------------------------------------------
+
+  // 🔹 6. 칸(열) 선택
+
+  // -------------------------------------------------------------
+
+  function loadColumns(container) {
+
+    const step = createStep("6️⃣ 칸(열) 선택");
+
+
+
+    const count = state.storage_column_total || 1;
+
+
+
+    const options = Array.from({ length: count }, (_, i) => ({
+
+      label: `${i + 1}열`,
+
+      value: i + 1,
+
+    }));
+
+
+
+    const group = createButtonGroup(
+
+      options,
+
+      (val) => {
+
+        state.storage_column = Number(val);
+
+        console.log("🎯 최종 선택:", { ...state });
+
+      },
+
+      state.storage_column
+
+    );
+
+
+
+    step.appendChild(group);
+
+    container.appendChild(step);
+
   }
 
   // -------------------------------------------------------------
@@ -283,6 +414,7 @@
       cabinet_id: defaultValue.cabinet_id || null,
 
       door_vertical: defaultValue.door_vertical || null,
+      door_horizontal: defaultValue.door_horizontal || null,
       internal_shelf_level: defaultValue.internal_shelf_level || null,
       storage_column: defaultValue.storage_column || null,
     });
@@ -292,7 +424,8 @@
     // 기본값 자동 오픈
     if (state.area_id) await loadCabinets(container, state.area_id);
     if (state.cabinet_id) loadDoorVertical(container);
-    if (state.door_vertical) loadShelfLevels(container);
+    if (state.door_vertical) loadDoorHorizontal(container);
+    if (state.door_horizontal) loadShelfLevels(container);
     if (state.internal_shelf_level) loadColumns(container);
   }
 
