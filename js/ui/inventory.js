@@ -10,6 +10,7 @@
   const getApp = () => globalThis.App || {};
   const getSupabase = () => getApp().supabase; // ✅ App.supabase 인스턴스 사용
   let currentSort = "category_name_kor"; // 기본 정렬: 한글순(분류)
+  let awaitingListDom = false;
 
   // ------------------------------------------------------------
   // 1️⃣ 정렬 함수
@@ -125,6 +126,15 @@
 
     if (!container || !status) {
       console.warn("⚠️ inventory-list 요소를 찾을 수 없습니다.");
+      if (!awaitingListDom && globalThis.App?.includeHTML) {
+        awaitingListDom = true;
+        console.log("📎 inventory-list DOM 미검출 → HTML 다시 로드 시도");
+        try {
+          await globalThis.App.includeHTML("pages/inventory-list.html", "form-container");
+        } finally {
+          awaitingListDom = false;
+        }
+      }
       return;
     }
 
