@@ -305,6 +305,7 @@
       if (detail.photo_url_320) {
         const preview = document.getElementById("photo-preview");
         preview.innerHTML = `<img src="${detail.photo_url_320}" alt="Preview">`;
+        set("photo_base64", detail.photo_url_320);
       }
     }
 
@@ -405,14 +406,14 @@
 
         try {
           const state = dump();
+          const volumeValue = document.getElementById("purchase_volume").value;
+          const currentAmount = volumeValue ? Number(volumeValue) : null;
           const payload = {
             cas_rn: document.getElementById("cas_rn").value.trim(),
             classification: state.classification,
             state: state.state,
-            purchase_volume: document.getElementById("purchase_volume").value || null,
+            current_amount: Number.isFinite(currentAmount) ? currentAmount : null,
             unit: state.unit,
-            concentration_value: document.getElementById("concentration_value").value || null,
-            concentration_unit: state.concentration_unit,
             manufacturer: state.manufacturer === "기타"
               ? document.getElementById("manufacturer_other").value.trim()
               : state.manufacturer,
@@ -423,7 +424,8 @@
             door_horizontal: state.door_horizontal || null,
             internal_shelf_level: state.internal_shelf_level || null,
             storage_column: state.storage_column || null,
-            photo_base64: state.photo_base64 || null,
+            photo_url_320: state.photo_base64 || null,
+            photo_url_160: state.photo_base64 || null,
             created_at: new Date().toISOString(),
           };
 
