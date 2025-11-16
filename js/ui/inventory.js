@@ -49,65 +49,55 @@
       return;
     }
     status.textContent = "";
-    container.innerHTML = mapped
-      .map((it) => {
-        const img = it.photo_url_320 || "/img/no-image.png";
-        return `
-          <div class="inventory-card" data-id="${it.id}">
-            <div class="card-image-placeholder">
-              <img class="card-image" src="${img}" alt="${it.name_kor || it.cas_rn}" />
-            </div>
-            <div class="card-info">
-              <h3>${it.name_kor || "-"}</h3>
-              <p class="area-name">${it.storage_location || "위치: 미지정"}</p>
-              <p class="cabinet-specs">
-                재고: ${it.current_amount ?? 0}${it.unit || ""} · ${new Date(it.created_at).toLocaleDateString()}
-              </p>
-            </div>
-            <div class="card-actions">
-              <button class="detail-btn" data-id="${it.id}">상세</button>
-              <button class="edit-btn" data-id="${it.id}">수정</button>
-              <button class="delete-btn" data-id="${it.id}">삭제</button>
-            </div>
-          </div>
-        `;
+
+    const grouped = mapped.reduce((acc, item) => {
+      const key = item.classification || "기타";
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    }, {});
+
+    const sections = Object.entries(grouped)
+      .sort(([a], [b]) => a.localeCompare(b, "ko"))
+      .map(([classification, items]) => {
+        const header = `
+          <div class="inventory-section-header">
+            <span class="section-title">${classification}</span>
+            <span class="section-count">${items.length}</span>
+          </div>`;
+
+        const cards = items
+          .map((item) => {
+            const img = item.photo_url_320 || "/img/no-image.png";
+            return `
+              <div class="inventory-card" data-id="${item.id}">
+                <div class="inventory-card__image">
+                  <img src="${img}" alt="${item.display_label}" />
+                </div>
+                <div class="inventory-card__body">
+                  <div class="inventory-card__title-row">
+                    <span class="material-symbols-outlined tag-icon">sell</span>
+                    <div class="inventory-card__title-text">&#12304; ${item.display_label} &#12305; ${item.display_code}</div>
+                  </div>
+                  <div class="inventory-card__location">${item.location_text}</div>
+                </div>
+                <div class="inventory-card__class">${classification}</div>
+              </div>
+            `;
+          })
+          .join("");
+
+        return header + cards;
       })
       .join("");
 
-    // ✅ 각 카드 버튼 이벤트
-    container.querySelectorAll(".detail-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const id = Number(btn.dataset.id);
-        console.log(`🔍 상세 보기 클릭: ID=${id}`);
+    container.innerHTML = sections;
+
+    container.querySelectorAll(".inventory-card").forEach((card) => {
+      const id = Number(card.dataset.id);
+      card.addEventListener("click", async () => {
         const ok = await App.includeHTML("pages/inventory-detail.html", "form-container");
         if (ok) App.Inventory?.loadDetail?.(id);
-      });
-    });
-
-    container.querySelectorAll(".edit-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const id = Number(btn.dataset.id);
-        console.log(`✏️ 수정 클릭: ID=${id}`);
-        const ok = await App.includeHTML("pages/inventory-form.html", "form-container");
-        if (ok) App.Forms?.initInventoryForm?.("edit", { id });
-      });
-    });
-
-    container.querySelectorAll(".delete-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const id = Number(btn.dataset.id);
-        if (!confirm("정말 삭제하시겠습니까?")) return;
-        try {
-          const supabase = getSupabase();
-          if (!supabase) throw new Error("Supabase 인스턴스 없음");
-          const { error } = await supabase.from("Inventory").delete().eq("id", id);
-          if (error) throw error;
-          alert("✅ 삭제되었습니다.");
-          loadList();
-        } catch (err) {
-          console.error("❌ 삭제 오류:", err);
-          alert("삭제 중 오류 발생");
-        }
       });
     });
   }
@@ -151,7 +141,7 @@
     const { data, error } = await supabase
       .from("Inventory")
       .select(`
-        id, current_amount, unit, classification, created_at, photo_url_320,
+        id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula ),
         Cabinet ( cabinet_name, Area ( area_name ) )
@@ -166,27 +156,50 @@
 
     const mapped = (data || []).map((row) => {
       const area = row.Cabinet?.Area?.area_name || "";
-      const cab = row.Cabinet?.cabinet_name || "";
-      const v = row.door_vertical || "";
-      const h = row.door_horizontal || "";
-      const shelf =
-        row.internal_shelf_level != null ? `${row.internal_shelf_level}층` : "";
-      const col =
-        row.storage_column != null ? `${row.storage_column}열` : "";
-      const loc = [area, cab, v, h, shelf, col].filter(Boolean).join(" · ");
+      const cabinetName = row.Cabinet?.cabinet_name || "";
+      const doorVertical = row.door_vertical || "";
+      const doorHorizontal = row.door_horizontal || "";
+      const shelfLevel = row.internal_shelf_level;
+      const column = row.storage_column;
+
+      const locationPieces = [];
+      if (cabinetName) locationPieces.push(`『${cabinetName}』`);
+
+      const detailParts = [];
+      if (doorVertical) detailParts.push(`${doorVertical}층문`);
+      if (doorHorizontal) detailParts.push(`${doorHorizontal}문`);
+      if (shelfLevel) detailParts.push(`${shelfLevel}층`);
+      if (column) detailParts.push(`${column}열`);
+
+      if (detailParts.length) {
+        locationPieces.push(detailParts.join(", "));
+      } else if (area) {
+        locationPieces.push(area);
+      }
+
+      const locationText = locationPieces.join(" ") || "위치 정보 없음";
+      const displayLabel =
+        row.Substance?.substance_name ||
+        row.Substance?.cas_rn ||
+        `Inventory #${row.id}`;
+      const displayCode = row.bottle_identifier
+        ? `No.${row.bottle_identifier}`
+        : `ID ${row.id}`;
 
       return {
         id: row.id,
         created_at: row.created_at,
         current_amount: row.current_amount,
         unit: row.unit,
-        classification: row.classification || "",
+        classification: row.classification || "기타",
         photo_url_320: row.photo_url_320 || null,
-        name_kor: row.Substance?.name || "",
-        name_eng: "",
-        cas_rn: row.Substance?.cas_rn || "",
+        display_label: displayLabel,
+        display_code: displayCode,
+        location_text: locationText,
+        name_kor: displayLabel,
+        name_eng: row.Substance?.cas_rn || "",
         formula: row.Substance?.molecular_formula || "",
-        storage_location: loc,
+        storage_location: locationText,
       };
     });
 
