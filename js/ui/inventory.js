@@ -43,64 +43,122 @@
   // 2️⃣ 목록 렌더링
   // ------------------------------------------------------------
   function renderList(mapped, container, status) {
+
     if (!mapped.length) {
+
       status.textContent = "📭 등록된 약품이 없습니다.";
+
       container.innerHTML = "";
+
       return;
+
     }
+
     status.textContent = "";
 
+
+
     const grouped = mapped.reduce((acc, item) => {
+
       const key = item.classification || "기타";
+
       if (!acc[key]) acc[key] = [];
+
       acc[key].push(item);
+
       return acc;
+
     }, {});
 
+
+
     const sections = Object.entries(grouped)
+
       .sort(([a], [b]) => a.localeCompare(b, "ko"))
+
       .map(([classification, items]) => {
+
         const header = `
+
           <div class="inventory-section-header">
+
             <span class="section-title">${classification}</span>
+
             <span class="section-count">${items.length}</span>
+
           </div>`;
 
+
+
         const cards = items
+
           .map((item) => {
+
             const img = item.photo_url_320 || "/img/no-image.png";
+
             return `
+
               <div class="inventory-card" data-id="${item.id}">
+
                 <div class="inventory-card__image">
+
                   <img src="${img}" alt="${item.display_label}" />
+
                 </div>
+
                 <div class="inventory-card__body">
+
                   <div class="inventory-card__title-row">
+
                     <span class="material-symbols-outlined tag-icon">sell</span>
                     <div class="inventory-card__title-text">&#12304; ${item.display_label} &#12305; ${item.display_code}</div>
                   </div>
+
                   <div class="inventory-card__location">${item.location_text}</div>
+
                 </div>
+
                 <div class="inventory-card__class">${classification}</div>
+
               </div>
+
             `;
+
           })
+
           .join("");
 
+
+
         return header + cards;
+
       })
+
       .join("");
+
+
 
     container.innerHTML = sections;
 
+
+
     container.querySelectorAll(".inventory-card").forEach((card) => {
+
       const id = Number(card.dataset.id);
+
       card.addEventListener("click", async () => {
+
         const ok = await App.includeHTML("pages/inventory-detail.html", "form-container");
+
         if (ok) App.Inventory?.loadDetail?.(id);
+
       });
+
     });
+
   }
+
+
 
   // ------------------------------------------------------------
   // 3️⃣ 목록 불러오기
