@@ -391,7 +391,8 @@
     if (cabSelect) {
       cabSelect.onchange = async (e) => {
         const cabId = e.target.value;
-        set("cabinet_id", cabId);
+        set("cabinet_id", cabId || null);
+        ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
         await renderCabinetButtons(cabId, null);
       };
     }
@@ -458,44 +459,69 @@
   // 🧩 도어·단·열 버튼 렌더링
   // -------------------------------------------------
   async function renderCabinetButtons(cabinetId, detail = null) {
-    if (!cabinetId) return;
-    const { data, error } = await supabase.from("Cabinet").select("*").eq("id", cabinetId).maybeSingle();
-    if (error || !data) return console.warn("⚠️ 캐비닛 정보 없음");
-
     const vBox = document.getElementById("location_door_vertical_group");
     const hBox = document.getElementById("location_door_horizontal_group");
     const sBox = document.getElementById("location_internal_shelf_group");
     const cBox = document.getElementById("location_storage_column_group");
 
+    const setPlaceholder = (box) => {
+      if (box)
+        box.innerHTML = `<span style="color:#888;">수납함 선택 후 표시됩니다.</span>`;
+    };
+
+    if (!cabinetId) {
+      setPlaceholder(vBox);
+      setPlaceholder(hBox);
+      setPlaceholder(sBox);
+      setPlaceholder(cBox);
+      return;
+    }
+
+    const { data, error } = await supabase.from("Cabinet").select("*").eq("id", cabinetId).maybeSingle();
+    if (error || !data) return console.warn("⚠️ 캐비닛 정보 없음");
+
+    const verticalCount = Number(data.door_vertical_count || data.door_vertical) || 0;
+    const horizontalCount = Number(data.door_horizontal_count || data.door_horizontal) || 0;
+    const shelfCount = Number(data.shelf_height || data.internal_shelf_level) || 0;
+    const columnCount = Number(data.storage_columns || data.storage_column) || 0;
+
     const makeBtns = (n) =>
       Array.from({ length: n }, (_, i) => `<button type="button" data-value="${i + 1}">${i + 1}</button>`).join("");
 
-    if (vBox && data.door_vertical) {
-      vBox.innerHTML = makeBtns(data.door_vertical, "door_vertical");
+    if (vBox && verticalCount > 0) {
+      vBox.innerHTML = makeBtns(verticalCount);
       setupButtonGroup("location_door_vertical_group", (btn) => set("door_vertical", btn.dataset.value));
       if (detail?.door_vertical)
         vBox.querySelector(`button[data-value="${detail.door_vertical}"]`)?.classList.add("active");
+    } else {
+      setPlaceholder(vBox);
     }
 
-    if (hBox && data.door_horizontal) {
-      hBox.innerHTML = makeBtns(data.door_horizontal, "door_horizontal");
+    if (hBox && horizontalCount > 0) {
+      hBox.innerHTML = makeBtns(horizontalCount);
       setupButtonGroup("location_door_horizontal_group", (btn) => set("door_horizontal", btn.dataset.value));
       if (detail?.door_horizontal)
         hBox.querySelector(`button[data-value="${detail.door_horizontal}"]`)?.classList.add("active");
+    } else {
+      setPlaceholder(hBox);
     }
 
-    if (sBox && data.internal_shelf_level) {
-      sBox.innerHTML = makeBtns(data.internal_shelf_level, "internal_shelf_level");
+    if (sBox && shelfCount > 0) {
+      sBox.innerHTML = makeBtns(shelfCount);
       setupButtonGroup("location_internal_shelf_group", (btn) => set("internal_shelf_level", btn.dataset.value));
       if (detail?.internal_shelf_level)
         sBox.querySelector(`button[data-value="${detail.internal_shelf_level}"]`)?.classList.add("active");
+    } else {
+      setPlaceholder(sBox);
     }
 
-    if (cBox && data.storage_column) {
-      cBox.innerHTML = makeBtns(data.storage_column, "storage_column");
+    if (cBox && columnCount > 0) {
+      cBox.innerHTML = makeBtns(columnCount);
       setupButtonGroup("location_storage_column_group", (btn) => set("storage_column", btn.dataset.value));
       if (detail?.storage_column)
         cBox.querySelector(`button[data-value="${detail.storage_column}"]`)?.classList.add("active");
+    } else {
+      setPlaceholder(cBox);
     }
   }
 
