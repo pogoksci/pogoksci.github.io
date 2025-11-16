@@ -175,21 +175,11 @@
 
     if (!container || !status) {
       console.warn("⚠️ inventory-list 요소를 찾을 수 없습니다.");
-      if (!awaitingListDom && globalThis.App?.includeHTML) {
+      if (!awaitingListDom) {
         awaitingListDom = true;
-        console.log("📎 inventory-list DOM 미검출 → HTML 다시 로드 시도");
-        try {
-          const ok = await globalThis.App.includeHTML("pages/inventory-list.html", "form-container");
-          if (ok) {
-            await new Promise((resolve) =>
-              requestAnimationFrame(() => requestAnimationFrame(resolve))
-            );
-            awaitingListDom = false;
-            return loadList();
-          }
-        } finally {
-          awaitingListDom = false;
-        }
+        await new Promise((resolve) => setTimeout(resolve, 60));
+        awaitingListDom = false;
+        return loadList();
       }
       return;
     }
