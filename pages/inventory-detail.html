@@ -1,36 +1,47 @@
 <!-- /pages/inveltory-detail.html -->
 
 <div id="detail-page-container">
-    <div class="detail-section">
-        <div id="detail-photo" class="photo-preview-box">
-            <span>사진 없음</span>
-        </div>
-        <h2 id="detail-name">정보 로드 중...</h2>
-        <p id="detail-cas"></p>
-        <p id="detail-location"></p>
+  <div class="detail-section detail-summary">
+    <div id="detail-photo" class="photo-preview-box">
+      <span>사진 없음</span>
     </div>
+    <div class="detail-summary__info">
+      <h2 id="detail-name">정보 로드 중...</h2>
+      <p id="detail-cas">CAS: -</p>
+      <ul class="detail-summary__list">
+        <li><strong>화학식:</strong> <span id="detail-formula">-</span></li>
+        <li><strong>분류:</strong> <span id="detail-class">-</span></li>
+        <li><strong>상태:</strong> <span id="detail-state">-</span></li>
+        <li><strong>제조사:</strong> <span id="detail-manufacturer">-</span></li>
+        <li><strong>재고:</strong> <span id="detail-quantity">-</span></li>
+        <li><strong>보관 위치:</strong> <span id="detail-location">-</span></li>
+        <li><strong>등록일:</strong> <span id="detail-created-at">-</span></li>
+      </ul>
+    </div>
+  </div>
 
-    <div class="detail-section">
-        <button id="msds-pdf-btn" style="display: none;">MSDS PDF 파일 보기</button>
-        <p id="no-msds-pdf" style="color: #888; display: none;">등록된 PDF 파일이 없습니다.</p>
-    </div>
+  <div class="detail-section">
+    <button id="msds-pdf-btn" style="display: none;">MSDS PDF 파일 보기</button>
+    <p id="no-msds-pdf" style="color: #888; display: none;">등록된 PDF 파일이 없습니다.</p>
+  </div>
 
-    <div class="detail-section">
-        <h3>MSDS (Material Safety Data Sheet)</h3>
-        <div id="msds-accordion" class="accordion">
-            <p>MSDS 정보 로드 중...</p>
-        </div>
+  <div class="detail-section">
+    <h3>MSDS (Material Safety Data Sheet)</h3>
+    <div id="msds-accordion" class="accordion">
+      <p>MSDS 정보 로드 중...</p>
     </div>
+  </div>
 
-    <div class="detail-section">
-        <h3>유해화학물질 분류 정보</h3>
-        <div id="hazard-info-container">
-            <p>분류 정보 로드 중...</p>
-        </div>
+  <div class="detail-section">
+    <h3>유해화학물질 분류 정보</h3>
+    <div id="hazard-info-container">
+      <p>분류 정보 로드 중...</p>
     </div>
+  </div>
 
-    <div class="fab-container">
-        <button id="edit-inventory-btn" class="fab-edit">수정</button>
-        <button id="delete-inventory-btn" class="fab-delete">삭제</button>
-    </div>
+  <div class="fab-container">
+    <button id="edit-inventory-btn" class="fab-edit">수정</button>
+    <button id="detail-back-btn" class="fab-edit" style="background:#555;">목록으로</button>
+    <button id="delete-inventory-btn" class="fab-delete">삭제</button>
+  </div>
 </div>

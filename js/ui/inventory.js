@@ -243,14 +243,20 @@
       return;
     }
 
-    const container = document.getElementById("form-container");
     const ok = await App.includeHTML("pages/inventory-detail.html", "form-container");
     if (!ok) return;
+
+    const detailContainer = document.getElementById("detail-page-container");
+    if (!detailContainer) {
+      console.warn("⚠️ detail-page-container를 찾을 수 없습니다.");
+      return;
+    }
 
     const { data, error } = await supabase
       .from("Inventory")
       .select(`
         id, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
+        state, manufacturer,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula ),
         Cabinet ( cabinet_name, Area ( area_name ) )
@@ -260,40 +266,75 @@
 
     if (error || !data) {
       console.error("❌ 상세 조회 실패:", error);
-      container.innerHTML = `<p>상세 정보를 불러오지 못했습니다.</p>`;
+      detailContainer.innerHTML = `<p>상세 정보를 불러오지 못했습니다.</p>`;
       return;
     }
 
     const info = data;
-    const area = info.Cabinet?.Area?.area_name || "-";
-    const cab = info.Cabinet?.cabinet_name || "-";
-    const photoUrl = info.photo_url_320 || info.photo_url_160 || "";
-    const photoContent = photoUrl
-      ? `<img src="${photoUrl}" alt="약품 이미지" class="detail-photo">`
-      : `<div class="detail-photo no-photo">사진 없음</div>`;
+    const area = info.Cabinet?.Area?.area_name || "";
+    const cab = info.Cabinet?.cabinet_name || "";
+    const doorV = info.door_vertical ? `${info.door_vertical}층문` : "";
+    const doorH = info.door_horizontal ? `${info.door_horizontal}문` : "";
+    const shelf = info.internal_shelf_level != null ? `${info.internal_shelf_level}층` : "";
+    const column = info.storage_column != null ? `${info.storage_column}열` : "";
+    const locationText = [area, cab, doorV, doorH, shelf, column].filter(Boolean).join(" · ") || "위치 정보 없음";
 
-    container.innerHTML = `
-      <div class="inventory-detail">
-        <div class="detail-header">
-          <h2>${info.Substance?.substance_name || "(이름 없음)"}</h2>
-          <p>CAS: ${info.Substance?.cas_rn || "-"}</p>
-        </div>
-        <div class="detail-body">
-          ${photoContent}
-          <ul>
-            <li><strong>화학식:</strong> ${info.Substance?.molecular_formula || "-"}</li>
-            <li><strong>분류:</strong> ${info.classification || "-"}</li>
-            <li><strong>재고:</strong> ${info.current_amount ?? 0}${info.unit || ""}</li>
-            <li><strong>보관 위치:</strong> ${area} · ${cab}</li>
-            <li><strong>등록일:</strong> ${new Date(info.created_at).toLocaleDateString()}</li>
-          </ul>
-        </div>
-        <div class="detail-actions">
-          <button id="detail-edit-btn">수정</button>
-          <button id="detail-back-btn">목록으로</button>
-        </div>
-      </div>
-    `;
+    const photoWrapper = document.getElementById("detail-photo");
+    const photoUrl = info.photo_url_320 || info.photo_url_160 || "";
+    if (photoWrapper) {
+      photoWrapper.innerHTML = photoUrl
+        ? `<img src="${photoUrl}" alt="약품 이미지">`
+        : `<span>사진 없음</span>`;
+    }
+
+    const setText = (elId, text) => {
+      const el = document.getElementById(elId);
+      if (el) el.textContent = text;
+    };
+
+    setText("detail-name", info.Substance?.substance_name || "(이름 없음)");
+    setText("detail-cas", `CAS: ${info.Substance?.cas_rn || "-"}`);
+    setText("detail-formula", info.Substance?.molecular_formula || "-");
+    setText("detail-class", info.classification || "-");
+    setText("detail-state", info.state || "-");
+    setText("detail-manufacturer", info.manufacturer || "-");
+    const quantityText =
+      info.current_amount != null ? `${info.current_amount}${info.unit || ""}` : "-";
+    setText("detail-quantity", quantityText);
+    setText("detail-location", locationText);
+    setText(
+      "detail-created-at",
+      info.created_at ? new Date(info.created_at).toLocaleDateString() : "-"
+    );
+
+    const backBtn = document.getElementById("detail-back-btn");
+    if (backBtn) {
+      backBtn.onclick = () => App.Inventory?.showListPage?.();
+    }
+
+    const editBtn = document.getElementById("edit-inventory-btn");
+    if (editBtn) {
+      editBtn.onclick = async () => {
+        const ok = await App.includeHTML("pages/inventory-form.html", "form-container");
+        if (ok) {
+          App.Forms?.initInventoryForm?.("edit", info);
+        }
+      };
+    }
+
+    const deleteBtn = document.getElementById("delete-inventory-btn");
+    if (deleteBtn) {
+      deleteBtn.onclick = async () => {
+        if (!confirm("정말 삭제하시겠습니까?")) return;
+        const { error: delError } = await supabase.from("Inventory").delete().eq("id", id);
+        if (delError) {
+          alert("삭제 중 오류가 발생했습니다.");
+          return;
+        }
+        alert("삭제되었습니다.");
+        App.Inventory?.showListPage?.();
+      };
+    }
   }
 
   // ------------------------------------------------------------
