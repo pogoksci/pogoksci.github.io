@@ -69,11 +69,14 @@
 
         const cards = items
           .map((item) => {
-            const img = item.photo_url_320 || "/img/no-image.png";
+            const photoUrl = item.photo_url_320 || item.photo_url_160 || null;
+            const media = photoUrl
+              ? `<img src="${photoUrl}" alt="${item.display_label}" />`
+              : `<div class="inventory-card__image--placeholder">사진 없음</div>`;
             return `
               <div class="inventory-card" data-id="${item.id}">
                 <div class="inventory-card__image">
-                  <img src="${img}" alt="${item.display_label}" />
+                  ${media}
                 </div>
 
                 <div class="inventory-card__body">
@@ -132,7 +135,7 @@
     const { data, error } = await supabase
       .from("Inventory")
       .select(`
-        id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320,
+        id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula ),
         Cabinet ( cabinet_name, Area ( area_name ) )
@@ -186,6 +189,7 @@
         unit: row.unit,
         classification: row.classification || "기타",
         photo_url_320: row.photo_url_320 || null,
+        photo_url_160: row.photo_url_160 || null,
         display_label: displayLabel,
         display_code: displayCode,
         location_text: locationText,
@@ -246,7 +250,7 @@
     const { data, error } = await supabase
       .from("Inventory")
       .select(`
-        id, current_amount, unit, classification, created_at, photo_url_320,
+        id, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula, molecular_weight ),
         Cabinet ( cabinet_name, Area ( area_name ) )
@@ -263,7 +267,10 @@
     const info = data;
     const area = info.Cabinet?.Area?.area_name || "-";
     const cab = info.Cabinet?.cabinet_name || "-";
-    const photo = info.photo_url_320 || "/img/no-image.png";
+    const photoUrl = info.photo_url_320 || info.photo_url_160 || "";
+    const photoContent = photoUrl
+      ? `<img src="${photoUrl}" alt="약품 이미지" class="detail-photo">`
+      : `<div class="detail-photo no-photo">사진 없음</div>`;
 
     container.innerHTML = `
       <div class="inventory-detail">
@@ -272,7 +279,7 @@
           <p>CAS: ${info.Substance?.cas_rn || "-"}</p>
         </div>
         <div class="detail-body">
-          <img src="${photo}" alt="약품 이미지" class="detail-photo">
+          ${photoContent}
           <ul>
             <li><strong>화학식:</strong> ${info.Substance?.molecular_formula || "-"}</li>
             <li><strong>분자량:</strong> ${info.Substance?.molecular_weight || "-"}</li>

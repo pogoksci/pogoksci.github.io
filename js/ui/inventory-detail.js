@@ -15,7 +15,7 @@
       const { data, error } = await supabase
         .from("Inventory")
         .select(`
-          id, state, current_amount, unit, classification, manufacturer, purchase_date, photo_url_320,
+          id, state, current_amount, unit, classification, manufacturer, purchase_date, photo_url_320, photo_url_160,
           door_vertical, door_horizontal, internal_shelf_level, storage_column,
           Substance ( id, substance_name, cas_rn, molecular_formula ),
           Cabinet ( id, cabinet_name, Area ( area_name ) )
@@ -27,8 +27,9 @@
 
       // 사진
       const photoDiv = document.getElementById("detail-photo");
-      photoDiv.innerHTML = data.photo_url_320
-        ? `<img src="${data.photo_url_320}" alt="시약병 사진">`
+      const photoUrl = data.photo_url_320 || data.photo_url_160 || "";
+      photoDiv.innerHTML = photoUrl
+        ? `<img src="${photoUrl}" alt="시약병 사진">`
         : `<span>사진 없음</span>`;
 
       // 이름/CAS
