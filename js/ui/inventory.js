@@ -252,7 +252,7 @@
       .select(`
         id, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( substance_name, cas_rn, molecular_formula, molecular_weight ),
+        Substance ( substance_name, cas_rn, molecular_formula ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .eq("id", id)
@@ -282,7 +282,6 @@
           ${photoContent}
           <ul>
             <li><strong>화학식:</strong> ${info.Substance?.molecular_formula || "-"}</li>
-            <li><strong>분자량:</strong> ${info.Substance?.molecular_weight || "-"}</li>
             <li><strong>분류:</strong> ${info.classification || "-"}</li>
             <li><strong>재고:</strong> ${info.current_amount ?? 0}${info.unit || ""}</li>
             <li><strong>보관 위치:</strong> ${area} · ${cab}</li>
