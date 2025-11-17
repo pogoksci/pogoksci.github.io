@@ -41,14 +41,16 @@
   // ------------------------------------------------------------
   // 2️⃣ 목록 렌더링
   // ------------------------------------------------------------
-  function renderList(mapped, container, status) {
+  function renderList(mapped, container) {
     if (!mapped.length) {
-      status.textContent = "📭 등록된 약품이 없습니다.";
-      container.innerHTML = "";
+      container.innerHTML = `
+        <p id="status-message-inventory-list" style="padding:0 15px; color:#888;">
+          📭 등록된 약품이 없습니다.
+        </p>
+      `;
       return;
     }
 
-    status.textContent = "";
     const grouped = mapped.reduce((acc, item) => {
       const key = item.classification || "기타";
       if (!acc[key]) acc[key] = [];
@@ -112,14 +114,20 @@
     }
 
     const container = document.getElementById("inventory-list-container");
-    const status = document.getElementById("status-message-inventory-list");
-
-    if (!container || !status) {
+    if (!container) {
       console.warn("⚠️ inventory-list 요소를 찾을 수 없습니다.");
       return;
     }
 
-    status.textContent = "🔄 약품 목록을 불러오는 중...";
+    const showStatus = (message) => {
+      container.innerHTML = `
+        <p id="status-message-inventory-list" style="padding:0 15px; color:#888;">
+          ${message}
+        </p>
+      `;
+    };
+
+    showStatus("🔄 약품 목록을 불러오는 중...");
 
     const { data, error } = await supabase
       .from("Inventory")
@@ -133,7 +141,7 @@
 
     if (error) {
       console.error("❌ 목록 조회 오류:", error);
-      status.textContent = "약품 목록을 불러오지 못했습니다.";
+      showStatus("약품 목록을 불러오지 못했습니다.");
       return;
     }
 
@@ -187,7 +195,7 @@
     });
 
     const sorted = sortData(mapped, currentSort);
-    renderList(sorted, container, status);
+    renderList(sorted, container);
   }
 
   async function showListPage() {
