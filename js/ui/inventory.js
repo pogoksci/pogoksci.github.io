@@ -138,6 +138,8 @@
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .order("created_at", { ascending: false });
+    
+    console.log("Inventory select result", { count: data?.length ?? 0, error });
 
     if (error) {
       console.error("❌ 목록 조회 오류:", error);
