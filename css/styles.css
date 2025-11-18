@@ -74,7 +74,7 @@ select {
 }
 
 select:focus {
-    border-color: #00bcd4;
+    border-color: #00a0b2;
     box-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
     outline: none;
 }
@@ -127,7 +127,7 @@ button:disabled {
 }
 
 .button-group button.active {
-    background-color: #00bcd4;
+    background-color: #00a0b2;
     color: white;
     border-color: #00a0b2;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -165,7 +165,7 @@ button:disabled {
 
 /* ?깅줉 踰꾪듉 ?ㅽ???*/
 #cabinet-submit-button {
-  background-color: #00BCD4;
+  background-color: #00a0b2;
   color: #fff;
 }
 #cabinet-submit-button:hover {
@@ -174,7 +174,7 @@ button:disabled {
 
 /* ?섏젙 踰꾪듉 (?깅줉 踰꾪듉怨??숈씪 ?ㅽ??? */
 #cabinet-save-btn {
-  background-color: #00BCD4;
+  background-color: #00a0b2;
   color: #fff;
 }
 #cabinet-save-btn:hover {
@@ -302,7 +302,7 @@ button:disabled {
 .form-group-location {
     margin-bottom: 25px;
     padding: 15px;
-    border: 2px solid #00bcd4;
+    border: 2px solid #00a0b2;
     border-radius: 8px;
     background-color: #f8f8ff;
 }
@@ -344,9 +344,9 @@ button:disabled {
 }
 
 .btn-location.active {
-    background-color: #00bcd4;
+    background-color: #00a0b2;
     color: white;
-    border-color: #00bcd4;
+    border-color: #00a0b2;
 }
 
 /* =================================================================
@@ -482,7 +482,7 @@ button:disabled {
 
 .card-actions button {
   padding: 10px 15px;
-  background-color: #00bcd4;
+  background-color: #00a0b2;
   color: white;
   border: none;
   border-radius: 5px;
@@ -534,12 +534,12 @@ button:disabled {
 }
 
 .nav-item.active {
-    color: #00bcd4;
+    color: #00a0b2;
     font-weight: 600;
 }
 
 .nav-item.start-button {
-    background-color: #00bcd4;
+    background-color: #00a0b2;
     color: white;
     flex-grow: 0;
     width: 70px;
@@ -585,7 +585,7 @@ button:disabled {
 }
 
 .menu-item:hover {                 /* ??hover ?④낵 */
-    background-color: #00BCD4;   /* 硫붿씤而щ윭? ?숈씪 */
+    background-color: #00a0b2;   /* 硫붿씤而щ윭? ?숈씪 */
     color: #fff;                 /* 湲???곗깋 */
 }
 
@@ -644,7 +644,7 @@ FAB
     font-size: 16px;
     font-weight: bold;
     text-align: center;
-    background-color: #00bcd4;
+    background-color: #00a0b2;
     color: white;
     border: none;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
@@ -696,12 +696,12 @@ FAB
 }
 
 .other-input-group input:focus {
-    border-color: #00bcd4;
+    border-color: #00a0b2;
     box-shadow: 0 0 5px rgba(0, 188, 212, 0.4);
 }
 
 .button-group button.active {
-    background-color: #00bcd4;
+    background-color: #00a0b2;
     color: white;
     border-color: #00a0b2;
     box-shadow: 0 2px 5px rgba(0, 188, 212, 0.3);
