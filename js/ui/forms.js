@@ -298,7 +298,7 @@
 
     // ✅ 수정 모드 기본 데이터 반영
     if (mode === "edit" && detail) {
-      ["cas_rn", "purchase_volume", "concentration_value", "purchase_date"].forEach((id) => {
+      ["cas_rn", "initial_amount", "concentration_value", "purchase_date"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = detail[id]?.split?.("T")[0] || detail[id] || "";
       });
