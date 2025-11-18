@@ -53,8 +53,23 @@
       // 삭제
       document.getElementById("delete-inventory-btn")?.addEventListener("click", async () => {
         if (!confirm("정말 삭제하시겠습니까?")) return;
-        const fnUrl = `${getApp().projectFunctionsBaseUrl || "/functions/v1"}/casimport?type=inventory&id=${inventoryId}`;
-        const res = await fetch(fnUrl, { method: "DELETE" });
+        const app = getApp();
+        const fnBase =
+          app.projectFunctionsBaseUrl ||
+          (app.supabaseUrl ? `${app.supabaseUrl}/functions/v1` : "");
+        if (!fnBase) {
+          alert("함수 호출 경로를 찾을 수 없습니다.");
+          return;
+        }
+        const headers =
+          app.supabaseAnonKey
+            ? {
+                apikey: app.supabaseAnonKey,
+                Authorization: `Bearer ${app.supabaseAnonKey}`,
+              }
+            : undefined;
+        const fnUrl = `${fnBase}/casimport?type=inventory&id=${inventoryId}`;
+        const res = await fetch(fnUrl, { method: "DELETE", headers });
         if (!res.ok) {
           const msg = await res.text();
           alert("삭제 실패: " + msg);
