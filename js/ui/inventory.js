@@ -59,48 +59,53 @@
     }, {});
 
 
-const sections = Object.entries(grouped)
-  .sort(([a], [b]) => a.localeCompare(b, "ko"))
-  .map(([classification, items]) => {
-    const header = `
-      <div class="inventory-section-header">
-        <span class="section-title">${classification}</span>
-        <span class="section-count">${items.length}</span>
-      </div>`;
+    const sections = Object.entries(grouped)
+      .sort(([a], [b]) => a.localeCompare(b, "ko"))
+      .map(([classification, items]) => {
+        const header = `
+          <div class="inventory-section-header">
+            <span class="section-title">${classification}</span>
+            <span class="section-count">${items.length}</span>
+          </div>`;
 
-    const cards = items
-      .map((item) => {
-        const img = item.photo_url_320 || "/img/no-image.png";
-        const concentration = item.concentration_text
-          ? `<span class="inventory-card__conc">(${item.concentration_text})</span>`
-          : "";
-        return `
-          <div class="inventory-card" data-id="${item.id}">
-            <div class="inventory-card__image">
-              <img src="${img}" alt="${item.display_label}" />
-            </div>
-            <div class="inventory-card__body">
-              <div class="inventory-card__left">
-                <div class="inventory-card__no">No.${item.id}</div>
-                <div class="inventory-card__name">${item.display_label} ${concentration}</div>
-                <div class="inventory-card__location">${item.location_text}</div>
+        const cards = items
+          .map((item) => {
+            const imageSrc = item.photo_url_320 || item.photo_url_160 || "";
+            const concentration = item.concentration_text
+              ? `<span class="inventory-card__conc">(${item.concentration_text})</span>`
+              : "";
+            const imageBlock = imageSrc
+              ? `<div class="inventory-card__image">
+                   <img src="${imageSrc}" alt="${item.display_label}" />
+                 </div>`
+              : `<div class="inventory-card__image inventory-card__image--empty">
+                   <span class="inventory-card__placeholder">사진 없음</span>
+                 </div>`;
+            return `
+              <div class="inventory-card" data-id="${item.id}">
+                ${imageBlock}
+                <div class="inventory-card__body">
+                  <div class="inventory-card__left">
+                    <div class="inventory-card__no">No.${item.id}</div>
+                    <div class="inventory-card__name">${item.display_label} ${concentration}</div>
+                    <div class="inventory-card__location">${item.location_text}</div>
+                  </div>
+                  <div class="inventory-card__meta">
+                    <div>${item.formula || '-'}</div>
+                    <div>${item.current_text}</div>
+                    <div>${item.classification}</div>
+                  </div>
+                </div>
               </div>
-              <div class="inventory-card__meta">
-                <div>${item.formula || '-'}</div>
-                <div>${item.current_text}</div>
-                <div>${item.classification}</div>
-              </div>
-            </div>
-          </div>
-        `;
+            `;
+          })
+          .join("");
+
+        return header + cards;
       })
       .join("");
 
-    return header + cards;
-  })
-  .join("");
-
-container.innerHTML = sections;
+    container.innerHTML = sections;
 
     container.innerHTML = sections;
     container.querySelectorAll(".inventory-card").forEach((card) => {

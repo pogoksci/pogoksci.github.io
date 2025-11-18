@@ -1031,6 +1031,20 @@ input[type="date"] {
   object-fit: cover;
   border: 1px solid #e5e5e5;
 }
+.inventory-card__image--empty {
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  border: 1px dashed #d4d4d4;
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.inventory-card__placeholder {
+  font-size: 13px;
+  color: #666;
+}
 .inventory-card__body {
   flex: 1;
   display: flex;
@@ -1044,8 +1058,8 @@ input[type="date"] {
   gap: 4px;
 }
 .inventory-card__no {
-  font-weight: 600;
-  color: #111;
+  font-size: 13px;
+  color: #666;
 }
 .inventory-card__name {
   font-weight: 600;
