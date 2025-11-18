@@ -58,43 +58,49 @@
       return acc;
     }, {});
 
-    const sections = Object.entries(grouped)
-      .sort(([a], [b]) => a.localeCompare(b, "ko"))
-      .map(([classification, items]) => {
-        const header = `
-          <div class="inventory-section-header">
-            <span class="section-title">${classification}</span>
-            <span class="section-count">${items.length}</span>
-          </div>`;
 
-        const cards = items
-          .map((item) => {
-            const photoUrl = item.photo_url_320 || item.photo_url_160 || null;
-            const media = photoUrl
-              ? `<img src="${photoUrl}" alt="${item.display_label}" />`
-              : `<div class="inventory-card__image--placeholder">사진 없음</div>`;
-            return `
-              <div class="inventory-card" data-id="${item.id}">
-                <div class="inventory-card__image">
-                  ${media}
-                </div>
+const sections = Object.entries(grouped)
+  .sort(([a], [b]) => a.localeCompare(b, "ko"))
+  .map(([classification, items]) => {
+    const header = `
+      <div class="inventory-section-header">
+        <span class="section-title">${classification}</span>
+        <span class="section-count">${items.length}</span>
+      </div>`;
 
-                <div class="inventory-card__body">
-                  <div class="inventory-card__title-row">
-                    <span class="material-symbols-outlined tag-icon">sell</span>
-                    <div class="inventory-card__title-text">&#12304; ${item.display_label} &#12305; ${item.display_code}</div>
-                  </div>
-                  <div class="inventory-card__location">${item.location_text}</div>
-                </div>
-
-                <div class="inventory-card__class">${classification}</div>
+    const cards = items
+      .map((item) => {
+        const img = item.photo_url_320 || "/img/no-image.png";
+        const concentration = item.concentration_text
+          ? `<span class="inventory-card__conc">(${item.concentration_text})</span>`
+          : "";
+        return `
+          <div class="inventory-card" data-id="${item.id}">
+            <div class="inventory-card__image">
+              <img src="${img}" alt="${item.display_label}" />
+            </div>
+            <div class="inventory-card__body">
+              <div class="inventory-card__left">
+                <div class="inventory-card__no">No.${item.id}</div>
+                <div class="inventory-card__name">${item.display_label} ${concentration}</div>
+                <div class="inventory-card__location">${item.location_text}</div>
               </div>
-            `;
-          })
-          .join("");
-        return header + cards;
+              <div class="inventory-card__meta">
+                <div>${item.formula || '-'}</div>
+                <div>${item.current_text}</div>
+                <div>${item.classification}</div>
+              </div>
+            </div>
+          </div>
+        `;
       })
       .join("");
+
+    return header + cards;
+  })
+  .join("");
+
+container.innerHTML = sections;
 
     container.innerHTML = sections;
     container.querySelectorAll(".inventory-card").forEach((card) => {
@@ -136,6 +142,7 @@
       .from("Inventory")
       .select(`
         id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
+        concentration_value, concentration_unit,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula ),
         Cabinet ( cabinet_name, Area ( area_name ) )
@@ -167,20 +174,26 @@
       if (shelfLevel) detailParts.push(`${shelfLevel}층`);
       if (column) detailParts.push(`${column}열`);
 
-      if (detailParts.length) {
-        locationPieces.push(detailParts.join(", "));
-      } else if (area) {
-        locationPieces.push(area);
-      }
+      if (detailParts.length) locationPieces.push(detailParts.join(", "));
+      else if (area) locationPieces.push(area);
 
       const locationText = locationPieces.join(" ") || "위치 정보 없음";
       const displayLabel =
         row.Substance?.substance_name ||
         row.Substance?.cas_rn ||
         `Inventory #${row.id}`;
-      const displayCode = row.bottle_identifier
-        ? `No.${row.bottle_identifier}`
-        : `ID ${row.id}`;
+
+      const concentrationValue = row.concentration_value;
+      const concentrationUnit = row.concentration_unit || "";
+      const concentrationText =
+        concentrationValue != null && concentrationValue !== ""
+          ? `${concentrationValue}${concentrationUnit}`
+          : "";
+
+      const currentText =
+        row.current_amount != null
+          ? `${row.current_amount}${row.unit || ""}`
+          : "-";
 
       return {
         id: row.id,
@@ -191,12 +204,10 @@
         photo_url_320: row.photo_url_320 || null,
         photo_url_160: row.photo_url_160 || null,
         display_label: displayLabel,
-        display_code: displayCode,
         location_text: locationText,
-        name_kor: displayLabel,
-        name_eng: row.Substance?.cas_rn || "",
-        formula: row.Substance?.molecular_formula || "",
-        storage_location: locationText,
+        formula: row.Substance?.molecular_formula || "-",
+        current_text: currentText,
+        concentration_text: concentrationText,
       };
     });
 

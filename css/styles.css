@@ -1014,14 +1014,16 @@ input[type="date"] {
 }
 .inventory-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
   padding: 14px 16px;
   border-bottom: 1px solid #e3e3e3;
   background: #fff;
   cursor: pointer;
 }
-.inventory-card:hover { background: #f9fbff; }
+.inventory-card:hover {
+  background: #f9fbff;
+}
 .inventory-card__image img {
   width: 70px;
   height: 70px;
@@ -1029,8 +1031,43 @@ input[type="date"] {
   object-fit: cover;
   border: 1px solid #e5e5e5;
 }
-.inventory-card__body { flex: 1; display:flex; flex-direction:column; gap:6px; }
-.inventory-card__title-row { display:flex; align-items:center; gap:6px; font-weight:600; color:#333; font-size:15px; }
-.inventory-card__title-row .material-symbols-outlined { font-size:18px; color:#666; }
-.inventory-card__location { font-size:13px; color:#666; }
-.inventory-card__class { min-width:48px; text-align:right; font-weight:700; color:#5f6b7a; font-size:13px; }
+.inventory-card__body {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.inventory-card__left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.inventory-card__no {
+  font-weight: 600;
+  color: #111;
+}
+.inventory-card__name {
+  font-weight: 600;
+  color: #222;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.inventory-card__conc {
+  font-size: 13px;
+  color: #777;
+}
+.inventory-card__location {
+  font-size: 13px;
+  color: #666;
+}
+.inventory-card__meta {
+  min-width: 120px;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #555;
+}
