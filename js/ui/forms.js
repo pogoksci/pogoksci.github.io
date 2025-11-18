@@ -298,35 +298,72 @@
 
     // ✅ 수정 모드 기본 데이터 반영
     if (mode === "edit" && detail) {
-      ["cas_rn", "initial_amount", "concentration_value", "purchase_date"].forEach((id) => {
+      const fieldMap = {
+        cas_rn: detail.Substance?.cas_rn ?? "",
+        purchase_volume: detail.initial_amount ?? "",
+        concentration_value: detail.concentration_value ?? "",
+        purchase_date: detail.purchase_date ?? "",
+      };
+
+      Object.entries(fieldMap).forEach(([id, value]) => {
         const el = document.getElementById(id);
-        if (el) el.value = detail[id]?.split?.("T")[0] || detail[id] || "";
+        if (!el) return;
+        const normalized = typeof value === "string" ? value.split("T")[0] : value ?? "";
+        el.value = normalized;
+        set(id, normalized);
       });
-      if (detail.photo_url_320) {
+
+      const existingPhoto = detail.photo_url_320 || detail.photo_url_160 || null;
+      if (existingPhoto) {
         const preview = document.getElementById("photo-preview");
-        preview.innerHTML = `<img src="${detail.photo_url_320}" alt="Preview">`;
-        set("photo_base64", detail.photo_url_320);
+        preview.innerHTML = `<img src="${existingPhoto}" alt="Preview">`;
+        set("photo_base64", existingPhoto);
       }
+      set("photo_updated", false);
+    } else {
+      set("photo_updated", false);
     }
 
     // ✅ 버튼 그룹 초기화 및 복원
-    ["classification_buttons", "state_buttons", "unit_buttons", "concentration_unit_buttons", "manufacturer_buttons"].forEach((id) => {
-      setupButtonGroup(id, (btn) => {
-        const key = id.replace("_buttons", "");
-        set(key, btn.dataset.value);
-        if (id === "manufacturer_buttons") {
+    const buttonFieldMap = {
+      classification_buttons: (d) => d?.classification ?? null,
+      state_buttons: (d) => d?.state ?? null,
+      unit_buttons: (d) => d?.unit ?? null,
+      concentration_unit_buttons: (d) => d?.concentration_unit ?? null,
+      manufacturer_buttons: (d) => d?.manufacturer ?? null,
+    };
+
+    Object.entries(buttonFieldMap).forEach(([groupId, getter]) => {
+      const stateKey = groupId.replace("_buttons", "");
+      setupButtonGroup(groupId, (btn) => {
+        set(stateKey, btn.dataset.value);
+        if (groupId === "manufacturer_buttons") {
           const group = document.getElementById("other_manufacturer_group");
-          if (btn.dataset.value === "기타") group.style.display = "block";
-          else group.style.display = "none";
+          if (group) group.style.display = btn.dataset.value === "기타" ? "block" : "none";
         }
       });
+
       if (mode === "edit" && detail) {
-        const key = id.replace("_buttons", "");
-        const val = detail[key];
-        if (val) {
-          const btn = document.querySelector(`#${id} button[data-value="${val}"]`);
-          if (btn) btn.classList.add("active");
-          set(key, val);
+        const value = getter(detail);
+        if (!value) return;
+        const targetBtn = document.querySelector(`#${groupId} button[data-value="${value}"]`);
+        if (targetBtn) {
+          targetBtn.classList.add("active");
+          set(stateKey, value);
+          if (groupId === "manufacturer_buttons") {
+            const group = document.getElementById("other_manufacturer_group");
+            if (group) group.style.display = value === "기타" ? "block" : "none";
+          }
+        } else if (groupId === "manufacturer_buttons") {
+          const otherBtn = document.querySelector(`#${groupId} button[data-value="기타"]`);
+          if (otherBtn) {
+            otherBtn.classList.add("active");
+            set("manufacturer", "기타");
+            const otherInput = document.getElementById("manufacturer_other");
+            if (otherInput) otherInput.value = value;
+            const group = document.getElementById("other_manufacturer_group");
+            if (group) group.style.display = "block";
+          }
         }
       }
     });
@@ -344,6 +381,7 @@
         const src = e.target.result;
         preview.innerHTML = `<img src="${src}" alt="Preview">`;
         set("photo_base64", src);
+        set("photo_updated", true);
       };
       reader.readAsDataURL(file);
     };
@@ -356,36 +394,62 @@
     const areaSelect = document.getElementById("location_area_select");
     const cabSelect = document.getElementById("location_cabinet_select");
 
-    if (areaSelect && supabase) {
-      const { data: areas } = await supabase.from("Area").select("id, area_name").order("area_name");
-      if (areas?.length) {
-        areaSelect.innerHTML += areas.map((a) => `<option value="${a.id}">${a.area_name}</option>`).join("");
-      }
+    if (areaSelect && cabSelect && supabase) {
+      const defaultAreaOptions =
+        areaSelect.__defaultOptions ??
+        areaSelect.innerHTML ||
+        `<option value="">-- 선택 안 함 --</option>`;
+      areaSelect.__defaultOptions = defaultAreaOptions;
 
-      // 수정모드: area/cabinet 복원
-      if (mode === "edit" && detail.area_id) {
-        areaSelect.value = detail.area_id;
-        const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", detail.area_id);
-        cabSelect.innerHTML =
-          `<option value="">-- 선택 안 함 --</option>` +
-          (cabs || []).map((c) => `<option value="${c.id}">${c.cabinet_name}</option>`).join("");
-        cabSelect.disabled = false;
-        if (detail.cabinet_id) cabSelect.value = detail.cabinet_id;
-        await renderCabinetButtons(detail.cabinet_id, detail);
+      const { data: areas } = await supabase.from("Area").select("id, area_name").order("area_name");
+      areaSelect.innerHTML =
+        defaultAreaOptions +
+        (areas?.map?.((a) => `<option value="${a.id}">${a.area_name}</option>`).join("") || "");
+
+      if (mode === "edit" && detail) {
+        const areaId = detail.area_id || detail.Cabinet?.area_id || detail.Cabinet?.Area?.id || null;
+        if (areaId) {
+          areaSelect.value = areaId;
+          set("area_id", areaId);
+
+          const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", areaId);
+          cabSelect.innerHTML =
+            `<option value="">-- 선택 안 함 --</option>` +
+            (cabs || []).map(({ id, cabinet_name }) => `<option value="${id}">${cabinet_name}</option>`).join("");
+          cabSelect.disabled = false;
+
+          const cabinetId = detail.cabinet_id || detail.Cabinet?.id || null;
+          if (cabinetId) {
+            cabSelect.value = cabinetId;
+            set("cabinet_id", cabinetId);
+          }
+
+          ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) =>
+            set(key, detail[key] ?? null),
+          );
+          await renderCabinetButtons(cabinetId, detail);
+        }
       }
 
       areaSelect.onchange = async (e) => {
-        const areaId = e.target.value;
+        const areaId = e.target.value || null;
         set("area_id", areaId);
         cabSelect.disabled = !areaId;
         if (!areaId) {
           cabSelect.innerHTML = `<option value="">-- 선택 안 함 --</option>`;
+          set("cabinet_id", null);
+          ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
+          await renderCabinetButtons(null, null);
           return;
         }
         const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", areaId);
         cabSelect.innerHTML =
           `<option value="">-- 선택 안 함 --</option>` +
           (cabs || []).map((c) => `<option value="${c.id}">${c.cabinet_name}</option>`).join("");
+        cabSelect.value = "";
+        set("cabinet_id", null);
+        ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
+        await renderCabinetButtons(null, null);
       };
     }
 
@@ -394,7 +458,7 @@
         const cabId = e.target.value;
         set("cabinet_id", cabId || null);
         ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
-        await renderCabinetButtons(cabId, null);
+        await renderCabinetButtons(cabId || null, null);
       };
     }
 
@@ -456,6 +520,7 @@
 
           if (mode === "edit" && detail?.id) {
             const updatePayload = {
+              initial_amount: volume,
               current_amount: volume,
               unit,
               state: state.state || null,
@@ -467,9 +532,11 @@
               door_horizontal: state.door_horizontal || null,
               internal_shelf_level: state.internal_shelf_level || null,
               storage_column: state.storage_column || null,
-              photo_url_320: state.photo_base64 || null,
-              photo_url_160: state.photo_base64 || null,
             };
+            if (state.photo_updated) {
+              updatePayload.photo_url_320 = state.photo_base64 || null;
+              updatePayload.photo_url_160 = state.photo_base64 || null;
+            }
 
             const { error } = await supabase.from("Inventory").update(updatePayload).eq("id", detail.id);
             if (error) throw error;
