@@ -312,12 +312,12 @@
     const { data, error } = await supabase
       .from("Inventory")
       .select(`
-        id, substance_id, initial_amount, current_amount, unit, classification, concentration_value, concentration_unit,
+        id, substance_id, cabinet_id, initial_amount, current_amount, unit, classification, concentration_value, concentration_unit,
         purchase_date, created_at, photo_url_320, photo_url_160,
         state, manufacturer,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula ),
-        Cabinet ( cabinet_name, Area ( area_name ) )
+        Cabinet ( id, area_id, cabinet_name, Area ( id, area_name ) )
       `)
       .eq("id", id)
       .maybeSingle();

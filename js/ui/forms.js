@@ -5,7 +5,7 @@
   console.log("🧾 App.Forms 모듈 로드됨");
 
   const { setupButtonGroup, makePayload } = App.Utils;
-  const { set, reset, dump } = App.State;
+  const { set, reset, dump, get } = App.State;
   const { start: startCamera, setupModalListeners, processImage } = App.Camera;
   const supabase = App.supabase;
 
@@ -386,7 +386,12 @@
       reader.readAsDataURL(file);
     };
     if (photoBtn && photoInput) photoBtn.onclick = () => photoInput.click();
-    if (cameraBtn && cameraInput) cameraBtn.onclick = () => cameraInput.click();
+    if (cameraBtn && typeof startCamera === "function") {
+      cameraBtn.onclick = () => startCamera();
+      setupModalListeners?.();
+    } else if (cameraBtn && cameraInput) {
+      cameraBtn.onclick = () => cameraInput.click();
+    }
     if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
     if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
 
@@ -423,10 +428,20 @@
             set("cabinet_id", cabinetId);
           }
 
-          ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) =>
-            set(key, detail[key] ?? null),
-          );
-          await renderCabinetButtons(cabinetId, detail);
+          ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => {
+            let value = detail[key] ?? null;
+            if (key === "door_vertical") value = normalizeChoice(value, "vertical");
+            if (key === "door_horizontal") value = normalizeChoice(value, "horizontal");
+            set(key, value);
+          });
+          const normalizedDetail = {
+            ...detail,
+            door_vertical: get("door_vertical"),
+            door_horizontal: get("door_horizontal"),
+            internal_shelf_level: get("internal_shelf_level"),
+            storage_column: get("storage_column"),
+          };
+          await renderCabinetButtons(cabinetId, normalizedDetail);
         }
       }
 
@@ -567,6 +582,21 @@
   // -------------------------------------------------
   // 🧩 도어·단·열 버튼 렌더링
   // -------------------------------------------------
+  function normalizeChoice(value, type) {
+    if (value == null) return null;
+    if (typeof value === "number") return String(value);
+    const str = String(value).trim();
+    if (!str) return null;
+    if (/^\d+$/.test(str)) return str;
+    const digit = str.match(/\d+/);
+    if (digit) return digit[0];
+    const maps = {
+      horizontal: { 왼쪽: "1", 오른쪽: "2", 좌: "1", 우: "2" },
+      vertical: { 상: "1", 중: "2", 하: "3" },
+    };
+    return maps[type]?.[str] || null;
+  }
+
   async function renderCabinetButtons(cabinetId, detail = null) {
     const vBox = document.getElementById("location_door_vertical_group");
     const hBox = document.getElementById("location_door_horizontal_group");
@@ -601,8 +631,8 @@
     const columnCount = Number(data.storage_columns || data.storage_column) || 0;
 
     const defaults = {
-      door_vertical: detail?.door_vertical || null,
-      door_horizontal: detail?.door_horizontal || null,
+      door_vertical: normalizeChoice(detail?.door_vertical, "vertical"),
+      door_horizontal: normalizeChoice(detail?.door_horizontal, "horizontal"),
       internal_shelf_level: detail?.internal_shelf_level || null,
       storage_column: detail?.storage_column || null,
     };
