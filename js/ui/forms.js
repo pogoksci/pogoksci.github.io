@@ -199,10 +199,10 @@
           if (!areaMatched && areaOtherGroup) {
             areaOtherGroup.style.display = "block";
             areaOtherInput.value = areaName || "";
-          
-          // ✅ 기타 버튼도 눌린 상태로 표시
-          const areaOtherBtn = document.querySelector("#area-button-group button[data-value='기타']");
-          if (areaOtherBtn) areaOtherBtn.classList.add("active");
+
+            // ✅ 기타 버튼도 눌린 상태로 표시
+            const areaOtherBtn = document.querySelector("#area-button-group button[data-value='기타']");
+            if (areaOtherBtn) areaOtherBtn.classList.add("active");
           }
 
           // 🏷 시약장 이름 복원
@@ -217,7 +217,7 @@
           if (!cabMatched && cabOtherGroup) {
             cabOtherGroup.style.display = "block";
             cabOtherInput.value = detail.cabinet_name || "";
-          
+
             // ✅ 시약장 이름의 기타 버튼도 눌린 상태로 표시
             const cabOtherBtn = document.querySelector("#cabinet_name_buttons button[data-value='기타']");
             if (cabOtherBtn) cabOtherBtn.classList.add("active");
@@ -259,7 +259,7 @@
             previewBox.innerHTML = `<img src="${url}" alt="시약장 사진">`;
           } else {
             previewBox.innerHTML = `<span>사진 없음</span>`;
-}
+          }
 
           // ✅ edit 모드에서도 버튼 클릭이 가능하도록 이벤트 재연결
           [
@@ -488,6 +488,8 @@
           const volumeValue = document.getElementById("purchase_volume").value;
           const volume = Number.parseFloat(volumeValue);
           const unit = state.unit;
+          const concentrationValue = document.getElementById("concentration_value").value;
+          const concentrationUnit = state.concentration_unit;
 
           if (!cas) {
             alert("CAS 번호는 필수 입력 항목입니다.");
@@ -525,6 +527,8 @@
             door_horizontal: state.door_horizontal || null,
             internal_shelf_level: state.internal_shelf_level || null,
             storage_column: state.storage_column || null,
+            concentration_value: concentrationValue ? Number(concentrationValue) : null,
+            concentration_unit: concentrationUnit || null,
           };
 
           if (state.photo_base64) {
@@ -546,6 +550,8 @@
               door_horizontal: state.door_horizontal || null,
               internal_shelf_level: state.internal_shelf_level || null,
               storage_column: state.storage_column || null,
+              concentration_value: concentrationValue ? Number(concentrationValue) : null,
+              concentration_unit: concentrationUnit || null,
             };
             if (state.photo_updated) {
               updatePayload.photo_url_320 = state.photo_base64 || null;
