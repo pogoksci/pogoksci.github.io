@@ -86,7 +86,15 @@
 
     const sections = Object.entries(grouped)
       .sort(([a], [b]) => {
-        // 위치 정렬일 때 키(구역+시약장)로 정렬, 분류 정렬일 때 분류명으로 정렬
+        // "미분류" 또는 "미지정 구역"은 항상 마지막으로 보냄
+        const isLast = (str) => str === "미분류" || str.startsWith("미지정 구역");
+        const aLast = isLast(a);
+        const bLast = isLast(b);
+
+        if (aLast && !bLast) return 1;
+        if (!aLast && bLast) return -1;
+
+        // 그 외에는 가나다순 정렬
         return String(a).localeCompare(String(b), "ko");
       })
       .map(([groupTitle, items]) => {
