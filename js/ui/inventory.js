@@ -249,6 +249,47 @@
     delete app.Inventory.__manualMount;
   }
 
+  async function purgeSubstanceIfUnused(substanceId) {
+    const supabase = getSupabase();
+    if (!supabase || !substanceId) return;
+
+    const { count, error } = await supabase
+      .from("Inventory")
+      .select("id", { count: "exact", head: true })
+      .eq("substance_id", substanceId);
+
+    if (error) {
+      console.error("❌ 재고 수량 확인 실패:", error);
+      return;
+    }
+
+    if ((count ?? 0) > 0) return;
+
+    const relatedTables = [
+      "MSDS",
+      "HazardClassifications",
+      "Synonyms",
+      "Properties",
+      "ReplacedRns",
+      "Citations",
+    ];
+
+    for (const table of relatedTables) {
+      const { error: relError } = await supabase
+        .from(table)
+        .delete()
+        .eq("substance_id", substanceId);
+      if (relError) {
+        console.warn(`⚠️ ${table} 정리 실패:`, relError);
+      }
+    }
+
+    const { error: subError } = await supabase.from("Substance").delete().eq("id", substanceId);
+    if (subError) {
+      console.warn("⚠️ Substance 삭제 실패:", subError);
+    }
+  }
+
   // ------------------------------------------------------------
   // 4️⃣ 상세 보기
   // ------------------------------------------------------------
@@ -271,7 +312,7 @@
     const { data, error } = await supabase
       .from("Inventory")
       .select(`
-        id, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
+        id, substance_id, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         state, manufacturer,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula ),
@@ -287,6 +328,7 @@
     }
 
     const info = data;
+    const substanceId = info.substance_id || null;
     const area = info.Cabinet?.Area?.area_name || "";
     const cab = info.Cabinet?.cabinet_name || "";
     const doorV = info.door_vertical ? `${info.door_vertical}층문` : "";
@@ -342,13 +384,22 @@
     if (deleteBtn) {
       deleteBtn.onclick = async () => {
         if (!confirm("정말 삭제하시겠습니까?")) return;
-        const { error: delError } = await supabase.from("Inventory").delete().eq("id", id);
-        if (delError) {
+        deleteBtn.disabled = true;
+        try {
+          const { error: delError } = await supabase.from("Inventory").delete().eq("id", id);
+          if (delError) throw delError;
+
+          if (substanceId) {
+            await purgeSubstanceIfUnused(substanceId);
+          }
+
+          alert("삭제되었습니다.");
+          App.Inventory?.showListPage?.();
+        } catch (err) {
+          console.error("❌ 삭제 실패:", err);
           alert("삭제 중 오류가 발생했습니다.");
-          return;
+          deleteBtn.disabled = false;
         }
-        alert("삭제되었습니다.");
-        App.Inventory?.showListPage?.();
       };
     }
   }
