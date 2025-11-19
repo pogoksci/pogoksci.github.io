@@ -572,6 +572,42 @@
 
             if (error) throw error;
             console.log("📦 등록 결과:", data);
+
+            // [Workaround] casimport가 일부 필드(농도, 위치 등)를 누락할 수 있으므로, 생성된 항목을 찾아 다시 업데이트합니다.
+            try {
+              let createdId = data?.id || data?.[0]?.id;
+
+              if (!createdId) {
+                // ID를 반환하지 않는 경우, 가장 최근에 생성된 항목을 조회
+                const { data: latest, error: latestError } = await supabase
+                  .from("Inventory")
+                  .select("id")
+                  .order("created_at", { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+                if (!latestError && latest) {
+                  createdId = latest.id;
+                }
+              }
+
+              if (createdId) {
+                const { error: updateError } = await supabase
+                  .from("Inventory")
+                  .update(inventoryDetails)
+                  .eq("id", createdId);
+
+                if (updateError) {
+                  console.warn("⚠️ 추가 정보(농도/위치) 업데이트 실패:", updateError);
+                } else {
+                  console.log("✅ 추가 정보(농도/위치) 업데이트 완료");
+                }
+              } else {
+                console.warn("⚠️ 생성된 Inventory ID를 찾을 수 없어 추가 업데이트를 건너뜁니다.");
+              }
+            } catch (err) {
+              console.warn("⚠️ 추가 업데이트 중 예외 발생:", err);
+            }
+
             alert("✅ 약품이 성공적으로 등록되었어요.");
           }
 

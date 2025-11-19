@@ -153,7 +153,7 @@
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .order("created_at", { ascending: false });
-    
+
     console.log("Inventory select result", { count: data?.length ?? 0, error });
 
     if (error) {
@@ -170,19 +170,35 @@
       const shelfLevel = row.internal_shelf_level;
       const column = row.storage_column;
 
-      const locationPieces = [];
-      if (cabinetName) locationPieces.push(`『${cabinetName}』`);
+      // 📍 위치 텍스트 포맷팅
+      let locationText = "";
+      if (area) locationText += area + " ";
+      if (cabinetName) locationText += `『${cabinetName}』 `;
 
-      const detailParts = [];
-      if (doorVertical) detailParts.push(`${doorVertical}층문`);
-      if (doorHorizontal) detailParts.push(`${doorHorizontal}문`);
-      if (shelfLevel) detailParts.push(`${shelfLevel}층`);
-      if (column) detailParts.push(`${column}열`);
+      // 도어 정보
+      let doorPart = "";
+      if (doorVertical && doorHorizontal) {
+        doorPart = `${doorVertical}층 ${doorHorizontal}문`;
+      } else if (doorVertical) {
+        doorPart = `${doorVertical}층문`;
+      } else if (doorHorizontal) {
+        doorPart = `${doorHorizontal}문`;
+      }
 
-      if (detailParts.length) locationPieces.push(detailParts.join(", "));
-      else if (area) locationPieces.push(area);
+      // 선반/열 정보
+      let shelfPart = "";
+      if (shelfLevel && column) {
+        shelfPart = `${shelfLevel}층 ${column}열`;
+      } else {
+        if (shelfLevel) shelfPart += `${shelfLevel}층`;
+        if (column) shelfPart += (shelfPart ? " " : "") + `${column}열`;
+      }
 
-      const locationText = locationPieces.join(" ") || "위치 정보 없음";
+      // 최종 조합 (도어, 선반)
+      const detailParts = [doorPart, shelfPart].filter(Boolean).join(", ");
+      if (detailParts) locationText += detailParts;
+
+      locationText = locationText.trim() || "위치 정보 없음";
       const displayLabel =
         row.Substance?.substance_name ||
         row.Substance?.cas_rn ||

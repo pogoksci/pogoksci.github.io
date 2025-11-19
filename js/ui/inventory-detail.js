@@ -43,7 +43,35 @@
       const h = data.door_horizontal || "";
       const shelf = data.internal_shelf_level != null ? `${data.internal_shelf_level}층` : "";
       const col = data.storage_column != null ? `${data.storage_column}열` : "";
-      const locText = [area, cab, v, h, shelf, col].filter(Boolean).join(" · ") || "위치: 미지정";
+      // 위치 포맷팅
+      let locText = "";
+      if (area) locText += area + " ";
+      if (cab) locText += `『${cab}』 `;
+
+      let doorPart = "";
+      if (v && h) {
+        doorPart = `${v}층 ${h}문`;
+      } else if (v) {
+        doorPart = `${v}층문`;
+      } else if (h) {
+        doorPart = `${h}문`;
+      }
+
+      let shelfPart = "";
+      const shelfVal = data.internal_shelf_level;
+      const colVal = data.storage_column;
+
+      if (shelfVal && colVal) {
+        shelfPart = `${shelfVal}층 ${colVal}열`;
+      } else {
+        if (shelfVal) shelfPart += `${shelfVal}층`;
+        if (colVal) shelfPart += (shelfPart ? " " : "") + `${colVal}열`;
+      }
+
+      const detailParts = [doorPart, shelfPart].filter(Boolean).join(", ");
+      if (detailParts) locText += detailParts;
+
+      locText = locText.trim() || "위치: 미지정";
       document.getElementById("detail-location").textContent = locText;
 
       document.getElementById("detail-class").textContent = data.classification || "-";
@@ -64,9 +92,9 @@
         const headers =
           app.supabaseAnonKey
             ? {
-                apikey: app.supabaseAnonKey,
-                Authorization: `Bearer ${app.supabaseAnonKey}`,
-              }
+              apikey: app.supabaseAnonKey,
+              Authorization: `Bearer ${app.supabaseAnonKey}`,
+            }
             : undefined;
         const fnUrl = `${fnBase}/casimport?type=inventory&id=${inventoryId}`;
         const res = await fetch(fnUrl, { method: "DELETE", headers });
