@@ -396,8 +396,7 @@
 
     if (areaSelect && cabSelect && supabase) {
       const defaultAreaOptions =
-        areaSelect.__defaultOptions ??
-        areaSelect.innerHTML ||
+        (areaSelect.__defaultOptions ?? areaSelect.innerHTML) ||
         `<option value="">-- 선택 안 함 --</option>`;
       areaSelect.__defaultOptions = defaultAreaOptions;
 
