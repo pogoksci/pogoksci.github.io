@@ -271,6 +271,9 @@
         formula: row.Substance?.molecular_formula || "-",
         current_text: currentText,
         concentration_text: concentrationText,
+        Cabinet: row.Cabinet, // ✅ 정렬/그룹화를 위해 원본 데이터 전달
+        name_kor: row.Substance?.chem_name_kor, // ✅ 정렬용
+        name_eng: row.Substance?.substance_name, // ✅ 정렬용
       };
     });
 
