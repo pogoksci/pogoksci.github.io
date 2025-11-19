@@ -15,24 +15,32 @@
   // ------------------------------------------------------------
   // 1️⃣ 정렬 함수
   // ------------------------------------------------------------
+  // ------------------------------------------------------------
+  // 1️⃣ 정렬 함수
+  // ------------------------------------------------------------
   function sortData(rows, key) {
     const collateKo = (a, b) => String(a || "").localeCompare(String(b || ""), "ko");
     const collateEn = (a, b) => String(a || "").localeCompare(String(b || ""), "en", { sensitivity: "base" });
 
     switch (key) {
-      case "category_name_kor":
+      case "category_name_kor": // 한글명(분류)
         return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateKo(a.name_kor, b.name_kor));
-      case "name_kor":
+      case "category_name_eng": // 영문명(분류)
+        return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateEn(a.name_eng, b.name_eng));
+      case "name_kor": // 한글명(전체)
         return rows.sort((a, b) => collateKo(a.name_kor, b.name_kor));
-      case "name_eng":
+      case "name_eng": // 영문명(전체)
         return rows.sort((a, b) => collateEn(a.name_eng, b.name_eng));
-      case "formula":
+      case "formula": // 화학식
         return rows.sort((a, b) => collateEn(a.formula, b.formula));
-      case "storage_location":
-        return rows.sort((a, b) => collateKo(a.storage_location, b.storage_location));
-      case "quantity_desc":
-        return rows.sort((a, b) => (b.current_amount ?? 0) - (a.current_amount ?? 0));
-      case "created_at_desc":
+      case "storage_location": // 위치
+        return rows.sort((a, b) => {
+          // Area -> Cabinet -> Location Text 순 정렬
+          const locA = (a.Cabinet?.Area?.area_name || "") + (a.Cabinet?.cabinet_name || "") + (a.location_text || "");
+          const locB = (b.Cabinet?.Area?.area_name || "") + (b.Cabinet?.cabinet_name || "") + (b.location_text || "");
+          return collateKo(locA, locB);
+        });
+      case "created_at_desc": // 등록순서 (최신순)
       default:
         return rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
@@ -51,22 +59,46 @@
       return;
     }
 
-    const grouped = mapped.reduce((acc, item) => {
-      const key = item.classification || "기타";
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(item);
-      return acc;
-    }, {});
+    // 그룹화 로직 결정
+    let grouped = {};
+    const isGroupedSort = ["category_name_kor", "category_name_eng", "storage_location"].includes(currentSort);
 
+    if (isGroupedSort) {
+      grouped = mapped.reduce((acc, item) => {
+        let key = "기타";
+        if (currentSort === "storage_location") {
+          const area = item.Cabinet?.Area?.area_name || "미지정 구역";
+          const cabinet = item.Cabinet?.cabinet_name ? `『${item.Cabinet.cabinet_name}』` : "";
+          key = `${area} ${cabinet}`.trim();
+        } else {
+          key = item.classification || "미분류";
+        }
+
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(item);
+        return acc;
+      }, {});
+    } else {
+      // 그룹화 없음 (전체 목록을 하나의 그룹으로 취급하거나 평면 리스트로 렌더링)
+      // 여기서는 기존 구조 유지를 위해 하나의 더미 그룹에 넣음
+      grouped = { "": mapped };
+    }
 
     const sections = Object.entries(grouped)
-      .sort(([a], [b]) => a.localeCompare(b, "ko"))
-      .map(([classification, items]) => {
-        const header = `
-          <div class="inventory-section-header">
-            <span class="section-title">${classification}</span>
-            <span class="section-count">${items.length}</span>
-          </div>`;
+      .sort(([a], [b]) => {
+        // 위치 정렬일 때 키(구역+시약장)로 정렬, 분류 정렬일 때 분류명으로 정렬
+        return String(a).localeCompare(String(b), "ko");
+      })
+      .map(([groupTitle, items]) => {
+        let header = "";
+        // 그룹화된 경우에만 헤더 표시
+        if (isGroupedSort && groupTitle) {
+          header = `
+            <div class="inventory-section-header">
+              <span class="section-title">${groupTitle}</span>
+              <span class="section-count">${items.length}</span>
+            </div>`;
+        }
 
         const cards = items
           .map((item) => {
@@ -93,7 +125,7 @@
                   <div class="inventory-card__meta">
                     <div>${item.formula || '-'}</div>
                     <div>${item.current_text}</div>
-                    <div>${item.classification}</div>
+                    <div>${item.classification || '미분류'}</div>
                   </div>
                 </div>
               </div>
@@ -104,8 +136,6 @@
         return header + cards;
       })
       .join("");
-
-    container.innerHTML = sections;
 
     container.innerHTML = sections;
     container.querySelectorAll(".inventory-card").forEach((card) => {
@@ -149,7 +179,7 @@
         id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         concentration_value, concentration_unit,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( substance_name, cas_rn, molecular_formula ),
+        Substance ( substance_name, cas_rn, molecular_formula, chem_name_kor ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .order("created_at", { ascending: false });
@@ -177,12 +207,18 @@
 
       // 도어 정보
       let doorPart = "";
-      if (doorVertical && doorHorizontal) {
-        doorPart = `${doorVertical}층 ${doorHorizontal}문`;
+      const doorHVal = String(doorHorizontal || "").trim();
+      let doorHLabel = "";
+      if (doorHVal === "1") doorHLabel = "왼쪽";
+      else if (doorHVal === "2") doorHLabel = "오른쪽";
+      else doorHLabel = doorHVal;
+
+      if (doorVertical && doorHLabel) {
+        doorPart = `${doorVertical}층 ${doorHLabel}문`;
       } else if (doorVertical) {
         doorPart = `${doorVertical}층문`;
-      } else if (doorHorizontal) {
-        doorPart = `${doorHorizontal}문`;
+      } else if (doorHLabel) {
+        doorPart = `${doorHLabel}문`;
       }
 
       // 선반/열 정보
@@ -199,10 +235,16 @@
       if (detailParts) locationText += detailParts;
 
       locationText = locationText.trim() || "위치 정보 없음";
-      const displayLabel =
-        row.Substance?.substance_name ||
-        row.Substance?.cas_rn ||
-        `Inventory #${row.id}`;
+      const substanceName = row.Substance?.substance_name || "";
+      const chemNameKor = row.Substance?.chem_name_kor || "";
+
+      let displayLabel = "";
+      if (chemNameKor) displayLabel += `${chemNameKor} `;
+      if (substanceName) displayLabel += substanceName;
+
+      if (!displayLabel) {
+        displayLabel = row.Substance?.cas_rn || `Inventory #${row.id}`;
+      }
 
       const concentrationValue = row.concentration_value;
       const concentrationUnit = row.concentration_unit || "";

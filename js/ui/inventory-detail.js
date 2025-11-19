@@ -49,12 +49,18 @@
       if (cab) locText += `『${cab}』 `;
 
       let doorPart = "";
-      if (v && h) {
-        doorPart = `${v}층 ${h}문`;
+      const doorHVal = String(h || "").trim();
+      let doorHLabel = "";
+      if (doorHVal === "1") doorHLabel = "왼쪽";
+      else if (doorHVal === "2") doorHLabel = "오른쪽";
+      else doorHLabel = doorHVal;
+
+      if (v && doorHLabel) {
+        doorPart = `${v}층 ${doorHLabel}문`;
       } else if (v) {
         doorPart = `${v}층문`;
-      } else if (h) {
-        doorPart = `${h}문`;
+      } else if (doorHLabel) {
+        doorPart = `${doorHLabel}문`;
       }
 
       let shelfPart = "";
