@@ -301,7 +301,7 @@
         loadList();
       },
       onRefresh: () => loadList(),
-      defaultLabel: "한글 분류",
+      defaultLabel: "한글명(분류)",
       defaultValue: currentSort,
     });
 
