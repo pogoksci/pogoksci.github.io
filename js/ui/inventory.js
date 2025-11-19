@@ -232,9 +232,9 @@
       // 선반/열 정보
       let shelfPart = "";
       if (shelfLevel && column) {
-        shelfPart = `${shelfLevel}층 ${column}열`;
+        shelfPart = `${shelfLevel}단 ${column}열`;
       } else {
-        if (shelfLevel) shelfPart += `${shelfLevel}층`;
+        if (shelfLevel) shelfPart += `${shelfLevel}단`;
         if (column) shelfPart += (shelfPart ? " " : "") + `${column}열`;
       }
 
@@ -403,7 +403,7 @@
     const cab = info.Cabinet?.cabinet_name || "";
     const doorV = info.door_vertical ? `${info.door_vertical}층문` : "";
     const doorH = info.door_horizontal ? `${info.door_horizontal}문` : "";
-    const shelf = info.internal_shelf_level != null ? `${info.internal_shelf_level}층` : "";
+    const shelf = info.internal_shelf_level != null ? `${info.internal_shelf_level}단` : "";
     const column = info.storage_column != null ? `${info.storage_column}열` : "";
     const locationText = [area, cab, doorV, doorH, shelf, column].filter(Boolean).join(" · ") || "위치 정보 없음";
 
