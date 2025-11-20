@@ -1,31 +1,37 @@
 /* =================================================================
    湲곕낯 ?ㅽ???(Body, Form ??
 ================================================================= */
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow-x: hidden; /* 媛濡??ㅽ겕濡?諛⑹? */
-    overflow-y: auto;
-    background-color: #ffffff; /* ????긽 ?숈씪???곗깋 諛곌꼍 */
-    font-family: 'Noto Sans KR', Arial, sans-serif; /* ???고듃 怨좎젙 */
-    color: #333;
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  /* 媛濡??ㅽ겕濡?諛⑹? */
+  overflow-y: auto;
+  background-color: #ffffff;
+  /* ????긽 ?숈씪???곗깋 諛곌꼍 */
+  font-family: 'Noto Sans KR', Arial, sans-serif;
+  /* ???고듃 怨좎젙 */
+  color: #333;
 }
 
-h1, h2, h3 {
-    color: #333;
+h1,
+h2,
+h3 {
+  color: #333;
 }
 
 /* =================================================================
    ??洹몃９ ?ㅽ???
 ================================================================= */
 .form-group {
-    margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: #fff;
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
 }
 
 /* =================================================================
@@ -34,7 +40,8 @@ h1, h2, h3 {
 #form-container {
   max-width: 600px;
   margin: 0 auto;
-  padding: 20px 20px 80px 20px; /* ?? ?? ?? 醫?*/
+  padding: 20px 20px 80px 20px;
+  /* ?? ?? ?? 醫?*/
   box-sizing: border-box;
 }
 
@@ -42,109 +49,113 @@ h1, h2, h3 {
    ?덉씠釉?諛??낅젰 ???ㅽ???
 ================================================================= */
 label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: #333;
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
 }
 
 input[type="text"],
 input[type="number"],
 input[type="date"],
 select {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-    background-color: #fff;
-    appearance: none;
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  background-color: #fff;
+  appearance: none;
 }
 
 /* =================================================================
    Select 諛뺤뒪 ?ㅽ???
 ================================================================= */
 select {
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22/%3E%3C/svg%3E');
-    background-repeat: no-repeat;
-    background-position: right 10px top 50%;
-    background-size: 10px auto;
-    padding-right: 30px;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22/%3E%3C/svg%3E');
+  background-repeat: no-repeat;
+  background-position: right 10px top 50%;
+  background-size: 10px auto;
+  padding-right: 30px;
 }
 
 select:focus {
-    border-color: #00a0b2;
-    box-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
-    outline: none;
+  border-color: #00a0b2;
+  box-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
+  outline: none;
 }
 
 /* =================================================================
    踰꾪듉 ?ㅽ???(湲곕낯 踰꾪듉 諛??좏깮 踰꾪듉)
 ================================================================= */
 button[type="submit"] {
-    background-color: #00a0b2;
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    width: 100%;
+  background-color: #00a0b2;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  width: 100%;
 }
 
 button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
 /* =================================================================
    踰꾪듉 洹몃９ ?ㅽ???
 ================================================================= */
 .button-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 5px;
-    box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+  box-sizing: border-box;
 }
 
 .button-group button {
-    flex-grow: 1;
-    padding: 8px 10px;
-    border: 1px solid #ddd;
-    background-color: white;
-    color: #333;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    text-align: center;
-    transition: all 0.2s ease;
+  flex-grow: 1;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  background-color: white;
+  color: #333;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: center;
+  transition: all 0.2s ease;
 }
 
 .button-group button:hover {
-    background-color: #f0f0f0;
+  background-color: #f0f0f0;
 }
 
 .button-group button.active {
-    background-color: #00a0b2;
-    color: white;
-    border-color: #00a0b2;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background-color: #00a0b2;
+  color: white;
+  border-color: #00a0b2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .form-bottom-buttons {
   display: flex;
-  justify-content: space-between;   /* 以묒븰 ?뺣젹 */
-  gap: 12px;                 /* 踰꾪듉 ?ъ씠 媛꾧꺽 */
+  justify-content: space-between;
+  /* 以묒븰 ?뺣젹 */
+  gap: 12px;
+  /* 踰꾪듉 ?ъ씠 媛꾧꺽 */
   margin-top: 24px;
   width: 100%;
   box-sizing: border-box;
-  padding: 0 8px; /* ?쇱쓽 醫뚯슦 ?щ갚怨??숈씪?섍쾶 議곗젙 (?꾩슂???섏젙) */
+  padding: 0 8px;
+  /* ?쇱쓽 醫뚯슦 ?щ갚怨??숈씪?섍쾶 議곗젙 (?꾩슂???섏젙) */
 }
 
 .form-bottom-buttons button {
-  flex: 1;                   /* ??踰꾪듉 ?숈씪????鍮꾩쑉 */
+  flex: 1;
+  /* ??踰꾪듉 ?숈씪????鍮꾩쑉 */
   padding: 12px 0;
   border: none;
   border-radius: 6px;
@@ -159,6 +170,7 @@ button:disabled {
   background-color: #e0e0e0;
   color: #333;
 }
+
 #cancel-form-btn:hover {
   background-color: #d0d0d0;
 }
@@ -168,6 +180,7 @@ button:disabled {
   background-color: #00a0b2;
   color: #fff;
 }
+
 #cabinet-submit-button:hover {
   background-color: #00BFD4;
 }
@@ -177,6 +190,7 @@ button:disabled {
   background-color: #00a0b2;
   color: #fff;
 }
+
 #cabinet-save-btn:hover {
   background-color: #00BFD4;
 }
@@ -196,7 +210,8 @@ button:disabled {
 #cabinet-photo-preview img {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain; /* ??鍮꾩쑉 ?좎??섎ŉ 異뺤냼/?뺣? */
+  object-fit: contain;
+  /* ??鍮꾩쑉 ?좎??섎ŉ 異뺤냼/?뺣? */
   border-radius: 6px;
 }
 
@@ -204,149 +219,152 @@ button:disabled {
    ?ъ쭊 ?깅줉 ?곸뿭
 ================================================================= */
 .photo-container {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 15px;
 }
 
 .photo-preview-box {
-    position: relative;
-    width: 100%;
-    max-width: 320px;
-    aspect-ratio: 1 / 1;          /* ???뺤궗媛곹삎 諛뺤뒪 ?좎? */
-    border: 2px dashed #ccc;
-    border-radius: 8px;
-    background-color: #fafafa;
-    overflow: hidden;
-    flex-shrink: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+  /* ???뺤궗媛곹삎 諛뺤뒪 ?좎? */
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  background-color: #fafafa;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .photo-preview-box::before {
-    content: "";
-    display: block;
-    padding-top: 100%;            /* ???뺤궗媛곹삎 蹂댁젙 (aspect-ratio fallback) */
+  content: "";
+  display: block;
+  padding-top: 100%;
+  /* ???뺤궗媛곹삎 蹂댁젙 (aspect-ratio fallback) */
 }
 
 .photo-preview-box span {
-    color: #888;
-    font-size: 0.95rem;
+  color: #888;
+  font-size: 0.95rem;
 }
 
 .photo-preview-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;          /* ??鍮꾩쑉 ?좎? + ?섎┝ ?놁쓬 */
-    object-position: center;
-    display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* ??鍮꾩쑉 ?좎? + ?섎┝ ?놁쓬 */
+  object-position: center;
+  display: block;
 }
 
 .photo-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .photo-buttons button {
-    padding: 10px 15px;
-    border: 1px solid #ccc;
-    background-color: #f0f0f0;
-    cursor: pointer;
-    border-radius: 5px;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  border-radius: 5px;
 }
 
 /* =================================================================
    移대찓??紐⑤떖 ?ㅽ???
 ================================================================= */
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
 }
 
 .modal-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
 }
 
 #camera-view {
-    width: 100%;
-    max-width: 500px;
-    border-radius: 5px;
-    background-color: #000;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 5px;
+  background-color: #000;
 }
 
 .modal-controls {
-    display: flex;
-    gap: 10px;
+  display: flex;
+  gap: 10px;
 }
 
 /* =================================================================
    蹂닿? ?꾩튂 ?ㅼ젙 (6?④퀎)
 ================================================================= */
 .form-group-location {
-    margin-bottom: 25px;
-    padding: 15px;
-    border: 2px solid #00a0b2;
-    border-radius: 8px;
-    background-color: #f8f8ff;
+  margin-bottom: 25px;
+  padding: 15px;
+  border: 2px solid #00a0b2;
+  border-radius: 8px;
+  background-color: #f8f8ff;
 }
 
 .form-group-location h3 {
-    margin-top: 0;
-    font-size: 16px;
-    color: #00a0b2;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 5px;
-    margin-bottom: 15px;
+  margin-top: 0;
+  font-size: 16px;
+  color: #00a0b2;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+  margin-bottom: 15px;
 }
 
 .location-step {
-    margin-bottom: 15px;
+  margin-bottom: 15px;
 }
 
 .location-step label {
-    font-size: 14px;
-    color: #555;
+  font-size: 14px;
+  color: #555;
 }
 
 /* ?꾩튂 ?좏깮 踰꾪듉 (btn-location) ?ㅽ???*/
 .btn-location {
-    flex-basis: calc(16.66% - 10px);
-    flex-grow: 1;
-    padding: 10px;
-    border: 1px solid #ccc;
-    background-color: #f9f9f9;
-    cursor: pointer;
-    text-align: center;
-    border-radius: 5px;
-    transition: background-color 0.2s, border-color 0.2s;
+  flex-basis: calc(16.66% - 10px);
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  text-align: center;
+  border-radius: 5px;
+  transition: background-color 0.2s, border-color 0.2s;
 }
 
 .btn-location:hover {
-    background-color: #e9e9e9;
-    border-color: #999;
+  background-color: #e9e9e9;
+  border-color: #999;
 }
 
 .btn-location.active {
-    background-color: #00a0b2;
-    color: white;
-    border-color: #00a0b2;
+  background-color: #00a0b2;
+  color: white;
+  border-color: #00a0b2;
 }
 
 /* =================================================================
@@ -354,7 +372,7 @@ button:disabled {
 ================================================================= */
 #location-list-page #cabinet-list-container {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); 
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   padding: 20px 16px 0 16px;
 }
@@ -362,49 +380,55 @@ button:disabled {
 /* ?쒖빟??紐⑸줉??2?대줈 諛곗튂 */
 .cabinet-list {
   display: flex;
-  flex-wrap: wrap; /* ??以꾩뿉 ?щ윭 ??ぉ???ㅻ룄濡??ㅼ젙 */
-  gap: 20px; /* ??ぉ 媛?媛꾧꺽 */
-  justify-content: space-between; /* ??ぉ 媛꾧꺽 議곗젙 */
+  flex-wrap: wrap;
+  /* ??以꾩뿉 ?щ윭 ??ぉ???ㅻ룄濡??ㅼ젙 */
+  gap: 20px;
+  /* ??ぉ 媛?媛꾧꺽 */
+  justify-content: space-between;
+  /* ??ぉ 媛꾧꺽 議곗젙 */
 }
 
 /* 媛??쒖빟??移대뱶 */
 .cabinet-card {
-  flex: 1 1 calc(50% - 10px); /* ??以꾩뿉 ??媛쒖뵫 諛곗튂 */
+  flex: 1 1 calc(50% - 10px);
+  /* ??以꾩뿉 ??媛쒖뵫 諛곗튂 */
   box-sizing: border-box;
-  margin-bottom: 20px; /* ?섎떒 ?щ갚 */
+  margin-bottom: 20px;
+  /* ?섎떒 ?щ갚 */
   background-color: #fff;
   border-radius: 8px;
   border: 1px solid #ddd;
 }
 
 .cabinet-card .card-info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .cabinet-card .card-info h3,
 .cabinet-card .card-info .area-name {
-    margin: 0;
-    line-height: 1.2;
-    display: flex;
-    align-items: center;
+  margin: 0;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
 }
 
 .cabinet-card .card-info .area-name::before {
-    content: "쨌";
-    margin: 0 6px 0 2px;
-    color: #8a8a8a;
+  content: "쨌";
+  margin: 0 6px 0 2px;
+  color: #8a8a8a;
 }
 
 .cabinet-card .card-info .area-name {
-    position: relative;
-    top: 1px;
+  position: relative;
+  top: 1px;
 }
 
 .card-image-placeholder {
   width: 100%;
-  aspect-ratio: 3 / 4;  /* 鍮꾩쑉 ?좎?, padding-top 遺덊븘??*/
+  aspect-ratio: 3 / 4;
+  /* 鍮꾩쑉 ?좎?, padding-top 遺덊븘??*/
   background-color: #f0f0f0;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
@@ -420,7 +444,8 @@ button:disabled {
   max-height: 100%;
   width: auto;
   height: auto;
-  object-fit: contain;   /* ???대?吏 ?꾩껜 ?쒖떆, ?먮Ⅴ吏 ?딆쓬 */
+  object-fit: contain;
+  /* ???대?吏 ?꾩껜 ?쒖떆, ?먮Ⅴ吏 ?딆쓬 */
   display: block;
 }
 
@@ -431,53 +456,53 @@ button:disabled {
 }
 
 .card-info {
-    padding: 15px;
-    text-align: center;
+  padding: 15px;
+  text-align: center;
 }
 
 .card-info h3 {
-    margin: 0 0 5px 0;
-    font-size: 18px;
+  margin: 0 0 5px 0;
+  font-size: 18px;
 }
 
 .card-info .area-name {
-    font-size: 14px;
-    color: #666;
-    margin: 10px 0;
+  font-size: 14px;
+  color: #666;
+  margin: 10px 0;
 }
 
 .card-info .cabinet-specs {
-    margin: 0;
-    font-size: 12px;
-    color: #888;
+  margin: 0;
+  font-size: 12px;
+  color: #888;
 }
 
 .card-actions {
-    padding: 10px 15px;
-    background-color: #f9f9f9;
-    border-top: 1px solid #f0f0f0;
-    text-align: right;
+  padding: 10px 15px;
+  background-color: #f9f9f9;
+  border-top: 1px solid #f0f0f0;
+  text-align: right;
 }
 
 .card-actions .edit-btn {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    font-size: 12px;
-    cursor: pointer;
-    margin-right: 5px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-right: 5px;
 }
 
 .card-actions .delete-btn {
-    background-color: #ff4d4d;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    font-size: 12px;
-    cursor: pointer;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .card-actions button {
@@ -499,132 +524,136 @@ button:disabled {
    ?섎떒 ?ㅻ퉬寃뚯씠??諛?諛?硫붾돱
 ================================================================= */
 .navbar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    height: 60px;
-    background-color: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
-    z-index: 1000;
-    backdrop-filter: blur(10px);
-    border-top: 1px solid #eee;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  height: 60px;
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  border-top: 1px solid #eee;
 }
 
 .nav-item {
-    flex-grow: 1;
-    text-align: center;
-    color: #333;
-    text-decoration: none;
-    padding: 10px 0;
-    font-size: 13px;
-    font-weight: 500;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease-in-out;
+  flex-grow: 1;
+  text-align: center;
+  color: #333;
+  text-decoration: none;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
 }
 
 .nav-icon {
-    font-size: 24px;
-    margin-bottom: 3px;
-    transition: transform 0.2s;
+  font-size: 24px;
+  margin-bottom: 3px;
+  transition: transform 0.2s;
 }
 
 .nav-item.active {
-    color: #00a0b2;
-    font-weight: 600;
+  color: #00a0b2;
+  font-weight: 600;
 }
 
 .nav-item.start-button {
-    background-color: #00a0b2;
-    color: white;
-    flex-grow: 0;
-    width: 70px;
-    border-top-right-radius: 10px;
+  background-color: #00a0b2;
+  color: white;
+  flex-grow: 0;
+  width: 70px;
+  border-top-right-radius: 10px;
 }
 
 /* =================================================================
    ?쒖옉硫붾돱 ?앹뾽 (Start Menu)
 ================================================================= */
 .start-menu-popup {
-    position: fixed;
-    bottom: 70px;
-    left: 15px;
-    width: 260px;
-    background-color: rgba(255, 255, 255, 0.97);
-    border-radius: 12px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-    z-index: 1010;
-    padding: 12px;
-    flex-direction: column;
-    opacity: 0;
-    transform: translateY(15px);
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+  position: fixed;
+  bottom: 70px;
+  left: 15px;
+  width: 260px;
+  background-color: rgba(255, 255, 255, 0.97);
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  z-index: 1010;
+  padding: 12px;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(15px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .start-menu-popup.open {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: all;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
 }
 
 .menu-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 12px;
-    color: #333;
-    text-decoration: none;
-    border-radius: 8px;
-    transition: background-color 0.15s ease, color 0.15s ease;
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px;
+  color: #333;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  cursor: pointer;
 }
 
-.menu-item:hover {                 /* ??hover ?④낵 */
-    background-color: #00a0b2;   /* 硫붿씤而щ윭? ?숈씪 */
-    color: #fff;                 /* 湲???곗깋 */
+.menu-item:hover {
+  /* ??hover ?④낵 */
+  background-color: #00a0b2;
+  /* 硫붿씤而щ윭? ?숈씪 */
+  color: #fff;
+  /* 湲???곗깋 */
 }
 
-.menu-item:hover i,                /* hover ???꾩씠肄??됱긽???④퍡 蹂寃?*/
+.menu-item:hover i,
+/* hover ???꾩씠肄??됱긽???④퍡 蹂寃?*/
 .menu-item:hover svg {
-    color: #fff;
+  color: #fff;
 }
 
 .menu-item.active {
-    background-color: rgba(0, 188, 212, 0.25);
-    color: #00a0b2;
-    font-weight: 600;
+  background-color: rgba(0, 188, 212, 0.25);
+  color: #00a0b2;
+  font-weight: 600;
 }
 
 .menu-footer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 12px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    margin-top: 5px;
-    cursor: pointer;
-    transition: background-color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-top: 5px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
 }
 
 .menu-footer:hover {
-    background-color: rgba(0, 166, 173, 0.1);
+  background-color: rgba(0, 166, 173, 0.1);
 }
 
 .user-icon {
-    font-size: 22px;
-    margin-right: 10px;
-    color: #00a0b2;
+  font-size: 22px;
+  margin-right: 10px;
+  color: #00a0b2;
 }
 
 .user-id {
-    font-weight: 600;
-    color: #333;
+  font-weight: 600;
+  color: #333;
 }
 
 /*------------------
@@ -633,73 +662,73 @@ FAB
 
 
 .fab {
-    position: fixed;
-    bottom: 70px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 600px;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    text-align: center;
-    background-color: #00a0b2;
-    color: white;
-    border: none;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  background-color: #00a0b2;
+  color: white;
+  border: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .detail-action-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 24px;
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
 }
 
 .detail-action {
-    flex: 1;
-    border: none;
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 15px;
-    font-weight: 600;
-    color: #fff;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.18);
-    transition: background-color 0.2s ease, transform 0.1s ease;
+  flex: 1;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .detail-action:active {
-    transform: translateY(1px);
+  transform: translateY(1px);
 }
 
 .detail-action--primary {
-    background-color: #00a0b2;
+  background-color: #00a0b2;
 }
 
 .detail-action--secondary {
-    background-color: #6c757d;
+  background-color: #6c757d;
 }
 
 .detail-action--danger {
-    background-color: #d9534f;
+  background-color: #d9534f;
 }
 
 /* =================================================================
    ?쒖빟????媛쒖꽑 (area-button-group / 湲고? ?낅젰 ?꾨뱶)
 ================================================================= */
 #area-button-group {
-    justify-content: space-between;
+  justify-content: space-between;
 }
 
 #area-button-group button {
-    flex: 1 1 calc(50% - 8px);
-    min-width: 120px;
+  flex: 1 1 calc(50% - 8px);
+  min-width: 120px;
 }
 
 .other-input-group {
-    display: none;
-    transition: opacity 0.2s ease;
+  display: none;
+  transition: opacity 0.2s ease;
 }
 
 .other-input-group.show {
@@ -708,25 +737,25 @@ FAB
 }
 
 .other-input-group input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 14px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
 .other-input-group input:focus {
-    border-color: #00a0b2;
-    box-shadow: 0 0 5px rgba(0, 188, 212, 0.4);
+  border-color: #00a0b2;
+  box-shadow: 0 0 5px rgba(0, 188, 212, 0.4);
 }
 
 .button-group button.active {
-    background-color: #00a0b2;
-    color: white;
-    border-color: #00a0b2;
-    box-shadow: 0 2px 5px rgba(0, 188, 212, 0.3);
-    transform: scale(1.03);
-    transition: all 0.2s ease-in-out;
+  background-color: #00a0b2;
+  color: white;
+  border-color: #00a0b2;
+  box-shadow: 0 2px 5px rgba(0, 188, 212, 0.3);
+  transform: scale(1.03);
+  transition: all 0.2s ease-in-out;
 }
 
 /* =================================================================
@@ -805,8 +834,15 @@ body:not(.home-active) #splash-screen {
 }
 
 @keyframes splashFadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 body.home-active #splash-screen {
@@ -856,7 +892,8 @@ body.home-active #splash-screen {
   background: #fff;
   box-sizing: border-box;
   overflow: hidden;
-  height: 28px; /* ???먯뿰?ㅻ윭???띿뒪???믪씠 */
+  height: 28px;
+  /* ???먯뿰?ㅻ윭???띿뒪???믪씠 */
   display: flex;
   align-items: center;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -865,7 +902,7 @@ body.home-active #splash-screen {
 .select-wrapper:hover,
 .select-wrapper:focus-within {
   border-color: #66afe9;
-  box-shadow: 0 0 3px rgba(102,175,233,0.6);
+  box-shadow: 0 0 3px rgba(102, 175, 233, 0.6);
 }
 
 /* Refresh 踰꾪듉 */
@@ -915,7 +952,8 @@ body.home-active #splash-screen {
   font-size: 14px;
   line-height: 1.2;
   color: #333;
-  height: 28px; /* ?뵻 踰꾪듉 ?믪씠 */
+  height: 28px;
+  /* ?뵻 踰꾪듉 ?믪씠 */
   box-sizing: border-box;
 }
 
@@ -985,13 +1023,24 @@ body.home-active #splash-screen {
 
 /* ??Fade-in ?좊땲硫붿씠??*/
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ?몃깽?좊━ 移대뱶 (?쒖빟??移대뱶 ?ㅽ????ъ궗?? */
-.inventory-card { 
-  background: #fff; border:1px solid #ddd; border-radius:8px; margin: 12px; overflow:hidden;
+.inventory-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 12px;
+  overflow: hidden;
 }
 
 /* ???щ젰(DatePicker) ?섎┝ 諛⑹???*/
@@ -1002,9 +1051,12 @@ body.home-active #splash-screen {
 }
 
 input[type="date"] {
-  font-family: inherit;  /* 遺紐⑥? ?숈씪??湲瑗??ъ슜 */
-  font-size: inherit;     /* 二쇰? input怨??ш린 ?쇱튂 */
-  color: inherit;                    /* 湲?먯깋???숈씪?섍쾶 */
+  font-family: inherit;
+  /* 遺紐⑥? ?숈씪??湲瑗??ъ슜 */
+  font-size: inherit;
+  /* 二쇰? input怨??ш린 ?쇱튂 */
+  color: inherit;
+  /* 湲?먯깋???숈씪?섍쾶 */
   letter-spacing: 0.02em;
   position: relative;
   z-index: 100;
@@ -1025,6 +1077,7 @@ input[type="date"] {
   border-left: 4px solid #00a0b2;
   border-radius: 4px;
 }
+
 .inventory-section-header .section-count {
   font-size: 12px;
   padding: 2px 8px;
@@ -1032,6 +1085,7 @@ input[type="date"] {
   border-radius: 12px;
   color: #0088a3;
 }
+
 .inventory-card {
   display: flex;
   align-items: flex-start;
@@ -1041,9 +1095,11 @@ input[type="date"] {
   background: #fff;
   cursor: pointer;
 }
+
 .inventory-card:hover {
   background: #f9fbff;
 }
+
 .inventory-card__image img {
   width: 70px;
   height: 70px;
@@ -1051,6 +1107,7 @@ input[type="date"] {
   object-fit: cover;
   border: 1px solid #e5e5e5;
 }
+
 .inventory-card__image--empty {
   width: 70px;
   height: 70px;
@@ -1061,26 +1118,31 @@ input[type="date"] {
   align-items: center;
   justify-content: center;
 }
+
 .inventory-card__placeholder {
   font-size: 13px;
   color: #666;
 }
+
 .inventory-card__body {
   flex: 1;
   display: flex;
   justify-content: space-between;
   gap: 16px;
 }
+
 .inventory-card__left {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
+
 .inventory-card__no {
   font-size: 13px;
   color: #666;
 }
+
 .inventory-card__name {
   font-weight: 600;
   color: #222;
@@ -1088,14 +1150,17 @@ input[type="date"] {
   gap: 6px;
   flex-wrap: wrap;
 }
+
 .inventory-card__conc {
   font-size: 13px;
   color: #777;
 }
+
 .inventory-card__location {
   font-size: 13px;
   color: #666;
 }
+
 .inventory-card__meta {
   min-width: 120px;
   text-align: right;
@@ -1104,4 +1169,198 @@ input[type="date"] {
   gap: 4px;
   font-size: 13px;
   color: #555;
+}
+
+/* =================================================================
+   Inventory Detail Page Redesign
+================================================================= */
+.inventory-detail-page {
+  padding: 10px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.detail-header {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.detail-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #333;
+}
+
+.detail-header .eng-name {
+  margin: 5px 0 0 0;
+  font-size: 1.1rem;
+  color: #666;
+  font-weight: normal;
+}
+
+/* 2-Column Grid */
+.detail-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.detail-left {
+  flex: 0 0 320px;
+  /* Fixed width for photo */
+  max-width: 100%;
+}
+
+.detail-right {
+  flex: 1;
+  min-width: 280px;
+}
+
+/* Photo Box Override/Adjustment */
+.detail-left .photo-preview-box {
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9f9f9;
+}
+
+.detail-left .photo-preview-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Info List */
+.detail-info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.detail-info-list li {
+  margin-bottom: 10px;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.detail-info-list li:last-child {
+  border-bottom: none;
+}
+
+.detail-info-list strong {
+  display: inline-block;
+  width: 80px;
+  color: #555;
+}
+
+/* MSDS Accordion */
+.msds-section {
+  margin-bottom: 30px;
+}
+
+.accordion {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.accordion-item {
+  border-bottom: 1px solid #ddd;
+}
+
+.accordion-item:last-child {
+  border-bottom: none;
+}
+
+.accordion-header {
+  width: 100%;
+  text-align: left;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.accordion-header:hover {
+  background-color: #f0f0f0;
+}
+
+.accordion-header::after {
+  content: "▼";
+  /* Triangle icon */
+  font-size: 0.8rem;
+  color: #888;
+  transition: transform 0.3s ease;
+}
+
+.accordion-item.active .accordion-header::after {
+  transform: rotate(180deg);
+}
+
+.accordion-content {
+  display: none;
+  padding: 15px;
+  background-color: #fff;
+  border-top: 1px solid #eee;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #444;
+}
+
+.accordion-item.active .accordion-content {
+  display: block;
+}
+
+/* PDF Download Button */
+.msds-pdf-section {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.pdf-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background-color: #d9534f;
+  /* Consistent Danger Red */
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.pdf-download-btn:hover {
+  background-color: #c9302c;
+}
+
+.pdf-icon {
+  font-size: 1.2rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+  .detail-grid {
+    flex-direction: column;
+  }
+
+  .detail-left {
+    margin: 0 auto;
+  }
 }

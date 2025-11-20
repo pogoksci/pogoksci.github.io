@@ -395,6 +395,23 @@
     if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
     if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
 
+    // ✅ MSDS PDF 처리
+    const msdsInput = document.getElementById("msds-pdf-input");
+    if (msdsInput) {
+      msdsInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 10 * 1024 * 1024) {
+                alert("파일 크기는 10MB 이하여야 합니다.");
+                msdsInput.value = "";
+                set("msds_pdf_file", null);
+                return;
+            }
+            set("msds_pdf_file", file);
+        }
+      };
+    }
+
     // ✅ 위치 (Area → Cabinet → 도어/단/열)
     const areaSelect = document.getElementById("location_area_select");
     const cabSelect = document.getElementById("location_cabinet_select");
@@ -531,6 +548,39 @@
             concentration_unit: concentrationUnit || null,
           };
 
+          // 📤 MSDS PDF 업로드
+          if (state.msds_pdf_file) {
+            statusMsg.textContent = "📄 MSDS PDF 업로드 중...";
+            try {
+                const file = state.msds_pdf_file;
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+                
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('msds-pdf')
+                    .upload(fileName, file);
+                    
+                if (uploadError) throw uploadError;
+                
+                const { data: publicUrlData } = supabase.storage
+                    .from('msds-pdf')
+                    .getPublicUrl(fileName);
+                    
+                inventoryDetails.msds_pdf_url = publicUrlData.publicUrl;
+                console.log("✅ MSDS PDF Uploaded:", inventoryDetails.msds_pdf_url);
+            } catch (err) {
+                console.error("PDF Upload Error:", err);
+                alert("MSDS PDF 업로드 중 오류가 발생했습니다: " + err.message);
+                statusMsg.textContent = "";
+                return;
+            }
+          } else if (mode === "edit" && detail?.msds_pdf_url) {
+              // 수정 모드이고 새 파일이 없으면 기존 URL 유지 (필요하다면)
+              // 하지만 updatePayload 구성 시 처리해야 함.
+              // 여기서는 inventoryDetails에 넣어서 casimport나 updatePayload에 전달.
+              inventoryDetails.msds_pdf_url = detail.msds_pdf_url;
+          }
+
           if (state.photo_base64) {
             inventoryDetails.photo_320_base64 = state.photo_base64;
             inventoryDetails.photo_160_base64 = state.photo_base64;
@@ -552,6 +602,7 @@
               storage_column: state.storage_column || null,
               concentration_value: concentrationValue ? Number(concentrationValue) : null,
               concentration_unit: concentrationUnit || null,
+              msds_pdf_url: inventoryDetails.msds_pdf_url || null, // PDF URL 추가
             };
             if (state.photo_updated) {
               updatePayload.photo_url_320 = state.photo_base64 || null;
