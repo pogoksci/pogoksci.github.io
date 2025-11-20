@@ -18,7 +18,10 @@
           id, state, current_amount, initial_amount, unit, classification, manufacturer, purchase_date, photo_url_320, photo_url_160,
           door_vertical, door_horizontal, internal_shelf_level, storage_column, msds_pdf_url,
           concentration_value, concentration_unit,
-          Substance ( id, substance_name, cas_rn, molecular_formula, chem_name_kor ),
+          Substance (
+            id, substance_name, cas_rn, molecular_formula, chem_name_kor,
+            MSDS ( section_number, content )
+          ),
           Cabinet ( id, cabinet_name, area_id, Area ( id, area_name ) )
         `)
         .eq("id", inventoryId)
@@ -128,18 +131,51 @@
         "16. 그 밖의 참고사항"
       ];
 
+      const msdsData = data.Substance?.MSDS || [];
       const accordionContainer = document.getElementById("msds-accordion");
+
       if (accordionContainer) {
-        accordionContainer.innerHTML = msdsTitles.map((title, index) => `
+        accordionContainer.innerHTML = msdsTitles.map((title, index) => {
+          const sectionNum = index + 1;
+          const sectionData = msdsData.find(d => d.section_number === sectionNum);
+          let contentHtml = '<p class="text-gray-500 italic p-4">내용 없음 (데이터 연동 필요)</p>';
+
+          if (sectionData && sectionData.content) {
+            // Check if it's structured data (contains delimiters)
+            if (sectionData.content.includes("|||")) {
+              const rows = sectionData.content.split(";;;");
+              const rowsHtml = rows.map(row => {
+                const parts = row.split("|||");
+                if (parts.length >= 3) {
+                  const [no, name, detail] = parts;
+                  return `
+                    <div class="msds-row">
+                      <div class="msds-header">${no} ${name}</div>
+                      <div class="msds-content">${detail}</div>
+                    </div>
+                  `;
+                } else {
+                  return `<div class="msds-simple-content">${row}</div>`;
+                }
+              }).join("");
+              contentHtml = `<div class="msds-table-container">${rowsHtml}</div>`;
+            } else {
+              // Fallback for old data or simple text
+              contentHtml = `<div class="msds-simple-content">${sectionData.content.replace(/\n/g, "<br>")}</div>`;
+            }
+          }
+
+          return `
             <div class="accordion-item">
                 <button class="accordion-header" onclick="this.parentElement.classList.toggle('active')">
                     ${title}
                 </button>
                 <div class="accordion-content">
-                    <p class="text-gray-500 italic">내용 없음 (데이터 연동 필요)</p>
+                    ${contentHtml}
                 </div>
             </div>
-          `).join("");
+          `;
+        }).join("");
       }
 
       // 5. MSDS PDF Link
