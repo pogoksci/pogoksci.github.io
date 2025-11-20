@@ -198,6 +198,7 @@ button:disabled {
 #cabinet-photo-preview {
   width: auto;
   height: 240px;
+  aspect-ratio: 3 / 4;
   display: flex;
   align-items: center;
   justify-content: center;
