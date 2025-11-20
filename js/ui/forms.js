@@ -690,9 +690,10 @@
               }
 
               if (createdId) {
+                const { area_id, ...updatePayload } = inventoryDetails;
                 const { error: updateError } = await supabase
                   .from("Inventory")
-                  .update(inventoryDetails)
+                  .update(updatePayload)
                   .eq("id", createdId);
 
                 if (updateError) {
