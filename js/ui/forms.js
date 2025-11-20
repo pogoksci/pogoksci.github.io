@@ -674,7 +674,7 @@
 
             // [Workaround] casimport가 일부 필드(농도, 위치 등)를 누락할 수 있으므로, 생성된 항목을 찾아 다시 업데이트합니다.
             try {
-              let createdId = data?.id || data?.[0]?.id;
+              let createdId = data?.inventoryId || data?.id || data?.[0]?.id;
 
               if (!createdId) {
                 // ID를 반환하지 않는 경우, 가장 최근에 생성된 항목을 조회
@@ -690,7 +690,7 @@
               }
 
               if (createdId) {
-                const { area_id, purchase_volume, ...updatePayload } = inventoryDetails;
+                const { area_id, purchase_volume, photo_320_base64, photo_160_base64, ...updatePayload } = inventoryDetails;
                 const { error: updateError } = await supabase
                   .from("Inventory")
                   .update(updatePayload)
