@@ -329,10 +329,13 @@
       }
       set("photo_updated", false);
     } else {
-      const clearInputs = ["cas_rn", "purchase_volume", "concentration_value", "purchase_date"];
+      const clearInputs = ["cas_rn", "purchase_volume", "concentration_value", "purchase_date", "manufacturer_other"];
       clearInputs.forEach((id) => {
         const el = document.getElementById(id);
-        if (el) el.value = "";
+        if (el) {
+          el.value = "";
+          el.setAttribute("value", ""); // DOM 속성도 강제 초기화
+        }
       });
       BUTTON_GROUP_IDS.forEach((groupId) => {
         const group = document.getElementById(groupId);
@@ -444,13 +447,13 @@
       msdsInput.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 10 * 1024 * 1024) {
-                alert("파일 크기는 10MB 이하여야 합니다.");
-                msdsInput.value = "";
-                set("msds_pdf_file", null);
-                return;
-            }
-            set("msds_pdf_file", file);
+          if (file.size > 10 * 1024 * 1024) {
+            alert("파일 크기는 10MB 이하여야 합니다.");
+            msdsInput.value = "";
+            set("msds_pdf_file", null);
+            return;
+          }
+          set("msds_pdf_file", file);
         }
       };
     }
@@ -595,33 +598,33 @@
           if (state.msds_pdf_file) {
             statusMsg.textContent = "📄 MSDS PDF 업로드 중...";
             try {
-                const file = state.msds_pdf_file;
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-                
-                const { data: uploadData, error: uploadError } = await supabase.storage
-                    .from('msds-pdf')
-                    .upload(fileName, file);
-                    
-                if (uploadError) throw uploadError;
-                
-                const { data: publicUrlData } = supabase.storage
-                    .from('msds-pdf')
-                    .getPublicUrl(fileName);
-                    
-                inventoryDetails.msds_pdf_url = publicUrlData.publicUrl;
-                console.log("✅ MSDS PDF Uploaded:", inventoryDetails.msds_pdf_url);
+              const file = state.msds_pdf_file;
+              const fileExt = file.name.split('.').pop();
+              const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('msds-pdf')
+                .upload(fileName, file);
+
+              if (uploadError) throw uploadError;
+
+              const { data: publicUrlData } = supabase.storage
+                .from('msds-pdf')
+                .getPublicUrl(fileName);
+
+              inventoryDetails.msds_pdf_url = publicUrlData.publicUrl;
+              console.log("✅ MSDS PDF Uploaded:", inventoryDetails.msds_pdf_url);
             } catch (err) {
-                console.error("PDF Upload Error:", err);
-                alert("MSDS PDF 업로드 중 오류가 발생했습니다: " + err.message);
-                statusMsg.textContent = "";
-                return;
+              console.error("PDF Upload Error:", err);
+              alert("MSDS PDF 업로드 중 오류가 발생했습니다: " + err.message);
+              statusMsg.textContent = "";
+              return;
             }
           } else if (mode === "edit" && detail?.msds_pdf_url) {
-              // 수정 모드이고 새 파일이 없으면 기존 URL 유지 (필요하다면)
-              // 하지만 updatePayload 구성 시 처리해야 함.
-              // 여기서는 inventoryDetails에 넣어서 casimport나 updatePayload에 전달.
-              inventoryDetails.msds_pdf_url = detail.msds_pdf_url;
+            // 수정 모드이고 새 파일이 없으면 기존 URL 유지 (필요하다면)
+            // 하지만 updatePayload 구성 시 처리해야 함.
+            // 여기서는 inventoryDetails에 넣어서 casimport나 updatePayload에 전달.
+            inventoryDetails.msds_pdf_url = detail.msds_pdf_url;
           }
 
           if (state.photo_base64) {

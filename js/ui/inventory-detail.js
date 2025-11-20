@@ -15,8 +15,9 @@
       const { data, error } = await supabase
         .from("Inventory")
         .select(`
-          id, state, current_amount, unit, classification, manufacturer, purchase_date, photo_url_320, photo_url_160,
+          id, state, current_amount, initial_amount, unit, classification, manufacturer, purchase_date, photo_url_320, photo_url_160,
           door_vertical, door_horizontal, internal_shelf_level, storage_column, msds_pdf_url,
+          concentration_value, concentration_unit,
           Substance ( id, substance_name, cas_rn, molecular_formula, chem_name_kor ),
           Cabinet ( id, cabinet_name, Area ( area_name ) )
         `)

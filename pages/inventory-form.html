@@ -1,6 +1,6 @@
 <!-- /pages/inventory-form.html -->
 
-<form id="inventory-form">
+<form id="inventory-form" autocomplete="off">
     <h1>약품 입고 정보 입력</h1>
 
     <div class="form-group">
@@ -10,7 +10,8 @@
 
     <div class="form-group">
         <label for="purchase_volume">구입용량 (숫자) *</label>
-        <input type="number" id="purchase_volume" name="purchase_volume" placeholder="구입 용량" min="0" step="any">
+        <input type="number" id="purchase_volume" name="purchase_volume" placeholder="구입 용량" min="0" step="any"
+            autocomplete="off">
     </div>
 
     <div class="form-group">
@@ -73,7 +74,7 @@
     <div class="form-group">
         <label for="concentration_value">농도 (숫자)</label>
         <input type="number" id="concentration_value" name="concentration_value" placeholder="농도 값 (예: 98, 1.0)" min="0"
-            step="any">
+            step="any" autocomplete="off">
     </div>
 
     <div class="form-group">
@@ -110,7 +111,7 @@
 
     <div class="form-group">
         <label for="purchase_date">제조일 또는 구입일</label>
-        <input type="date" id="purchase_date" name="purchase_date">
+        <input type="date" id="purchase_date" name="purchase_date" autocomplete="off">
     </div>
 
     <div class="form-group-location">
