@@ -1252,13 +1252,14 @@ input[type="date"] {
   object-fit: contain;
 }
 
-/* Location Section in Left Column */
+/* Location Section (Full Width) */
 .detail-location-section {
   background-color: #f8f9fa;
   padding: 15px;
   border-radius: 8px;
   border: 1px solid #eee;
-  margin-top: 15px;
+  margin-bottom: 30px;
+  clear: both;
 }
 
 .detail-location-section strong {
