@@ -1191,7 +1191,9 @@ input[type="date"] {
   align-items: baseline;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 5px;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
 }
 
 #detail-name-kor {
