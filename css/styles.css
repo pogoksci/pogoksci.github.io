@@ -1267,13 +1267,16 @@ input[type="date"] {
   border: 1px solid #eee;
   margin-bottom: 30px;
   clear: both;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .detail-location-section strong {
-  display: block;
-  margin-bottom: 8px;
   color: #555;
   font-size: 0.95rem;
+  white-space: nowrap;
+  /* Prevent label wrapping */
 }
 
 .detail-location-section .location-text {
