@@ -1,20 +1,20 @@
 <!-- /pages/inventory-detail.html -->
 
 <div id="detail-page-container" class="inventory-detail-page">
-  <!-- 1. Header: Name -->
-  <div class="detail-header">
-    <h2 id="detail-name-kor">정보 로드 중...</h2>
-    <p id="detail-name-eng" class="eng-name"></p>
-  </div>
-
-  <!-- 2. 2-Column Grid: Photo & Info -->
+  <!-- 2-Column Grid: Photo & Info -->
   <div class="detail-grid">
     <div class="detail-left">
+      <!-- Names Moved Here -->
+      <div class="detail-name-group">
+        <h2 id="detail-name-kor">정보 로드 중...</h2>
+        <span id="detail-name-eng" class="eng-name"></span>
+      </div>
+
       <div id="detail-photo" class="photo-preview-box">
         <span>사진 없음</span>
       </div>
 
-      <!-- Location Info Moved Here -->
+      <!-- Location Info -->
       <div class="detail-location-section">
         <strong>보관 위치</strong>
         <p id="detail-location" class="location-text">-</p>

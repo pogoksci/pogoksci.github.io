@@ -1185,14 +1185,23 @@ input[type="date"] {
   text-align: left;
 }
 
+/* Name Group (Ko + En) */
+.detail-name-group {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
 #detail-name-kor {
   margin: 0;
   font-size: 1.8rem;
   color: #333;
+  line-height: 1.2;
 }
 
-.detail-header .eng-name {
-  margin: 5px 0 0 0;
+.detail-name-group .eng-name {
   font-size: 1.1rem;
   color: #666;
   font-weight: normal;
