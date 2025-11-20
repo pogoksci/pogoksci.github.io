@@ -324,7 +324,9 @@
       const existingPhoto = detail.photo_url_320 || detail.photo_url_160 || null;
       if (existingPhoto) {
         const preview = document.getElementById("photo-preview");
-        preview.innerHTML = `<img src="${existingPhoto}" alt="Preview">`;
+        if (preview) {
+          preview.innerHTML = `<img src="${existingPhoto}" alt="Preview">`;
+        }
         set("photo_base64", existingPhoto);
       }
       set("photo_updated", false);

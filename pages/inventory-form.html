@@ -20,10 +20,6 @@
             <button type="button" data-value="g">g</button>
             <button type="button" data-value="mL">mL</button>
             <button type="button" data-value="개">개</button>
-            <div class="modal-controls">
-                <button type="button" id="capture-btn">사진 찍기</button>
-                <button type="button" id="cancel-camera-btn">취소</button>
-            </div>
         </div>
     </div>
 
@@ -158,6 +154,20 @@
                 <span style="color:#888;">수납함 선택 후 표시됩니다.</span>
             </div>
         </div>
+    </div>
+
+    <div class="form-group">
+        <label>사진</label>
+        <div id="photo-preview"
+            style="margin-bottom: 10px; min-height: 50px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center;">
+            <span style="color:#888;">사진 없음</span>
+        </div>
+        <div class="button-group">
+            <button type="button" id="photo-btn">파일 업로드</button>
+            <button type="button" id="camera-btn">카메라 촬영</button>
+        </div>
+        <input type="file" id="photo-input" accept="image/*" style="display: none;">
+        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
     </div>
 
     <button type="submit" id="inventory-submit-button">약품 입고 정보 저장</button>
