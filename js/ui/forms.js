@@ -296,6 +296,14 @@
     const statusMsg = document.getElementById("statusMessage");
     if (title) title.textContent = mode === "edit" ? "약품 정보 수정" : "약품 입고 정보 입력";
 
+    const BUTTON_GROUP_IDS = [
+      "classification_buttons",
+      "state_buttons",
+      "unit_buttons",
+      "concentration_unit_buttons",
+      "manufacturer_buttons",
+    ];
+
     // ✅ 수정 모드 기본 데이터 반영
     if (mode === "edit" && detail) {
       const fieldMap = {
@@ -321,6 +329,22 @@
       }
       set("photo_updated", false);
     } else {
+      const clearInputs = ["cas_rn", "purchase_volume", "concentration_value", "purchase_date"];
+      clearInputs.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+      BUTTON_GROUP_IDS.forEach((groupId) => {
+        const group = document.getElementById(groupId);
+        if (group) group.querySelectorAll(".active").forEach((btn) => btn.classList.remove("active"));
+      });
+      ["classification", "state", "unit", "concentration_unit", "manufacturer"].forEach((key) => set(key, null));
+      const otherGroup = document.getElementById("other_manufacturer_group");
+      if (otherGroup) otherGroup.style.display = "none";
+      const otherInput = document.getElementById("manufacturer_other");
+      if (otherInput) otherInput.value = "";
+      set("msds_pdf_file", null);
+      set("photo_base64", null);
       set("photo_updated", false);
     }
 
@@ -344,23 +368,42 @@
       });
 
       if (mode === "edit" && detail) {
-        const value = getter(detail);
-        if (!value) return;
-        const targetBtn = document.querySelector(`#${groupId} button[data-value="${value}"]`);
+        const raw = getter(detail);
+        const normalizedValue = raw == null ? "" : String(raw).trim();
+        if (!normalizedValue) return;
+        const buttons = Array.from(document.querySelectorAll(`#${groupId} button`));
+        const sanitize = (v) => v.replace(/\s+/g, "").toLowerCase();
+        let targetBtn = buttons.find((btn) => {
+          const candidate = (btn.dataset.value || btn.textContent || "").trim();
+          return candidate === normalizedValue;
+        });
+        if (!targetBtn) {
+          targetBtn = buttons.find((btn) => {
+            const candidate = (btn.dataset.value || btn.textContent || "").trim();
+            return sanitize(candidate) === sanitize(normalizedValue);
+          });
+        }
         if (targetBtn) {
+          buttons.forEach((btn) => btn.classList.remove("active"));
           targetBtn.classList.add("active");
-          set(stateKey, value);
+          const appliedValue = targetBtn.dataset.value || targetBtn.textContent.trim();
+          set(stateKey, appliedValue);
           if (groupId === "manufacturer_buttons") {
             const group = document.getElementById("other_manufacturer_group");
-            if (group) group.style.display = value === "기타" ? "block" : "none";
+            if (group) group.style.display = appliedValue === "기타" ? "block" : "none";
+            if (appliedValue === "기타") {
+              const otherInput = document.getElementById("manufacturer_other");
+              if (otherInput && normalizedValue !== "기타") otherInput.value = normalizedValue;
+            }
           }
         } else if (groupId === "manufacturer_buttons") {
           const otherBtn = document.querySelector(`#${groupId} button[data-value="기타"]`);
           if (otherBtn) {
+            buttons.forEach((btn) => btn.classList.remove("active"));
             otherBtn.classList.add("active");
             set("manufacturer", "기타");
             const otherInput = document.getElementById("manufacturer_other");
-            if (otherInput) otherInput.value = value;
+            if (otherInput) otherInput.value = normalizedValue;
             const group = document.getElementById("other_manufacturer_group");
             if (group) group.style.display = "block";
           }
