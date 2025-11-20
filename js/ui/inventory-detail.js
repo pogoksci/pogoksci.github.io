@@ -153,8 +153,34 @@
 
 
       // 삭제
+      // 삭제
       document.getElementById("delete-inventory-btn")?.addEventListener("click", async () => {
         if (!confirm("정말 삭제하시겠습니까?")) return;
+
+        // 🗑️ MSDS PDF 파일 삭제
+        if (data.msds_pdf_url) {
+          try {
+            // URL에서 파일명 추출 (예: .../msds-pdf/filename.pdf)
+            const url = data.msds_pdf_url;
+            const fileName = url.substring(url.lastIndexOf('/') + 1);
+
+            if (fileName) {
+              console.log("🗑️ MSDS PDF 삭제 시도:", fileName);
+              const { error: storageError } = await supabase.storage
+                .from('msds-pdf')
+                .remove([fileName]);
+
+              if (storageError) {
+                console.warn("⚠️ PDF 파일 삭제 실패:", storageError);
+              } else {
+                console.log("✅ PDF 파일 삭제 완료");
+              }
+            }
+          } catch (err) {
+            console.warn("⚠️ PDF 삭제 처리 중 오류:", err);
+          }
+        }
+
         const app = getApp();
         const fnBase =
           app.projectFunctionsBaseUrl ||

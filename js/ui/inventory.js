@@ -363,115 +363,12 @@
   // 4️⃣ 상세 보기
   // ------------------------------------------------------------
   async function loadDetail(id) {
-    const supabase = getSupabase();
-    if (!supabase) {
-      console.error("❌ Supabase 인스턴스가 없습니다.");
-      return;
+    // ✅ inventory-detail.js에 정의된 최신 로직 사용
+    if (typeof globalThis.loadInventoryDetail === "function") {
+      return globalThis.loadInventoryDetail(id);
     }
-
-    const ok = await App.includeHTML("pages/inventory-detail.html", "form-container");
-    if (!ok) return;
-
-    const detailContainer = document.getElementById("detail-page-container");
-    if (!detailContainer) {
-      console.warn("⚠️ detail-page-container를 찾을 수 없습니다.");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("Inventory")
-      .select(`
-        id, substance_id, cabinet_id, initial_amount, current_amount, unit, classification, concentration_value, concentration_unit,
-        purchase_date, created_at, photo_url_320, photo_url_160,
-        state, manufacturer,
-        door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( substance_name, cas_rn, molecular_formula ),
-        Cabinet ( id, area_id, cabinet_name, Area ( id, area_name ) )
-      `)
-      .eq("id", id)
-      .maybeSingle();
-
-    if (error || !data) {
-      console.error("❌ 상세 조회 실패:", error);
-      detailContainer.innerHTML = `<p>상세 정보를 불러오지 못했습니다.</p>`;
-      return;
-    }
-
-    const info = data;
-    const substanceId = info.substance_id || null;
-    const area = info.Cabinet?.Area?.area_name || "";
-    const cab = info.Cabinet?.cabinet_name || "";
-    const doorV = info.door_vertical ? `${info.door_vertical}층문` : "";
-    const doorH = info.door_horizontal ? `${info.door_horizontal}문` : "";
-    const shelf = info.internal_shelf_level != null ? `${info.internal_shelf_level}단` : "";
-    const column = info.storage_column != null ? `${info.storage_column}열` : "";
-    const locationText = [area, cab, doorV, doorH, shelf, column].filter(Boolean).join(" · ") || "위치 정보 없음";
-
-    const photoWrapper = document.getElementById("detail-photo");
-    const photoUrl = info.photo_url_320 || info.photo_url_160 || "";
-    if (photoWrapper) {
-      photoWrapper.innerHTML = photoUrl
-        ? `<img src="${photoUrl}" alt="약품 이미지">`
-        : `<span>사진 없음</span>`;
-    }
-
-    const setText = (elId, text) => {
-      const el = document.getElementById(elId);
-      if (el) el.textContent = text;
-    };
-
-    setText("detail-name", info.Substance?.substance_name || "(이름 없음)");
-    setText("detail-cas", `CAS: ${info.Substance?.cas_rn || "-"}`);
-    setText("detail-formula", info.Substance?.molecular_formula || "-");
-    setText("detail-class", info.classification || "-");
-    setText("detail-state", info.state || "-");
-    setText("detail-manufacturer", info.manufacturer || "-");
-    const quantityText =
-      info.current_amount != null ? `${info.current_amount}${info.unit || ""}` : "-";
-    setText("detail-quantity", quantityText);
-    setText("detail-location", locationText);
-    setText(
-      "detail-created-at",
-      info.created_at ? new Date(info.created_at).toLocaleDateString() : "-"
-    );
-
-    const backBtn = document.getElementById("detail-back-btn");
-    if (backBtn) {
-      backBtn.onclick = () => App.Inventory?.showListPage?.();
-    }
-
-    const editBtn = document.getElementById("edit-inventory-btn");
-    if (editBtn) {
-      editBtn.onclick = async () => {
-        const ok = await App.includeHTML("pages/inventory-form.html", "form-container");
-        if (ok) {
-          App.Forms?.initInventoryForm?.("edit", info);
-        }
-      };
-    }
-
-    const deleteBtn = document.getElementById("delete-inventory-btn");
-    if (deleteBtn) {
-      deleteBtn.onclick = async () => {
-        if (!confirm("정말 삭제하시겠습니까?")) return;
-        deleteBtn.disabled = true;
-        try {
-          const { error: delError } = await supabase.from("Inventory").delete().eq("id", id);
-          if (delError) throw delError;
-
-          if (substanceId) {
-            await purgeSubstanceIfUnused(substanceId);
-          }
-
-          alert("삭제되었습니다.");
-          App.Inventory?.showListPage?.();
-        } catch (err) {
-          console.error("❌ 삭제 실패:", err);
-          alert("삭제 중 오류가 발생했습니다.");
-          deleteBtn.disabled = false;
-        }
-      };
-    }
+    console.error("❌ loadInventoryDetail 함수를 찾을 수 없습니다. inventory-detail.js가 로드되었는지 확인하세요.");
+    alert("상세 페이지 로직을 불러오지 못했습니다.");
   }
 
   // ------------------------------------------------------------
