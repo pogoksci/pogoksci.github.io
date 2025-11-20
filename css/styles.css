@@ -196,7 +196,7 @@ button:disabled {
 }
 
 #cabinet-photo-preview {
-  width: 100%;
+  width: auto;
   height: 240px;
   display: flex;
   align-items: center;
@@ -227,7 +227,8 @@ button:disabled {
 
 .photo-preview-box {
   position: relative;
-  width: 100%;
+  width: auto;
+  height: 240px;
   max-width: 320px;
   aspect-ratio: 3 / 4;
   /* 세로형 박스 유지 */
