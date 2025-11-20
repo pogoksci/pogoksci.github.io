@@ -1216,7 +1216,7 @@ input[type="date"] {
   flex-wrap: wrap;
   gap: 20px;
   margin-bottom: 30px;
-  align-items: flex-start;
+  /* align-items: flex-start; removed to allow stretch */
 }
 
 .detail-left {
@@ -1234,6 +1234,8 @@ input[type="date"] {
   max-width: 50%;
   min-width: 0;
   /* Allow shrinking */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Photo Box Override/Adjustment */
@@ -1287,6 +1289,10 @@ input[type="date"] {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
 }
 
 .detail-info-list li {
@@ -1296,7 +1302,10 @@ input[type="date"] {
   font-size: 1rem;
   line-height: 1.5;
   border-bottom: 1px solid #eee;
-  padding: 12px 0;
+  padding: 0;
+  /* Remove padding to allow flex distribution */
+  flex: 1;
+  /* Distribute height evenly */
 }
 
 .detail-info-list li:first-child {
