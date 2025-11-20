@@ -1205,6 +1205,7 @@ input[type="date"] {
   font-size: 1.1rem;
   color: #666;
   font-weight: normal;
+  margin-left: 8px;
 }
 
 /* 2-Column Grid */
@@ -1255,6 +1256,7 @@ input[type="date"] {
   padding: 15px;
   border-radius: 8px;
   border: 1px solid #eee;
+  margin-top: 15px;
 }
 
 .detail-location-section strong {
@@ -1280,21 +1282,34 @@ input[type="date"] {
 }
 
 .detail-info-list li {
-  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
   font-size: 1rem;
   line-height: 1.5;
   border-bottom: 1px solid #eee;
-  padding-bottom: 8px;
+  padding: 12px 0;
+}
+
+.detail-info-list li:first-child {
+  border-top: 1px solid #eee;
 }
 
 .detail-info-list li:last-child {
-  border-bottom: none;
+  border-bottom: 1px solid #eee;
 }
 
-.detail-info-list strong {
+.detail-info-list .label {
   display: inline-block;
-  width: 80px;
+  width: 100px;
+  font-weight: 700;
   color: #555;
+  flex-shrink: 0;
+}
+
+.detail-info-list .value {
+  color: #333;
+  flex-grow: 1;
 }
 
 /* MSDS Accordion */

@@ -94,9 +94,17 @@
       locText = locText.trim() || "위치: 미지정";
       document.getElementById("detail-location").textContent = locText;
 
-      const dateStr = data.purchase_date || data.created_at; // purchase_date가 없으면 created_at 사용? (created_at은 select에 없으므로 추가 필요할수도)
-      // select에 created_at이 없으므로 purchase_date만 사용
-      document.getElementById("detail-created-at").textContent = data.purchase_date || "-";
+      const dateStr = data.purchase_date || data.created_at;
+      // Format date to YYYY-MM-DD
+      let formattedDate = "-";
+      if (dateStr) {
+        const dateObj = new Date(dateStr);
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        formattedDate = `${year}-${month}-${day}`;
+      }
+      document.getElementById("detail-created-at").textContent = formattedDate;
 
 
       // 4. MSDS Accordion
