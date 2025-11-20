@@ -1216,11 +1216,13 @@ input[type="date"] {
   flex-wrap: wrap;
   gap: 20px;
   margin-bottom: 30px;
+  align-items: flex-start;
 }
 
 .detail-left {
   flex: 0 0 320px;
   /* Fixed width for photo */
+  width: 320px;
   max-width: 100%;
   display: flex;
   flex-direction: column;
@@ -1229,7 +1231,7 @@ input[type="date"] {
 
 .detail-right {
   flex: 1;
-  min-width: 280px;
+  min-width: 250px;
 }
 
 /* Photo Box Override/Adjustment */
