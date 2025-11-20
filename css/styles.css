@@ -1,5 +1,5 @@
 /* =================================================================
-   湲곕낯 ?ㅽ???(Body, Form ??
+   기본 스타일 (Body, Form 등)
 ================================================================= */
 html,
 body {
@@ -8,12 +8,12 @@ body {
   width: 100%;
   height: 100%;
   overflow-x: hidden;
-  /* 媛濡??ㅽ겕濡?諛⑹? */
+  /* 가로 스크롤 방지 */
   overflow-y: auto;
   background-color: #ffffff;
-  /* ????긽 ?숈씪???곗깋 諛곌꼍 */
+  /* 앱 전체 동일 배경색 */
   font-family: 'Noto Sans KR', Arial, sans-serif;
-  /* ???고듃 怨좎젙 */
+  /* 폰트 고정 */
   color: #333;
 }
 
@@ -24,7 +24,7 @@ h3 {
 }
 
 /* =================================================================
-   ??洹몃９ ?ㅽ???
+   폼 그룹 스타일
 ================================================================= */
 .form-group {
   margin-bottom: 20px;
@@ -35,18 +35,18 @@ h3 {
 }
 
 /* =================================================================
-   ??而⑦뀒?대꼫 ?ㅽ???
+   폼 컨테이너 스타일
 ================================================================= */
 #form-container {
   max-width: 600px;
   margin: 0 auto;
   padding: 20px 20px 80px 20px;
-  /* ?? ?? ?? 醫?*/
+  /* 상 우 하 좌 여백 */
   box-sizing: border-box;
 }
 
 /* =================================================================
-   ?덉씠釉?諛??낅젰 ???ㅽ???
+   레이블 및 입력 필드 스타일
 ================================================================= */
 label {
   display: block;
@@ -70,7 +70,7 @@ select {
 }
 
 /* =================================================================
-   Select 諛뺤뒪 ?ㅽ???
+   Select 박스 스타일
 ================================================================= */
 select {
   background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22/%3E%3C/svg%3E');
@@ -87,7 +87,7 @@ select:focus {
 }
 
 /* =================================================================
-   踰꾪듉 ?ㅽ???(湲곕낯 踰꾪듉 諛??좏깮 踰꾪듉)
+   버튼 스타일 (기본 버튼 및 선택 버튼)
 ================================================================= */
 button[type="submit"] {
   background-color: #00a0b2;
@@ -106,7 +106,7 @@ button:disabled {
 }
 
 /* =================================================================
-   踰꾪듉 洹몃９ ?ㅽ???
+   버튼 그룹 스타일
 ================================================================= */
 .button-group {
   display: flex;
@@ -143,19 +143,19 @@ button:disabled {
 .form-bottom-buttons {
   display: flex;
   justify-content: space-between;
-  /* 以묒븰 ?뺣젹 */
+  /* 양끝 정렬 */
   gap: 12px;
-  /* 踰꾪듉 ?ъ씠 媛꾧꺽 */
+  /* 버튼 사이 간격 */
   margin-top: 24px;
   width: 100%;
   box-sizing: border-box;
   padding: 0 8px;
-  /* ?쇱쓽 醫뚯슦 ?щ갚怨??숈씪?섍쾶 議곗젙 (?꾩슂???섏젙) */
+  /* 행의 좌우 여백과 동일하게 조정 (필요시 수정) */
 }
 
 .form-bottom-buttons button {
   flex: 1;
-  /* ??踰꾪듉 ?숈씪????鍮꾩쑉 */
+  /* 각 버튼 동일한 비율 */
   padding: 12px 0;
   border: none;
   border-radius: 6px;
@@ -165,7 +165,7 @@ button:disabled {
   transition: background-color 0.2s ease;
 }
 
-/* 痍⑥냼 踰꾪듉 ?ㅽ???*/
+/* 취소 버튼 스타일 */
 #cancel-form-btn {
   background-color: #e0e0e0;
   color: #333;
@@ -175,7 +175,7 @@ button:disabled {
   background-color: #d0d0d0;
 }
 
-/* ?깅줉 踰꾪듉 ?ㅽ???*/
+/* 등록 버튼 스타일 */
 #cabinet-submit-button {
   background-color: #00a0b2;
   color: #fff;
@@ -185,7 +185,7 @@ button:disabled {
   background-color: #00BFD4;
 }
 
-/* ?섏젙 踰꾪듉 (?깅줉 踰꾪듉怨??숈씪 ?ㅽ??? */
+/* 수정 버튼 (등록 버튼과 동일 스타일) */
 #cabinet-save-btn {
   background-color: #00a0b2;
   color: #fff;
@@ -211,12 +211,12 @@ button:disabled {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  /* ??鍮꾩쑉 ?좎??섎ŉ 異뺤냼/?뺣? */
+  /* 비율 유지하며 축소/확대 */
   border-radius: 6px;
 }
 
 /* =================================================================
-   ?ъ쭊 ?깅줉 ?곸뿭
+   사진 등록 영역
 ================================================================= */
 .photo-container {
   display: flex;
@@ -229,8 +229,8 @@ button:disabled {
   position: relative;
   width: 100%;
   max-width: 320px;
-  aspect-ratio: 1 / 1;
-  /* ???뺤궗媛곹삎 諛뺤뒪 ?좎? */
+  aspect-ratio: 3 / 4;
+  /* 세로형 박스 유지 */
   border: 2px dashed #ccc;
   border-radius: 8px;
   background-color: #fafafa;
@@ -245,7 +245,7 @@ button:disabled {
   content: "";
   display: block;
   padding-top: 100%;
-  /* ???뺤궗媛곹삎 蹂댁젙 (aspect-ratio fallback) */
+  /* 정사각형 보정 (aspect-ratio fallback) */
 }
 
 .photo-preview-box span {
@@ -257,7 +257,7 @@ button:disabled {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  /* ??鍮꾩쑉 ?좎? + ?섎┝ ?놁쓬 */
+  /* 비율 유지 + 잘림 없음 */
   object-position: center;
   display: block;
 }
@@ -277,7 +277,7 @@ button:disabled {
 }
 
 /* =================================================================
-   移대찓??紐⑤떖 ?ㅽ???
+   카메라 모달 스타일
 ================================================================= */
 .modal-overlay {
   position: fixed;
@@ -315,7 +315,7 @@ button:disabled {
 }
 
 /* =================================================================
-   蹂닿? ?꾩튂 ?ㅼ젙 (6?④퀎)
+   보관 위치 설정 (6단계)
 ================================================================= */
 .form-group-location {
   margin-bottom: 25px;
@@ -343,7 +343,7 @@ button:disabled {
   color: #555;
 }
 
-/* ?꾩튂 ?좏깮 踰꾪듉 (btn-location) ?ㅽ???*/
+/* 위치 선택 버튼 (btn-location) 스타일 */
 .btn-location {
   flex-basis: calc(16.66% - 10px);
   flex-grow: 1;
@@ -368,7 +368,7 @@ button:disabled {
 }
 
 /* =================================================================
-   ?쒖빟??紐⑸줉 移대뱶
+   시약장 목록 카드
 ================================================================= */
 #location-list-page #cabinet-list-container {
   display: grid;
@@ -377,24 +377,24 @@ button:disabled {
   padding: 20px 16px 0 16px;
 }
 
-/* ?쒖빟??紐⑸줉??2?대줈 諛곗튂 */
+/* 시약장 목록을 2열로 배치 */
 .cabinet-list {
   display: flex;
   flex-wrap: wrap;
-  /* ??以꾩뿉 ?щ윭 ??ぉ???ㅻ룄濡??ㅼ젙 */
+  /* 한 줄에 여러 항목이 오도록 설정 */
   gap: 20px;
-  /* ??ぉ 媛?媛꾧꺽 */
+  /* 인벤토리 카드 레이아웃 */
   justify-content: space-between;
-  /* ??ぉ 媛꾧꺽 議곗젙 */
+  /* 항목 간격 조정 */
 }
 
-/* 媛??쒖빟??移대뱶 */
+/* 각 시약장 카드 */
 .cabinet-card {
   flex: 1 1 calc(50% - 10px);
-  /* ??以꾩뿉 ??媛쒖뵫 諛곗튂 */
+  /* 한 줄에 2개씩 배치 */
   box-sizing: border-box;
   margin-bottom: 20px;
-  /* ?섎떒 ?щ갚 */
+  /* 하단 여백 */
   background-color: #fff;
   border-radius: 8px;
   border: 1px solid #ddd;
@@ -415,7 +415,7 @@ button:disabled {
 }
 
 .cabinet-card .card-info .area-name::before {
-  content: "쨌";
+  content: "·";
   margin: 0 6px 0 2px;
   color: #8a8a8a;
 }
@@ -428,7 +428,7 @@ button:disabled {
 .card-image-placeholder {
   width: 100%;
   aspect-ratio: 3 / 4;
-  /* 鍮꾩쑉 ?좎?, padding-top 遺덊븘??*/
+  /* 비율 유지, padding-top 불필요 */
   background-color: #f0f0f0;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
@@ -445,7 +445,7 @@ button:disabled {
   width: auto;
   height: auto;
   object-fit: contain;
-  /* ???대?吏 ?꾩껜 ?쒖떆, ?먮Ⅴ吏 ?딆쓬 */
+  /* 이미지 전체 표시, 자르지 않음 */
   display: block;
 }
 
@@ -521,7 +521,7 @@ button:disabled {
 }
 
 /* =================================================================
-   ?섎떒 ?ㅻ퉬寃뚯씠??諛?諛?硫붾돱
+   하단 내비게이션 바 및 메뉴
 ================================================================= */
 .navbar {
   position: fixed;
@@ -572,7 +572,7 @@ button:disabled {
 }
 
 /* =================================================================
-   ?쒖옉硫붾돱 ?앹뾽 (Start Menu)
+   시작메뉴 팝업 (Start Menu)
 ================================================================= */
 .start-menu-popup {
   position: fixed;
@@ -610,15 +610,15 @@ button:disabled {
 }
 
 .menu-item:hover {
-  /* ??hover ?④낵 */
+  /* hover 효과 */
   background-color: #00a0b2;
-  /* 硫붿씤而щ윭? ?숈씪 */
+  /* 메인컬러와 동일 */
   color: #fff;
-  /* 湲???곗깋 */
+  /* 글자 흰색 */
 }
 
 .menu-item:hover i,
-/* hover ???꾩씠肄??됱긽???④퍡 蹂寃?*/
+/* hover 시 아이콘 색상도 함께 변경 */
 .menu-item:hover svg {
   color: #fff;
 }
@@ -715,7 +715,7 @@ FAB
 }
 
 /* =================================================================
-   ?쒖빟????媛쒖꽑 (area-button-group / 湲고? ?낅젰 ?꾨뱶)
+   시약장 개선 (area-button-group / 기타 입력 필드)
 ================================================================= */
 #area-button-group {
   justify-content: space-between;
@@ -759,7 +759,7 @@ FAB
 }
 
 /* =================================================================
-   ?뙚 SciManager ??濡쒓퀬) ?붾㈃ ??怨좎젙 濡쒕뵫/???붾㈃
+   앱 SciManager (로고) 화면 및 고정 로딩/스플래시 화면
 ================================================================= */
 body.home-active {
   overflow: hidden;
@@ -850,7 +850,7 @@ body.home-active #splash-screen {
 }
 
 /*--------------------------
-?쒖빟 紐⑸줉
+시약 목록
 ---------------------------*/
 #inventory-list-page {
   display: flex;
@@ -860,7 +860,7 @@ body.home-active #splash-screen {
   box-sizing: border-box;
 }
 
-/* ???곷떒 ?쒕ぉ怨??뺣젹 洹몃９ */
+/* 우상단 제목과 정렬 그룹 */
 .header-actions {
   display: flex;
   align-items: flex-end;
@@ -885,7 +885,7 @@ body.home-active #splash-screen {
   line-height: 1.3;
 }
 
-/* 媛먯떥??諛뺤뒪 (select wrapper) */
+/* 감싸는 박스 (select wrapper) */
 .select-wrapper {
   border: 1px solid #c4c4c4;
   border-radius: 6px;
@@ -893,7 +893,7 @@ body.home-active #splash-screen {
   box-sizing: border-box;
   overflow: hidden;
   height: 28px;
-  /* ???먯뿰?ㅻ윭???띿뒪???믪씠 */
+  /* 자연스러운 텍스트 높이 */
   display: flex;
   align-items: center;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -905,7 +905,7 @@ body.home-active #splash-screen {
   box-shadow: 0 0 3px rgba(102, 175, 233, 0.6);
 }
 
-/* Refresh 踰꾪듉 */
+/* Refresh 버튼 */
 #refresh-btn {
   display: flex;
   align-items: center;
@@ -931,7 +931,7 @@ body.home-active #splash-screen {
 }
 
 /* ---------------------------
-   而ㅼ뒪? ?쒕∼?ㅼ슫
+   커스텀 드롭다운
 ---------------------------- */
 .custom-dropdown {
   position: relative;
@@ -953,7 +953,7 @@ body.home-active #splash-screen {
   line-height: 1.2;
   color: #333;
   height: 28px;
-  /* ?뵻 踰꾪듉 ?믪씠 */
+  /* 딱 버튼 높이 */
   box-sizing: border-box;
 }
 
@@ -1021,7 +1021,7 @@ body.home-active #splash-screen {
   color: #555;
 }
 
-/* ??Fade-in ?좊땲硫붿씠??*/
+/* Fade-in 애니메이션 */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -1034,7 +1034,7 @@ body.home-active #splash-screen {
   }
 }
 
-/* ?몃깽?좊━ 移대뱶 (?쒖빟??移대뱶 ?ㅽ????ъ궗?? */
+/* 인벤토리 카드 (시약장 카드 스타일 복사) */
 .inventory-card {
   background: #fff;
   border: 1px solid #ddd;
@@ -1043,7 +1043,7 @@ body.home-active #splash-screen {
   overflow: hidden;
 }
 
-/* ???щ젰(DatePicker) ?섎┝ 諛⑹???*/
+/* 달력(DatePicker) 잘림 방지 */
 #form-container,
 #inventory-form,
 .form-group {
@@ -1052,11 +1052,11 @@ body.home-active #splash-screen {
 
 input[type="date"] {
   font-family: inherit;
-  /* 遺紐⑥? ?숈씪??湲瑗??ъ슜 */
+  /* 부모와 동일한 글꼴 사용 */
   font-size: inherit;
-  /* 二쇰? input怨??ш린 ?쇱튂 */
+  /* 주변 input과 크기 일치 */
   color: inherit;
-  /* 湲?먯깋???숈씪?섍쾶 */
+  /* 글자색도 동일하게 */
   letter-spacing: 0.02em;
   position: relative;
   z-index: 100;
