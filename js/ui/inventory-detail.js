@@ -17,7 +17,7 @@
         .select(`
           id, state, current_amount, unit, classification, manufacturer, purchase_date, photo_url_320, photo_url_160,
           door_vertical, door_horizontal, internal_shelf_level, storage_column, msds_pdf_url,
-          Substance ( id, substance_name, cas_rn, molecular_formula ),
+          Substance ( id, substance_name, cas_rn, molecular_formula, chem_name_kor ),
           Cabinet ( id, cabinet_name, Area ( area_name ) )
         `)
         .eq("id", inventoryId)
@@ -25,9 +25,12 @@
 
       if (error) throw error;
 
-      // 1. Header Name
-      document.getElementById("detail-name").textContent = data.Substance?.substance_name || "이름 없음";
-      // 영문명 등 추가 정보가 있다면 여기에 표시
+      // 1. Header Name (Dual)
+      const korName = data.Substance?.chem_name_kor || data.Substance?.substance_name || "이름 없음";
+      const engName = data.Substance?.substance_name || "";
+
+      document.getElementById("detail-name-kor").textContent = korName;
+      document.getElementById("detail-name-eng").textContent = engName !== korName ? engName : "";
 
       // 2. Photo
       const photoDiv = document.getElementById("detail-photo");
