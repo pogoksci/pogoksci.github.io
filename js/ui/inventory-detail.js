@@ -19,7 +19,7 @@
           door_vertical, door_horizontal, internal_shelf_level, storage_column, msds_pdf_url,
           concentration_value, concentration_unit,
           Substance ( id, substance_name, cas_rn, molecular_formula, chem_name_kor ),
-          Cabinet ( id, cabinet_name, Area ( area_name ) )
+          Cabinet ( id, cabinet_name, area_id, Area ( id, area_name ) )
         `)
         .eq("id", inventoryId)
         .single();
