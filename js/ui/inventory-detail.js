@@ -131,6 +131,18 @@
         "16. 그 밖의 참고사항"
       ];
 
+      const ghsMapping = {
+        "01": "▶폭발성(Explosive)\n·불안정한 폭발물\n·폭발물\n·자기반응성 물질 및 혼합물\n·유기과산화물",
+        "02": "▶인화성(Flammable)\n·인화성 가스\n·가연성 에어로졸\n·인화성 액체\n·인화성 고체\n·자기반응성 물질 및 혼합물\n·발화성 액체\n·발화성 고체\n·가연성 고체\n·가연성 액체\n·자체 발열 물질 및 혼합물\n·물과 접촉하여 가연성 가스를 방출하는 물질 및 혼합물\n·유기 과산화물",
+        "03": "▶산화성(Oxidizing)\n·산화 가스\n·산화성 액체\n·산화성 고체",
+        "04": "▶고압 가스(Compressed Gas)\n·압축 가스\n·액화 가스\n·냉장 액화 가스\n·용존 가스",
+        "05": "▶부식성(Corrosive)\n·금속 부식성\n·폭발물\n·인화성 가스\n·자기 반응성물질 및 혼합물\n·유기 과산화물\n·피부부식\n·심각한 눈 손상",
+        "06": "▶유독성(Toxic)\n·급성 독성",
+        "07": "▶경고(Health Hazard, Hazardous to Ozone Layer)\n·급성 독성\n·피부 자극성\n·눈 자극성\n·피부 과민성\n·특정 표적 장기 독성(호흡기 자극, 마약 효과)",
+        "08": "▶건강 유해성(Serious Health hazard)\n·호흡기 과민성\n·생식세포 변이원성\n·발암성\n·생식독성\n·특정표적장기 독성\n·흡인 위험",
+        "09": "▶수생 환경 유독성(Hazardous to the Environment)\n·수생환경 유해성",
+      };
+
       const msdsData = data.Substance?.MSDS || [];
       const accordionContainer = document.getElementById("msds-accordion");
 
@@ -141,8 +153,66 @@
           let contentHtml = '<p class="text-gray-500 italic p-4">내용 없음 (데이터 연동 필요)</p>';
 
           if (sectionData && sectionData.content) {
-            // Check if it's structured data (contains delimiters)
-            if (sectionData.content.includes("|||")) {
+            // Special handling for Section 2 (Hazard Info) GHS Pictograms
+            if (sectionNum === 2 && sectionData.content.includes("|||그림문자|||")) {
+              const rows = sectionData.content.split(";;;");
+              const rowsHtml = rows.map(row => {
+                const parts = row.split("|||");
+                if (parts.length >= 3) {
+                  const [no, name, detail] = parts;
+
+                  // Check for GHS Pictograms
+                  if (name.trim() === "그림문자") {
+                    const ghsCodes = detail.trim().split(/\s+/).filter(s => s.endsWith(".gif"));
+                    if (ghsCodes.length > 0) {
+                      const ghsTableRows = ghsCodes.map(code => {
+                        // Extract number (e.g., GHS01.gif -> 01)
+                        const match = code.match(/GHS(\d+)\.gif/i);
+                        if (match) {
+                          const num = match[1];
+                          const imgUrl = `https://hazmat.nfa.go.kr/design/images/contents/ghs-icon${num}.gif`;
+                          const desc = ghsMapping[num] || "설명 없음";
+                          return `
+                            <tr class="ghs-row">
+                              <td class="ghs-cell-image">
+                                <img src="${imgUrl}" alt="${code}" class="ghs-image">
+                              </td>
+                              <td class="ghs-cell-desc">
+                                ${desc.replace(/\n/g, "<br>")}
+                              </td>
+                            </tr>
+                          `;
+                        }
+                        return "";
+                      }).join("");
+
+                      return `
+                        <div class="msds-row">
+                          <div class="msds-header">${no} ${name}</div>
+                          <div class="msds-content">
+                            <table class="ghs-table">
+                              ${ghsTableRows}
+                            </table>
+                          </div>
+                        </div>
+                      `;
+                    }
+                  }
+
+                  return `
+                    <div class="msds-row">
+                      <div class="msds-header">${no} ${name}</div>
+                      <div class="msds-content">${detail}</div>
+                    </div>
+                  `;
+                } else {
+                  return `<div class="msds-simple-content">${row}</div>`;
+                }
+              }).join("");
+              contentHtml = `<div class="msds-table-container">${rowsHtml}</div>`;
+            }
+            // Standard structured data handling
+            else if (sectionData.content.includes("|||")) {
               const rows = sectionData.content.split(";;;");
               const rowsHtml = rows.map(row => {
                 const parts = row.split("|||");
