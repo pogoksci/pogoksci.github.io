@@ -717,7 +717,7 @@
               }
 
               if (createdId) {
-                const { purchase_volume, photo_320_base64, photo_160_base64, ...updatePayload } = inventoryDetails;
+                const { area_id, purchase_volume, photo_320_base64, photo_160_base64, ...updatePayload } = inventoryDetails;
                 const { error: updateError } = await supabase
                   .from("Inventory")
                   .update(updatePayload)
@@ -849,8 +849,9 @@
       }
 
       sBox.innerHTML = Array.from({ length: shelfCount }, (_, idx) => {
-        const value = idx + 1;
-        const label = `${shelfCount - idx}단`;
+        const labelNum = shelfCount - idx;
+        const value = labelNum;
+        const label = `${labelNum}단`;
         return `<button type="button" data-value="${value}">${label}</button>`;
       }).join("");
 
