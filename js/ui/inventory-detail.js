@@ -277,8 +277,8 @@
 
       if (hazardError) {
         console.error("유해화학물질 정보 조회 오류:", hazardError);
+        if (hazardContainer) hazardContainer.innerHTML = `<p class="text-red-500">정보 조회 실패</p>`;
       } else if (hazardData && hazardData.length > 0) {
-        const hazardContainer = document.getElementById("hazard-classification-content");
         if (hazardContainer) {
           let html = `<table class="hazard-table">
           <thead>
@@ -306,7 +306,6 @@
           hazardContainer.innerHTML = html;
         }
       } else {
-        const hazardContainer = document.getElementById("hazard-classification-content");
         if (hazardContainer) {
           hazardContainer.innerHTML = "<p class='text-gray-500'>해당 물질에 대한 유해화학물질 분류 정보가 없습니다.</p>";
         }
