@@ -334,6 +334,41 @@
           alert("폼 수정 모드로 전환 (구현 필요)");
         }
       });
+      // 7. Auto-update Check (Background)
+      if (data.Substance?.cas_rn) {
+        const checkUpdate = async () => {
+          try {
+            const app = getApp();
+            const fnBase = app.projectFunctionsBaseUrl || (app.supabaseUrl ? `${app.supabaseUrl}/functions/v1` : "");
+            if (!fnBase) return;
+
+            const headers = app.supabaseAnonKey
+              ? { apikey: app.supabaseAnonKey, Authorization: `Bearer ${app.supabaseAnonKey}`, "Content-Type": "application/json" }
+              : { "Content-Type": "application/json" };
+
+            const res = await fetch(`${fnBase}/casimport?type=check_update`, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({ cas_rn: data.Substance.cas_rn }),
+            });
+
+            if (res.ok) {
+              const result = await res.json();
+              console.log("🔄 Auto-update check:", result);
+              if (result.status === "updated") {
+                console.log("✅ MSDS updated. Reloading page...");
+                // Reload current page to show new data
+                loadInventoryDetail(inventoryId);
+              }
+            }
+          } catch (e) {
+            console.warn("⚠️ Auto-update check failed:", e);
+          }
+        };
+        // Run in background
+        checkUpdate();
+      }
+
     } catch (err) {
       console.error("상세 페이지 로드 오류:", err);
       document.getElementById("detail-page-container").innerHTML = `<p>❌ 오류: ${err.message}</p>`;
