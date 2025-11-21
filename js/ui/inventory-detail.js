@@ -280,30 +280,49 @@
         if (hazardContainer) hazardContainer.innerHTML = `<p class="text-red-500">정보 조회 실패</p>`;
       } else if (hazardData && hazardData.length > 0) {
         if (hazardContainer) {
-          let html = `<table class="hazard-table">
-          <thead>
-            <tr>
-              <th>분류 유형</th>
-              <th>고유 번호</th>
-              <th>내용</th>
-              <th>고시 정보</th>
-              <th>고시 일자</th>
-            </tr>
-          </thead>
-          <tbody>`;
+          const accordion = hazardData.map((item, idx) => {
+            const title = item.sbstnClsfTypeNm || `분류 ${idx + 1}`;
+            const unq = item.unqNo || "-";
+            const cont = item.contInfo || "-";
+            const info = item.ancmntInfo || "-";
+            const ymd = item.ancmntYmd || "-";
+            return `
+              <div class="hazard-acc-item">
+                <button class="hazard-acc-header" type="button">
+                  <span class="hazard-acc-title">${title}</span>
+                  <span class="hazard-acc-arrow" aria-hidden="true">▾</span>
+                </button>
+                <div class="hazard-acc-content">
+                  <table class="hazard-table">
+                    <thead>
+                      <tr>
+                        <th>고유 번호</th>
+                        <th>내용</th>
+                        <th>고시 정보</th>
+                        <th>고시 일자</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>${unq}</td>
+                        <td>${cont}</td>
+                        <td>${info}</td>
+                        <td>${ymd}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+          }).join("");
 
-          hazardData.forEach(item => {
-            html += `<tr>
-            <td>${item.sbstnClsfTypeNm || "-"}</td>
-            <td>${item.unqNo || "-"}</td>
-            <td>${item.contInfo || "-"}</td>
-            <td>${item.ancmntInfo || "-"}</td>
-            <td>${item.ancmntYmd || "-"}</td>
-          </tr>`;
+          hazardContainer.innerHTML = `<div class="hazard-accordion">${accordion}</div>`;
+
+          hazardContainer.querySelectorAll(".hazard-acc-header").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              btn.parentElement.classList.toggle("open");
+            });
           });
-
-          html += `</tbody></table>`;
-          hazardContainer.innerHTML = html;
         }
       } else {
         if (hazardContainer) {

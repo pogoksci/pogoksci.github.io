@@ -766,6 +766,55 @@ FAB
   border-bottom: none;
 }
 
+.hazard-accordion {
+  border: 1px solid #e6eaee;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.hazard-acc-item + .hazard-acc-item {
+  border-top: 1px solid #e6eaee;
+}
+
+.hazard-acc-header {
+  width: 100%;
+  border: none;
+  background: #f9fbfd;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #2f343a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.hazard-acc-header:focus {
+  outline: 2px solid #00a0b2;
+  outline-offset: -2px;
+}
+
+.hazard-acc-arrow {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+  color: #7a7f87;
+}
+
+.hazard-acc-item.open .hazard-acc-arrow {
+  transform: rotate(180deg);
+}
+
+.hazard-acc-content {
+  display: none;
+  background: #fff;
+  padding: 0 12px 12px 12px;
+}
+
+.hazard-acc-item.open .hazard-acc-content {
+  display: block;
+}
+
 @media (max-width: 640px) {
   .hazard-card {
     padding: 10px 12px;
