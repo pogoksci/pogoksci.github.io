@@ -265,6 +265,7 @@
       // 6. Hazard Info
       const hazardContainer = document.getElementById("hazard-info-container");
       const hazards = data.Substance?.HazardClassifications || [];
+      const substanceId = data.Substance?.id;
 
 
       // 테이블 형태로 표시
