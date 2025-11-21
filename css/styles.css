@@ -1528,25 +1528,25 @@ input[type="date"] {
 
 .ghs-cell-image {
   width: 80px;
-  padding: 10px;
+  padding: 4px;
   text-align: center;
   vertical-align: middle;
-  background-color: #f9f9f9;
+  /* background-color removed */
   border-right: 1px solid #eee;
 }
 
 .ghs-image {
-  width: 60px;
+  width: 50px;
   height: auto;
   display: block;
   margin: 0 auto;
 }
 
 .ghs-cell-desc {
-  padding: 10px 15px;
+  padding: 4px 8px;
   vertical-align: middle;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.4;
   color: #333;
   white-space: normal;
 }
