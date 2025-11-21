@@ -311,6 +311,13 @@
           hazardContainer.innerHTML = "<p class='text-gray-500'>해당 물질에 대한 유해화학물질 분류 정보가 없습니다.</p>";
         }
       }
+      // 목록으로
+      document.getElementById("detail-back-btn")?.addEventListener("click", async () => {
+        if (getApp().Inventory?.showListPage) {
+          await getApp().Inventory.showListPage();
+        }
+      });
+
       // 삭제
       document.getElementById("delete-inventory-btn")?.addEventListener("click", async () => {
         if (!confirm("정말 삭제하시겠습니까?")) return;

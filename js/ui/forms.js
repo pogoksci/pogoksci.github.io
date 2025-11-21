@@ -586,7 +586,6 @@
             classification: state.classification || null,
             manufacturer: manufacturerValue,
             purchase_date: purchaseDate,
-            area_id: state.area_id || null,
             cabinet_id: state.cabinet_id || null,
             door_vertical: state.door_vertical || null,
             door_horizontal: state.door_horizontal || null,
@@ -670,7 +669,6 @@
               classification: state.classification || null,
               manufacturer: manufacturerValue,
               purchase_date: purchaseDate,
-              area_id: state.area_id || null,
               cabinet_id: state.cabinet_id || null,
               door_vertical: state.door_vertical || null,
               door_horizontal: state.door_horizontal || null,
@@ -719,7 +717,7 @@
               }
 
               if (createdId) {
-                const { area_id, purchase_volume, photo_320_base64, photo_160_base64, ...updatePayload } = inventoryDetails;
+                const { purchase_volume, photo_320_base64, photo_160_base64, ...updatePayload } = inventoryDetails;
                 const { error: updateError } = await supabase
                   .from("Inventory")
                   .update(updatePayload)
