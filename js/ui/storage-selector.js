@@ -116,13 +116,13 @@
           state.door_horizontal =
           state.internal_shelf_level =
           state.storage_column =
-            null;
+          null;
 
         state.door_vertical_total =
           state.door_horizontal_total =
           state.shelf_level_total =
           state.storage_column_total =
-            null;
+          null;
 
         clearNextSteps(container, 1);
         await loadCabinets(container, areaId);
@@ -174,10 +174,10 @@
 
         // 초기화
         state.door_vertical =
-        state.door_horizontal =
-        state.internal_shelf_level =
-        state.storage_column =
-        null;
+          state.door_horizontal =
+          state.internal_shelf_level =
+          state.storage_column =
+          null;
 
         clearNextSteps(container, 2);
         loadDoorVertical(container);
@@ -314,7 +314,7 @@
 
     const options = Array.from({ length: count }, (_, i) => ({
 
-      label: `${i + 1}층`,
+      label: `${i + 1}단`,
 
       value: i + 1,
 

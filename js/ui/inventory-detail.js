@@ -59,7 +59,7 @@
       const cab = data.Cabinet?.cabinet_name || "";
       const v = data.door_vertical || "";
       const h = data.door_horizontal || "";
-      const shelf = data.internal_shelf_level != null ? `${data.internal_shelf_level}층` : "";
+      const shelf = data.internal_shelf_level != null ? `${data.internal_shelf_level}단` : "";
       const col = data.storage_column != null ? `${data.storage_column}열` : "";
 
       let locText = "";
@@ -86,9 +86,9 @@
       const colVal = data.storage_column;
 
       if (shelfVal && colVal) {
-        shelfPart = `${shelfVal}층 ${colVal}열`;
+        shelfPart = `${shelfVal}단 ${colVal}열`;
       } else {
-        if (shelfVal) shelfPart += `${shelfVal}층`;
+        if (shelfVal) shelfPart += `${shelfVal}단`;
         if (colVal) shelfPart += (shelfPart ? " " : "") + `${colVal}열`;
       }
 
