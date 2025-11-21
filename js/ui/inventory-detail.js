@@ -171,8 +171,20 @@
                         if (match) {
                           const num = match[1];
                           const imgUrl = `https://hazmat.nfa.go.kr/design/images/contents/ghs-icon${num}.gif`;
-                          const desc = ghsMapping[num] || "설명 없음";
-                          return `<tr class="ghs-row"><td class="ghs-cell-image"><img src="${imgUrl}" alt="${code}" class="ghs-image"></td><td class="ghs-cell-desc">${desc.replace(/\n/g, "<br>")}</td></tr>`;
+                          const fullDesc = ghsMapping[num] || "설명 없음";
+                          const lines = fullDesc.split('\n');
+                          const titleLine = lines[0];
+                          const detailLines = lines.slice(1).join('<br>');
+
+                          let korName = titleLine.replace('▶', '').trim();
+                          let engName = "";
+                          const matchTitle = korName.match(/^(.*)\((.*)\)$/);
+                          if (matchTitle) {
+                            korName = matchTitle[1];
+                            engName = matchTitle[2];
+                          }
+
+                          return `<tr class="ghs-row"><td class="ghs-cell-image"><img src="${imgUrl}" alt="${code}" class="ghs-image"><div class="ghs-name-kor">${korName}</div><div class="ghs-name-eng">${engName}</div></td><td class="ghs-cell-desc">${detailLines}</td></tr>`;
                         }
                         return "";
                       }).join("");
