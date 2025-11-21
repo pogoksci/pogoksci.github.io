@@ -1507,15 +1507,19 @@ input[type="date"] {
   }
 }
 
+.msds-content.msds-no-padding {
+  padding: 0;
+}
+
 /* =================================================================
    MSDS GHS Pictogram Table
 ================================================================= */
 .ghs-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 5px;
-  background-color: #fff;
-  border: 1px solid #eee;
+  margin: 0;
+  background-color: transparent;
+  border: none;
 }
 
 .ghs-row {
@@ -1528,10 +1532,9 @@ input[type="date"] {
 
 .ghs-cell-image {
   width: 80px;
-  padding: 4px;
+  padding: 12px 16px;
   text-align: center;
   vertical-align: middle;
-  /* background-color removed */
   border-right: 1px solid #eee;
 }
 
@@ -1543,10 +1546,10 @@ input[type="date"] {
 }
 
 .ghs-cell-desc {
-  padding: 4px 8px;
+  padding: 12px 16px;
   vertical-align: middle;
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.5;
   color: #333;
   white-space: normal;
 }
