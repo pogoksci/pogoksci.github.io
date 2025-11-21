@@ -597,37 +597,64 @@
           };
 
           // 📤 MSDS PDF 업로드
+          // MSDS PDF 처리 (Deduplication Logic)
           if (state.msds_pdf_file) {
-            statusMsg.textContent = "📄 MSDS PDF 업로드 중...";
+            statusMsg.textContent = "📄 MSDS PDF 처리 중...";
             try {
               const file = state.msds_pdf_file;
-              const fileExt = file.name.split('.').pop();
-              const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
 
-              const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('msds-pdf')
-                .upload(fileName, file);
+              // 1. 해시 계산
+              const arrayBuffer = await file.arrayBuffer();
+              const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+              const hashArray = Array.from(new Uint8Array(hashBuffer));
+              const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-              if (uploadError) throw uploadError;
+              console.log("File Hash:", hashHex);
 
-              const { data: publicUrlData } = supabase.storage
-                .from('msds-pdf')
-                .getPublicUrl(fileName);
+              // 2. 중복 확인
+              const { data: existingFile } = await supabase
+                .from('Inventory')
+                .select('msds_pdf_url')
+                .eq('msds_pdf_hash', hashHex)
+                .limit(1)
+                .maybeSingle();
 
-              inventoryDetails.msds_pdf_url = publicUrlData.publicUrl;
-              console.log("✅ MSDS PDF Uploaded:", inventoryDetails.msds_pdf_url);
+              if (existingFile?.msds_pdf_url) {
+                console.log("♻️ Duplicate file found. Reusing URL:", existingFile.msds_pdf_url);
+                inventoryDetails.msds_pdf_url = existingFile.msds_pdf_url;
+                inventoryDetails.msds_pdf_hash = hashHex;
+              } else {
+                // 3. 업로드
+                console.log("📤 New file. Uploading...");
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                  .from('msds-pdf')
+                  .upload(fileName, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: publicUrlData } = supabase.storage
+                  .from('msds-pdf')
+                  .getPublicUrl(fileName);
+
+                inventoryDetails.msds_pdf_url = publicUrlData.publicUrl;
+                inventoryDetails.msds_pdf_hash = hashHex;
+                console.log("✅ MSDS PDF Uploaded:", inventoryDetails.msds_pdf_url);
+              }
             } catch (err) {
-              console.error("PDF Upload Error:", err);
-              alert("MSDS PDF 업로드 중 오류가 발생했습니다: " + err.message);
+              console.error("PDF Processing Error:", err);
+              alert("MSDS PDF 처리 중 오류가 발생했습니다: " + err.message);
               statusMsg.textContent = "";
               return;
             }
           } else if (mode === "edit" && detail?.msds_pdf_url) {
-            // 수정 모드이고 새 파일이 없으면 기존 URL 유지 (필요하다면)
-            // 하지만 updatePayload 구성 시 처리해야 함.
-            // 여기서는 inventoryDetails에 넣어서 casimport나 updatePayload에 전달.
+            // 수정 모드이고 새 파일이 없으면 기존 URL/Hash 유지
             inventoryDetails.msds_pdf_url = detail.msds_pdf_url;
+            inventoryDetails.msds_pdf_hash = detail.msds_pdf_hash; // 기존 해시 유지 (필요시 detail 조회 쿼리 수정 필요)
           }
+
 
           if (state.photo_base64) {
             inventoryDetails.photo_320_base64 = state.photo_base64;
@@ -643,6 +670,7 @@
               classification: state.classification || null,
               manufacturer: manufacturerValue,
               purchase_date: purchaseDate,
+              area_id: state.area_id || null,
               cabinet_id: state.cabinet_id || null,
               door_vertical: state.door_vertical || null,
               door_horizontal: state.door_horizontal || null,
@@ -650,7 +678,8 @@
               storage_column: state.storage_column || null,
               concentration_value: concentrationValue ? Number(concentrationValue) : null,
               concentration_unit: concentrationUnit || null,
-              msds_pdf_url: inventoryDetails.msds_pdf_url || null, // PDF URL 추가
+              msds_pdf_url: inventoryDetails.msds_pdf_url || null,
+              msds_pdf_hash: inventoryDetails.msds_pdf_hash || null, // Hash 추가
             };
             if (state.photo_updated) {
               updatePayload.photo_url_320 = state.photo_base64 || null;
