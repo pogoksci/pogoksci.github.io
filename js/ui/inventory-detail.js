@@ -189,11 +189,7 @@
                       return `
                         <div class="msds-row">
                           <div class="msds-header">${no} ${name}</div>
-                          <div class="msds-content msds-no-padding">
-                            <table class="ghs-table">
-                              ${ghsTableRows}
-                            </table>
-                          </div>
+                          <div class="msds-content msds-no-padding"><table class="ghs-table">${ghsTableRows}</table></div>
                         </div>
                       `;
                     }
