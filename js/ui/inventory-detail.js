@@ -20,7 +20,8 @@
           concentration_value, concentration_unit,
           Substance (
             id, substance_name, cas_rn, molecular_formula, chem_name_kor,
-            MSDS ( section_number, content )
+            MSDS ( section_number, content ),
+            HazardClassifications (*)
           ),
           Cabinet ( id, cabinet_name, area_id, Area ( id, area_name ) )
         `)
@@ -261,12 +262,54 @@
         if (noPdfMsg) noPdfMsg.style.display = "block";
       }
 
-      // 6. Hazard Info (Placeholder)
-      // TODO: Fetch hazard info from Substance or API
-      document.getElementById("hazard-info-container").innerHTML = "<p>데이터 없음</p>";
+      // 6. Hazard Info
+      const hazardContainer = document.getElementById("hazard-info-container");
+      const hazards = data.Substance?.HazardClassifications || [];
 
 
-      // 삭제
+      // 테이블 형태로 표시
+      // 3. 유해화학물질 분류 정보 (HazardClassifications)
+      const { data: hazardData, error: hazardError } = await supabase
+        .from("HazardClassifications")
+        .select("*")
+        .eq("substance_id", substanceId);
+
+      if (hazardError) {
+        console.error("유해화학물질 정보 조회 오류:", hazardError);
+      } else if (hazardData && hazardData.length > 0) {
+        const hazardContainer = document.getElementById("hazard-classification-content");
+        if (hazardContainer) {
+          let html = `<table class="hazard-table">
+          <thead>
+            <tr>
+              <th>분류 유형</th>
+              <th>고유 번호</th>
+              <th>내용</th>
+              <th>고시 정보</th>
+              <th>고시 일자</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+          hazardData.forEach(item => {
+            html += `<tr>
+            <td>${item.sbstnClsfTypeNm || "-"}</td>
+            <td>${item.unqNo || "-"}</td>
+            <td>${item.contInfo || "-"}</td>
+            <td>${item.ancmntInfo || "-"}</td>
+            <td>${item.ancmntYmd || "-"}</td>
+          </tr>`;
+          });
+
+          html += `</tbody></table>`;
+          hazardContainer.innerHTML = html;
+        }
+      } else {
+        const hazardContainer = document.getElementById("hazard-classification-content");
+        if (hazardContainer) {
+          hazardContainer.innerHTML = "<p class='text-gray-500'>해당 물질에 대한 유해화학물질 분류 정보가 없습니다.</p>";
+        }
+      }
       // 삭제
       document.getElementById("delete-inventory-btn")?.addEventListener("click", async () => {
         if (!confirm("정말 삭제하시겠습니까?")) return;
