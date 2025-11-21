@@ -172,16 +172,7 @@
                           const num = match[1];
                           const imgUrl = `https://hazmat.nfa.go.kr/design/images/contents/ghs-icon${num}.gif`;
                           const desc = ghsMapping[num] || "설명 없음";
-                          return `
-                            <tr class="ghs-row">
-                              <td class="ghs-cell-image">
-                                <img src="${imgUrl}" alt="${code}" class="ghs-image">
-                              </td>
-                              <td class="ghs-cell-desc">
-                                ${desc.replace(/\n/g, "<br>")}
-                              </td>
-                            </tr>
-                          `;
+                          return `<tr class="ghs-row"><td class="ghs-cell-image"><img src="${imgUrl}" alt="${code}" class="ghs-image"></td><td class="ghs-cell-desc">${desc.replace(/\n/g, "<br>")}</td></tr>`;
                         }
                         return "";
                       }).join("");
