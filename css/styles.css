@@ -745,6 +745,8 @@ FAB
   border-collapse: collapse;
   font-size: 14px;
   color: #2f343a;
+  table-layout: fixed;
+  /* Enforce fixed column widths */
 }
 
 .hazard-table thead th {
@@ -755,6 +757,23 @@ FAB
   border-bottom: 1px solid #dfe4e9;
   text-align: left;
   white-space: nowrap;
+}
+
+/* Fixed Column Widths */
+.hazard-table th:nth-child(1) {
+  width: 15%;
+}
+
+.hazard-table th:nth-child(2) {
+  width: 25%;
+}
+
+.hazard-table th:nth-child(3) {
+  width: 40%;
+}
+
+.hazard-table th:nth-child(4) {
+  width: 20%;
 }
 
 .hazard-table tbody td {
