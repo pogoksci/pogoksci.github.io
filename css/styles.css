@@ -1237,7 +1237,7 @@ input[type="date"] {
 }
 
 .inventory-card__image {
-  width: 75px;
+  width: 90px;
   height: auto;
   flex-shrink: 0;
   /* Prevent shrinking */
@@ -1254,7 +1254,7 @@ input[type="date"] {
 }
 
 .inventory-card__image--empty {
-  width: 75px;
+  width: 90px;
   height: auto;
   aspect-ratio: 3 / 4;
   border-radius: 8px;
