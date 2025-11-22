@@ -726,11 +726,11 @@ FAB
 }
 
 .hazard-card {
-  border: 1px solid #e6eaee;
-  border-radius: 10px;
-  padding: 12px 14px;
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .hazard-placeholder {
@@ -772,7 +772,7 @@ FAB
   overflow: hidden;
 }
 
-.hazard-acc-item + .hazard-acc-item {
+.hazard-acc-item+.hazard-acc-item {
   border-top: 1px solid #e6eaee;
 }
 
@@ -829,6 +829,7 @@ FAB
     padding: 8px 6px;
   }
 }
+
 /* =================================================================
    시약장 개선 (area-button-group / 기타 입력 필드)
 ================================================================= */
@@ -1216,16 +1217,18 @@ input[type="date"] {
 }
 
 .inventory-card__image img {
-  width: 70px;
-  height: 70px;
+  width: 60px;
+  height: auto;
+  aspect-ratio: 3 / 4;
   border-radius: 8px;
   object-fit: cover;
   border: 1px solid #e5e5e5;
 }
 
 .inventory-card__image--empty {
-  width: 70px;
-  height: 70px;
+  width: 60px;
+  height: auto;
+  aspect-ratio: 3 / 4;
   border-radius: 8px;
   border: 1px dashed #d4d4d4;
   background: #fafafa;
@@ -1262,8 +1265,26 @@ input[type="date"] {
   font-weight: 600;
   color: #222;
   display: flex;
+  align-items: baseline;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.name-kor {
+  font-size: 16px;
+  font-weight: 700;
+  color: #222;
+  flex-shrink: 0;
+  /* 한글명은 줄어들지 않음 */
+}
+
+.name-eng {
+  font-size: 15px;
+  font-weight: 400;
+  color: #333;
+  /* 영문명은 JS로 크기 조절됨 */
 }
 
 .inventory-card__conc {
@@ -1358,7 +1379,7 @@ input[type="date"] {
   width: 100%;
   max-width: 100%;
   /* Allow full width of the 50% column */
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 3 / 4;
   border: 1px solid #ddd;
   border-radius: 8px;
   overflow: hidden;

@@ -116,7 +116,7 @@
               : "";
             const imageBlock = imageSrc
               ? `<div class="inventory-card__image">
-                   <img src="${imageSrc}" alt="${item.display_label}" />
+                   <img src="${imageSrc}" alt="Inventory Image" />
                  </div>`
               : `<div class="inventory-card__image inventory-card__image--empty">
                    <span class="inventory-card__placeholder">사진 없음</span>
@@ -127,7 +127,10 @@
                 <div class="inventory-card__body">
                   <div class="inventory-card__left">
                     <div class="inventory-card__no">No.${item.id}</div>
-                    <div class="inventory-card__name">${item.display_label} ${concentration}</div>
+                    <div class="inventory-card__name">
+                      ${item.display_label_html}
+                      ${concentration}
+                    </div>
                     <div class="inventory-card__location">${item.location_text}</div>
                   </div>
                   <div class="inventory-card__meta">
@@ -151,6 +154,31 @@
       card.addEventListener("click", async () => {
         const ok = await App.includeHTML("pages/inventory-detail.html", "form-container");
         if (ok) App.Inventory?.loadDetail?.(id);
+      });
+    });
+
+    // ------------------------------------------------------------
+    // ⚡ 한 줄 맞춤 (Fit-to-Width) 로직
+    // ------------------------------------------------------------
+    requestAnimationFrame(() => {
+      const nameContainers = container.querySelectorAll(".inventory-card__name");
+      nameContainers.forEach((el) => {
+        const engSpan = el.querySelector(".name-eng");
+        if (!engSpan) return;
+
+        // 부모 너비
+        const parentWidth = el.clientWidth;
+        // 현재 컨텐츠 너비 (scrollWidth가 clientWidth보다 크면 넘친 것)
+        // 하지만 flex-wrap: nowrap 상태여야 정확히 알 수 있음.
+        // CSS에서 white-space: nowrap을 주어야 함.
+
+        // 폰트 사이즈 줄이기 루프 (최소 10px까지)
+        let fontSize = 15; // 시작 폰트 사이즈 (CSS와 일치해야 함)
+        // 안전장치: 무한루프 방지
+        while (el.scrollWidth > el.clientWidth && fontSize > 10) {
+          fontSize -= 0.5;
+          engSpan.style.fontSize = `${fontSize}px`;
+        }
       });
     });
   }
@@ -246,12 +274,13 @@
       const substanceName = row.Substance?.substance_name || "";
       const chemNameKor = row.Substance?.chem_name_kor || "";
 
-      let displayLabel = "";
-      if (chemNameKor) displayLabel += `${chemNameKor} `;
-      if (substanceName) displayLabel += substanceName;
+      // HTML 구조로 변경 (JS에서 처리하기 위해)
+      let displayLabelHtml = "";
+      if (chemNameKor) displayLabelHtml += `<span class="name-kor">${chemNameKor}</span>`;
+      if (substanceName) displayLabelHtml += `<span class="name-eng">${substanceName}</span>`;
 
-      if (!displayLabel) {
-        displayLabel = row.Substance?.cas_rn || `Inventory #${row.id}`;
+      if (!displayLabelHtml) {
+        displayLabelHtml = `<span class="name-kor">${row.Substance?.cas_rn || `Inventory #${row.id}`}</span>`;
       }
 
       const concentrationValue = row.concentration_value;
@@ -274,14 +303,14 @@
         classification: row.classification || "기타",
         photo_url_320: row.photo_url_320 || null,
         photo_url_160: row.photo_url_160 || null,
-        display_label: displayLabel,
+        display_label_html: displayLabelHtml, // HTML로 전달
         location_text: locationText,
         formula: row.Substance?.molecular_formula || "-",
         current_text: currentText,
         concentration_text: concentrationText,
-        Cabinet: row.Cabinet, // ✅ 정렬/그룹화를 위해 원본 데이터 전달
-        name_kor: row.Substance?.chem_name_kor, // ✅ 정렬용
-        name_eng: row.Substance?.substance_name, // ✅ 정렬용
+        Cabinet: row.Cabinet,
+        name_kor: row.Substance?.chem_name_kor,
+        name_eng: row.Substance?.substance_name,
       };
     });
 
