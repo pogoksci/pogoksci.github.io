@@ -137,7 +137,7 @@
                   <div class="inventory-card__meta">
                     <div class="meta-line1">${item.formula || '-'}</div>
                     <div class="meta-line2">
-                      <span class="meta-label">m.w.</span>
+                      <span class="meta-label">화학식량</span>
                       <span class="meta-value">${item.molecular_mass || '-'}</span>
                     </div>
                     <div class="meta-line3">${item.concentration_text || '-'}</div>
