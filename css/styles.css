@@ -1236,13 +1236,21 @@ input[type="date"] {
   background: #f9fbff;
 }
 
-.inventory-card__image img {
+.inventory-card__image {
   width: 75px;
+  height: auto;
+  flex-shrink: 0;
+  /* Prevent shrinking */
+}
+
+.inventory-card__image img {
+  width: 100%;
   height: auto;
   aspect-ratio: 3 / 4;
   border-radius: 8px;
   object-fit: cover;
   border: 1px solid #e5e5e5;
+  display: block;
 }
 
 .inventory-card__image--empty {
@@ -1255,6 +1263,8 @@ input[type="date"] {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  /* Prevent shrinking */
 }
 
 .inventory-card__placeholder {

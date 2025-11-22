@@ -290,7 +290,7 @@
               <div class="hazard-acc-item">
                 <button class="hazard-acc-header" type="button">
                   <span class="hazard-acc-title">${title}</span>
-                  <span class="hazard-acc-arrow" aria-hidden="true">▾</span>
+                  <span class="hazard-acc-arrow" aria-hidden="true">▼</span>
                 </button>
                 <div class="hazard-acc-content">
                   <table class="hazard-table">
