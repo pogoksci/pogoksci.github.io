@@ -111,9 +111,6 @@
         const cards = items
           .map((item) => {
             const imageSrc = item.photo_url_320 || item.photo_url_160 || "";
-            const concentration = item.concentration_text
-              ? `<span class="inventory-card__conc">(${item.concentration_text})</span>`
-              : "";
             const imageBlock = imageSrc
               ? `<div class="inventory-card__image">
                    <img src="${imageSrc}" alt="Inventory Image" />
@@ -336,7 +333,7 @@
     delete app.Inventory.__manualMount;
   }
 
-  async function purgeSubstanceIfUnused(substanceId) {
+  async function _purgeSubstanceIfUnused(substanceId) {
     const supabase = getSupabase();
     if (!supabase || !substanceId) return;
 
@@ -383,7 +380,7 @@
   async function loadDetail(id) {
     // ✅ inventory-detail.js에 정의된 최신 로직 사용
     if (typeof globalThis.loadInventoryDetail === "function") {
-      return globalThis.loadInventoryDetail(id);
+      return await globalThis.loadInventoryDetail(id);
     }
     console.error("❌ loadInventoryDetail 함수를 찾을 수 없습니다. inventory-detail.js가 로드되었는지 확인하세요.");
     alert("상세 페이지 로직을 불러오지 못했습니다.");

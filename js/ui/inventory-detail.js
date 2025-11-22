@@ -60,8 +60,8 @@
       const cab = data.Cabinet?.cabinet_name || "";
       const v = data.door_vertical || "";
       const h = data.door_horizontal || "";
-      const shelf = data.internal_shelf_level != null ? `${data.internal_shelf_level}단` : "";
-      const col = data.storage_column != null ? `${data.storage_column}열` : "";
+      const _shelf = data.internal_shelf_level != null ? `${data.internal_shelf_level}단` : "";
+      const _col = data.storage_column != null ? `${data.storage_column}열` : "";
 
       let locText = "";
       if (area) locText += area + " ";
@@ -264,7 +264,7 @@
 
       // 6. Hazard Info
       const hazardContainer = document.getElementById("hazard-info-container");
-      const hazards = data.Substance?.HazardClassifications || [];
+      const _hazards = data.Substance?.HazardClassifications || [];
       const substanceId = data.Substance?.id;
 
 

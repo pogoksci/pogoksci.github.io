@@ -1437,7 +1437,7 @@ input[type="date"] {
 /* 2-Column Grid */
 .detail-grid {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 20px;
   margin-bottom: 30px;
   /* align-items: flex-start; removed to allow stretch */
@@ -1460,13 +1460,15 @@ input[type="date"] {
   /* Allow shrinking */
   display: flex;
   flex-direction: column;
+  height: 280px;
+  min-height: 280px;
 }
 
 /* Photo Box Override/Adjustment */
 .detail-left .photo-preview-box {
   width: auto;
   max-width: 100%;
-  height: 320px;
+  height: 280px;
   aspect-ratio: 3 / 4;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -1655,6 +1657,7 @@ input[type="date"] {
 @media (max-width: 600px) {
   .detail-grid {
     flex-direction: column;
+    flex-wrap: wrap;
   }
 
   .detail-left {
