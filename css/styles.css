@@ -1276,7 +1276,9 @@ input[type="date"] {
   flex: 1;
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
+  min-width: 0;
+  /* Allow shrinking */
 }
 
 .inventory-card__left {
@@ -1284,6 +1286,8 @@ input[type="date"] {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  /* Allow shrinking */
 }
 
 .inventory-card__no {
@@ -1291,30 +1295,49 @@ input[type="date"] {
   color: #666;
 }
 
-.inventory-card__name {
-  font-weight: 600;
-  color: #222;
+.inventory-card__line1 {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-  overflow: hidden;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
 }
 
-.name-kor {
+.cas-rn {
+  font-size: 12px;
+  color: #888;
+  background: #f0f0f0;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.inventory-card__line2 {
   font-size: 16px;
   font-weight: 700;
   color: #222;
-  flex-shrink: 0;
-  /* 한글명은 줄어들지 않음 */
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.name-eng {
-  font-size: 15px;
-  font-weight: 400;
-  color: #333;
-  /* 영문명은 JS로 크기 조절됨 */
+.inventory-card__line3 {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inventory-card__line4 {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .inventory-card__conc {
@@ -1328,13 +1351,36 @@ input[type="date"] {
 }
 
 .inventory-card__meta {
-  min-width: 120px;
+  min-width: 100px;
   text-align: right;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  /* Match left side gap */
   font-size: 13px;
   color: #555;
+}
+
+.meta-line1 {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.meta-line2 {
+  color: #666;
+  font-size: 13px;
+}
+
+.meta-line3 {
+  color: #555;
+  font-size: 13px;
+}
+
+.meta-line4 {
+  color: #00a0b2;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 /* =================================================================

@@ -126,17 +126,19 @@
                 ${imageBlock}
                 <div class="inventory-card__body">
                   <div class="inventory-card__left">
-                    <div class="inventory-card__no">No.${item.id}</div>
-                    <div class="inventory-card__name">
-                      ${item.display_label_html}
-                      ${concentration}
+                    <div class="inventory-card__line1">
+                      <span class="inventory-card__no">No.${item.id}</span>
+                      ${item.cas_rn ? `<span class="cas-rn">${item.cas_rn}</span>` : ""}
                     </div>
-                    <div class="inventory-card__location">${item.location_text}</div>
+                    <div class="inventory-card__line2 name-kor">${item.name_kor || '-'}</div>
+                    <div class="inventory-card__line3 name-eng">${item.name_eng || '-'}</div>
+                    <div class="inventory-card__line4 inventory-card__location">${item.location_text}</div>
                   </div>
                   <div class="inventory-card__meta">
-                    <div>${item.formula || '-'}</div>
-                    <div>${item.current_text}</div>
-                    <div>${item.classification || '미분류'}</div>
+                    <div class="meta-line1">${item.formula || '-'}</div>
+                    <div class="meta-line2">${item.molecular_weight || '-'}</div>
+                    <div class="meta-line3">${item.concentration_text || '-'}</div>
+                    <div class="meta-line4">${item.current_text}</div>
                   </div>
                 </div>
               </div>
@@ -160,27 +162,9 @@
     // ------------------------------------------------------------
     // ⚡ 한 줄 맞춤 (Fit-to-Width) 로직
     // ------------------------------------------------------------
-    requestAnimationFrame(() => {
-      const nameContainers = container.querySelectorAll(".inventory-card__name");
-      nameContainers.forEach((el) => {
-        const engSpan = el.querySelector(".name-eng");
-        if (!engSpan) return;
-
-        // 부모 너비
-        const parentWidth = el.clientWidth;
-        // 현재 컨텐츠 너비 (scrollWidth가 clientWidth보다 크면 넘친 것)
-        // 하지만 flex-wrap: nowrap 상태여야 정확히 알 수 있음.
-        // CSS에서 white-space: nowrap을 주어야 함.
-
-        // 폰트 사이즈 줄이기 루프 (최소 10px까지)
-        let fontSize = 15; // 시작 폰트 사이즈 (CSS와 일치해야 함)
-        // 안전장치: 무한루프 방지
-        while (el.scrollWidth > el.clientWidth && fontSize > 10) {
-          fontSize -= 0.5;
-          engSpan.style.fontSize = `${fontSize}px`;
-        }
-      });
-    });
+    // ------------------------------------------------------------
+    // ⚡ 한 줄 맞춤 (Fit-to-Width) 로직 제거됨 (4줄 레이아웃으로 변경)
+    // ------------------------------------------------------------
   }
 
   // ------------------------------------------------------------
@@ -215,7 +199,7 @@
         id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         concentration_value, concentration_unit,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( substance_name, cas_rn, molecular_formula, chem_name_kor ),
+        Substance ( substance_name, cas_rn, molecular_formula, molecular_weight, chem_name_kor ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .order("created_at", { ascending: false });
@@ -311,6 +295,8 @@
         Cabinet: row.Cabinet,
         name_kor: row.Substance?.chem_name_kor,
         name_eng: row.Substance?.substance_name,
+        cas_rn: row.Substance?.cas_rn,
+        molecular_weight: row.Substance?.molecular_weight,
       };
     });
 
