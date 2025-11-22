@@ -1287,7 +1287,7 @@ input[type="date"] {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
   /* Allow shrinking */
 }
@@ -1303,7 +1303,7 @@ input[type="date"] {
   gap: 8px;
   font-size: 13px;
   color: #666;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .cas-rn {
@@ -1318,7 +1318,7 @@ input[type="date"] {
   font-size: 16px;
   font-weight: 700;
   color: #222;
-  line-height: 1.4;
+  line-height: 1.5;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1327,7 +1327,7 @@ input[type="date"] {
 .inventory-card__line3 {
   font-size: 14px;
   color: #555;
-  line-height: 1.4;
+  line-height: 1.5;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1336,7 +1336,7 @@ input[type="date"] {
 .inventory-card__line4 {
   font-size: 13px;
   color: #666;
-  line-height: 1.4;
+  line-height: 1.5;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1357,7 +1357,7 @@ input[type="date"] {
   text-align: right;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   /* Match left side gap */
   font-size: 13px;
   color: #555;
@@ -1367,22 +1367,26 @@ input[type="date"] {
   font-weight: 600;
   color: #333;
   font-size: 14px;
+  line-height: 1.5;
 }
 
 .meta-line2 {
   color: #666;
   font-size: 13px;
+  line-height: 1.5;
 }
 
 .meta-line3 {
   color: #555;
   font-size: 13px;
+  line-height: 1.5;
 }
 
 .meta-line4 {
   color: #00a0b2;
   font-weight: 600;
   font-size: 14px;
+  line-height: 1.5;
 }
 
 /* =================================================================
