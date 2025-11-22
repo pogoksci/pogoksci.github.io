@@ -1238,15 +1238,16 @@ input[type="date"] {
 
 .inventory-card__image {
   width: 90px;
-  height: auto;
+  min-width: 90px;
+  max-width: 90px;
+  height: 120px;
   flex-shrink: 0;
   /* Prevent shrinking */
 }
 
 .inventory-card__image img {
   width: 100%;
-  height: auto;
-  aspect-ratio: 3 / 4;
+  height: 100%;
   border-radius: 8px;
   object-fit: cover;
   border: 1px solid #e5e5e5;
@@ -1255,8 +1256,9 @@ input[type="date"] {
 
 .inventory-card__image--empty {
   width: 90px;
-  height: auto;
-  aspect-ratio: 3 / 4;
+  min-width: 90px;
+  max-width: 90px;
+  height: 120px;
   border-radius: 8px;
   border: 1px solid #ddd;
   background: #f9f9f9;
