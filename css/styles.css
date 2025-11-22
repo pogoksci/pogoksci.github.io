@@ -1389,6 +1389,12 @@ input[type="date"] {
   line-height: 1.5;
 }
 
+.meta-line2 .meta-label {
+  font-size: 11px;
+  color: #888;
+  margin-right: 4px;
+}
+
 /* =================================================================
    Inventory Detail Page Redesign
 ================================================================= */

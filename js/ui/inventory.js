@@ -136,7 +136,10 @@
                   </div>
                   <div class="inventory-card__meta">
                     <div class="meta-line1">${item.formula || '-'}</div>
-                    <div class="meta-line2">${item.molecular_mass || '-'}</div>
+                    <div class="meta-line2">
+                      <span class="meta-label">m.w.</span>
+                      <span class="meta-value">${item.molecular_mass || '-'}</span>
+                    </div>
                     <div class="meta-line3">${item.concentration_text || '-'}</div>
                     <div class="meta-line4">${item.current_text}</div>
                   </div>
