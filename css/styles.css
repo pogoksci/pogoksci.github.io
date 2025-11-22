@@ -226,16 +226,17 @@ button:disabled {
   gap: 15px;
 }
 
-.photo-preview-box {
+.photo-preview-box,
+#photo-preview {
   position: relative;
   width: auto;
   height: 240px;
   max-width: 320px;
   aspect-ratio: 3 / 4;
   /* 세로형 박스 유지 */
-  border: 2px dashed #ccc;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  background-color: #fafafa;
+  background-color: #f9f9f9;
   overflow: hidden;
   flex-shrink: 0;
   display: flex;
@@ -767,8 +768,8 @@ FAB
 }
 
 .hazard-accordion {
-  border: 1px solid #e6eaee;
-  border-radius: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -779,7 +780,7 @@ FAB
 .hazard-acc-header {
   width: 100%;
   border: none;
-  background: #f9fbfd;
+  background: #f9f9f9;
   padding: 12px 14px;
   font-size: 15px;
   font-weight: 600;
@@ -796,7 +797,7 @@ FAB
 }
 
 .hazard-acc-arrow {
-  font-size: 16px;
+  font-size: 0.8rem;
   transition: transform 0.2s ease;
   color: #7a7f87;
 }
@@ -1217,7 +1218,7 @@ input[type="date"] {
 }
 
 .inventory-card__image img {
-  width: 60px;
+  width: 75px;
   height: auto;
   aspect-ratio: 3 / 4;
   border-radius: 8px;
@@ -1226,19 +1227,19 @@ input[type="date"] {
 }
 
 .inventory-card__image--empty {
-  width: 60px;
+  width: 75px;
   height: auto;
   aspect-ratio: 3 / 4;
   border-radius: 8px;
-  border: 1px dashed #d4d4d4;
-  background: #fafafa;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .inventory-card__placeholder {
-  font-size: 13px;
+  font-size: 12px;
   color: #666;
 }
 
@@ -1397,10 +1398,10 @@ input[type="date"] {
 
 /* Location Section (Full Width) */
 .detail-location-section {
-  background-color: #f8f9fa;
+  background-color: #f9f9f9;
   padding: 15px;
   border-radius: 8px;
-  border: 1px solid #eee;
+  border: 1px solid #ddd;
   margin-bottom: 30px;
   clear: both;
   display: flex;
@@ -1539,21 +1540,24 @@ input[type="date"] {
 }
 
 .pdf-download-btn {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background-color: #d9534f;
-  /* Consistent Danger Red */
+  background-color: #00a0b2;
+  /* Primary Color */
   color: white;
   text-decoration: none;
   border-radius: 6px;
   font-weight: bold;
   transition: background-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .pdf-download-btn:hover {
-  background-color: #c9302c;
+  background-color: #009bb3;
 }
 
 .pdf-icon {
