@@ -1444,18 +1444,18 @@ input[type="date"] {
 }
 
 .detail-left {
-  flex: 1;
-  width: 50%;
-  max-width: 50%;
+  flex: 0 0 40%;
+  width: 40%;
+  max-width: 40%;
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
 
 .detail-right {
-  flex: 1;
-  width: 50%;
-  max-width: 50%;
+  flex: 1 1 60%;
+  width: 60%;
+  max-width: 60%;
   min-width: 0;
   /* Allow shrinking */
   display: flex;
@@ -1464,9 +1464,9 @@ input[type="date"] {
 
 /* Photo Box Override/Adjustment */
 .detail-left .photo-preview-box {
-  width: 100%;
+  width: auto;
   max-width: 100%;
-  /* Allow full width of the 50% column */
+  height: 320px;
   aspect-ratio: 3 / 4;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -1661,11 +1661,16 @@ input[type="date"] {
     margin: 0 auto;
     width: 100%;
     /* Full width on mobile */
+    max-width: 100%;
+    flex: none;
   }
 
   .detail-left .photo-preview-box {
     margin: 0 auto;
     /* Center photo */
+    height: auto;
+    width: 100%;
+    max-width: 360px;
   }
 }
 
