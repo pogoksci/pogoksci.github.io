@@ -136,7 +136,7 @@
                   </div>
                   <div class="inventory-card__meta">
                     <div class="meta-line1">${item.formula || '-'}</div>
-                    <div class="meta-line2">${item.molecular_weight || '-'}</div>
+                    <div class="meta-line2">${item.molecular_mass || '-'}</div>
                     <div class="meta-line3">${item.concentration_text || '-'}</div>
                     <div class="meta-line4">${item.current_text}</div>
                   </div>
@@ -199,7 +199,7 @@
         id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         concentration_value, concentration_unit,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( substance_name, cas_rn, molecular_formula, molecular_weight, chem_name_kor ),
+        Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .order("created_at", { ascending: false });
@@ -296,7 +296,7 @@
         name_kor: row.Substance?.chem_name_kor,
         name_eng: row.Substance?.substance_name,
         cas_rn: row.Substance?.cas_rn,
-        molecular_weight: row.Substance?.molecular_weight,
+        molecular_mass: row.Substance?.molecular_mass,
       };
     });
 
