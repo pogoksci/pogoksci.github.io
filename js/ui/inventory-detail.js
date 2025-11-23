@@ -238,16 +238,19 @@
 
       if (data.converted_concentration_value_1) {
         const unit1 = data.converted_concentration_unit_1;
-        if (unit1 === "M") convState.label1 = "몰농도(M):";
-        else if (unit1 === "%") convState.label1 = "퍼센트농도(%):";
-        else convState.label1 = `Conversion (${unit1})`;
+        const unit1Norm = (unit1 || "").trim();
+        if (unit1Norm.toUpperCase().startsWith("M")) convState.label1 = "몰농도:";
+        else if (unit1Norm.includes("%")) convState.label1 = "퍼센트농도:";
+        else convState.label1 = "Conversion";
         convState.value1 = formatConvVal(data.converted_concentration_value_1, unit1);
       }
 
       if (data.converted_concentration_value_2) {
         const unit2 = data.converted_concentration_unit_2;
-        if (unit2 === "m") convState.label2 = "몰랄농도(m):";
-        else convState.label2 = `Conversion (${unit2})`;
+        const unit2Norm = (unit2 || "").trim();
+        if (unit2Norm.toLowerCase().startsWith("m")) convState.label2 = "몰랄농도:";
+        else if (unit2Norm.includes("%")) convState.label2 = "퍼센트농도:";
+        else convState.label2 = "Conversion";
         convState.value2 = formatConvVal(data.converted_concentration_value_2, unit2);
       }
 
@@ -590,7 +593,7 @@
           const show3dFallback = () => {
             box3d.style.backgroundColor = "#f9f9f9";
             box3d.innerHTML =
-              '<div class="structure-error" style="display:flex;align-items:center;justify-content:center;height:100%;">? ??? 3D ?? ???? ???? ????.</div>';
+              '<div class="structure-error" style="display:flex;align-items:center;justify-content:center;height:100%;">이 물질은 3D 구조 데이터가 제공되지 않습니다.</div>';
           };
 
           // ?? iframe? ??? ?? ???? ??
@@ -603,7 +606,7 @@
           }
 
           try {
-            box3d.innerHTML = '<div class="structure-error" style="color:#666; text-align:center; padding:10px;">PubChem 3D ?? ?? ?...</div>';
+            box3d.innerHTML = '<div class="structure-error" style="color:#666; text-align:center; padding:10px;">PubChem 3D 구조를 읽는 중...</div>';
 
             // 1. Get CID
             const cid = await loadPubChemCid();
