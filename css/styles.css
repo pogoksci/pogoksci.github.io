@@ -1565,9 +1565,18 @@ input[type="date"] {
 
 .chem-grid {
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
-  gap: 20px;
+  grid-template-columns: 1fr 1.2fr;
+  /* Adjust ratio */
+  gap: 30px;
   align-items: stretch;
+}
+
+.structure-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  /* Prevent flex item from overflowing */
 }
 
 .structure-box {
@@ -1577,16 +1586,23 @@ input[type="date"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
-  min-height: 240px;
-  aspect-ratio: 1 / 1;
+  padding: 0;
+  /* Remove padding for full image/iframe */
+  height: 320px;
+  /* Fixed height to match ~6 rows */
+  width: 100%;
   overflow: hidden;
+  /* Clip content */
+  position: relative;
 }
 
-.structure-box svg {
+.structure-box svg,
+.structure-box img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  transition: transform 0.2s ease;
+  /* For zoom */
 }
 
 .structure-placeholder {
@@ -1595,21 +1611,31 @@ input[type="date"] {
 }
 
 .chem-info {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  background: #fff;
+  border: none;
+  padding: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  /* Match structure box height */
 }
 
 .chem-info-row {
   display: flex;
   align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 0 10px;
+  border-bottom: 1px solid #eee;
+  flex: 1;
+  /* Distribute height evenly */
+}
+
+.chem-info-row:first-child {
+  border-top: 1px solid #eee;
 }
 
 .chem-info-row:last-child {
-  border-bottom: none;
+  border-bottom: 1px solid #eee;
 }
 
 .chem-info .label {
@@ -1622,6 +1648,9 @@ input[type="date"] {
 .chem-info .value {
   color: #333;
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 768px) {

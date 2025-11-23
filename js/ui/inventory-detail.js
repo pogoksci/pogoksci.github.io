@@ -18,34 +18,6 @@
   const formatTemp = (val) => formatWithUnit(val, " C");
   const formatDensity = (val) => formatWithUnit(val, " g/mL");
 
-  function computeConversions({ value, unit, molarMass, density }) {
-    const v = toNumber(value);
-    const mw = toNumber(molarMass);
-    const rho = toNumber(density) || 1;
-    const result = { percent: null, molarity: null, molality: null };
-    if (!v || !mw || mw <= 0) return result;
-
-    if (unit === "%") {
-      const massSolute = v;
-      const totalMass = 100;
-      const solutionVolumeL = (totalMass / rho) / 1000;
-      const moles = massSolute / mw;
-      result.molarity = solutionVolumeL > 0 ? moles / solutionVolumeL : null;
-      const solventMassKg = (totalMass - massSolute) / 1000;
-      result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
-      result.percent = v;
-    } else if (unit === "M" || unit === "N") {
-      const effectiveM = v;
-      const solutionMassG = rho * 1000;
-      const soluteMassG = effectiveM * mw;
-      const solventMassKg = (solutionMassG - soluteMassG) / 1000;
-      result.percent = solutionMassG > 0 ? (soluteMassG / solutionMassG) * 100 : null;
-      result.molality = solventMassKg > 0 ? effectiveM / solventMassKg : null;
-      result.molarity = effectiveM;
-    }
-    return result;
-  }
-
   function renderSvg(structureString, target) {
     if (!target) return;
     if (structureString) {
@@ -77,16 +49,18 @@
       const { data, error } = await supabase
         .from("Inventory")
         .select(`
-          id, state, current_amount, initial_amount, unit, classification, manufacturer, purchase_date, photo_url_320, photo_url_160,
-          door_vertical, door_horizontal, internal_shelf_level, storage_column, msds_pdf_url,
-          concentration_value, concentration_unit,
-          Substance (
-            id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, svg_image,
-            Properties ( name, property ),
-            MSDS ( section_number, content ),
-            HazardClassifications (*)
-          ),
-          Cabinet ( id, cabinet_name, area_id, Area ( id, area_name ) )
+        id, state, current_amount, initial_amount, unit, classification, manufacturer, purchase_date, photo_url_320, photo_url_160,
+        door_vertical, door_horizontal, internal_shelf_level, storage_column, msds_pdf_url,
+        concentration_value, concentration_unit,
+        converted_concentration_value_1, converted_concentration_unit_1,
+        converted_concentration_value_2, converted_concentration_unit_2,
+        Substance (
+          id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, svg_image,
+          Properties ( name, property ),
+          MSDS ( section_number, content ),
+          HazardClassifications (*)
+        ),
+        Cabinet ( id, cabinet_name, area_id, Area ( id, area_name ) )
         `)
         .eq("id", inventoryId)
         .single();
@@ -105,8 +79,11 @@
         ? `<img src="${photoUrl}" alt="시약 사진">`
         : `<span>사진 없음</span>`;
 
-      document.getElementById("detail-cas").textContent = data.Substance?.cas_rn || "-";
-      document.getElementById("detail-formula").textContent = data.Substance?.molecular_formula || "-";
+      document.getElementById("detail-name-kor").textContent = data.Substance?.chem_name_kor || "이름 없음";
+      document.getElementById("detail-name-eng").textContent = data.Substance?.substance_name || "";
+      if (data.Substance?.id) {
+        document.getElementById("detail-substance-id").textContent = `No.${data.Substance.id}`;
+      }
       document.getElementById("detail-class").textContent = data.classification || "-";
       document.getElementById("detail-state").textContent = data.state || "-";
       document.getElementById("detail-manufacturer").textContent = data.manufacturer || "-";
@@ -217,6 +194,10 @@
       document.getElementById("detail-melting").textContent = formatTemp(meltingPoint);
       document.getElementById("detail-density").textContent = formatDensity(density);
 
+      // Original Concentration
+      const concVal = data.concentration_value ? `${data.concentration_value} ${data.concentration_unit || ""}` : "-";
+      document.getElementById("detail-concentration").textContent = concVal;
+
       const formatConvVal = (num, unitText) => {
         const n = Number(num);
         if (!Number.isFinite(n)) return "-";
@@ -230,26 +211,19 @@
         value2: "-",
       };
 
-      const conversions = computeConversions({
-        value: data.concentration_value,
-        unit: data.concentration_unit,
-        molarMass: data.Substance?.molecular_mass,
-        density: density,
-      });
+      if (data.converted_concentration_value_1) {
+        const unit1 = data.converted_concentration_unit_1;
+        if (unit1 === "M") convState.label1 = "Molarity (M)";
+        else if (unit1 === "%") convState.label1 = "Mass %";
+        else convState.label1 = `Conversion (${unit1})`;
+        convState.value1 = formatConvVal(data.converted_concentration_value_1, unit1);
+      }
 
-      if (data.concentration_unit === "%") {
-        convState.label1 = "Molarity (M)";
-        convState.value1 = formatConvVal(conversions.molarity, "M");
-        convState.label2 = "Molality (m)";
-        convState.value2 = formatConvVal(conversions.molality, "m");
-      } else if (data.concentration_unit === "M" || data.concentration_unit === "N") {
-        convState.label1 = "Mass %";
-        convState.value1 = formatConvVal(conversions.percent, "%");
-        convState.label2 = "Molarity (M)";
-        convState.value2 = formatConvVal(conversions.molarity, "M");
-      } else {
-        convState.label1 = "Conversion";
-        convState.label2 = "Conversion";
+      if (data.converted_concentration_value_2) {
+        const unit2 = data.converted_concentration_unit_2;
+        if (unit2 === "m") convState.label2 = "Molality (m)";
+        else convState.label2 = `Conversion (${unit2})`;
+        convState.value2 = formatConvVal(data.converted_concentration_value_2, unit2);
       }
 
       const convLabel1El = document.getElementById("conv-label-1");
@@ -545,16 +519,39 @@
       // ---------------------------------------------------------
       const btn2d = document.getElementById("btn-view-2d");
       const btn3d = document.getElementById("btn-view-3d");
+      const btnZoomIn = document.getElementById("btn-zoom-in");
+      const btnZoomOut = document.getElementById("btn-zoom-out");
       const box2d = document.getElementById("detail-structure");
       const box3d = document.getElementById("detail-structure-3d");
       let viewer3d = null;
+      let currentZoom = 1.0;
+
+      const applyZoom = () => {
+        const target = box2d.style.display !== "none" ? box2d.querySelector("img, svg") : box3d.querySelector("iframe, canvas");
+        if (target) {
+          target.style.transform = `scale(${currentZoom})`;
+        }
+      };
 
       if (btn2d && btn3d && box2d && box3d) {
+        if (btnZoomIn && btnZoomOut) {
+          btnZoomIn.onclick = () => {
+            currentZoom += 0.2;
+            applyZoom();
+          };
+          btnZoomOut.onclick = () => {
+            currentZoom = Math.max(0.2, currentZoom - 0.2);
+            applyZoom();
+          };
+        }
+
         btn2d.onclick = () => {
           btn2d.classList.add("active");
           btn3d.classList.remove("active");
           box2d.style.display = "block";
           box3d.style.display = "none";
+          currentZoom = 1.0; // Reset zoom on switch
+          applyZoom();
         };
 
         btn3d.onclick = async () => {
@@ -562,6 +559,8 @@
           btn3d.classList.add("active");
           box2d.style.display = "none";
           box3d.style.display = "block";
+          currentZoom = 1.0; // Reset zoom on switch
+          applyZoom();
 
           // 이미 iframe이 있으면 다시 로드하지 않음
           if (box3d.querySelector("iframe")) return;

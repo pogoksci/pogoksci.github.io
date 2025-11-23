@@ -304,6 +304,13 @@
       "manufacturer_buttons",
     ];
 
+    // ✅ Substance 정보 저장 (계산용)
+    if (detail?.Substance) {
+      set("substance_info", detail.Substance);
+    } else {
+      set("substance_info", null);
+    }
+
     // ✅ 수정 모드 기본 데이터 반영
     if (mode === "edit" && detail) {
       const fieldMap = {
@@ -679,6 +686,38 @@
               msds_pdf_url: inventoryDetails.msds_pdf_url || null,
               msds_pdf_hash: inventoryDetails.msds_pdf_hash || null, // Hash 추가
             };
+
+            // 🧮 농도 변환 계산 (수정 모드)
+            const substanceInfo = state.substance_info;
+            if (substanceInfo && concentrationValue && concentrationUnit) {
+              const propsList = substanceInfo.Properties || [];
+              const getPropVal = (nameKey) => {
+                const found = propsList.find((p) => p.name && p.name.toLowerCase().includes(nameKey.toLowerCase()));
+                return found ? found.property : null;
+              };
+              const densityVal = getPropVal("Density");
+
+              const conversions = computeConversions({
+                value: concentrationValue,
+                unit: concentrationUnit,
+                molarMass: substanceInfo.molecular_mass,
+                density: densityVal
+              });
+
+              if (conversions) {
+                if (concentrationUnit === "%") {
+                  updatePayload.converted_concentration_value_1 = conversions.molarity;
+                  updatePayload.converted_concentration_unit_1 = "M";
+                  updatePayload.converted_concentration_value_2 = conversions.molality;
+                  updatePayload.converted_concentration_unit_2 = "m";
+                } else if (concentrationUnit === "M" || concentrationUnit === "N") {
+                  updatePayload.converted_concentration_value_1 = conversions.percent;
+                  updatePayload.converted_concentration_unit_1 = "%";
+                  updatePayload.converted_concentration_value_2 = conversions.molality; // Molarity -> Molality logic check
+                  updatePayload.converted_concentration_unit_2 = "m"; // Wait, logic in detail was: M -> % and Molality
+                }
+              }
+            }
             if (state.photo_updated) {
               updatePayload.photo_url_320 = state.photo_base64 || null;
               updatePayload.photo_url_160 = state.photo_base64 || null;
@@ -964,4 +1003,46 @@
   };
 
   console.log("✅ App.Forms 모듈 초기화 완료 (도어 자동 표시 버전)");
+
+  // -------------------------------------------------
+  // 🧮 농도 변환 유틸리티
+  // -------------------------------------------------
+  function computeConversions({ value, unit, molarMass, density }) {
+    const v = Number(value);
+    const mw = Number(molarMass);
+    const rho = Number(density) || 1; // g/mL
+    const result = { percent: null, molarity: null, molality: null };
+
+    if (!Number.isFinite(v) || !Number.isFinite(mw) || mw <= 0) return null;
+
+    if (unit === "%") {
+      // % w/w -> Molarity, Molality
+      // Molarity = (density * 10 * %) / MW
+      const massSolute = v; // g (in 100g solution)
+      const totalMass = 100; // g
+      const solutionVolumeL = (totalMass / rho) / 1000;
+      const moles = massSolute / mw;
+      result.molarity = solutionVolumeL > 0 ? moles / solutionVolumeL : null;
+
+      const solventMassKg = (totalMass - massSolute) / 1000;
+      result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
+      result.percent = v;
+    } else if (unit === "M" || unit === "N") {
+      // Molarity -> % w/w, Molality
+      // Assume M = N for simplicity if not specified, or treat input as M
+      const effectiveM = v;
+      // Basis: 1 L solution
+      const solutionVolumeL = 1;
+      const moles = effectiveM * solutionVolumeL;
+      const soluteMassG = moles * mw;
+      const solutionMassG = solutionVolumeL * 1000 * rho;
+
+      result.percent = solutionMassG > 0 ? (soluteMassG / solutionMassG) * 100 : null;
+
+      const solventMassKg = (solutionMassG - soluteMassG) / 1000;
+      result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
+      result.molarity = effectiveM;
+    }
+    return result;
+  }
 })();

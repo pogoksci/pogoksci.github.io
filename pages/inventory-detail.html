@@ -7,6 +7,8 @@
   <div class="detail-name-group">
     <h2 id="detail-name-kor">정보 로드 중...</h2>
     <span id="detail-name-eng" class="eng-name"></span>
+    <span id="detail-substance-id" class="substance-id-tag"
+      style="margin-left: auto; color: #888; font-size: 0.9rem;"></span>
   </div>
 
   <!-- 2-Column Grid: Photo & Info -->
@@ -38,19 +40,32 @@
   <!-- Substance Structure & Properties -->
   <div class="detail-section chem-section">
     <div class="chem-grid">
-      <div class="structure-wrapper">
-        <div class="structure-controls">
-          <button id="btn-view-2d" class="view-mode-btn active">2D</button>
-          <button id="btn-view-3d" class="view-mode-btn">3D</button>
+      <div class="structure-wrapper" style="position: relative;">
+        <!-- Zoom Controls (Overlay) -->
+        <div class="zoom-controls"
+          style="position: absolute; top: 10px; right: 10px; z-index: 10; display: flex; flex-direction: column; gap: 5px;">
+          <button id="btn-zoom-in" class="view-mode-btn" title="확대"
+            style="background: rgba(255,255,255,0.9); box-shadow: 0 1px 3px rgba(0,0,0,0.2);">+</button>
+          <button id="btn-zoom-out" class="view-mode-btn" title="축소"
+            style="background: rgba(255,255,255,0.9); box-shadow: 0 1px 3px rgba(0,0,0,0.2);">-</button>
         </div>
+
         <div id="detail-structure" class="structure-box mode-2d">
           <span class="structure-placeholder">구조 이미지 없음</span>
         </div>
         <div id="detail-structure-3d" class="structure-box mode-3d" style="display:none; position: relative;">
           <!-- 3D Viewer -->
         </div>
-        <div class="license-notice" style="font-size: 10px; color: #aaa; text-align: right; margin-top: 4px;">
-          3D Viewer powered by PubChem
+
+        <div class="structure-footer"
+          style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 8px;">
+          <div class="view-mode-controls" style="display: flex; gap: 5px;">
+            <button id="btn-view-2d" class="view-mode-btn active">2D</button>
+            <button id="btn-view-3d" class="view-mode-btn">3D</button>
+          </div>
+          <div class="license-notice" style="font-size: 10px; color: #aaa;">
+            3D Viewer powered by PubChem
+          </div>
         </div>
       </div>
       <div class="chem-info">
@@ -65,6 +80,10 @@
         <div class="chem-info-row">
           <span class="label">밀도:</span>
           <span id="detail-density" class="value">-</span>
+        </div>
+        <div class="chem-info-row">
+          <span class="label">농도:</span>
+          <span id="detail-concentration" class="value">-</span>
         </div>
         <div class="chem-info-row">
           <span id="conv-label-1" class="label">변환농도 1:</span>
