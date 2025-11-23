@@ -238,15 +238,15 @@
 
       if (data.converted_concentration_value_1) {
         const unit1 = data.converted_concentration_unit_1;
-        if (unit1 === "M") convState.label1 = "몰농도(M)";
-        else if (unit1 === "%") convState.label1 = "퍼센트농도(%)";
+        if (unit1 === "M") convState.label1 = "몰농도:";
+        else if (unit1 === "%") convState.label1 = "퍼센트농도:";
         else convState.label1 = `Conversion (${unit1})`;
         convState.value1 = formatConvVal(data.converted_concentration_value_1, unit1);
       }
 
       if (data.converted_concentration_value_2) {
         const unit2 = data.converted_concentration_unit_2;
-        if (unit2 === "m") convState.label2 = "몰랄농도(m)";
+        if (unit2 === "m") convState.label2 = "몰랄농도:";
         else convState.label2 = `Conversion (${unit2})`;
         convState.value2 = formatConvVal(data.converted_concentration_value_2, unit2);
       }
