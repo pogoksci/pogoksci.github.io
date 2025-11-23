@@ -26,7 +26,7 @@
       const [valuePart, ...rest] = raw.split("@");
       const value = valuePart.trim();
       const temp = rest.join("@").trim();
-      return temp ? `${value}<br>@ ${temp}` : value || "-";
+      return temp ? `${value}<br><span class="density-temp">@ ${temp}</span>` : value || "-";
     }
 
     const n = Number(raw);
@@ -601,19 +601,15 @@
 
             // 1. Get CID
             const cid = await loadPubChemCid();
-            if (!cid) throw new Error("PubChem에서 물질 정보를 찾을 수 없습니다.");
-
-            // 2. Check 3D Availability
-            // 3D 데이터가 있는지 먼저 확인 (SDF 요청)
-            const checkRes = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/record/SDF/?record_type=3d`);
-            if (!checkRes.ok) {
-              throw new Error("이 물질은 3D 구조 데이터가 제공되지 않습니다.");
+            if (!cid) {
+              box3d.style.backgroundColor = "#f9f9f9";
+              box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
+              return;
             }
 
-            // 3. Embed Iframe
-            // PubChem 3D Conformer Embed URL
+            // 2. Embed Iframe directly (avoid SDF probe that can 404)
             const embedUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}#section=3D-Conformer&embed=true`;
-
+            box3d.style.backgroundColor = "#f9f9f9";
             box3d.innerHTML = `
               <iframe 
                 src="${embedUrl}" 
@@ -623,9 +619,30 @@
               </iframe>
             `;
 
-          } catch (e) {
-            console.warn("PubChem Load Error:", e);
-            box3d.innerHTML = `<p style="padding:10px; color:#888; font-size:13px;">3D 모델을 불러올 수 없습니다.<br>(${e.message})</p>`;
+            // 3. Fallback if iframe never loads
+            const iframeEl = box3d.querySelector("iframe");
+            let loaded = false;
+            const timeoutId = setTimeout(() => {
+              if (!loaded) {
+                box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
+              }
+            }, 4000);
+
+            if (iframeEl) {
+              iframeEl.onload = () => {
+                loaded = true;
+                clearTimeout(timeoutId);
+              };
+              iframeEl.onerror = () => {
+                loaded = true;
+                clearTimeout(timeoutId);
+                box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
+              };
+            }
+
+          } catch (_e) {
+            box3d.style.backgroundColor = "#f9f9f9";
+            box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
           }
         };
       }

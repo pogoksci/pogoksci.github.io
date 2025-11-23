@@ -1584,6 +1584,7 @@ input[type="date"] {
   border: 1px solid #ddd;
   border-radius: 8px;
   background-color: #f9f9f9;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1592,6 +1593,8 @@ input[type="date"] {
   aspect-ratio: 1 / 1;
   height: auto;
   width: 100%;
+  max-width: 240px;
+  min-height: 240px;
   overflow: hidden;
   /* Clip content */
   position: relative;
@@ -1621,6 +1624,11 @@ input[type="date"] {
 
 .license-notice {
   font-size: 9px !important;
+}
+
+.density-temp {
+  font-size: 9px;
+  color: #777;
 }
 
 .chem-info {
