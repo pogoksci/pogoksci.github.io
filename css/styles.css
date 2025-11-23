@@ -1600,6 +1600,10 @@ input[type="date"] {
   position: relative;
 }
 
+.structure-box.mode-2d {
+  background-color: #f9f9f9;
+}
+
 .structure-box svg,
 .structure-box img {
   width: 100%;
