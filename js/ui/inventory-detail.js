@@ -66,7 +66,7 @@
         .from("Inventory")
         .select(`
         id, state, current_amount, initial_amount, unit, classification, manufacturer, purchase_date, photo_url_320, photo_url_160,
-        door_vertical, door_horizontal, door_horizontal_count, internal_shelf_level, storage_column, msds_pdf_url,
+        door_vertical, door_horizontal, internal_shelf_level, storage_column, msds_pdf_url,
         concentration_value, concentration_unit,
         converted_concentration_value_1, converted_concentration_unit_1,
         converted_concentration_value_2, converted_concentration_unit_2,
@@ -76,7 +76,7 @@
           MSDS ( section_number, content ),
           HazardClassifications (*)
         ),
-        Cabinet ( id, cabinet_name, area_id, Area ( id, area_name ) )
+        Cabinet ( id, cabinet_name, area_id, door_horizontal_count, Area ( id, area_name ) )
         `)
         .eq("id", inventoryId)
         .single();
@@ -115,7 +115,7 @@
       const cab = data.Cabinet?.cabinet_name || "";
       const v = data.door_vertical || "";
       const h = data.door_horizontal || "";
-      const hCount = Number(data.door_horizontal_count || 0);
+      const hCount = Number(data.Cabinet?.door_horizontal_count || data.door_horizontal_count || 0);
 
       let locText = "";
       if (area) locText += `${area} `;
