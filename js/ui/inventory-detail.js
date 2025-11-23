@@ -1,4 +1,4 @@
-﻿// /js/ui/inventory-detail.js
+// /js/ui/inventory-detail.js
 (function () {
   const getApp = () => globalThis.App || {};
   const getSupabase = () => getApp().supabase;
@@ -26,8 +26,8 @@
     if (!v || !mw || mw <= 0) return result;
 
     if (unit === "%") {
-      const massSolute = v; // g per 100 g solution
-      const totalMass = 100; // g
+      const massSolute = v;
+      const totalMass = 100;
       const solutionVolumeL = (totalMass / rho) / 1000;
       const moles = massSolute / mw;
       result.molarity = solutionVolumeL > 0 ? moles / solutionVolumeL : null;
@@ -35,8 +35,8 @@
       result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
       result.percent = v;
     } else if (unit === "M" || unit === "N") {
-      const effectiveM = v; // Treat N ~ M (valence unknown)
-      const solutionMassG = rho * 1000; // mass of 1 L solution
+      const effectiveM = v;
+      const solutionMassG = rho * 1000;
       const soluteMassG = effectiveM * mw;
       const solventMassKg = (solutionMassG - soluteMassG) / 1000;
       result.percent = solutionMassG > 0 ? (soluteMassG / solutionMassG) * 100 : null;
@@ -59,10 +59,10 @@
           return;
         }
       } catch (e) {
-        console.warn("SVG ?뚯떛 ?ㅽ뙣:", e);
+        console.warn("SVG parsing failed:", e);
       }
     }
-    target.innerHTML = `<span class="structure-placeholder">구조 이미지 없음</span>`;
+    target.innerHTML = `<span class="structure-placeholder">구조식 이미지 없음</span>`;
   }
 
   async function loadInventoryDetail(id = null) {
@@ -70,7 +70,7 @@
       const supabase = getSupabase();
       const inventoryId = id || localStorage.getItem("selected_inventory_id");
       if (!inventoryId) {
-        alert("?섎せ???묎렐?낅땲??");
+        alert("선택된 재고가 없습니다.");
         return;
       }
 
@@ -93,21 +93,18 @@
 
       if (error) throw error;
 
-      // 1. Header Name (Dual)
-      const korName = data.Substance?.chem_name_kor || data.Substance?.substance_name || "?대쫫 ?놁쓬";
+      const korName = data.Substance?.chem_name_kor || data.Substance?.substance_name || "이름 없음";
       const engName = data.Substance?.substance_name || "";
 
       document.getElementById("detail-name-kor").textContent = korName;
       document.getElementById("detail-name-eng").textContent = engName !== korName ? engName : "";
 
-      // 2. Photo
       const photoDiv = document.getElementById("detail-photo");
       const photoUrl = data.photo_url_320 || data.photo_url_160 || "";
       photoDiv.innerHTML = photoUrl
-        ? `<img src="${photoUrl}" alt="?쒖빟蹂??ъ쭊">`
-        : `<span>?ъ쭊 ?놁쓬</span>`;
+        ? `<img src="${photoUrl}" alt="시약 사진">`
+        : `<span>사진 없음</span>`;
 
-      // 3. Info List
       document.getElementById("detail-cas").textContent = data.Substance?.cas_rn || "-";
       document.getElementById("detail-formula").textContent = data.Substance?.molecular_formula || "-";
       document.getElementById("detail-class").textContent = data.classification || "-";
@@ -123,26 +120,24 @@
       const cab = data.Cabinet?.cabinet_name || "";
       const v = data.door_vertical || "";
       const h = data.door_horizontal || "";
-      const _shelf = data.internal_shelf_level != null ? `${data.internal_shelf_level}?? : "";
-      const _col = data.storage_column != null ? `${data.storage_column}?? : "";
 
       let locText = "";
-      if (area) locText += area + " ";
-      if (cab) locText += `??{cab}??`;
+      if (area) locText += `${area} `;
+      if (cab) locText += `${cab} `;
 
       let doorPart = "";
       const doorHVal = String(h || "").trim();
       let doorHLabel = "";
-      if (doorHVal === "1") doorHLabel = "?쇱そ";
-      else if (doorHVal === "2") doorHLabel = "?ㅻⅨ履?;
+      if (doorHVal === "1") doorHLabel = "왼쪽";
+      else if (doorHVal === "2") doorHLabel = "오른쪽";
       else doorHLabel = doorHVal;
 
       if (v && doorHLabel) {
-        doorPart = `${v}痢?${doorHLabel}臾?;
+        doorPart = `${v}층 ${doorHLabel}문`;
       } else if (v) {
-        doorPart = `${v}痢듬Ц`;
+        doorPart = `${v}층문`;
       } else if (doorHLabel) {
-        doorPart = `${doorHLabel}臾?;
+        doorPart = `${doorHLabel}문`;
       }
 
       let shelfPart = "";
@@ -150,31 +145,29 @@
       const colVal = data.storage_column;
 
       if (shelfVal && colVal) {
-        shelfPart = `${shelfVal}??${colVal}??;
+        shelfPart = `${shelfVal}층 ${colVal}열`;
       } else {
-        if (shelfVal) shelfPart += `${shelfVal}??;
-        if (colVal) shelfPart += (shelfPart ? " " : "") + `${colVal}??;
+        if (shelfVal) shelfPart += `${shelfVal}층`;
+        if (colVal) shelfPart += (shelfPart ? " " : "") + `${colVal}열`;
       }
 
       const detailParts = [doorPart, shelfPart].filter(Boolean).join(", ");
       if (detailParts) locText += detailParts;
 
-      locText = locText.trim() || "?꾩튂: 誘몄???;
+      locText = locText.trim() || "위치: 미확인";
       document.getElementById("detail-location").textContent = locText;
 
       const dateStr = data.purchase_date || data.created_at;
-      // Format date to YYYY-MM-DD
       let formattedDate = "-";
       if (dateStr) {
         const dateObj = new Date(dateStr);
         const year = dateObj.getFullYear();
-        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const day = String(dateObj.getDate()).padStart(2, '0');
+        const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const day = String(dateObj.getDate()).padStart(2, "0");
         formattedDate = `${year}-${month}-${day}`;
       }
       document.getElementById("detail-created-at").textContent = formattedDate;
 
-      // Structure & properties + conversions
       const propsRaw = data.Substance?.Properties;
       const props = Array.isArray(propsRaw) ? propsRaw[0] : propsRaw;
       renderSvg(data.Substance?.svg_image, document.getElementById("detail-structure"));
@@ -228,144 +221,143 @@
       if (convValue1El) convValue1El.textContent = convState.value1;
       if (convValue2El) convValue2El.textContent = convState.value2;
 
-
-      // 4. MSDS Accordion
       const msdsTitles = [
-        "1. ?뷀븰?쒗뭹怨??뚯궗??愿???뺣낫",
-        "2. ?좏빐?굿룹쐞?섏꽦",
-        "3. 援ъ꽦?깅텇??紐낆묶 諛??⑥쑀??,
-        "4. ?묎툒議곗튂 ?붾졊",
-        "5. ??컻쨌?붿옱???泥섎갑踰?,
-        "6. ?꾩텧 ?ш퀬???泥섎갑踰?,
-        "7. 痍④툒 諛???λ갑踰?,
-        "8. ?몄텧諛⑹? 諛?媛쒖씤蹂댄샇援?,
-        "9. 臾쇰━?뷀븰???뱀꽦",
-        "10. ?덉젙??諛?諛섏쓳??,
-        "11. ?낆꽦??愿???뺣낫",
-        "12. ?섍꼍??誘몄튂???곹뼢",
-        "13. ?먭린??二쇱쓽?ы빆",
-        "14. ?댁넚???꾩슂???뺣낫",
-        "15. 踰뺤쟻 洹쒖젣?꾪솴",
-        "16. 洹?諛뽰쓽 李멸퀬?ы빆"
+        "1. 화학제품과 회사에 관한 정보",
+        "2. 유해성·위험성",
+        "3. 구성성분의 명칭 및 함유량",
+        "4. 응급조치 요령",
+        "5. 화재 시 조치방법",
+        "6. 누출 시 조치방법",
+        "7. 취급 및 저장방법",
+        "8. 노출방지 및 개인보호구",
+        "9. 물리화학적 특성",
+        "10. 안정성 및 반응성",
+        "11. 독성에 관한 정보",
+        "12. 환경에 미치는 영향",
+        "13. 폐기 시 주의사항",
+        "14. 운송에 필요한 정보",
+        "15. 법적 규제현황",
+        "16. 그 밖의 참고사항",
       ];
 
       const ghsMapping = {
-        "01": "?띤룺諛쒖꽦(Explosive)\n쨌 遺덉븞?뺥븳 ??컻臾?n쨌 ??컻臾?n쨌 ?먭린諛섏쓳??臾쇱쭏 諛??쇳빀臾?n쨌 ?좉린怨쇱궛?붾Ъ",
-        "02": "?띠씤?붿꽦(Flammable)\n쨌 ?명솕??媛??n쨌 媛?곗꽦 ?먯뼱濡쒖「\n쨌 ?명솕???≪껜\n쨌 ?명솕??怨좎껜\n쨌 ?먭린諛섏쓳??臾쇱쭏 諛??쇳빀臾?n쨌 諛쒗솕???≪껜\n쨌 諛쒗솕??怨좎껜\n쨌 媛?곗꽦 怨좎껜\n쨌 媛?곗꽦 ?≪껜\n쨌 ?먯껜 諛쒖뿴 臾쇱쭏 諛??쇳빀臾?n쨌 臾쇨낵 ?묒큺?섏뿬 媛?곗꽦 媛?ㅻ? 諛⑹텧?섎뒗 臾쇱쭏 諛??쇳빀臾?n쨌 ?좉린 怨쇱궛?붾Ъ",
-        "03": "?띠궛?붿꽦(Oxidizing)\n쨌 ?고솕 媛??n쨌 ?고솕???≪껜\n쨌 ?고솕??怨좎껜",
-        "04": "?띔퀬??媛??Compressed Gas)\n쨌 ?뺤텞 媛??n쨌 ?≫솕 媛??n쨌 ?됱옣 ?≫솕 媛??n쨌 ?⑹〈 媛??,
-        "05": "?띕??앹꽦(Corrosive)\n쨌 湲덉냽 遺?앹꽦\n쨌 ??컻臾?n쨌 ?명솕??媛??n쨌 ?먭린 諛섏쓳?깅Ъ吏?諛??쇳빀臾?n쨌 ?좉린 怨쇱궛?붾Ъ\n쨌 ?쇰?遺??n쨌 ?ш컖?????먯긽",
-        "06": "?띠쑀?낆꽦(Toxic)\n쨌 湲됱꽦 ?낆꽦",
-        "07": "?띔꼍怨?Health Hazard, Hazardous to Ozone Layer)\n쨌 湲됱꽦 ?낆꽦\n쨌 ?쇰? ?먭레??n쨌 ???먭레??n쨌 ?쇰? 怨쇰???n쨌 ?뱀젙 ?쒖쟻 ?κ린 ?낆꽦(?명씉湲??먭레, 留덉빟 ?④낵)",
-        "08": "?띔굔媛??좏빐??Serious Health hazard)\n쨌 ?명씉湲?怨쇰???n쨌 ?앹떇?명룷 蹂?댁썝??n쨌 諛쒖븫??n쨌 ?앹떇?낆꽦\n쨌 ?뱀젙?쒖쟻?κ린 ?낆꽦\n쨌 ?≪씤 ?꾪뿕",
-        "09": "?띠닔???섍꼍 ?좊룆??Hazardous to the Environment)\n쨌 ?섏깮?섍꼍 ?좏빐??,
+        "01": "Explosive\nUnstable explosive; self-reactive; organic peroxide",
+        "02": "Flammable\nFlammable gas/aerosol/liquid/solid; self-reactive; pyrophoric; emits flammable gas; organic peroxide",
+        "03": "Oxidizing\nOxidizing gas/liquid/solid",
+        "04": "Compressed Gas\nCompressed, liquefied or refrigerated gas",
+        "05": "Corrosive\nCorrosive to metals; skin corrosion/irritation; serious eye damage",
+        "06": "Toxic\nAcute toxicity",
+        "07": "Health Hazard\nIrritation; sensitization; narcotic effects; ozone layer hazard",
+        "08": "Serious Health Hazard\nRespiratory sensitizer; germ cell mutagenicity; carcinogenicity; reproductive toxicity; target organ toxicity; aspiration hazard",
+        "09": "Environment\nHazardous to the aquatic environment",
       };
 
       const msdsData = data.Substance?.MSDS || [];
       const accordionContainer = document.getElementById("msds-accordion");
 
       if (accordionContainer) {
-        accordionContainer.innerHTML = msdsTitles.map((title, index) => {
-          const sectionNum = index + 1;
-          const sectionData = msdsData.find(d => d.section_number === sectionNum);
-          let contentHtml = '<p class="text-gray-500 italic p-4">?댁슜 ?놁쓬 (?곗씠???곕룞 ?꾩슂)</p>';
+        accordionContainer.innerHTML = msdsTitles
+          .map((title, index) => {
+            const sectionNum = index + 1;
+            const sectionData = msdsData.find((d) => d.section_number === sectionNum);
+            let contentHtml = '<p class="text-gray-500 italic p-4">내용 없음 (데이터 동기화 필요)</p>';
 
-          if (sectionData && sectionData.content) {
-            // Special handling for Section 2 (Hazard Info) GHS Pictograms
-            if (sectionNum === 2 && sectionData.content.includes("|||洹몃┝臾몄옄|||")) {
-              const rows = sectionData.content.split(";;;");
-              const rowsHtml = rows.map(row => {
-                const parts = row.split("|||");
-                if (parts.length >= 3) {
-                  const [no, name, detail] = parts;
+            if (sectionData && sectionData.content) {
+              if (sectionNum === 2 && sectionData.content.includes("|||그림문자|||")) {
+                const rows = sectionData.content.split(";;;");
+                const rowsHtml = rows
+                  .map((row) => {
+                    const parts = row.split("|||");
+                    if (parts.length >= 3) {
+                      const [no, name, detail] = parts;
 
-                  // Check for GHS Pictograms
-                  if (name.trim() === "洹몃┝臾몄옄") {
-                    const ghsCodes = detail.trim().split(/\s+/).filter(s => s.endsWith(".gif"));
-                    if (ghsCodes.length > 0) {
-                      const ghsTableRows = ghsCodes.map(code => {
-                        // Extract number (e.g., GHS01.gif -> 01)
-                        const match = code.match(/GHS(\d+)\.gif/i);
-                        if (match) {
-                          const num = match[1];
-                          const imgUrl = `https://hazmat.nfa.go.kr/design/images/contents/ghs-icon${num}.gif`;
-                          const fullDesc = ghsMapping[num] || "?ㅻ챸 ?놁쓬";
-                          const lines = fullDesc.split('\n');
-                          const titleLine = lines[0];
-                          const detailLines = lines.slice(1).join('<br>');
+                      if (name.trim() === "그림문자") {
+                        const ghsCodes = detail.trim().split(/\s+/).filter((s) => s.endsWith(".gif"));
+                        if (ghsCodes.length > 0) {
+                          const ghsTableRows = ghsCodes
+                            .map((code) => {
+                              const match = code.match(/GHS(\d+)\.gif/i);
+                              if (match) {
+                                const num = match[1];
+                                const imgUrl = `https://hazmat.nfa.go.kr/design/images/contents/ghs-icon${num}.gif`;
+                                const fullDesc = ghsMapping[num] || "분류 정보 없음";
+                                const lines = fullDesc.split("\n");
+                                const titleLine = lines[0];
+                                const detailLines = lines.slice(1).join("<br>");
 
-                          let korName = titleLine.replace('??, '').trim();
-                          let engName = "";
-                          const matchTitle = korName.match(/^(.*)\((.*)\)$/);
-                          if (matchTitle) {
-                            korName = matchTitle[1];
-                            engName = matchTitle[2];
-                          }
+                                let korName = titleLine;
+                                let engName = "";
+                                const matchTitle = titleLine.match(/^(.*)\((.*)\)$/);
+                                if (matchTitle) {
+                                  korName = matchTitle[1].trim();
+                                  engName = matchTitle[2].trim();
+                                }
 
-                          return `<tr class="ghs-row"><td class="ghs-cell-image"><img src="${imgUrl}" alt="${code}" class="ghs-image"><div class="ghs-name-kor">${korName}</div><div class="ghs-name-eng">${engName}</div></td><td class="ghs-cell-desc">${detailLines}</td></tr>`;
+                                return `<tr class="ghs-row"><td class="ghs-cell-image"><img src="${imgUrl}" alt="${code}" class="ghs-image"><div class="ghs-name-kor">${korName}</div><div class="ghs-name-eng">${engName}</div></td><td class="ghs-cell-desc">${detailLines}</td></tr>`;
+                              }
+                              return "";
+                            })
+                            .join("");
+
+                          return `
+                            <div class="msds-row">
+                              <div class="msds-header">${no} ${name}</div>
+                              <div class="msds-content msds-no-padding"><table class="ghs-table">${ghsTableRows}</table></div>
+                            </div>
+                          `;
                         }
-                        return "";
-                      }).join("");
+                      }
 
                       return `
                         <div class="msds-row">
                           <div class="msds-header">${no} ${name}</div>
-                          <div class="msds-content msds-no-padding"><table class="ghs-table">${ghsTableRows}</table></div>
+                          <div class="msds-content">${detail}</div>
                         </div>
                       `;
+                    } else {
+                      return `<div class="msds-simple-content">${row}</div>`;
                     }
-                  }
-
-                  return `
-                    <div class="msds-row">
-                      <div class="msds-header">${no} ${name}</div>
-                      <div class="msds-content">${detail}</div>
-                    </div>
-                  `;
-                } else {
-                  return `<div class="msds-simple-content">${row}</div>`;
-                }
-              }).join("");
-              contentHtml = `<div class="msds-table-container">${rowsHtml}</div>`;
+                  })
+                  .join("");
+                contentHtml = `<div class="msds-table-container">${rowsHtml}</div>`;
+              } else if (sectionData.content.includes("|||")) {
+                const rows = sectionData.content.split(";;;");
+                const rowsHtml = rows
+                  .map((row) => {
+                    const parts = row.split("|||");
+                    if (parts.length >= 3) {
+                      const [no, name, detail] = parts;
+                      return `
+                        <div class="msds-row">
+                          <div class="msds-header">${no} ${name}</div>
+                          <div class="msds-content">${detail}</div>
+                        </div>
+                      `;
+                    } else {
+                      return `<div class="msds-simple-content">${row}</div>`;
+                    }
+                  })
+                  .join("");
+                contentHtml = `<div class="msds-table-container">${rowsHtml}</div>`;
+              } else {
+                contentHtml = `<div class="msds-simple-content">${sectionData.content.replace(/\n/g, "<br>")}</div>`;
+              }
             }
-            // Standard structured data handling
-            else if (sectionData.content.includes("|||")) {
-              const rows = sectionData.content.split(";;;");
-              const rowsHtml = rows.map(row => {
-                const parts = row.split("|||");
-                if (parts.length >= 3) {
-                  const [no, name, detail] = parts;
-                  return `
-                    <div class="msds-row">
-                      <div class="msds-header">${no} ${name}</div>
-                      <div class="msds-content">${detail}</div>
-                    </div>
-                  `;
-                } else {
-                  return `<div class="msds-simple-content">${row}</div>`;
-                }
-              }).join("");
-              contentHtml = `<div class="msds-table-container">${rowsHtml}</div>`;
-            } else {
-              // Fallback for old data or simple text
-              contentHtml = `<div class="msds-simple-content">${sectionData.content.replace(/\n/g, "<br>")}</div>`;
-            }
-          }
 
-          return `
-            <div class="accordion-item">
-                <button class="accordion-header" onclick="this.parentElement.classList.toggle('active')">
-                    ${title}
-                </button>
-                <div class="accordion-content">
-                    ${contentHtml}
-                </div>
-            </div>
-          `;
-        }).join("");
+            return `
+              <div class="accordion-item">
+                  <button class="accordion-header" onclick="this.parentElement.classList.toggle('active')">
+                      ${title}
+                  </button>
+                  <div class="accordion-content">
+                      ${contentHtml}
+                  </div>
+              </div>
+            `;
+          })
+          .join("");
       }
 
-      // 5. MSDS PDF Link
       const pdfContainer = document.getElementById("msds-pdf-container");
       const noPdfMsg = document.getElementById("no-msds-pdf");
       const pdfLink = document.getElementById("msds-pdf-link");
@@ -379,59 +371,57 @@
         if (noPdfMsg) noPdfMsg.style.display = "block";
       }
 
-      // 6. Hazard Info
       const hazardContainer = document.getElementById("hazard-info-container");
       const _hazards = data.Substance?.HazardClassifications || [];
       const substanceId = data.Substance?.id;
 
-
-      // ?뚯씠釉??뺥깭濡??쒖떆
-      // 3. ?좏빐?뷀븰臾쇱쭏 遺꾨쪟 ?뺣낫 (HazardClassifications)
       const { data: hazardData, error: hazardError } = await supabase
         .from("HazardClassifications")
         .select("*")
         .eq("substance_id", substanceId);
 
       if (hazardError) {
-        console.error("?좏빐?뷀븰臾쇱쭏 ?뺣낫 議고쉶 ?ㅻ쪟:", hazardError);
-        if (hazardContainer) hazardContainer.innerHTML = `<p class="text-red-500">?뺣낫 議고쉶 ?ㅽ뙣</p>`;
+        console.error("유해화학물질 정보 조회 오류:", hazardError);
+        if (hazardContainer) hazardContainer.innerHTML = `<p class="text-red-500">정보 조회 실패</p>`;
       } else if (hazardData && hazardData.length > 0) {
         if (hazardContainer) {
-          const accordion = hazardData.map((item, idx) => {
-            const title = item.sbstnClsfTypeNm || `遺꾨쪟 ${idx + 1}`;
-            const unq = item.unqNo || "-";
-            const cont = item.contInfo || "-";
-            const info = item.ancmntInfo || "-";
-            const ymd = item.ancmntYmd || "-";
-            return `
-              <div class="hazard-acc-item">
-                <button class="hazard-acc-header" type="button">
-                  <span class="hazard-acc-title">${title}</span>
-                  <span class="hazard-acc-arrow" aria-hidden="true">??/span>
-                </button>
-                <div class="hazard-acc-content">
-                  <table class="hazard-table">
-                    <thead>
-                      <tr>
-                        <th>怨좎쑀 踰덊샇</th>
-                        <th>?댁슜</th>
-                        <th>怨좎떆 ?뺣낫</th>
-                        <th>怨좎떆 ?쇱옄</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>${unq}</td>
-                        <td>${cont}</td>
-                        <td>${info}</td>
-                        <td>${ymd}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+          const accordion = hazardData
+            .map((item, idx) => {
+              const title = item.sbstnClsfTypeNm || `분류 ${idx + 1}`;
+              const unq = item.unqNo || "-";
+              const cont = item.contInfo || "-";
+              const info = item.ancmntInfo || "-";
+              const ymd = item.ancmntYmd || "-";
+              return `
+                <div class="hazard-acc-item">
+                  <button class="hazard-acc-header" type="button">
+                    <span class="hazard-acc-title">${title}</span>
+                    <span class="hazard-acc-arrow" aria-hidden="true">▼</span>
+                  </button>
+                  <div class="hazard-acc-content">
+                    <table class="hazard-table">
+                      <thead>
+                        <tr>
+                          <th>고유 번호</th>
+                          <th>내용</th>
+                          <th>고시 정보</th>
+                          <th>고시 일자</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>${unq}</td>
+                          <td>${cont}</td>
+                          <td>${info}</td>
+                          <td>${ymd}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            `;
-          }).join("");
+              `;
+            })
+            .join("");
 
           hazardContainer.innerHTML = `<div class="hazard-accordion">${accordion}</div>`;
 
@@ -443,84 +433,72 @@
         }
       } else {
         if (hazardContainer) {
-          hazardContainer.innerHTML = "<p class='text-gray-500'>?대떦 臾쇱쭏??????좏빐?뷀븰臾쇱쭏 遺꾨쪟 ?뺣낫媛 ?놁뒿?덈떎.</p>";
+          hazardContainer.innerHTML = "<p class='text-gray-500'>해당 물질의 유해화학물질 분류 정보가 없습니다.</p>";
         }
       }
-      // 紐⑸줉?쇰줈
+
       document.getElementById("detail-back-btn")?.addEventListener("click", async () => {
         if (getApp().Inventory?.showListPage) {
           await getApp().Inventory.showListPage();
         }
       });
 
-      // ??젣
       document.getElementById("delete-inventory-btn")?.addEventListener("click", async () => {
-        if (!confirm("?뺣쭚 ??젣?섏떆寃좎뒿?덇퉴?")) return;
+        if (!confirm("정말 삭제하시겠습니까?")) return;
 
-        // ?뿊截?MSDS PDF ?뚯씪 ??젣
         if (data.msds_pdf_url) {
           try {
-            // URL?먯꽌 ?뚯씪紐?異붿텧 (?? .../msds-pdf/filename.pdf)
             const url = data.msds_pdf_url;
-            const fileName = url.substring(url.lastIndexOf('/') + 1);
+            const fileName = url.substring(url.lastIndexOf("/") + 1);
 
             if (fileName) {
-              console.log("?뿊截?MSDS PDF ??젣 ?쒕룄:", fileName);
-              const { error: storageError } = await supabase.storage
-                .from('msds-pdf')
-                .remove([fileName]);
+              const { error: storageError } = await supabase.storage.from("msds-pdf").remove([fileName]);
 
               if (storageError) {
-                console.warn("?좑툘 PDF ?뚯씪 ??젣 ?ㅽ뙣:", storageError);
-              } else {
-                console.log("??PDF ?뚯씪 ??젣 ?꾨즺");
+                console.warn("PDF 파일 삭제 실패:", storageError);
               }
             }
           } catch (err) {
-            console.warn("?좑툘 PDF ??젣 泥섎━ 以??ㅻ쪟:", err);
+            console.warn("PDF 삭제 처리 오류:", err);
           }
         }
 
         const app = getApp();
         const fnBase =
-          app.projectFunctionsBaseUrl ||
-          (app.supabaseUrl ? `${app.supabaseUrl}/functions/v1` : "");
+          app.projectFunctionsBaseUrl || (app.supabaseUrl ? `${app.supabaseUrl}/functions/v1` : "");
         if (!fnBase) {
-          alert("?⑥닔 ?몄텧 寃쎈줈瑜?李얠쓣 ???놁뒿?덈떎.");
+          alert("함수 호출 경로를 찾을 수 없습니다.");
           return;
         }
-        const headers =
-          app.supabaseAnonKey
-            ? {
+        const headers = app.supabaseAnonKey
+          ? {
               apikey: app.supabaseAnonKey,
               Authorization: `Bearer ${app.supabaseAnonKey}`,
             }
-            : undefined;
+          : undefined;
         const fnUrl = `${fnBase}/casimport?type=inventory&id=${inventoryId}`;
         const res = await fetch(fnUrl, { method: "DELETE", headers });
         if (!res.ok) {
           const msg = await res.text();
-          alert("??젣 ?ㅽ뙣: " + msg);
+          alert("삭제 실패: " + msg);
           return;
         }
-        alert("??젣?섏뿀?듬땲??");
-        // 紐⑸줉?쇰줈 蹂듦?
+        alert("삭제되었습니다.");
         if (getApp().Inventory?.showListPage) {
           await getApp().Inventory.showListPage();
         }
       });
 
-      // ?섏젙
       document.getElementById("edit-inventory-btn")?.addEventListener("click", async () => {
         if (getApp().Router?.go && getApp().Forms?.initInventoryForm) {
           await getApp().Router.go("addInventory", "form-container", () =>
             getApp().Forms.initInventoryForm("edit", data),
           );
         } else {
-          alert("???섏젙 紐⑤뱶濡??꾪솚 (援ы쁽 ?꾩슂)");
+          alert("편집 모드로 전환 (구현 필요)");
         }
       });
-      // 7. Auto-update Check (Background)
+
       if (data.Substance?.cas_rn) {
         const checkUpdate = async () => {
           try {
@@ -540,29 +518,21 @@
 
             if (res.ok) {
               const result = await res.json();
-              console.log("?봽 Auto-update check:", result);
               if (result.status === "updated") {
-                console.log("??MSDS updated. Reloading page...");
-                // Reload current page to show new data
                 loadInventoryDetail(inventoryId);
               }
             }
           } catch (e) {
-            console.warn("?좑툘 Auto-update check failed:", e);
+            console.warn("Auto-update check failed:", e);
           }
         };
-        // Run in background
         checkUpdate();
       }
-
     } catch (err) {
-      console.error("?곸꽭 ?섏씠吏 濡쒕뱶 ?ㅻ쪟:", err);
-      document.getElementById("detail-page-container").innerHTML = `<p>???ㅻ쪟: ${err.message}</p>`;
+      console.error("상세 페이지 로드 오류:", err);
+      document.getElementById("detail-page-container").innerHTML = `<p>오류: ${err.message}</p>`;
     }
   }
 
   globalThis.loadInventoryDetail = loadInventoryDetail;
 })();
-
-
-
