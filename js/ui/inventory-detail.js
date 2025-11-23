@@ -573,8 +573,9 @@
         btn2d.onclick = () => {
           btn2d.classList.add("active");
           btn3d.classList.remove("active");
-          box2d.style.display = "block";
+          box2d.style.display = "flex";
           box3d.style.display = "none";
+          box2d.style.backgroundColor = "#fafafa";
           currentZoom = 1.0; // Reset zoom on switch
           applyZoom();
         };
@@ -583,7 +584,8 @@
           btn2d.classList.remove("active");
           btn3d.classList.add("active");
           box2d.style.display = "none";
-          box3d.style.display = "block";
+          box3d.style.display = "flex";
+          box3d.style.backgroundColor = "#fafafa";
           currentZoom = 1.0; // Reset zoom on switch
           applyZoom();
 
@@ -592,12 +594,13 @@
 
           const casRn = data.Substance?.cas_rn;
           if (!casRn) {
-            box3d.innerHTML = '<p style="padding:10px;">CAS 번호가 없어 3D 모델을 불러올 수 없습니다.</p>';
+            box3d.style.backgroundColor = "#f9f9f9";
+            box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
             return;
           }
 
           try {
-            box3d.innerHTML = '<p style="padding:10px; color:#666;">PubChem 3D 모델 로딩 중...</p>';
+            box3d.innerHTML = '<div class="structure-error" style="color:#666;">PubChem 3D 모델 로딩 중...</div>';
 
             // 1. Get CID
             const cid = await loadPubChemCid();
@@ -614,6 +617,7 @@
             // PubChem 3D Conformer Embed URL
             const embedUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}#section=3D-Conformer&embed=true`;
 
+            box3d.style.backgroundColor = "#fafafa";
             box3d.innerHTML = `
               <iframe 
                 src="${embedUrl}" 
@@ -625,7 +629,8 @@
 
           } catch (e) {
             console.warn("PubChem Load Error:", e);
-            box3d.innerHTML = `<p style="padding:10px; color:#888; font-size:13px;">3D 모델을 불러올 수 없습니다.<br>(${e.message})</p>`;
+            box3d.style.backgroundColor = "#f9f9f9";
+            box3d.innerHTML = `<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>`;
           }
         };
       }
