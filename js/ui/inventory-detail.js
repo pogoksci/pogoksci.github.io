@@ -66,7 +66,7 @@
         .from("Inventory")
         .select(`
         id, state, current_amount, initial_amount, unit, classification, manufacturer, purchase_date, photo_url_320, photo_url_160,
-        door_vertical, door_horizontal, internal_shelf_level, storage_column, msds_pdf_url,
+        door_vertical, door_horizontal, door_horizontal_count, internal_shelf_level, storage_column, msds_pdf_url,
         concentration_value, concentration_unit,
         converted_concentration_value_1, converted_concentration_unit_1,
         converted_concentration_value_2, converted_concentration_unit_2,
@@ -115,17 +115,20 @@
       const cab = data.Cabinet?.cabinet_name || "";
       const v = data.door_vertical || "";
       const h = data.door_horizontal || "";
+      const hCount = Number(data.door_horizontal_count || 0);
 
       let locText = "";
       if (area) locText += `${area} `;
-      if (cab) locText += `${cab} `;
+      if (cab) locText += `『${cab}』 `;
 
       let doorPart = "";
       const doorHVal = String(h || "").trim();
       let doorHLabel = "";
-      if (doorHVal === "1") doorHLabel = "왼쪽";
-      else if (doorHVal === "2") doorHLabel = "오른쪽";
-      else doorHLabel = doorHVal;
+      if (hCount > 1) {
+        if (doorHVal === "1") doorHLabel = "왼쪽";
+        else if (doorHVal === "2") doorHLabel = "오른쪽";
+        else doorHLabel = doorHVal;
+      }
 
       if (v && doorHLabel) {
         doorPart = `${v}층 ${doorHLabel}문`;

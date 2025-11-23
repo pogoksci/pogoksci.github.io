@@ -1565,19 +1565,19 @@ input[type="date"] {
 
 .chem-grid {
   display: grid;
-  grid-template-columns: minmax(420px, 1.2fr) minmax(340px, 1fr);
-  /* Widen structure column so controls and license align in one row */
+  grid-template-columns: minmax(0, 360px) 1fr;
+  /* Keep the render area the same visual width as the photo box */
   gap: 28px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .structure-wrapper {
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 360px;
   min-width: 0;
-  /* Prevent flex item from overflowing */
-  min-width: 420px;
+  /* Prevent flex item from overflowing while matching photo width */
 }
 
 .structure-box {
@@ -1590,7 +1590,6 @@ input[type="date"] {
   padding: 0;
   /* Remove padding for full image/iframe */
   aspect-ratio: 1 / 1;
-  min-height: 360px;
   height: auto;
   width: 100%;
   overflow: hidden;
