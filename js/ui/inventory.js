@@ -200,7 +200,7 @@
         id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         concentration_value, concentration_unit,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, Synonyms ( synonyms_name, synonyms_eng ) ),
+        Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, Synonyms ( synonyms_name, synonyms_eng ), ReplacedRns ( replaced_rn ) ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .order("created_at", { ascending: false });
@@ -285,6 +285,10 @@
       const synonymsName = synonymsList.map((s) => s.synonyms_name).filter(Boolean).join(", ");
       const synonymsEng = synonymsList.map((s) => s.synonyms_eng).filter(Boolean).join(", ");
 
+      // ✅ ReplacedRns 처리
+      const replacedRnsList = row.Substance?.ReplacedRns || [];
+      const replacedRns = replacedRnsList.map((r) => r.replaced_rn).filter(Boolean).join(", ");
+
       return {
         id: row.id,
         created_at: row.created_at,
@@ -305,6 +309,7 @@
         molecular_mass: row.Substance?.molecular_mass,
         synonyms_name: synonymsName,
         synonyms_eng: synonymsEng,
+        replaced_rn: replacedRns,
       };
     });
 
@@ -333,6 +338,7 @@
           item.synonyms_name,
           item.synonyms_eng,
           item.classification,
+          item.replaced_rn, // ✅ Replaced RN 검색 추가
         ];
         return targetFields.some((field) => String(field || "").toLowerCase().includes(query));
       });
