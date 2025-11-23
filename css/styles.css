@@ -1558,6 +1558,82 @@ input[type="date"] {
   flex-grow: 1;
 }
 
+/* Structure & Properties */
+.chem-section {
+  margin: 30px 0;
+}
+
+.chem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.structure-box {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  min-height: 240px;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+
+.structure-box svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.structure-placeholder {
+  color: #999;
+  font-size: 14px;
+}
+
+.chem-info {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+}
+
+.chem-info-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.chem-info-row:last-child {
+  border-bottom: none;
+}
+
+.chem-info .label {
+  width: 110px;
+  font-weight: 700;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.chem-info .value {
+  color: #333;
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .chem-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chem-info .label {
+    width: 100px;
+  }
+}
+
 /* MSDS Accordion */
 .msds-section {
   margin-bottom: 30px;
