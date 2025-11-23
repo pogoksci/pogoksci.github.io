@@ -1,24 +1,22 @@
-```html
 <!-- /pages/inventory-list.html -->
 <div id="inventory-list-page">
   <div class="list-header">
     <h2>약품 관리</h2>
-
   </div>
 
   <div class="header-actions"
-    style="margin-top: 10px; justify-content: flex-end; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+    style="margin-top: 12px; display: flex; width: 100%; gap: 8px; justify-content: space-between; align-items: stretch;">
     <!-- ✅ 검색창 추가 -->
     <div class="search-container"
-      style="display: flex; align-items: center; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 0 8px; margin-right: 8px; height: 36px;">
+      style="flex: 1; display: flex; align-items: center; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 0 8px; height: auto;">
       <span class="material-symbols-outlined" style="font-size: 20px; color: #888;">search</span>
       <input type="text" id="inventory-search-input" placeholder="약품 검색..."
-        style="border: none; outline: none; padding: 0 8px; font-size: 14px; width: 200px;">
+        style="border: none; outline: none; padding: 0 8px; font-size: 14px; width: 100%;">
     </div>
 
     <!-- ✅ 공용 SortDropdown 컴포넌트 (App.SortDropdown.init에서 제어) -->
     <div class="custom-dropdown" id="sort-dropdown">
-      <button class="dropdown-toggle" id="sort-toggle" aria-haspopup="true" aria-expanded="false">
+      <button class="dropdown-toggle" id="sort-toggle" aria-haspopup="true" aria-expanded="false" style="height: 100%;">
         <span class="material-symbols-outlined">sort</span>
         <span id="sort-label" data-value="category_name_kor">한글명(분류)</span>
         <span class="material-symbols-outlined arrow">expand_more</span>
@@ -57,7 +55,7 @@
     </div>
 
     <!-- ✅ Material Symbols 기반 새로고침 버튼 -->
-    <button id="refresh-btn" title="목록 새로고침" aria-label="새로고침">
+    <button id="refresh-btn" title="목록 새로고침" aria-label="새로고침" style="height: 100%;">
       <span class="material-symbols-outlined">refresh</span>
     </button>
   </div>
