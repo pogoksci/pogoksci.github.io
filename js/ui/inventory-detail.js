@@ -178,7 +178,40 @@
       const meltingPoint = getPropVal("Melting Point");
       const density = getPropVal("Density");
 
-      renderSvg(data.Substance?.svg_image, document.getElementById("detail-structure"));
+      // PubChem CID Helper
+      let cachedCid = null;
+      const loadPubChemCid = async () => {
+        if (cachedCid) return cachedCid;
+        const casRn = data.Substance?.cas_rn;
+        if (!casRn) return null;
+        try {
+          const res = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${casRn}/cids/JSON`);
+          if (!res.ok) return null;
+          const json = await res.json();
+          cachedCid = json.IdentifierList?.CID?.[0];
+          return cachedCid;
+        } catch (e) {
+          console.warn("CID Fetch Error:", e);
+          return null;
+        }
+      };
+
+      // Load 2D Image
+      const structureBox = document.getElementById("detail-structure");
+      (async () => {
+        structureBox.innerHTML = '<span class="structure-placeholder" style="font-size:12px; color:#999;">Loading...</span>';
+        const cid = await loadPubChemCid();
+        if (cid) {
+          const imgUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/PNG?record_type=2d&image_size=300x300`;
+          structureBox.innerHTML = `<img src="${imgUrl}" alt="Structure" style="width:100%; height:100%; object-fit:contain;">`;
+        } else {
+          if (data.Substance?.svg_image) {
+            renderSvg(data.Substance.svg_image, structureBox);
+          } else {
+            structureBox.innerHTML = '<span class="structure-placeholder">이미지 없음</span>';
+          }
+        }
+      })();
 
       document.getElementById("detail-boiling").textContent = formatTemp(boilingPoint);
       document.getElementById("detail-melting").textContent = formatTemp(meltingPoint);
@@ -543,14 +576,17 @@
             box3d.innerHTML = '<p style="padding:10px; color:#666;">PubChem 3D 모델 로딩 중...</p>';
 
             // 1. Get CID
-            const cidRes = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${casRn}/cids/JSON`);
-            if (!cidRes.ok) throw new Error("PubChem에서 물질 정보를 찾을 수 없습니다.");
-            const cidJson = await cidRes.json();
-            const cid = cidJson.IdentifierList?.CID?.[0];
+            const cid = await loadPubChemCid();
+            if (!cid) throw new Error("PubChem에서 물질 정보를 찾을 수 없습니다.");
 
-            if (!cid) throw new Error("CID를 찾을 수 없습니다.");
+            // 2. Check 3D Availability
+            // 3D 데이터가 있는지 먼저 확인 (SDF 요청)
+            const checkRes = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/record/SDF/?record_type=3d`);
+            if (!checkRes.ok) {
+              throw new Error("이 물질은 3D 구조 데이터가 제공되지 않습니다.");
+            }
 
-            // 2. Embed Iframe
+            // 3. Embed Iframe
             // PubChem 3D Conformer Embed URL
             const embedUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}#section=3D-Conformer&embed=true`;
 
