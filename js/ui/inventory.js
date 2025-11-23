@@ -200,7 +200,7 @@
         id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         concentration_value, concentration_unit,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, synonyms_name, synonyms_eng ),
+        Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .order("created_at", { ascending: false });
