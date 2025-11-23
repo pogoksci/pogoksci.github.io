@@ -3,7 +3,7 @@
   const getApp = () => globalThis.App || {};
   const getSupabase = () => getApp().supabase;
 
-  const toNumber = (val) => {
+  const _toNumber = (val) => {
     const n = Number(val);
     return Number.isFinite(n) ? n : null;
   };
@@ -548,7 +548,7 @@
       const btnZoomOut = document.getElementById("btn-zoom-out");
       const box2d = document.getElementById("detail-structure");
       const box3d = document.getElementById("detail-structure-3d");
-      let viewer3d = null;
+      const _viewer3d = null;
       let currentZoom = 1.0;
 
       const applyZoom = () => {
@@ -587,27 +587,49 @@
           currentZoom = 1.0; // Reset zoom on switch
           applyZoom();
 
-          // 이미 iframe이 있으면 다시 로드하지 않음
+          const show3dFallback = () => {
+            box3d.style.backgroundColor = "#f9f9f9";
+            box3d.innerHTML =
+              '<div class="structure-error" style="display:flex;align-items:center;justify-content:center;height:100%;">? ??? 3D ?? ???? ???? ????.</div>';
+          };
+
+          // ?? iframe? ??? ?? ???? ??
           if (box3d.querySelector("iframe")) return;
 
           const casRn = data.Substance?.cas_rn;
           if (!casRn) {
-            box3d.innerHTML = '<p style="padding:10px;">CAS 번호가 없어 3D 모델을 불러올 수 없습니다.</p>';
+            show3dFallback();
             return;
           }
 
           try {
-            box3d.innerHTML = '<p style="padding:10px; color:#666;">PubChem 3D 모델 로딩 중...</p>';
+            box3d.innerHTML = '<div class="structure-error" style="color:#666; text-align:center; padding:10px;">PubChem 3D ?? ?? ?...</div>';
 
             // 1. Get CID
             const cid = await loadPubChemCid();
             if (!cid) {
-              box3d.style.backgroundColor = "#f9f9f9";
-              box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
+              show3dFallback();
               return;
             }
 
-            // 2. Embed Iframe directly (avoid SDF probe that can 404)
+            // 2. Check 3D availability via JSON; ??? iframe ????
+            let has3d = false;
+            try {
+              const resp = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/JSON`);
+              if (resp.ok) {
+                const dataJson = await resp.json();
+                const coords = dataJson?.PC_Compounds?.[0]?.coords || [];
+                has3d = coords.some((c) => c?.type?.dimension === 3);
+              }
+            } catch (_) {
+              has3d = false;
+            }
+            if (!has3d) {
+              show3dFallback();
+              return;
+            }
+
+            // 3. Embed Iframe directly
             const embedUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}#section=3D-Conformer&embed=true`;
             box3d.style.backgroundColor = "#f9f9f9";
             box3d.innerHTML = `
@@ -619,13 +641,11 @@
               </iframe>
             `;
 
-            // 3. Fallback if iframe never loads
+            // 4. Fallback if iframe never loads or errors
             const iframeEl = box3d.querySelector("iframe");
             let loaded = false;
             const timeoutId = setTimeout(() => {
-              if (!loaded) {
-                box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
-              }
+              if (!loaded) show3dFallback();
             }, 4000);
 
             if (iframeEl) {
@@ -636,13 +656,12 @@
               iframeEl.onerror = () => {
                 loaded = true;
                 clearTimeout(timeoutId);
-                box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
+                show3dFallback();
               };
             }
 
           } catch (_e) {
-            box3d.style.backgroundColor = "#f9f9f9";
-            box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
+            show3dFallback();
           }
         };
       }
