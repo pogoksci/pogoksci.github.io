@@ -82,7 +82,7 @@
           concentration_value, concentration_unit,
           Substance (
             id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, svg_image,
-            Properties ( boiling_point, melting_point, density ),
+            Properties ( name, property ),
             MSDS ( section_number, content ),
             HazardClassifications (*)
           ),
@@ -168,13 +168,21 @@
       }
       document.getElementById("detail-created-at").textContent = formattedDate;
 
-      const propsRaw = data.Substance?.Properties;
-      const props = Array.isArray(propsRaw) ? propsRaw[0] : propsRaw;
+      const propsList = data.Substance?.Properties || [];
+      const getPropVal = (nameKey) => {
+        const found = propsList.find((p) => p.name && p.name.toLowerCase().includes(nameKey.toLowerCase()));
+        return found ? found.property : null;
+      };
+
+      const boilingPoint = getPropVal("Boiling Point");
+      const meltingPoint = getPropVal("Melting Point");
+      const density = getPropVal("Density");
+
       renderSvg(data.Substance?.svg_image, document.getElementById("detail-structure"));
 
-      document.getElementById("detail-boiling").textContent = formatTemp(props?.boiling_point);
-      document.getElementById("detail-melting").textContent = formatTemp(props?.melting_point);
-      document.getElementById("detail-density").textContent = formatDensity(props?.density);
+      document.getElementById("detail-boiling").textContent = formatTemp(boilingPoint);
+      document.getElementById("detail-melting").textContent = formatTemp(meltingPoint);
+      document.getElementById("detail-density").textContent = formatDensity(density);
 
       const formatConvVal = (num, unitText) => {
         const n = Number(num);
@@ -193,7 +201,7 @@
         value: data.concentration_value,
         unit: data.concentration_unit,
         molarMass: data.Substance?.molecular_mass,
-        density: props?.density,
+        density: density,
       });
 
       if (data.concentration_unit === "%") {
@@ -472,9 +480,9 @@
         }
         const headers = app.supabaseAnonKey
           ? {
-              apikey: app.supabaseAnonKey,
-              Authorization: `Bearer ${app.supabaseAnonKey}`,
-            }
+            apikey: app.supabaseAnonKey,
+            Authorization: `Bearer ${app.supabaseAnonKey}`,
+          }
           : undefined;
         const fnUrl = `${fnBase}/casimport?type=inventory&id=${inventoryId}`;
         const res = await fetch(fnUrl, { method: "DELETE", headers });
