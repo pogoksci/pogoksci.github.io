@@ -16,7 +16,23 @@
   };
 
   const formatTemp = (val) => formatWithUnit(val, " C");
-  const formatDensity = (val) => formatWithUnit(val, " g/mL");
+
+  const formatDensity = (val) => {
+    if (val === null || val === undefined || val === "") return "-";
+    const raw = String(val).trim();
+    if (!raw) return "-";
+
+    if (raw.includes("@")) {
+      const [valuePart, ...rest] = raw.split("@");
+      const value = valuePart.trim();
+      const temp = rest.join("@").trim();
+      return temp ? `${value}<br>@ ${temp}` : value || "-";
+    }
+
+    const n = Number(raw);
+    if (Number.isFinite(n)) return `${n} g/mL`;
+    return raw;
+  };
 
   function renderSvg(structureString, target) {
     if (!target) return;
@@ -84,6 +100,8 @@
       if (data.Substance?.id) {
         document.getElementById("detail-substance-id").textContent = `No.${data.Substance.id}`;
       }
+      document.getElementById("detail-cas").textContent = data.Substance?.cas_rn || "-";
+      document.getElementById("detail-formula").textContent = data.Substance?.molecular_formula || "-";
       document.getElementById("detail-class").textContent = data.classification || "-";
       document.getElementById("detail-state").textContent = data.state || "-";
       document.getElementById("detail-manufacturer").textContent = data.manufacturer || "-";
@@ -192,7 +210,11 @@
 
       document.getElementById("detail-boiling").textContent = formatTemp(boilingPoint);
       document.getElementById("detail-melting").textContent = formatTemp(meltingPoint);
-      document.getElementById("detail-density").textContent = formatDensity(density);
+
+      const densityEl = document.getElementById("detail-density");
+      if (densityEl) {
+        densityEl.innerHTML = formatDensity(density);
+      }
 
       // Original Concentration
       const concVal = data.concentration_value ? `${data.concentration_value} ${data.concentration_unit || ""}` : "-";

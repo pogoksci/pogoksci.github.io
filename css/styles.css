@@ -1400,7 +1400,7 @@ input[type="date"] {
 ================================================================= */
 .inventory-detail-page {
   padding: 10px;
-  max-width: 800px;
+  max-width: 1080px;
   margin: 0 auto;
 }
 
@@ -1565,9 +1565,9 @@ input[type="date"] {
 
 .chem-grid {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  /* Adjust ratio */
-  gap: 30px;
+  grid-template-columns: minmax(420px, 1.2fr) minmax(340px, 1fr);
+  /* Widen structure column so controls and license align in one row */
+  gap: 28px;
   align-items: stretch;
 }
 
@@ -1577,6 +1577,7 @@ input[type="date"] {
   width: 100%;
   min-width: 0;
   /* Prevent flex item from overflowing */
+  min-width: 420px;
 }
 
 .structure-box {
@@ -1588,8 +1589,9 @@ input[type="date"] {
   justify-content: center;
   padding: 0;
   /* Remove padding for full image/iframe */
-  height: 320px;
-  /* Fixed height to match ~6 rows */
+  aspect-ratio: 1 / 1;
+  min-height: 360px;
+  height: auto;
   width: 100%;
   overflow: hidden;
   /* Clip content */
@@ -1648,14 +1650,24 @@ input[type="date"] {
 .chem-info .value {
   color: #333;
   flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.chem-info .density-value {
+  font-size: 0.92rem;
+  line-height: 1.25;
+  white-space: normal;
 }
 
 @media (max-width: 768px) {
   .chem-grid {
     grid-template-columns: 1fr;
+  }
+
+  .structure-wrapper {
+    min-width: 0;
   }
 
   .chem-info .label {
