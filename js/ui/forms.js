@@ -704,17 +704,28 @@
                 density: densityVal
               });
 
+              const annotateUnit = (unit) => {
+                const stateVal = String(state.state || "").trim().toLowerCase();
+                const solids = ["파우더", "조각", "비드", "펠렛", "리본", "막대", "벌크", "고체"];
+                const isSolid = solids.some((k) => stateVal.includes(k));
+                const isGas = stateVal.includes("기체") || stateVal.includes("gas");
+                const isLiquid = stateVal === "액체" || stateVal.includes("liquid");
+                if (unit === "M" && (isSolid || isGas)) return `${unit} (의미 없음)`;
+                if (unit === "m" && (isLiquid || isGas)) return `${unit} (정의 불가)`;
+                return unit;
+              };
+
               if (conversions) {
                 if (concentrationUnit === "%") {
                   updatePayload.converted_concentration_value_1 = conversions.molarity;
-                  updatePayload.converted_concentration_unit_1 = "M";
+                  updatePayload.converted_concentration_unit_1 = annotateUnit("M");
                   updatePayload.converted_concentration_value_2 = conversions.molality;
-                  updatePayload.converted_concentration_unit_2 = "m";
+                  updatePayload.converted_concentration_unit_2 = annotateUnit("m");
                 } else if (concentrationUnit === "M" || concentrationUnit === "N") {
                   updatePayload.converted_concentration_value_1 = conversions.percent;
                   updatePayload.converted_concentration_unit_1 = "%";
                   updatePayload.converted_concentration_value_2 = conversions.molality; // Molarity -> Molality logic check
-                  updatePayload.converted_concentration_unit_2 = "m"; // Wait, logic in detail was: M -> % and Molality
+                  updatePayload.converted_concentration_unit_2 = annotateUnit("m"); // Wait, logic in detail was: M -> % and Molality
                 }
               }
             }
@@ -1008,23 +1019,35 @@
   // 🧮 농도 변환 유틸리티
   // -------------------------------------------------
   function computeConversions({ value, unit, molarMass, density }) {
+    const parseDensity = (d) => {
+      if (d === null || d === undefined) return null;
+      const match = String(d).match(/-?\d+(?:\.\d+)?/);
+      return match ? Number(match[0]) : null;
+    };
+
     const v = Number(value);
     const mw = Number(molarMass);
-    const rho = Number(density) || 1; // g/mL
+    const rho = parseDensity(density) ?? 1; // g/mL (solute density)
+    const waterRho = 1; // g/mL, assumption
     const result = { percent: null, molarity: null, molality: null };
 
     if (!Number.isFinite(v) || !Number.isFinite(mw) || mw <= 0) return null;
 
     if (unit === "%") {
       // % w/w -> Molarity, Molality
-      // Molarity = (density * 10 * %) / MW
-      const massSolute = v; // g (in 100g solution)
+      // Use separate volumes: solute volume from its density, solvent volume from water density.
+      const massSolute = v; // g (in 100 g solution)
       const totalMass = 100; // g
-      const solutionVolumeL = (totalMass / rho) / 1000;
+      const solventMass = totalMass - massSolute;
+
+      const soluteVolumeL = massSolute / rho / 1000; // L
+      const solventVolumeL = solventMass / waterRho / 1000; // L
+      const solutionVolumeL = soluteVolumeL + solventVolumeL;
+
       const moles = massSolute / mw;
       result.molarity = solutionVolumeL > 0 ? moles / solutionVolumeL : null;
 
-      const solventMassKg = (totalMass - massSolute) / 1000;
+      const solventMassKg = solventMass / 1000;
       result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
       result.percent = v;
     } else if (unit === "M" || unit === "N") {
