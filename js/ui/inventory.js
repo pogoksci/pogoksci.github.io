@@ -200,7 +200,7 @@
         id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         concentration_value, concentration_unit,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor ),
+        Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, Synonyms ( synonyms_name, synonyms_eng ) ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .order("created_at", { ascending: false });
@@ -280,6 +280,11 @@
           ? `${row.current_amount}${row.unit || ""}`
           : "-";
 
+      // ✅ Synonyms 처리
+      const synonymsList = row.Substance?.Synonyms || [];
+      const synonymsName = synonymsList.map((s) => s.synonyms_name).filter(Boolean).join(", ");
+      const synonymsEng = synonymsList.map((s) => s.synonyms_eng).filter(Boolean).join(", ");
+
       return {
         id: row.id,
         created_at: row.created_at,
@@ -298,8 +303,8 @@
         name_eng: row.Substance?.substance_name || "",
         cas_rn: row.Substance?.cas_rn || "",
         molecular_mass: row.Substance?.molecular_mass,
-        synonyms_name: row.Substance?.synonyms_name || "",
-        synonyms_eng: row.Substance?.synonyms_eng || "",
+        synonyms_name: synonymsName,
+        synonyms_eng: synonymsEng,
       };
     });
 
