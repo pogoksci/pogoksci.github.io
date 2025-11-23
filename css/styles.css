@@ -1565,7 +1565,7 @@ input[type="date"] {
 
 .chem-grid {
   display: grid;
-  grid-template-columns: minmax(0, 360px) 1fr;
+  grid-template-columns: minmax(0, 240px) 1fr;
   /* Keep the render area the same visual width as the photo box */
   gap: 28px;
   align-items: start;
@@ -1575,7 +1575,7 @@ input[type="date"] {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 360px;
+  max-width: 240px;
   min-width: 0;
   /* Prevent flex item from overflowing while matching photo width */
 }
@@ -1609,6 +1609,10 @@ input[type="date"] {
 .structure-placeholder {
   color: #999;
   font-size: 14px;
+}
+
+.license-notice {
+  font-size: 9px !important;
 }
 
 .chem-info {
@@ -1667,6 +1671,7 @@ input[type="date"] {
 
   .structure-wrapper {
     min-width: 0;
+    max-width: 100%;
   }
 
   .chem-info .label {
