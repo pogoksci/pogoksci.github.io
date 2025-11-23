@@ -1,5 +1,7 @@
 <!-- /pages/inventory-detail.html -->
 
+
+
 <div id="detail-page-container" class="inventory-detail-page">
   <!-- Names Moved Here (Top) -->
   <div class="detail-name-group">
@@ -36,8 +38,20 @@
   <!-- Substance Structure & Properties -->
   <div class="detail-section chem-section">
     <div class="chem-grid">
-      <div id="detail-structure" class="structure-box">
-        <span class="structure-placeholder">구조 이미지 없음</span>
+      <div class="structure-wrapper">
+        <div class="structure-controls">
+          <button id="btn-view-2d" class="view-mode-btn active">2D</button>
+          <button id="btn-view-3d" class="view-mode-btn">3D</button>
+        </div>
+        <div id="detail-structure" class="structure-box mode-2d">
+          <span class="structure-placeholder">구조 이미지 없음</span>
+        </div>
+        <div id="detail-structure-3d" class="structure-box mode-3d" style="display:none; position: relative;">
+          <!-- 3D Viewer -->
+        </div>
+        <div class="license-notice" style="font-size: 10px; color: #aaa; text-align: right; margin-top: 4px;">
+          3D Viewer powered by PubChem
+        </div>
       </div>
       <div class="chem-info">
         <div class="chem-info-row">

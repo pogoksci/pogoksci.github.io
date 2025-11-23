@@ -507,6 +507,69 @@
         }
       });
 
+      // ---------------------------------------------------------
+      // 3D Viewer Logic
+      // ---------------------------------------------------------
+      const btn2d = document.getElementById("btn-view-2d");
+      const btn3d = document.getElementById("btn-view-3d");
+      const box2d = document.getElementById("detail-structure");
+      const box3d = document.getElementById("detail-structure-3d");
+      let viewer3d = null;
+
+      if (btn2d && btn3d && box2d && box3d) {
+        btn2d.onclick = () => {
+          btn2d.classList.add("active");
+          btn3d.classList.remove("active");
+          box2d.style.display = "block";
+          box3d.style.display = "none";
+        };
+
+        btn3d.onclick = async () => {
+          btn2d.classList.remove("active");
+          btn3d.classList.add("active");
+          box2d.style.display = "none";
+          box3d.style.display = "block";
+
+          // 이미 iframe이 있으면 다시 로드하지 않음
+          if (box3d.querySelector("iframe")) return;
+
+          const casRn = data.Substance?.cas_rn;
+          if (!casRn) {
+            box3d.innerHTML = '<p style="padding:10px;">CAS 번호가 없어 3D 모델을 불러올 수 없습니다.</p>';
+            return;
+          }
+
+          try {
+            box3d.innerHTML = '<p style="padding:10px; color:#666;">PubChem 3D 모델 로딩 중...</p>';
+
+            // 1. Get CID
+            const cidRes = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${casRn}/cids/JSON`);
+            if (!cidRes.ok) throw new Error("PubChem에서 물질 정보를 찾을 수 없습니다.");
+            const cidJson = await cidRes.json();
+            const cid = cidJson.IdentifierList?.CID?.[0];
+
+            if (!cid) throw new Error("CID를 찾을 수 없습니다.");
+
+            // 2. Embed Iframe
+            // PubChem 3D Conformer Embed URL
+            const embedUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}#section=3D-Conformer&embed=true`;
+
+            box3d.innerHTML = `
+              <iframe 
+                src="${embedUrl}" 
+                style="width: 100%; height: 100%; border: none;" 
+                title="PubChem 3D Viewer"
+                loading="lazy">
+              </iframe>
+            `;
+
+          } catch (e) {
+            console.warn("PubChem Load Error:", e);
+            box3d.innerHTML = `<p style="padding:10px; color:#888; font-size:13px;">3D 모델을 불러올 수 없습니다.<br>(${e.message})</p>`;
+          }
+        };
+      }
+
       if (data.Substance?.cas_rn) {
         const checkUpdate = async () => {
           try {

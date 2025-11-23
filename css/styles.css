@@ -1878,3 +1878,57 @@ input[type="date"] {
   color: #333;
   white-space: normal;
 }
+
+/* =================================================================
+   3D Molecule Viewer Styles
+================================================================= */
+.structure-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.structure-controls {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 5px;
+  justify-content: flex-end;
+}
+
+.view-mode-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.view-mode-btn:hover {
+  background-color: #eee;
+}
+
+.view-mode-btn.active {
+  background-color: #00a0b2;
+  color: white;
+  border-color: #00a0b2;
+}
+
+.structure-box.mode-3d {
+  width: 100%;
+  height: 200px;
+  /* Match existing structure box height */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+/* Ensure canvas inside 3Dmol fills the container */
+.structure-box.mode-3d canvas {
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+}
