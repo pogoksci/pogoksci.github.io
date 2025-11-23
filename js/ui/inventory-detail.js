@@ -3,7 +3,7 @@
   const getApp = () => globalThis.App || {};
   const getSupabase = () => getApp().supabase;
 
-  const toNumber = (val) => {
+  const _toNumber = (val) => {
     const n = Number(val);
     return Number.isFinite(n) ? n : null;
   };
@@ -548,7 +548,7 @@
       const btnZoomOut = document.getElementById("btn-zoom-out");
       const box2d = document.getElementById("detail-structure");
       const box3d = document.getElementById("detail-structure-3d");
-      let viewer3d = null;
+      const _viewer3d = null;
       let currentZoom = 1.0;
 
       const applyZoom = () => {
@@ -610,7 +610,9 @@
             // 3D 데이터가 있는지 먼저 확인 (SDF 요청)
             const checkRes = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/record/SDF/?record_type=3d`);
             if (!checkRes.ok) {
-              throw new Error("이 물질은 3D 구조 데이터가 제공되지 않습니다.");
+              box3d.style.backgroundColor = "#f9f9f9";
+              box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
+              return;
             }
 
             // 3. Embed Iframe
@@ -628,9 +630,8 @@
             `;
 
           } catch (e) {
-            console.warn("PubChem Load Error:", e);
             box3d.style.backgroundColor = "#f9f9f9";
-            box3d.innerHTML = `<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>`;
+            box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
           }
         };
       }

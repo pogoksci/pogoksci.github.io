@@ -635,7 +635,7 @@
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
 
-                const { data: uploadData, error: uploadError } = await supabase.storage
+                const { data: _uploadData, error: uploadError } = await supabase.storage
                   .from('msds-pdf')
                   .upload(fileName, file);
 
@@ -756,7 +756,7 @@
               }
 
               if (createdId) {
-                const { area_id, purchase_volume, photo_320_base64, photo_160_base64, ...updatePayload } = inventoryDetails;
+                const { area_id: _area_id, purchase_volume: _purchase_volume, photo_320_base64: _photo_320_base64, photo_160_base64: _photo_160_base64, ...updatePayload } = inventoryDetails;
                 const { error: updateError } = await supabase
                   .from("Inventory")
                   .update(updatePayload)
