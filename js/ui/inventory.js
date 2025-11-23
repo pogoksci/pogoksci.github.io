@@ -10,6 +10,7 @@
   const getApp = () => globalThis.App || {};
   const getSupabase = () => getApp().supabase; // ✅ App.supabase 인스턴스 사용
   let currentSort = "category_name_kor"; // 기본 정렬: 한글순(분류)
+  let allInventoryData = []; // ✅ 전체 데이터 저장용 (검색 필터링)
 
   // ------------------------------------------------------------
   // 1️⃣ 정렬 함수
@@ -135,7 +136,7 @@
       .select(`
         id, current_amount, unit, classification, created_at, photo_url_320,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( substance_name, cas_rn, molecular_formula ),
+        Substance ( substance_name, cas_rn, molecular_formula, chem_name_kor, synonyms_name, synonyms_eng ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .order("created_at", { ascending: false });
@@ -164,15 +165,48 @@
         unit: row.unit,
         classification: row.classification || "",
         photo_url_320: row.photo_url_320 || null,
-        name_kor: row.Substance?.name || "",
-        name_eng: "",
+        name_kor: row.Substance?.name || row.Substance?.chem_name_kor || "", // ✅ chem_name_kor 우선 사용
+        name_eng: row.Substance?.substance_name || "", // ✅ substance_name을 영문명으로 가정
         cas_rn: row.Substance?.cas_rn || "",
         formula: row.Substance?.molecular_formula || "",
+        synonyms_name: row.Substance?.synonyms_name || "",
+        synonyms_eng: row.Substance?.synonyms_eng || "",
         storage_location: loc,
       };
     });
 
-    const sorted = sortData(mapped, currentSort);
+    allInventoryData = mapped; // ✅ 전체 데이터 저장
+    applyFilterAndRender(); // ✅ 필터링 및 렌더링 호출
+  }
+
+  // ------------------------------------------------------------
+  // 3-1️⃣ 검색 필터링 및 렌더링
+  // ------------------------------------------------------------
+  function applyFilterAndRender() {
+    const container = document.getElementById("inventory-list-container");
+    const status = document.getElementById("status-message-inventory-list");
+    const searchInput = document.getElementById("inventory-search-input");
+    const query = (searchInput?.value || "").trim().toLowerCase();
+
+    // ✅ 검색 필터링
+    let filtered = allInventoryData;
+    if (query) {
+      filtered = allInventoryData.filter((item) => {
+        const targetFields = [
+          item.cas_rn,
+          item.name_eng, // substance_name
+          item.formula,
+          item.name_kor, // chem_name_kor
+          item.synonyms_name,
+          item.synonyms_eng,
+          item.classification,
+        ];
+        return targetFields.some((field) => String(field || "").toLowerCase().includes(query));
+      });
+    }
+
+    // ✅ 정렬 및 렌더링
+    const sorted = sortData(filtered, currentSort);
     renderList(sorted, container, status);
   }
 
@@ -264,19 +298,30 @@
   function bindListPage() {
     console.log("🧭 bindListPage() 실행됨");
 
-    const refreshBtn = document.getElementById("refresh-btn");
-    if (refreshBtn) {
-      refreshBtn.onclick = () => {
-        console.log("🔄 목록 새로고침");
-        loadList();
-      };
+    // ✅ SortDropdown 초기화
+    if (App.SortDropdown && App.SortDropdown.init) {
+      App.SortDropdown.init({
+        onChange: (val) => {
+          console.log(`🔽 정렬 변경: ${val}`);
+          currentSort = val;
+          applyFilterAndRender();
+        },
+        onRefresh: () => {
+          console.log("🔄 목록 새로고침");
+          loadList();
+        },
+        defaultLabel: "한글명(분류)",
+        defaultValue: "category_name_kor",
+      });
     }
 
-    const sortSelect = document.getElementById("sort-select");
-    if (sortSelect) {
-      sortSelect.onchange = () => {
-        currentSort = sortSelect.value;
-        loadList();
+    // ✅ 검색 입력 이벤트
+    const searchInput = document.getElementById("inventory-search-input");
+    if (searchInput) {
+      // 기존 리스너 제거가 어려우므로, oninput 사용하거나 중복 방지 필요
+      // 여기서는 간단히 oninput 사용
+      searchInput.oninput = () => {
+        applyFilterAndRender();
       };
     }
 

@@ -47,6 +47,9 @@
           console.log("📦 Router → Inventory.loadList() 실행");
           await App.Inventory.loadList();
         }
+        if (App?.Inventory?.bindListPage) {
+          App.Inventory.bindListPage();
+        }
         break;
 
       case "addCabinet":
