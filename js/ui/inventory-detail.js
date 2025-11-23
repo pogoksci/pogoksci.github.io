@@ -3,7 +3,7 @@
   const getApp = () => globalThis.App || {};
   const getSupabase = () => getApp().supabase;
 
-  const _toNumber = (val) => {
+  const toNumber = (val) => {
     const n = Number(val);
     return Number.isFinite(n) ? n : null;
   };
@@ -230,23 +230,23 @@
       };
 
       const convState = {
-        label1: "Conversion 1",
-        label2: "Conversion 2",
+        label1: "변환농도1",
+        label2: "변환농도2",
         value1: "-",
         value2: "-",
       };
 
       if (data.converted_concentration_value_1) {
         const unit1 = data.converted_concentration_unit_1;
-        if (unit1 === "M") convState.label1 = "Molarity (M)";
-        else if (unit1 === "%") convState.label1 = "Mass %";
+        if (unit1 === "M") convState.label1 = "몰농도(M)";
+        else if (unit1 === "%") convState.label1 = "퍼센트농도(%)";
         else convState.label1 = `Conversion (${unit1})`;
         convState.value1 = formatConvVal(data.converted_concentration_value_1, unit1);
       }
 
       if (data.converted_concentration_value_2) {
         const unit2 = data.converted_concentration_unit_2;
-        if (unit2 === "m") convState.label2 = "Molality (m)";
+        if (unit2 === "m") convState.label2 = "몰랄농도(m)";
         else convState.label2 = `Conversion (${unit2})`;
         convState.value2 = formatConvVal(data.converted_concentration_value_2, unit2);
       }
@@ -548,7 +548,7 @@
       const btnZoomOut = document.getElementById("btn-zoom-out");
       const box2d = document.getElementById("detail-structure");
       const box3d = document.getElementById("detail-structure-3d");
-      const _viewer3d = null;
+      let viewer3d = null;
       let currentZoom = 1.0;
 
       const applyZoom = () => {
@@ -573,9 +573,8 @@
         btn2d.onclick = () => {
           btn2d.classList.add("active");
           btn3d.classList.remove("active");
-          box2d.style.display = "flex";
+          box2d.style.display = "block";
           box3d.style.display = "none";
-          box2d.style.backgroundColor = "#fafafa";
           currentZoom = 1.0; // Reset zoom on switch
           applyZoom();
         };
@@ -584,8 +583,7 @@
           btn2d.classList.remove("active");
           btn3d.classList.add("active");
           box2d.style.display = "none";
-          box3d.style.display = "flex";
-          box3d.style.backgroundColor = "#fafafa";
+          box3d.style.display = "block";
           currentZoom = 1.0; // Reset zoom on switch
           applyZoom();
 
@@ -594,13 +592,12 @@
 
           const casRn = data.Substance?.cas_rn;
           if (!casRn) {
-            box3d.style.backgroundColor = "#f9f9f9";
-            box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
+            box3d.innerHTML = '<p style="padding:10px;">CAS 번호가 없어 3D 모델을 불러올 수 없습니다.</p>';
             return;
           }
 
           try {
-            box3d.innerHTML = '<div class="structure-error" style="color:#666;">PubChem 3D 모델 로딩 중...</div>';
+            box3d.innerHTML = '<p style="padding:10px; color:#666;">PubChem 3D 모델 로딩 중...</p>';
 
             // 1. Get CID
             const cid = await loadPubChemCid();
@@ -610,16 +607,13 @@
             // 3D 데이터가 있는지 먼저 확인 (SDF 요청)
             const checkRes = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/record/SDF/?record_type=3d`);
             if (!checkRes.ok) {
-              box3d.style.backgroundColor = "#f9f9f9";
-              box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
-              return;
+              throw new Error("이 물질은 3D 구조 데이터가 제공되지 않습니다.");
             }
 
             // 3. Embed Iframe
             // PubChem 3D Conformer Embed URL
             const embedUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}#section=3D-Conformer&embed=true`;
 
-            box3d.style.backgroundColor = "#fafafa";
             box3d.innerHTML = `
               <iframe 
                 src="${embedUrl}" 
@@ -630,8 +624,8 @@
             `;
 
           } catch (e) {
-            box3d.style.backgroundColor = "#f9f9f9";
-            box3d.innerHTML = '<div class="structure-error">3D 모델을 불러올 수 없습니다.<br>(이 물질은 3D 구조 데이터가 제공되지 않습니다.)</div>';
+            console.warn("PubChem Load Error:", e);
+            box3d.innerHTML = `<p style="padding:10px; color:#888; font-size:13px;">3D 모델을 불러올 수 없습니다.<br>(${e.message})</p>`;
           }
         };
       }
