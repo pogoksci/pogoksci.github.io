@@ -34,6 +34,9 @@
   try {
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     globalThis.App.supabase = client;
+    globalThis.App.supabaseUrl = SUPABASE_URL;
+    globalThis.App.supabaseAnonKey = SUPABASE_ANON_KEY;
+    globalThis.App.projectFunctionsBaseUrl = `${SUPABASE_URL}/functions/v1`;
 
     console.log("✅ Supabase 클라이언트 초기화 완료");
   } catch (err) {

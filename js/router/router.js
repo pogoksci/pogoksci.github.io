@@ -43,9 +43,9 @@
         break;
 
       case "inventory":
-        if (App?.Inventory?.loadList) {
-          console.log("📦 Router → Inventory.loadList() 실행");
-          await App.Inventory.loadList();
+        if (App?.Inventory?.showListPage) {
+          console.log("📦 Router → Inventory.showListPage() 실행");
+          await App.Inventory.showListPage();
         }
         if (App?.Inventory?.bindListPage) {
           App.Inventory.bindListPage();

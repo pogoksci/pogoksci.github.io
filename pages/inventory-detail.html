@@ -1,36 +1,69 @@
-<!-- /pages/inveltory-detail.html -->
+<!-- /pages/inventory-detail.html -->
 
-<div id="detail-page-container">
-    <div class="detail-section">
-        <div id="detail-photo" class="photo-preview-box">
-            <span>사진 없음</span>
-        </div>
-        <h2 id="detail-name">정보 로드 중...</h2>
-        <p id="detail-cas"></p>
-        <p id="detail-location"></p>
-    </div>
+<div id="detail-page-container" class="inventory-detail-page">
+  <!-- Names Moved Here (Top) -->
+  <div class="detail-name-group">
+    <h2 id="detail-name-kor">정보 로드 중...</h2>
+    <span id="detail-name-eng" class="eng-name"></span>
+  </div>
 
-    <div class="detail-section">
-        <button id="msds-pdf-btn" style="display: none;">MSDS PDF 파일 보기</button>
-        <p id="no-msds-pdf" style="color: #888; display: none;">등록된 PDF 파일이 없습니다.</p>
+  <!-- 2-Column Grid: Photo & Info -->
+  <div class="detail-grid">
+    <div class="detail-left">
+      <div id="detail-photo" class="photo-preview-box">
+        <span>사진 없음</span>
+      </div>
     </div>
+    <div class="detail-right">
+      <ul class="detail-info-list">
+        <li><span class="label">CAS:</span> <span id="detail-cas" class="value">-</span></li>
+        <li><span class="label">화학식:</span> <span id="detail-formula" class="value">-</span></li>
+        <li><span class="label">분류:</span> <span id="detail-class" class="value">-</span></li>
+        <li><span class="label">상태:</span> <span id="detail-state" class="value">-</span></li>
+        <li><span class="label">제조사:</span> <span id="detail-manufacturer" class="value">-</span></li>
+        <li><span class="label">재고:</span> <span id="detail-quantity" class="value">-</span></li>
+        <li><span class="label">등록일:</span> <span id="detail-created-at" class="value">-</span></li>
+      </ul>
+    </div>
+  </div>
 
-    <div class="detail-section">
-        <h3>MSDS (Material Safety Data Sheet)</h3>
-        <div id="msds-accordion" class="accordion">
-            <p>MSDS 정보 로드 중...</p>
-        </div>
-    </div>
+  <!-- Location Info (Full Width) -->
+  <div class="detail-location-section">
+    <strong>보관 위치:</strong>
+    <p id="detail-location" class="location-text">-</p>
+  </div>
 
-    <div class="detail-section">
-        <h3>유해화학물질 분류 정보</h3>
-        <div id="hazard-info-container">
-            <p>분류 정보 로드 중...</p>
-        </div>
+  <!-- 3. MSDS Accordion -->
+  <div class="detail-section msds-section">
+    <h3>MSDS (Material Safety Data Sheet)</h3>
+    <div id="msds-accordion" class="accordion">
+      <!-- JS will populate 16 items here -->
+      <p>MSDS 정보 로드 중...</p>
     </div>
+  </div>
 
-    <div class="fab-container">
-        <button id="edit-inventory-btn" class="fab-edit">수정</button>
-        <button id="delete-inventory-btn" class="fab-delete">삭제</button>
+  <!-- 4. MSDS PDF Link -->
+  <div class="detail-section msds-pdf-section">
+    <div id="msds-pdf-container" style="display: none;">
+      <a id="msds-pdf-link" href="#" target="_blank" class="pdf-download-btn">
+        <span class="pdf-icon">📄</span> MSDS PDF 보기/다운로드
+      </a>
     </div>
+    <p id="no-msds-pdf" style="color: #888; display: none;">등록된 MSDS PDF 파일이 없습니다.</p>
+  </div>
+
+  <!-- 5. Hazard Info -->
+  <div class="detail-section hazard-section">
+    <h3>유해화학물질 분류 정보</h3>
+    <div id="hazard-info-container" class="hazard-card">
+      <p class="hazard-placeholder">분류 정보 로드 중...</p>
+    </div>
+  </div>
+
+  <!-- 6. Actions -->
+  <div class="detail-action-group">
+    <button id="detail-back-btn" class="detail-action detail-action--secondary">목록으로</button>
+    <button id="edit-inventory-btn" class="detail-action detail-action--primary">수정</button>
+    <button id="delete-inventory-btn" class="detail-action detail-action--danger">삭제</button>
+  </div>
 </div>

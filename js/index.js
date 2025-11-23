@@ -11,7 +11,7 @@
   // 1️⃣ 모듈 경로 정의
   // ------------------------------------------------------------
   const baseModules = [
-    // "./js/supabaseClient.js",
+    "./js/supabaseClient.js",
     "./js/app-bootstrap.js", // includeHTML 정의
   ];
   const coreModules = [

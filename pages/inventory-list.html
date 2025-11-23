@@ -1,15 +1,40 @@
+<!-- /pages/inventory-list.html -->
+<div id="inventory-list-page">
+  <div class="list-header">
+    <h2>약품 관리</h2>
+
+    <div class="header-actions">
+      <!-- ✅ 검색창 추가 -->
+      <div class="search-container"
+        style="display: flex; align-items: center; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 0 8px; margin-right: 8px; height: 36px;">
+        <span class="material-symbols-outlined" style="font-size: 20px; color: #888;">search</span>
+        <input type="text" id="inventory-search-input" placeholder="약품 검색..."
+          style="border: none; outline: none; padding: 0 8px; font-size: 14px; width: 200px;">
+      </div>
+
+      <!-- ✅ 공용 SortDropdown 컴포넌트 (App.SortDropdown.init에서 제어) -->
+      <div class="custom-dropdown" id="sort-dropdown">
+        <button class="dropdown-toggle" id="sort-toggle" aria-haspopup="true" aria-expanded="false">
+          <span class="material-symbols-outlined">sort</span>
+          <span id="sort-label" data-value="category_name_kor">한글명(분류)</span>
+          <span class="material-symbols-outlined arrow">expand_more</span>
+        </button>
 
         <div class="dropdown-menu" id="sort-menu" role="menu">
           <div class="dropdown-item" data-value="category_name_kor">
             <span class="material-symbols-outlined">category</span>
             한글명(분류)
           </div>
+          <div class="dropdown-item" data-value="category_name_eng">
+            <span class="material-symbols-outlined">category</span>
+            영문명(분류)
+          </div>
           <div class="dropdown-item" data-value="name_kor">
-            <span class="material-symbols-outlined">text_fields</span>
+            <span class="material-symbols-outlined">sort_by_alpha</span>
             한글명(전체)
           </div>
           <div class="dropdown-item" data-value="name_eng">
-            <span class="material-symbols-outlined">translate</span>
+            <span class="material-symbols-outlined">sort_by_alpha</span>
             영문명(전체)
           </div>
           <div class="dropdown-item" data-value="formula">
@@ -19,10 +44,6 @@
           <div class="dropdown-item" data-value="storage_location">
             <span class="material-symbols-outlined">location_on</span>
             위치
-          </div>
-          <div class="dropdown-item" data-value="quantity_desc">
-            <span class="material-symbols-outlined">inventory_2</span>
-            재고량
           </div>
           <div class="dropdown-item" data-value="created_at_desc">
             <span class="material-symbols-outlined">schedule</span>

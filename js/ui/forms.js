@@ -5,7 +5,7 @@
   console.log("🧾 App.Forms 모듈 로드됨");
 
   const { setupButtonGroup, makePayload } = App.Utils;
-  const { set, reset, dump } = App.State;
+  const { set, reset, dump, get } = App.State;
   const { start: startCamera, setupModalListeners, processImage } = App.Camera;
   const supabase = App.supabase;
 
@@ -199,10 +199,10 @@
           if (!areaMatched && areaOtherGroup) {
             areaOtherGroup.style.display = "block";
             areaOtherInput.value = areaName || "";
-          
-          // ✅ 기타 버튼도 눌린 상태로 표시
-          const areaOtherBtn = document.querySelector("#area-button-group button[data-value='기타']");
-          if (areaOtherBtn) areaOtherBtn.classList.add("active");
+
+            // ✅ 기타 버튼도 눌린 상태로 표시
+            const areaOtherBtn = document.querySelector("#area-button-group button[data-value='기타']");
+            if (areaOtherBtn) areaOtherBtn.classList.add("active");
           }
 
           // 🏷 시약장 이름 복원
@@ -217,7 +217,7 @@
           if (!cabMatched && cabOtherGroup) {
             cabOtherGroup.style.display = "block";
             cabOtherInput.value = detail.cabinet_name || "";
-          
+
             // ✅ 시약장 이름의 기타 버튼도 눌린 상태로 표시
             const cabOtherBtn = document.querySelector("#cabinet_name_buttons button[data-value='기타']");
             if (cabOtherBtn) cabOtherBtn.classList.add("active");
@@ -259,7 +259,7 @@
             previewBox.innerHTML = `<img src="${url}" alt="시약장 사진">`;
           } else {
             previewBox.innerHTML = `<span>사진 없음</span>`;
-}
+          }
 
           // ✅ edit 모드에서도 버튼 클릭이 가능하도록 이벤트 재연결
           [
@@ -296,36 +296,122 @@
     const statusMsg = document.getElementById("statusMessage");
     if (title) title.textContent = mode === "edit" ? "약품 정보 수정" : "약품 입고 정보 입력";
 
+    const BUTTON_GROUP_IDS = [
+      "classification_buttons",
+      "state_buttons",
+      "unit_buttons",
+      "concentration_unit_buttons",
+      "manufacturer_buttons",
+    ];
+
     // ✅ 수정 모드 기본 데이터 반영
     if (mode === "edit" && detail) {
-      ["cas_rn", "purchase_volume", "concentration_value", "purchase_date"].forEach((id) => {
+      const fieldMap = {
+        cas_rn: detail.Substance?.cas_rn ?? "",
+        purchase_volume: detail.initial_amount ?? "",
+        concentration_value: detail.concentration_value ?? "",
+        purchase_date: detail.purchase_date ?? "",
+      };
+
+      Object.entries(fieldMap).forEach(([id, value]) => {
         const el = document.getElementById(id);
-        if (el) el.value = detail[id]?.split?.("T")[0] || detail[id] || "";
+        if (!el) return;
+        const normalized = typeof value === "string" ? value.split("T")[0] : value ?? "";
+        el.value = normalized;
+        set(id, normalized);
       });
-      if (detail.photo_url_320) {
+
+      const existingPhoto = detail.photo_url_320 || detail.photo_url_160 || null;
+      if (existingPhoto) {
         const preview = document.getElementById("photo-preview");
-        preview.innerHTML = `<img src="${detail.photo_url_320}" alt="Preview">`;
+        if (preview) {
+          preview.innerHTML = `<img src="${existingPhoto}" alt="Preview">`;
+        }
+        set("photo_base64", existingPhoto);
       }
+      set("photo_updated", false);
+    } else {
+      const clearInputs = ["cas_rn", "purchase_volume", "concentration_value", "purchase_date", "manufacturer_other"];
+      clearInputs.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.value = "";
+          el.setAttribute("value", ""); // DOM 속성도 강제 초기화
+        }
+      });
+      BUTTON_GROUP_IDS.forEach((groupId) => {
+        const group = document.getElementById(groupId);
+        if (group) group.querySelectorAll(".active").forEach((btn) => btn.classList.remove("active"));
+      });
+      ["classification", "state", "unit", "concentration_unit", "manufacturer"].forEach((key) => set(key, null));
+      const otherGroup = document.getElementById("other_manufacturer_group");
+      if (otherGroup) otherGroup.style.display = "none";
+      const otherInput = document.getElementById("manufacturer_other");
+      if (otherInput) otherInput.value = "";
+      set("msds_pdf_file", null);
+      set("photo_base64", null);
+      set("photo_updated", false);
     }
 
     // ✅ 버튼 그룹 초기화 및 복원
-    ["classification_buttons", "state_buttons", "unit_buttons", "concentration_unit_buttons", "manufacturer_buttons"].forEach((id) => {
-      setupButtonGroup(id, (btn) => {
-        const key = id.replace("_buttons", "");
-        set(key, btn.dataset.value);
-        if (id === "manufacturer_buttons") {
+    const buttonFieldMap = {
+      classification_buttons: (d) => d?.classification ?? null,
+      state_buttons: (d) => d?.state ?? null,
+      unit_buttons: (d) => d?.unit ?? null,
+      concentration_unit_buttons: (d) => d?.concentration_unit ?? null,
+      manufacturer_buttons: (d) => d?.manufacturer ?? null,
+    };
+
+    Object.entries(buttonFieldMap).forEach(([groupId, getter]) => {
+      const stateKey = groupId.replace("_buttons", "");
+      setupButtonGroup(groupId, (btn) => {
+        set(stateKey, btn.dataset.value);
+        if (groupId === "manufacturer_buttons") {
           const group = document.getElementById("other_manufacturer_group");
-          if (btn.dataset.value === "기타") group.style.display = "block";
-          else group.style.display = "none";
+          if (group) group.style.display = btn.dataset.value === "기타" ? "block" : "none";
         }
       });
+
       if (mode === "edit" && detail) {
-        const key = id.replace("_buttons", "");
-        const val = detail[key];
-        if (val) {
-          const btn = document.querySelector(`#${id} button[data-value="${val}"]`);
-          if (btn) btn.classList.add("active");
-          set(key, val);
+        const raw = getter(detail);
+        const normalizedValue = raw == null ? "" : String(raw).trim();
+        if (!normalizedValue) return;
+        const buttons = Array.from(document.querySelectorAll(`#${groupId} button`));
+        const sanitize = (v) => v.replace(/\s+/g, "").toLowerCase();
+        let targetBtn = buttons.find((btn) => {
+          const candidate = (btn.dataset.value || btn.textContent || "").trim();
+          return candidate === normalizedValue;
+        });
+        if (!targetBtn) {
+          targetBtn = buttons.find((btn) => {
+            const candidate = (btn.dataset.value || btn.textContent || "").trim();
+            return sanitize(candidate) === sanitize(normalizedValue);
+          });
+        }
+        if (targetBtn) {
+          buttons.forEach((btn) => btn.classList.remove("active"));
+          targetBtn.classList.add("active");
+          const appliedValue = targetBtn.dataset.value || targetBtn.textContent.trim();
+          set(stateKey, appliedValue);
+          if (groupId === "manufacturer_buttons") {
+            const group = document.getElementById("other_manufacturer_group");
+            if (group) group.style.display = appliedValue === "기타" ? "block" : "none";
+            if (appliedValue === "기타") {
+              const otherInput = document.getElementById("manufacturer_other");
+              if (otherInput && normalizedValue !== "기타") otherInput.value = normalizedValue;
+            }
+          }
+        } else if (groupId === "manufacturer_buttons") {
+          const otherBtn = document.querySelector(`#${groupId} button[data-value="기타"]`);
+          if (otherBtn) {
+            buttons.forEach((btn) => btn.classList.remove("active"));
+            otherBtn.classList.add("active");
+            set("manufacturer", "기타");
+            const otherInput = document.getElementById("manufacturer_other");
+            if (otherInput) otherInput.value = normalizedValue;
+            const group = document.getElementById("other_manufacturer_group");
+            if (group) group.style.display = "block";
+          }
         }
       }
     });
@@ -343,56 +429,115 @@
         const src = e.target.result;
         preview.innerHTML = `<img src="${src}" alt="Preview">`;
         set("photo_base64", src);
+        set("photo_updated", true);
       };
       reader.readAsDataURL(file);
     };
     if (photoBtn && photoInput) photoBtn.onclick = () => photoInput.click();
-    if (cameraBtn && cameraInput) cameraBtn.onclick = () => cameraInput.click();
+    if (cameraBtn && typeof startCamera === "function") {
+      cameraBtn.onclick = () => startCamera();
+      setupModalListeners?.();
+    } else if (cameraBtn && cameraInput) {
+      cameraBtn.onclick = () => cameraInput.click();
+    }
     if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
     if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
+
+    // ✅ MSDS PDF 처리
+    const msdsInput = document.getElementById("msds-pdf-input");
+    if (msdsInput) {
+      msdsInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          if (file.size > 10 * 1024 * 1024) {
+            alert("파일 크기는 10MB 이하여야 합니다.");
+            msdsInput.value = "";
+            set("msds_pdf_file", null);
+            return;
+          }
+          set("msds_pdf_file", file);
+        }
+      };
+    }
 
     // ✅ 위치 (Area → Cabinet → 도어/단/열)
     const areaSelect = document.getElementById("location_area_select");
     const cabSelect = document.getElementById("location_cabinet_select");
 
-    if (areaSelect && supabase) {
-      const { data: areas } = await supabase.from("Area").select("id, area_name").order("area_name");
-      if (areas?.length) {
-        areaSelect.innerHTML += areas.map((a) => `<option value="${a.id}">${a.area_name}</option>`).join("");
-      }
+    if (areaSelect && cabSelect && supabase) {
+      const defaultAreaOptions =
+        (areaSelect.__defaultOptions ?? areaSelect.innerHTML) ||
+        `<option value="">-- 선택 안 함 --</option>`;
+      areaSelect.__defaultOptions = defaultAreaOptions;
 
-      // 수정모드: area/cabinet 복원
-      if (mode === "edit" && detail.area_id) {
-        areaSelect.value = detail.area_id;
-        const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", detail.area_id);
-        cabSelect.innerHTML =
-          `<option value="">-- 선택 안 함 --</option>` +
-          (cabs || []).map((c) => `<option value="${c.id}">${c.cabinet_name}</option>`).join("");
-        cabSelect.disabled = false;
-        if (detail.cabinet_id) cabSelect.value = detail.cabinet_id;
-        await renderCabinetButtons(detail.cabinet_id, detail);
+      const { data: areas } = await supabase.from("Area").select("id, area_name").order("area_name");
+      areaSelect.innerHTML =
+        defaultAreaOptions +
+        (areas?.map?.((a) => `<option value="${a.id}">${a.area_name}</option>`).join("") || "");
+
+      if (mode === "edit" && detail) {
+        const areaId = detail.area_id || detail.Cabinet?.area_id || detail.Cabinet?.Area?.id || null;
+        if (areaId) {
+          areaSelect.value = areaId;
+          set("area_id", areaId);
+
+          const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", areaId);
+          cabSelect.innerHTML =
+            `<option value="">-- 선택 안 함 --</option>` +
+            (cabs || []).map(({ id, cabinet_name }) => `<option value="${id}">${cabinet_name}</option>`).join("");
+          cabSelect.disabled = false;
+
+          const cabinetId = detail.cabinet_id || detail.Cabinet?.id || null;
+          if (cabinetId) {
+            cabSelect.value = cabinetId;
+            set("cabinet_id", cabinetId);
+          }
+
+          ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => {
+            let value = detail[key] ?? null;
+            if (key === "door_vertical") value = normalizeChoice(value, "vertical");
+            if (key === "door_horizontal") value = normalizeChoice(value, "horizontal");
+            set(key, value);
+          });
+          const normalizedDetail = {
+            ...detail,
+            door_vertical: get("door_vertical"),
+            door_horizontal: get("door_horizontal"),
+            internal_shelf_level: get("internal_shelf_level"),
+            storage_column: get("storage_column"),
+          };
+          await renderCabinetButtons(cabinetId, normalizedDetail);
+        }
       }
 
       areaSelect.onchange = async (e) => {
-        const areaId = e.target.value;
+        const areaId = e.target.value || null;
         set("area_id", areaId);
         cabSelect.disabled = !areaId;
         if (!areaId) {
           cabSelect.innerHTML = `<option value="">-- 선택 안 함 --</option>`;
+          set("cabinet_id", null);
+          ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
+          await renderCabinetButtons(null, null);
           return;
         }
         const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", areaId);
         cabSelect.innerHTML =
           `<option value="">-- 선택 안 함 --</option>` +
           (cabs || []).map((c) => `<option value="${c.id}">${c.cabinet_name}</option>`).join("");
+        cabSelect.value = "";
+        set("cabinet_id", null);
+        ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
+        await renderCabinetButtons(null, null);
       };
     }
 
     if (cabSelect) {
       cabSelect.onchange = async (e) => {
         const cabId = e.target.value;
-        set("cabinet_id", cabId);
-        await renderCabinetButtons(cabId, null);
+        set("cabinet_id", cabId || null);
+        ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
+        await renderCabinetButtons(cabId || null, null);
       };
     }
 
@@ -404,99 +549,408 @@
 
         try {
           const state = dump();
-          const payload = {
-            cas_rn: document.getElementById("cas_rn").value.trim(),
-            classification: state.classification,
-            state: state.state,
-            purchase_volume: document.getElementById("purchase_volume").value || null,
-            unit: state.unit,
-            concentration_value: document.getElementById("concentration_value").value || null,
-            concentration_unit: state.concentration_unit,
-            manufacturer: state.manufacturer === "기타"
-              ? document.getElementById("manufacturer_other").value.trim()
-              : state.manufacturer,
-            purchase_date: document.getElementById("purchase_date").value || null,
-            area_id: state.area_id || null,
-            cabinet_id: state.cabinet_id || null,
-            door_vertical: state.door_vertical || null,
-            door_horizontal: state.door_horizontal || null,
-            internal_shelf_level: state.internal_shelf_level || null,
-            storage_column: state.storage_column || null,
-            photo_base64: state.photo_base64 || null,
-            created_at: new Date().toISOString(),
-          };
+          const cas = document.getElementById("cas_rn").value.trim();
+          const volumeValue = document.getElementById("purchase_volume").value;
+          const volume = Number.parseFloat(volumeValue);
+          const unit = state.unit;
+          const concentrationValue = document.getElementById("concentration_value").value;
+          const concentrationUnit = state.concentration_unit;
 
-          if (!payload.cas_rn) {
+          if (!cas) {
             alert("CAS 번호는 필수 입력 항목입니다.");
             statusMsg.textContent = "";
             return;
           }
 
-          if (mode === "edit" && detail?.id) {
-            const { error } = await supabase.from("Inventory").update(payload).eq("id", detail.id);
-            if (error) throw error;
-            alert("✅ 약품 정보가 수정되었습니다.");
-          } else {
-            const { error } = await supabase.from("Inventory").insert(payload);
-            if (error) throw error;
-            alert("✅ 약품이 성공적으로 등록되었습니다.");
+          if (!Number.isFinite(volume) || volume <= 0) {
+            alert("구입용량을 바르게 입력해 주세요.");
+            statusMsg.textContent = "";
+            return;
           }
 
-          await App.includeHTML("pages/inventory-list.html", "form-container");
-          App.Inventory.loadList();
+          if (!unit) {
+            alert("구입용량 단위를 선택해 주세요.");
+            statusMsg.textContent = "";
+            return;
+          }
+
+          const manufacturerValue =
+            state.manufacturer === "기타"
+              ? document.getElementById("manufacturer_other").value.trim() || null
+              : state.manufacturer || null;
+          const purchaseDate = document.getElementById("purchase_date").value || null;
+          const inventoryDetails = {
+            purchase_volume: volume,
+            unit,
+            state: state.state || null,
+            classification: state.classification || null,
+            manufacturer: manufacturerValue,
+            purchase_date: purchaseDate,
+            cabinet_id: state.cabinet_id || null,
+            door_vertical: state.door_vertical || null,
+            door_horizontal: state.door_horizontal || null,
+            internal_shelf_level: state.internal_shelf_level || null,
+            storage_column: state.storage_column || null,
+            concentration_value: concentrationValue ? Number(concentrationValue) : null,
+            concentration_unit: concentrationUnit || null,
+          };
+
+          // 📤 MSDS PDF 업로드
+          // MSDS PDF 처리 (Deduplication Logic)
+          if (state.msds_pdf_file) {
+            statusMsg.textContent = "📄 MSDS PDF 처리 중...";
+            try {
+              const file = state.msds_pdf_file;
+
+              // 1. 해시 계산
+              const arrayBuffer = await file.arrayBuffer();
+              const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+              const hashArray = Array.from(new Uint8Array(hashBuffer));
+              const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+              console.log("File Hash:", hashHex);
+
+              // 2. 중복 확인
+              const { data: existingFile } = await supabase
+                .from('Inventory')
+                .select('msds_pdf_url')
+                .eq('msds_pdf_hash', hashHex)
+                .limit(1)
+                .maybeSingle();
+
+              if (existingFile?.msds_pdf_url) {
+                console.log("♻️ Duplicate file found. Reusing URL:", existingFile.msds_pdf_url);
+                inventoryDetails.msds_pdf_url = existingFile.msds_pdf_url;
+                inventoryDetails.msds_pdf_hash = hashHex;
+              } else {
+                // 3. 업로드
+                console.log("📤 New file. Uploading...");
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                  .from('msds-pdf')
+                  .upload(fileName, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: publicUrlData } = supabase.storage
+                  .from('msds-pdf')
+                  .getPublicUrl(fileName);
+
+                inventoryDetails.msds_pdf_url = publicUrlData.publicUrl;
+                inventoryDetails.msds_pdf_hash = hashHex;
+                console.log("✅ MSDS PDF Uploaded:", inventoryDetails.msds_pdf_url);
+              }
+            } catch (err) {
+              console.error("PDF Processing Error:", err);
+              alert("MSDS PDF 처리 중 오류가 발생했습니다: " + err.message);
+              statusMsg.textContent = "";
+              return;
+            }
+          } else if (mode === "edit" && detail?.msds_pdf_url) {
+            // 수정 모드이고 새 파일이 없으면 기존 URL/Hash 유지
+            inventoryDetails.msds_pdf_url = detail.msds_pdf_url;
+            inventoryDetails.msds_pdf_hash = detail.msds_pdf_hash; // 기존 해시 유지 (필요시 detail 조회 쿼리 수정 필요)
+          }
+
+
+          if (state.photo_base64) {
+            inventoryDetails.photo_320_base64 = state.photo_base64;
+            inventoryDetails.photo_160_base64 = state.photo_base64;
+          }
+
+          if (mode === "edit" && detail?.id) {
+            const updatePayload = {
+              initial_amount: volume,
+              current_amount: volume,
+              unit,
+              state: state.state || null,
+              classification: state.classification || null,
+              manufacturer: manufacturerValue,
+              purchase_date: purchaseDate,
+              cabinet_id: state.cabinet_id || null,
+              door_vertical: state.door_vertical || null,
+              door_horizontal: state.door_horizontal || null,
+              internal_shelf_level: state.internal_shelf_level || null,
+              storage_column: state.storage_column || null,
+              concentration_value: concentrationValue ? Number(concentrationValue) : null,
+              concentration_unit: concentrationUnit || null,
+              msds_pdf_url: inventoryDetails.msds_pdf_url || null,
+              msds_pdf_hash: inventoryDetails.msds_pdf_hash || null, // Hash 추가
+            };
+            if (state.photo_updated) {
+              updatePayload.photo_url_320 = state.photo_base64 || null;
+              updatePayload.photo_url_160 = state.photo_base64 || null;
+            }
+
+            const { error } = await supabase.from("Inventory").update(updatePayload).eq("id", detail.id);
+            if (error) throw error;
+            alert("✅ 약품 정보가 수정되었어요.");
+          } else {
+            const { data, error } = await supabase.functions.invoke("casimport", {
+              method: "POST",
+              body: {
+                casRns: [cas],
+                inventoryDetails,
+              },
+            });
+
+            if (error) throw error;
+            console.log("📦 등록 결과:", data);
+
+            // [Workaround] casimport가 일부 필드(농도, 위치 등)를 누락할 수 있으므로, 생성된 항목을 찾아 다시 업데이트합니다.
+            try {
+              let createdId = data?.inventoryId || data?.id || data?.[0]?.id;
+
+              if (!createdId) {
+                // ID를 반환하지 않는 경우, 가장 최근에 생성된 항목을 조회
+                const { data: latest, error: latestError } = await supabase
+                  .from("Inventory")
+                  .select("id")
+                  .order("created_at", { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+                if (!latestError && latest) {
+                  createdId = latest.id;
+                }
+              }
+
+              if (createdId) {
+                const { area_id, purchase_volume, photo_320_base64, photo_160_base64, ...updatePayload } = inventoryDetails;
+                const { error: updateError } = await supabase
+                  .from("Inventory")
+                  .update(updatePayload)
+                  .eq("id", createdId);
+
+                if (updateError) {
+                  console.warn("⚠️ 추가 정보(농도/위치) 업데이트 실패:", updateError);
+                } else {
+                  console.log("✅ 추가 정보(농도/위치) 업데이트 완료");
+                }
+              } else {
+                console.warn("⚠️ 생성된 Inventory ID를 찾을 수 없어 추가 업데이트를 건너뜁니다.");
+              }
+            } catch (err) {
+              console.warn("⚠️ 추가 업데이트 중 예외 발생:", err);
+            }
+
+            alert("✅ 약품이 성공적으로 등록되었어요.");
+          }
+
+          await App.Inventory?.showListPage?.();
         } catch (err) {
           console.error("❌ 저장 오류:", err);
-          statusMsg.textContent = "❌ 저장 실패. 콘솔을 확인하세요.";
+          statusMsg.textContent = "❌ 저장 실패. 콘솔을 확인해 주세요.";
         }
       };
     }
-
     console.log(`✅ 약품 폼 초기화 완료 (${mode})`);
   }
 
   // -------------------------------------------------
   // 🧩 도어·단·열 버튼 렌더링
   // -------------------------------------------------
-  async function renderCabinetButtons(cabinetId, detail = null) {
-    if (!cabinetId) return;
-    const { data, error } = await supabase.from("Cabinet").select("*").eq("id", cabinetId).maybeSingle();
-    if (error || !data) return console.warn("⚠️ 캐비닛 정보 없음");
+  function normalizeChoice(value, type) {
+    if (value == null) return null;
+    if (typeof value === "number") return String(value);
+    const str = String(value).trim();
+    if (!str) return null;
+    if (/^\d+$/.test(str)) return str;
+    const digit = str.match(/\d+/);
+    if (digit) return digit[0];
+    const maps = {
+      horizontal: { 왼쪽: "1", 오른쪽: "2", 좌: "1", 우: "2" },
+      vertical: { 상: "1", 중: "2", 하: "3" },
+    };
+    return maps[type]?.[str] || null;
+  }
 
+  async function renderCabinetButtons(cabinetId, detail = null) {
     const vBox = document.getElementById("location_door_vertical_group");
     const hBox = document.getElementById("location_door_horizontal_group");
     const sBox = document.getElementById("location_internal_shelf_group");
     const cBox = document.getElementById("location_storage_column_group");
 
-    const makeBtns = (n) =>
-      Array.from({ length: n }, (_, i) => `<button type="button" data-value="${i + 1}">${i + 1}</button>`).join("");
+    const showMessage = (box, msg) => {
+      if (box) box.innerHTML = `<span style="color:#888;">${msg}</span>`;
+    };
 
-    if (vBox && data.door_vertical) {
-      vBox.innerHTML = makeBtns(data.door_vertical, "door_vertical");
-      setupButtonGroup("location_door_vertical_group", (btn) => set("door_vertical", btn.dataset.value));
-      if (detail?.door_vertical)
-        vBox.querySelector(`button[data-value="${detail.door_vertical}"]`)?.classList.add("active");
+    const resetSteps = () => {
+      showMessage(vBox, "수납함 선택 후 표시됩니다.");
+      showMessage(hBox, "3번 항목 선택 후 표시됩니다.");
+      showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+      showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+    };
+
+    if (!cabinetId) {
+      resetSteps();
+      return;
     }
 
-    if (hBox && data.door_horizontal) {
-      hBox.innerHTML = makeBtns(data.door_horizontal, "door_horizontal");
-      setupButtonGroup("location_door_horizontal_group", (btn) => set("door_horizontal", btn.dataset.value));
-      if (detail?.door_horizontal)
-        hBox.querySelector(`button[data-value="${detail.door_horizontal}"]`)?.classList.add("active");
+    const { data, error } = await supabase.from("Cabinet").select("*").eq("id", cabinetId).maybeSingle();
+    if (error || !data) {
+      resetSteps();
+      return console.warn("⚠️ 캐비닛 정보 없음");
     }
 
-    if (sBox && data.internal_shelf_level) {
-      sBox.innerHTML = makeBtns(data.internal_shelf_level, "internal_shelf_level");
-      setupButtonGroup("location_internal_shelf_group", (btn) => set("internal_shelf_level", btn.dataset.value));
-      if (detail?.internal_shelf_level)
-        sBox.querySelector(`button[data-value="${detail.internal_shelf_level}"]`)?.classList.add("active");
-    }
+    const verticalCount = Number(data.door_vertical_count || data.door_vertical) || 0;
+    const horizontalCount = Number(data.door_horizontal_count || data.door_horizontal) || 0;
+    const shelfCount = Number(data.shelf_height || data.internal_shelf_level) || 0;
+    const columnCount = Number(data.storage_columns || data.storage_column) || 0;
 
-    if (cBox && data.storage_column) {
-      cBox.innerHTML = makeBtns(data.storage_column, "storage_column");
-      setupButtonGroup("location_storage_column_group", (btn) => set("storage_column", btn.dataset.value));
-      if (detail?.storage_column)
-        cBox.querySelector(`button[data-value="${detail.storage_column}"]`)?.classList.add("active");
-    }
+    const defaults = {
+      door_vertical: normalizeChoice(detail?.door_vertical, "vertical"),
+      door_horizontal: normalizeChoice(detail?.door_horizontal, "horizontal"),
+      internal_shelf_level: detail?.internal_shelf_level || null,
+      storage_column: detail?.storage_column || null,
+    };
+
+    const renderColumns = () => {
+      if (!cBox) return;
+      const state = dump();
+      if (!state.internal_shelf_level) {
+        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+        return;
+      }
+      if (!columnCount) {
+        showMessage(cBox, "열 정보가 없습니다.");
+        return;
+      }
+
+      cBox.innerHTML = Array.from({ length: columnCount }, (_, i) => {
+        const value = i + 1;
+        return `<button type="button" data-value="${value}">${value}열</button>`;
+      }).join("");
+
+      setupButtonGroup("location_storage_column_group", (btn) => {
+        set("storage_column", btn.dataset.value);
+      });
+
+      const selected = defaults.storage_column || state.storage_column;
+      if (selected) {
+        cBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
+        defaults.storage_column = null;
+      }
+    };
+
+    const renderShelves = () => {
+      if (!sBox) return;
+      const state = dump();
+      if (!state.door_horizontal) {
+        showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+        return;
+      }
+      if (!shelfCount) {
+        showMessage(sBox, "선반 정보가 없습니다.");
+        showMessage(cBox, "선반 정보가 없습니다.");
+        return;
+      }
+
+      sBox.innerHTML = Array.from({ length: shelfCount }, (_, idx) => {
+        const labelNum = shelfCount - idx;
+        const value = labelNum;
+        const label = `${labelNum}단`;
+        return `<button type="button" data-value="${value}">${label}</button>`;
+      }).join("");
+
+      setupButtonGroup("location_internal_shelf_group", (btn) => {
+        set("internal_shelf_level", btn.dataset.value);
+        set("storage_column", null);
+        renderColumns();
+      });
+
+      const selected = defaults.internal_shelf_level || state.internal_shelf_level;
+      if (selected) {
+        sBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
+        set("internal_shelf_level", selected);
+        defaults.internal_shelf_level = null;
+        renderColumns();
+      } else {
+        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+      }
+    };
+
+    const renderHorizontal = () => {
+      if (!hBox) return;
+      const state = dump();
+      if (!state.door_vertical) {
+        showMessage(hBox, "3번 항목 선택 후 표시됩니다.");
+        showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+        return;
+      }
+      if (!horizontalCount) {
+        showMessage(hBox, "좌우 정보가 없습니다.");
+        showMessage(sBox, "좌우 정보가 없습니다.");
+        showMessage(cBox, "좌우 정보가 없습니다.");
+        return;
+      }
+
+      const horizontalLabels =
+        horizontalCount === 1 ? ["문"] : ["왼쪽", "오른쪽"];
+      hBox.innerHTML = Array.from({ length: horizontalCount }, (_, idx) => {
+        const value = idx + 1;
+        const label = horizontalLabels[idx] || `${value}구역`;
+        return `<button type="button" data-value="${value}">${label}</button>`;
+      }).join("");
+
+      setupButtonGroup("location_door_horizontal_group", (btn) => {
+        set("door_horizontal", btn.dataset.value);
+        set("internal_shelf_level", null);
+        set("storage_column", null);
+        renderShelves();
+      });
+
+      const selected = defaults.door_horizontal || state.door_horizontal;
+      if (selected) {
+        hBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
+        set("door_horizontal", selected);
+        defaults.door_horizontal = null;
+        renderShelves();
+      } else {
+        showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+      }
+    };
+
+    const renderVertical = () => {
+      if (!vBox) return;
+      if (!verticalCount) {
+        showMessage(vBox, "문 정보가 없습니다.");
+        resetSteps();
+        return;
+      }
+
+      vBox.innerHTML = Array.from({ length: verticalCount }, (_, idx) => {
+        const value = idx + 1;
+        const label = `${verticalCount - idx}층`;
+        return `<button type="button" data-value="${value}">${label}</button>`;
+      }).join("");
+
+      setupButtonGroup("location_door_vertical_group", (btn) => {
+        set("door_vertical", btn.dataset.value);
+        set("door_horizontal", null);
+        set("internal_shelf_level", null);
+        set("storage_column", null);
+        renderHorizontal();
+      });
+
+      const selected = defaults.door_vertical;
+      if (selected) {
+        vBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
+        set("door_vertical", selected);
+        defaults.door_vertical = null;
+        renderHorizontal();
+      } else {
+        showMessage(hBox, "3번 항목 선택 후 표시됩니다.");
+        showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+      }
+    };
+
+    renderVertical();
   }
 
   // -------------------------------------------------

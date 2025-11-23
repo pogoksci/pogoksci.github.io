@@ -19,8 +19,8 @@
    */
   function init(opts = {}) {
     const {
-      onChange = () => {},
-      onRefresh = () => {},
+      onChange = () => { },
+      onRefresh = () => { },
       defaultLabel = "정렬 기준",
       defaultValue = "",
     } = opts;
@@ -50,7 +50,9 @@
       item.addEventListener("click", (e) => {
         e.stopPropagation();
         const value = item.dataset.value || "";
-        const text = item.textContent.trim();
+        // 아이콘 텍스트(ligature) 제외하고 순수 텍스트만 추출
+        const textNode = Array.from(item.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+        const text = textNode ? textNode.textContent.trim() : item.textContent.trim();
         label.textContent = text;
         label.dataset.value = value;
         menu.classList.remove("open");
