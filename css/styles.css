@@ -2066,3 +2066,47 @@ input[type="date"] {
 .download-action-btn:disabled .icon {
   color: #ccc;
 }
+
+/* UI Refinements */
+/* 1. Zoom Buttons Outline */
+#btn-zoom-in, #btn-zoom-out {
+    border: 1px solid #e0e0e0 !important;
+    box-shadow: none !important;
+}
+
+/* 2. 2D/3D Toggle Button Colors */
+.view-mode-btn.active,
+.view-mode-btn:hover {
+    background-color: #00A0B2 !important;
+    color: white !important;
+    border-color: #00A0B2 !important;
+}
+
+/* 3. Download Buttons Layout */
+.chem-info-row.button-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+#btn-download-mol-row {
+    flex: 1;
+}
+
+#btn-download-msds-row {
+    flex: 0 0 auto;
+}
+
+/* 4. Button Image Size */
+.download-action-btn .icon {
+    font-size: 18px !important;
+}
+
+/* 5. Vertically Center Button Text */
+.download-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
