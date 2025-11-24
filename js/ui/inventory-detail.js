@@ -562,6 +562,7 @@
       const btnZoomOut = document.getElementById("btn-zoom-out");
       const box2d = document.getElementById("detail-structure");
       const box3d = document.getElementById("detail-structure-3d");
+      const structureWrapper = document.querySelector(".structure-wrapper");
       const _viewer3d = null;
       let currentZoom = 1.0;
 
@@ -572,7 +573,24 @@
         }
       };
 
+      const setViewMode = (mode) => {
+        const is2d = mode === "2d";
+        if (structureWrapper) {
+          structureWrapper.dataset.viewMode = mode;
+        }
+        btn2d.classList.toggle("active", is2d);
+        btn3d.classList.toggle("active", !is2d);
+        box2d.style.display = is2d ? "block" : "none";
+        box3d.style.display = is2d ? "none" : "block";
+        currentZoom = 1.0; // Reset zoom on switch
+        applyZoom();
+      };
+
       if (btn2d && btn3d && box2d && box3d) {
+        if (structureWrapper) {
+          structureWrapper.dataset.viewMode = "2d";
+        }
+
         if (btnZoomIn && btnZoomOut) {
           btnZoomIn.onclick = () => {
             currentZoom += 0.2;
@@ -585,12 +603,7 @@
         }
 
         btn2d.onclick = () => {
-          btn2d.classList.add("active");
-          btn3d.classList.remove("active");
-          box2d.style.display = "block";
-          box3d.style.display = "none";
-          currentZoom = 1.0; // Reset zoom on switch
-          applyZoom();
+          setViewMode("2d");
         };
 
         // ---------------------------------------------------------
@@ -642,12 +655,7 @@
         }
 
         btn3d.onclick = async () => {
-          btn2d.classList.remove("active");
-          btn3d.classList.add("active");
-          box2d.style.display = "none";
-          box3d.style.display = "block";
-          currentZoom = 1.0; // Reset zoom on switch
-          applyZoom();
+          setViewMode("3d");
 
           const show3dFallback = () => {
             box3d.style.backgroundColor = "#f9f9f9";
