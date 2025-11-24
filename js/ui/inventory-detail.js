@@ -26,7 +26,7 @@
       const [valuePart, ...rest] = raw.split("@");
       const value = valuePart.trim();
       const temp = rest.join("@").trim();
-      return temp ? `${value} @ ${temp}` : value || "-";
+      return temp ? `${value} <span style="font-size: 10px;">@ ${temp}</span>` : value || "-";
     }
 
     const n = Number(raw);
