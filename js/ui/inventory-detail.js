@@ -585,7 +585,7 @@
         // ---------------------------------------------------------
         // MOL Download Logic
         // ---------------------------------------------------------
-        const btnDownloadMol = document.getElementById("btn-download-mol");
+        const btnDownloadMol = document.getElementById("btn-mol-download");
         if (btnDownloadMol) {
           if (data.Substance?.has_molfile) {
             btnDownloadMol.style.display = "inline-flex"; // Show button
