@@ -78,6 +78,17 @@
     await App.includeHTML("pages/navbar.html", "navbar-container");
     if (App.Navbar?.setup) App.Navbar.setup();
 
+    // ---------------------------------------------------
+    // ✅ Navbar 로드 후, 스플래시 텍스트를 최종 상태(GOE학교)로 변경
+    // ---------------------------------------------------
+    const { APPNAME, SCHOOL } = globalThis.APP_CONFIG || {};
+    const titleEl = document.getElementById("app-title");
+    const schoolEl = document.getElementById("school-name");
+
+    if (titleEl && APPNAME) titleEl.textContent = APPNAME;
+    if (schoolEl && SCHOOL) schoolEl.textContent = SCHOOL;
+    console.log("🔄 Splash 화면 텍스트 업데이트 완료 (GOE학교)");
+
     // Main 화면 로드
     await App.includeHTML("pages/main.html", "form-container");
 
@@ -103,13 +114,13 @@
     if (titleEl) titleEl.textContent = APPNAME || "";
     if (verEl) verEl.textContent = VERSION || "";
     if (schoolEl) schoolEl.textContent = SCHOOL || "";
-    
+
     console.log("🔄 Splash 화면 텍스트 업데이트 완료");
   }
 
   // DOMContentLoaded 또는 initApp에서 실행
   document.addEventListener("DOMContentLoaded", () => {
-    updateSplashScreenText();
+    // updateSplashScreenText(); // 🚫 초기 로딩 시 텍스트 덮어쓰기 방지 (HTML 하드코딩 사용)
   });
 
   // ------------------------------------------------------------

@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8" />
   <title>SciManager</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
   <!-- 파비콘 -->
   <link rel="icon" type="image/x-icon" href="css/favicon.ico" />
@@ -28,7 +30,7 @@
         ? '/scimanager/'
         : '/';
 
-        window.APP_BASE_PATH = guessed.replace(/\/+$/, '/')  // 끝에 / 하나만
+      window.APP_BASE_PATH = guessed.replace(/\/+$/, '/')  // 끝에 / 하나만
     })();
   </script>
 
@@ -39,24 +41,24 @@
 <body class="home-active">
   <!-- 🧪 스플래시(로딩) 화면 -->
   <div id="splash-screen">
-      <img src="css/logo.png" alt="SciManager Logo" class="main-logo" />
+    <img src="css/logo.png" alt="SciManager Logo" class="main-logo" />
 
-      <!-- ✅ 앱 이름: APP_CONFIG.APPNAME -->
-      <h1 id="app-title" class="app-title"></h1>
+    <!-- ✅ 앱 이름: APP_CONFIG.APPNAME -->
+    <h1 id="app-title" class="app-title">SciManager</h1>
 
-      <!-- ✅ 버전: APP_CONFIG.VERSION -->
-      <p id="app-version" class="app-version"></p>
+    <!-- ✅ 버전: APP_CONFIG.VERSION -->
+    <p id="app-version" class="app-version" style="display: none;"></p>
 
-      <!-- ✅ 학교 이름: APP_CONFIG.SCHOOL -->
-      <p id="school-name" class="school-name">잠시만 기다리세요.</p>
-    </div>
+    <!-- ✅ 학교 이름: APP_CONFIG.SCHOOL -->
+    <p id="school-name" class="school-name">잠시만 기다려주세요.</p>
+  </div>
 
   <!-- 🔹 메인 컨텐츠 -->
   <div id="form-container"></div>
 
   <!-- 🧭 하단 네비게이션 -->
   <div id="navbar-container"></div>
-  
+
   <!-- ➕ 플로팅 액션 버튼 -->
   <button class="fab" id="fab-button" style="display: none;"></button>
 
@@ -72,4 +74,5 @@
     </div>
   </div>
 </body>
+
 </html>
