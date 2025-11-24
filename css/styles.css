@@ -777,7 +777,7 @@ FAB
 }
 
 .hazard-table tbody tr:last-child td {
-  border-bottom: none;
+  border-bottom: 1px solid #eee;
 }
 
 .hazard-accordion {
@@ -1438,9 +1438,9 @@ input[type="date"] {
 }
 
 .detail-left {
-  flex: 0 0 40%;
-  width: 40%;
-  max-width: 40%;
+  flex: 0 0 240px;
+  width: 240px;
+  max-width: 240px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -1460,10 +1460,9 @@ input[type="date"] {
 
 /* Photo Box Override/Adjustment */
 .detail-left .photo-preview-box {
-  width: auto;
+  width: 100%;
   max-width: 100%;
   height: 280px;
-  aspect-ratio: 3 / 4;
   border: 1px solid #ddd;
   border-radius: 8px;
   overflow: hidden;
@@ -1541,7 +1540,7 @@ input[type="date"] {
 
 .detail-info-list .label {
   display: inline-block;
-  width: 100px;
+  width: 110px;
   font-weight: 700;
   color: #555;
   flex-shrink: 0;
@@ -1718,7 +1717,7 @@ input[type="date"] {
 }
 
 .accordion-item:last-child {
-  border-bottom: none;
+  border-bottom: 1px solid #eee;
 }
 
 .accordion-header {
@@ -1805,21 +1804,18 @@ input[type="date"] {
   }
 
   .detail-left {
-    margin: 0 auto;
     width: 100%;
-    /* Full width on mobile */
     max-width: 100%;
     flex: none;
+    margin: 0 auto;
   }
 
   .detail-left .photo-preview-box {
     margin: 0 auto;
-    /* Center photo */
-    height: auto;
     width: 100%;
     max-width: 360px;
+    height: auto;
   }
-}
 
 /* MSDS Layout Styles */
 .msds-table-container {
@@ -1835,7 +1831,7 @@ input[type="date"] {
 }
 
 .msds-row:last-child {
-  border-bottom: none;
+  border-bottom: 1px solid #eee;
 }
 
 .msds-header {
@@ -1904,7 +1900,7 @@ input[type="date"] {
 }
 
 .ghs-row:last-child {
-  border-bottom: none;
+  border-bottom: 1px solid #eee;
 }
 
 .ghs-cell-image {
@@ -2008,11 +2004,11 @@ input[type="date"] {
   display: flex;
   gap: 8px;
   justify-content: space-between;
-  align-items: stretch;
+  align-items: center;
   padding: 0 10px !important;
   /* Restore standard padding */
-  border-bottom: none;
-  /* Keep no border */
+  border-bottom: 1px solid #eee;
+  /* Match other row separators */
   box-sizing: border-box;
 }
 
@@ -2030,8 +2026,8 @@ input[type="date"] {
   cursor: pointer;
   transition: all 0.2s ease;
   color: #333;
-  height: 100%;
-  /* Fill the row height */
+  height: 75%;
+  /* Trim height to avoid crowding */
   white-space: nowrap;
   /* Prevent text wrapping */
   overflow: hidden;
