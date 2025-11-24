@@ -2,6 +2,41 @@
 
 
 
+<style>
+  .view-mode-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    border-radius: 4px;
+    color: #555;
+    transition: all 0.2s;
+  }
+
+  .view-mode-btn:hover {
+    background-color: #eee;
+  }
+
+  .structure-wrapper[data-view-mode="2d"] #btn-view-2d,
+  .structure-wrapper[data-view-mode="2d"] #btn-view-2d:hover,
+  .structure-wrapper[data-view-mode="3d"] #btn-view-3d,
+  .structure-wrapper[data-view-mode="3d"] #btn-view-3d:hover {
+    background-color: #00A0B2;
+    color: #fff;
+    border-color: #00A0B2;
+    box-shadow: 0 0 0 1px #00A0B2 inset;
+  }
+
+  .structure-wrapper[data-view-mode="2d"] #btn-view-3d:hover,
+  .structure-wrapper[data-view-mode="3d"] #btn-view-2d:hover {
+    background-color: #f0f0f0;
+    color: #555;
+    border-color: #ddd;
+    box-shadow: none;
+  }
+</style>
+
 <div id="detail-page-container" class="inventory-detail-page">
   <!-- Names Moved Here (Top) -->
   <div class="detail-name-group">
