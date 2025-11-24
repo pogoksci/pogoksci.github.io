@@ -652,7 +652,7 @@
           const show3dFallback = () => {
             box3d.style.backgroundColor = "#f9f9f9";
             box3d.innerHTML =
-              '<div class="structure-error" style="display:flex;align-items:center;justify-content:center;height:100%;">이 물질은 3D 구조 데이터가 제공되지 않습니다.</div>';
+              '<div class="structure-error" style="display:flex;align-items:center;justify-content:center;height:100%;">이 물질은 PubChem에서 3D 구조 데이터를 제공하지 않습니다.</div>';
           };
 
           // ?? iframe? ??? ?? ???? ??
@@ -665,7 +665,7 @@
           }
 
           try {
-            box3d.innerHTML = '<div class="structure-error" style="color:#666; text-align:center; padding:10px;">PubChem 3D 구조를 읽는 중...</div>';
+            box3d.innerHTML = '<div class="structure-error" style="display:flex; align-items:center; justify-content:center; height:100%; color:#666;">PubChem 3D 구조를 읽는 중...</div>';
 
             // 1. Get CID
             const cid = await loadPubChemCid();
