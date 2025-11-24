@@ -1568,7 +1568,8 @@ input[type="date"] {
   flex-wrap: nowrap;
   /* Force side-by-side */
   gap: 20px;
-  align-items: flex-start;
+  align-items: stretch;
+  /* Match heights */
 }
 
 .structure-wrapper {
@@ -2008,10 +2009,10 @@ input[type="date"] {
   display: flex;
   gap: 8px;
   justify-content: space-between;
-  padding: 8px 0 0 0 !important;
-  /* Adjust padding to match other rows */
-  height: 40px;
-  /* Force fixed height to match other rows */
+  padding: 0 10px !important;
+  /* Restore standard padding */
+  border-bottom: none;
+  /* Keep no border */
   box-sizing: border-box;
 }
 
