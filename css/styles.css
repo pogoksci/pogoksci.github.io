@@ -1524,7 +1524,7 @@ input[type="date"] {
   font-size: 1rem;
   line-height: 1.5;
   border-bottom: 1px solid #eee;
-  padding: 0;
+  padding: 0 10px;`r`n  box-sizing: border-box;
   /* Remove padding to allow flex distribution */
   flex: 1;
   /* Distribute height evenly */
