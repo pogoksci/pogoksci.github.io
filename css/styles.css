@@ -1564,20 +1564,21 @@ input[type="date"] {
 }
 
 .chem-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 240px) 1fr;
-  /* Keep the render area the same visual width as the photo box */
-  gap: 28px;
-  align-items: start;
+  display: flex;
+  flex-wrap: nowrap;
+  /* Force side-by-side */
+  gap: 20px;
+  align-items: flex-start;
 }
 
 .structure-wrapper {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 240px;
+  width: 240px;
+  /* Fixed width */
+  flex: 0 0 240px;
+  /* Don't grow or shrink */
   min-width: 0;
-  /* Prevent flex item from overflowing while matching photo width */
 }
 
 .structure-box {
@@ -1684,14 +1685,16 @@ input[type="date"] {
   white-space: normal;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .chem-grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .structure-wrapper {
-    min-width: 0;
-    max-width: 100%;
+    width: 100%;
+    flex: none;
+    max-width: 240px;
+    margin: 0 auto;
   }
 
   .chem-info .label {
