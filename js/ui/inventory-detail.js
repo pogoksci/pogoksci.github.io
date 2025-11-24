@@ -26,7 +26,7 @@
       const [valuePart, ...rest] = raw.split("@");
       const value = valuePart.trim();
       const temp = rest.join("@").trim();
-      return temp ? `${value}<br><span class="density-temp">@ ${temp}</span>` : value || "-";
+      return temp ? `${value} @ ${temp}` : value || "-";
     }
 
     const n = Number(raw);
