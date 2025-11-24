@@ -71,7 +71,7 @@
         converted_concentration_value_1, converted_concentration_unit_1,
         converted_concentration_value_2, converted_concentration_unit_2,
         Substance (
-          id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, svg_image,
+          id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, svg_image, has_molfile,
           Properties ( name, property ),
           MSDS ( section_number, content ),
           HazardClassifications (*)
@@ -581,6 +581,47 @@
           currentZoom = 1.0; // Reset zoom on switch
           applyZoom();
         };
+
+        // ---------------------------------------------------------
+        // MOL Download Logic
+        // ---------------------------------------------------------
+        const btnDownloadMol = document.getElementById("btn-download-mol");
+        if (btnDownloadMol) {
+          if (data.Substance?.has_molfile) {
+            btnDownloadMol.style.display = "inline-flex"; // Show button
+            btnDownloadMol.onclick = async () => {
+              const substanceId = data.Substance.id;
+              const casRn = data.Substance.cas_rn;
+              if (!substanceId) return;
+
+              try {
+                const app = getApp();
+                const fnBase = app.projectFunctionsBaseUrl || (app.supabaseUrl ? `${app.supabaseUrl}/functions/v1` : "");
+                if (!fnBase) {
+                  alert("함수 호출 경로를 찾을 수 없습니다.");
+                  return;
+                }
+
+                // Use window.open or create a link to trigger download
+                const downloadUrl = `${fnBase}/casimport?type=download_mol&substance_id=${substanceId}`;
+
+                // Create a temporary link to force download
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.setAttribute('download', `${casRn || 'structure'}.mol`); // Hint filename
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+              } catch (e) {
+                console.error("Download failed:", e);
+                alert("다운로드 요청 중 오류가 발생했습니다.");
+              }
+            };
+          } else {
+            btnDownloadMol.style.display = "none"; // Hide if no molfile
+          }
+        }
 
         btn3d.onclick = async () => {
           btn2d.classList.remove("active");
