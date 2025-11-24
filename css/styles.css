@@ -1655,6 +1655,9 @@ input[type="date"] {
   border-bottom: 1px solid #eee;
   flex: 1;
   /* Distribute height evenly */
+  min-height: 0;
+  /* Allow shrinking */
+  box-sizing: border-box;
 }
 
 .chem-info-row:first-child {
