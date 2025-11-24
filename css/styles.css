@@ -1,5 +1,5 @@
 /* =================================================================
-   기본 스타일 (Body, Form 등)
+   기본 ?��???(Body, Form ??
 ================================================================= */
 html,
 body {
@@ -8,12 +8,12 @@ body {
   width: 100%;
   height: 100%;
   overflow-x: hidden;
-  /* 가로 스크롤 방지 */
+  /* 가�??�크�?방�? */
   overflow-y: auto;
   background-color: #ffffff;
-  /* 앱 전체 동일 배경색 */
+  /* ???�체 ?�일 배경??*/
   font-family: 'Noto Sans KR', Arial, sans-serif;
-  /* 폰트 고정 */
+  /* ?�트 고정 */
   color: #333;
 }
 
@@ -24,8 +24,7 @@ h3 {
 }
 
 /* =================================================================
-   폼 그룹 스타일
-================================================================= */
+   ??그룹 ?��???================================================================= */
 .form-group {
   margin-bottom: 20px;
   padding: 15px;
@@ -35,19 +34,17 @@ h3 {
 }
 
 /* =================================================================
-   폼 컨테이너 스타일
-================================================================= */
+   ??컨테?�너 ?��???================================================================= */
 #form-container {
   max-width: 600px;
   margin: 0 auto;
   padding: 20px 20px 80px 20px;
-  /* 상 우 하 좌 여백 */
+  /* ??????�??�백 */
   box-sizing: border-box;
 }
 
 /* =================================================================
-   레이블 및 입력 필드 스타일
-================================================================= */
+   ?�이�?�??�력 ?�드 ?��???================================================================= */
 label {
   display: block;
   margin-bottom: 8px;
@@ -70,8 +67,7 @@ select {
 }
 
 /* =================================================================
-   Select 박스 스타일
-================================================================= */
+   Select 박스 ?��???================================================================= */
 select {
   background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22/%3E%3C/svg%3E');
   background-repeat: no-repeat;
@@ -87,7 +83,7 @@ select:focus {
 }
 
 /* =================================================================
-   버튼 스타일 (기본 버튼 및 선택 버튼)
+   버튼 ?��???(기본 버튼 �??�택 버튼)
 ================================================================= */
 button[type="submit"] {
   background-color: #00a0b2;
@@ -106,8 +102,7 @@ button:disabled {
 }
 
 /* =================================================================
-   버튼 그룹 스타일
-================================================================= */
+   버튼 그룹 ?��???================================================================= */
 .button-group {
   display: flex;
   flex-wrap: wrap;
@@ -143,19 +138,19 @@ button:disabled {
 .form-bottom-buttons {
   display: flex;
   justify-content: space-between;
-  /* 양끝 정렬 */
+  /* ?�끝 ?�렬 */
   gap: 12px;
-  /* 버튼 사이 간격 */
+  /* 버튼 ?�이 간격 */
   margin-top: 24px;
   width: 100%;
   box-sizing: border-box;
   padding: 0 8px;
-  /* 행의 좌우 여백과 동일하게 조정 (필요시 수정) */
+  /* ?�의 좌우 ?�백�??�일?�게 조정 (?�요???�정) */
 }
 
 .form-bottom-buttons button {
   flex: 1;
-  /* 각 버튼 동일한 비율 */
+  /* �?버튼 ?�일??비율 */
   padding: 12px 0;
   border: none;
   border-radius: 6px;
@@ -165,7 +160,7 @@ button:disabled {
   transition: background-color 0.2s ease;
 }
 
-/* 취소 버튼 스타일 */
+/* 취소 버튼 ?��???*/
 #cancel-form-btn {
   background-color: #e0e0e0;
   color: #333;
@@ -175,7 +170,7 @@ button:disabled {
   background-color: #d0d0d0;
 }
 
-/* 등록 버튼 스타일 */
+/* ?�록 버튼 ?��???*/
 #cabinet-submit-button {
   background-color: #00a0b2;
   color: #fff;
@@ -185,7 +180,7 @@ button:disabled {
   background-color: #00BFD4;
 }
 
-/* 수정 버튼 (등록 버튼과 동일 스타일) */
+/* ?�정 버튼 (?�록 버튼�??�일 ?��??? */
 #cabinet-save-btn {
   background-color: #00a0b2;
   color: #fff;
@@ -212,12 +207,12 @@ button:disabled {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  /* 비율 유지하며 축소/확대 */
+  /* 비율 ?��??�며 축소/?��? */
   border-radius: 6px;
 }
 
 /* =================================================================
-   사진 등록 영역
+   ?�진 ?�록 ?�역
 ================================================================= */
 .photo-container {
   display: flex;
@@ -233,7 +228,7 @@ button:disabled {
   height: 240px;
   max-width: 320px;
   aspect-ratio: 3 / 4;
-  /* 세로형 박스 유지 */
+  /* ?�로??박스 ?��? */
   border: 1px solid #ddd;
   border-radius: 8px;
   background-color: #f9f9f9;
@@ -248,7 +243,7 @@ button:disabled {
   content: "";
   display: block;
   padding-top: 100%;
-  /* 정사각형 보정 (aspect-ratio fallback) */
+  /* ?�사각형 보정 (aspect-ratio fallback) */
 }
 
 .photo-preview-box span {
@@ -260,7 +255,7 @@ button:disabled {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  /* 비율 유지 + 잘림 없음 */
+  /* 비율 ?��? + ?�림 ?�음 */
   object-position: center;
   display: block;
 }
@@ -280,8 +275,7 @@ button:disabled {
 }
 
 /* =================================================================
-   카메라 모달 스타일
-================================================================= */
+   카메??모달 ?��???================================================================= */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -318,7 +312,7 @@ button:disabled {
 }
 
 /* =================================================================
-   보관 위치 설정 (6단계)
+   보�? ?�치 ?�정 (6?�계)
 ================================================================= */
 .form-group-location {
   margin-bottom: 25px;
@@ -346,7 +340,7 @@ button:disabled {
   color: #555;
 }
 
-/* 위치 선택 버튼 (btn-location) 스타일 */
+/* ?�치 ?�택 버튼 (btn-location) ?��???*/
 .btn-location {
   flex-basis: calc(16.66% - 10px);
   flex-grow: 1;
@@ -371,7 +365,7 @@ button:disabled {
 }
 
 /* =================================================================
-   시약장 목록 카드
+   ?�약??목록 카드
 ================================================================= */
 #location-list-page #cabinet-list-container {
   display: grid;
@@ -380,24 +374,24 @@ button:disabled {
   padding: 20px 16px 0 16px;
 }
 
-/* 시약장 목록을 2열로 배치 */
+/* ?�약??목록??2?�로 배치 */
 .cabinet-list {
   display: flex;
   flex-wrap: wrap;
-  /* 한 줄에 여러 항목이 오도록 설정 */
+  /* ??줄에 ?�러 ??��???�도�??�정 */
   gap: 20px;
-  /* 인벤토리 카드 레이아웃 */
+  /* ?�벤?�리 카드 ?�이?�웃 */
   justify-content: space-between;
-  /* 항목 간격 조정 */
+  /* ??�� 간격 조정 */
 }
 
-/* 각 시약장 카드 */
+/* �??�약??카드 */
 .cabinet-card {
   flex: 1 1 calc(50% - 10px);
-  /* 한 줄에 2개씩 배치 */
+  /* ??줄에 2개씩 배치 */
   box-sizing: border-box;
   margin-bottom: 20px;
-  /* 하단 여백 */
+  /* ?�단 ?�백 */
   background-color: #fff;
   border-radius: 8px;
   border: 1px solid #ddd;
@@ -431,7 +425,7 @@ button:disabled {
 .card-image-placeholder {
   width: 100%;
   aspect-ratio: 3 / 4;
-  /* 비율 유지, padding-top 불필요 */
+  /* 비율 ?��?, padding-top 불필??*/
   background-color: #f0f0f0;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
@@ -448,7 +442,7 @@ button:disabled {
   width: auto;
   height: auto;
   object-fit: contain;
-  /* 이미지 전체 표시, 자르지 않음 */
+  /* ?��?지 ?�체 ?�시, ?�르지 ?�음 */
   display: block;
 }
 
@@ -524,7 +518,7 @@ button:disabled {
 }
 
 /* =================================================================
-   하단 내비게이션 바 및 메뉴
+   ?�단 ?�비게이??�?�?메뉴
 ================================================================= */
 .navbar {
   position: fixed;
@@ -575,7 +569,7 @@ button:disabled {
 }
 
 /* =================================================================
-   시작메뉴 팝업 (Start Menu)
+   ?�작메뉴 ?�업 (Start Menu)
 ================================================================= */
 .start-menu-popup {
   position: fixed;
@@ -613,15 +607,15 @@ button:disabled {
 }
 
 .menu-item:hover {
-  /* hover 효과 */
+  /* hover ?�과 */
   background-color: #00a0b2;
-  /* 메인컬러와 동일 */
+  /* 메인컬러?� ?�일 */
   color: #fff;
-  /* 글자 흰색 */
+  /* 글???�색 */
 }
 
 .menu-item:hover i,
-/* hover 시 아이콘 색상도 함께 변경 */
+/* hover ???�이�??�상???�께 변�?*/
 .menu-item:hover svg {
   color: #fff;
 }
@@ -851,7 +845,7 @@ FAB
 }
 
 /* =================================================================
-   시약장 개선 (area-button-group / 기타 입력 필드)
+   ?�약??개선 (area-button-group / 기�? ?�력 ?�드)
 ================================================================= */
 #area-button-group {
   justify-content: space-between;
@@ -895,7 +889,7 @@ FAB
 }
 
 /* =================================================================
-   앱 SciManager (로고) 화면 및 고정 로딩/스플래시 화면
+   ??SciManager (로고) ?�면 �?고정 로딩/?�플?�시 ?�면
 ================================================================= */
 body.home-active {
   overflow: hidden;
@@ -986,7 +980,7 @@ body.home-active #splash-screen {
 }
 
 /*--------------------------
-시약 목록
+?�약 목록
 ---------------------------*/
 #inventory-list-page {
   display: flex;
@@ -996,7 +990,7 @@ body.home-active #splash-screen {
   box-sizing: border-box;
 }
 
-/* 우상단 제목과 정렬 그룹 */
+/* ?�상???�목�??�렬 그룹 */
 .header-actions {
   display: flex;
   align-items: flex-end;
@@ -1021,7 +1015,7 @@ body.home-active #splash-screen {
   line-height: 1.3;
 }
 
-/* 감싸는 박스 (select wrapper) */
+/* 감싸??박스 (select wrapper) */
 .select-wrapper {
   border: 1px solid #c4c4c4;
   border-radius: 6px;
@@ -1029,7 +1023,7 @@ body.home-active #splash-screen {
   box-sizing: border-box;
   overflow: hidden;
   height: 28px;
-  /* 자연스러운 텍스트 높이 */
+  /* ?�연?�러???�스???�이 */
   display: flex;
   align-items: center;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -1067,7 +1061,7 @@ body.home-active #splash-screen {
 }
 
 /* ---------------------------
-   커스텀 드롭다운
+   커스?� ?�롭?�운
 ---------------------------- */
 .custom-dropdown {
   position: relative;
@@ -1089,7 +1083,7 @@ body.home-active #splash-screen {
   line-height: 1.2;
   color: #333;
   height: 28px;
-  /* 딱 버튼 높이 */
+  /* ??버튼 ?�이 */
   box-sizing: border-box;
 }
 
@@ -1157,7 +1151,7 @@ body.home-active #splash-screen {
   color: #555;
 }
 
-/* Fade-in 애니메이션 */
+/* Fade-in ?�니메이??*/
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -1170,7 +1164,7 @@ body.home-active #splash-screen {
   }
 }
 
-/* 인벤토리 카드 (시약장 카드 스타일 복사) */
+/* ?�벤?�리 카드 (?�약??카드 ?��???복사) */
 .inventory-card {
   background: #fff;
   border: 1px solid #ddd;
@@ -1179,7 +1173,7 @@ body.home-active #splash-screen {
   overflow: hidden;
 }
 
-/* 달력(DatePicker) 잘림 방지 */
+/* ?�력(DatePicker) ?�림 방�? */
 #form-container,
 #inventory-form,
 .form-group {
@@ -1188,11 +1182,11 @@ body.home-active #splash-screen {
 
 input[type="date"] {
   font-family: inherit;
-  /* 부모와 동일한 글꼴 사용 */
+  /* 부모�? ?�일??글�??�용 */
   font-size: inherit;
-  /* 주변 input과 크기 일치 */
+  /* 주�? input�??�기 ?�치 */
   color: inherit;
-  /* 글자색도 동일하게 */
+  /* 글?�색???�일?�게 */
   letter-spacing: 0.02em;
   position: relative;
   z-index: 100;
@@ -1580,6 +1574,8 @@ input[type="date"] {
   flex: 0 0 240px;
   /* Don't grow or shrink */
   min-width: 0;
+  height: 100%;
+  align-self: stretch;
 }
 
 .structure-box {
@@ -1641,10 +1637,13 @@ input[type="date"] {
   border: none;
   padding: 0;
   background: transparent;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  display: grid;
+  grid-template-rows: repeat(7, minmax(0, 1fr));
   height: 100%;
+  align-self: stretch;
+  min-height: 0;
+  flex: 1 1 0;
+  min-width: 0;
   /* Match structure box height */
 }
 
@@ -1653,11 +1652,8 @@ input[type="date"] {
   align-items: center;
   padding: 0 10px;
   border-bottom: 1px solid #eee;
-  flex: 1;
-  /* Distribute height evenly */
-  min-height: 0;
-  /* Allow shrinking */
   box-sizing: border-box;
+  min-height: 0;
 }
 
 .chem-info-row:first-child {
@@ -1745,7 +1741,7 @@ input[type="date"] {
 }
 
 .accordion-header::after {
-  content: "▼";
+  content: "??;
   /* Triangle icon */
   font-size: 0.8rem;
   color: #888;
@@ -2012,6 +2008,7 @@ input[type="date"] {
   display: flex;
   gap: 8px;
   justify-content: space-between;
+  align-items: stretch;
   padding: 0 10px !important;
   /* Restore standard padding */
   border-bottom: none;

@@ -5,7 +5,7 @@
 <div id="detail-page-container" class="inventory-detail-page">
   <!-- Names Moved Here (Top) -->
   <div class="detail-name-group">
-    <h2 id="detail-name-kor">정보 로드 중...</h2>
+    <h2 id="detail-name-kor">?�보 로드 �?..</h2>
     <span id="detail-name-eng" class="eng-name"></span>
     <span id="detail-substance-id" class="substance-id-tag"
       style="margin-left: auto; color: #888; font-size: 0.9rem;"></span>
@@ -15,25 +15,25 @@
   <div class="detail-grid">
     <div class="detail-left">
       <div id="detail-photo" class="photo-preview-box">
-        <span>사진 없음</span>
+        <span>?�진 ?�음</span>
       </div>
     </div>
     <div class="detail-right">
       <ul class="detail-info-list">
         <li><span class="label">CAS:</span> <span id="detail-cas" class="value">-</span></li>
-        <li><span class="label">화학식:</span> <span id="detail-formula" class="value">-</span></li>
+        <li><span class="label">?�학??</span> <span id="detail-formula" class="value">-</span></li>
         <li><span class="label">분류:</span> <span id="detail-class" class="value">-</span></li>
-        <li><span class="label">상태:</span> <span id="detail-state" class="value">-</span></li>
-        <li><span class="label">제조사:</span> <span id="detail-manufacturer" class="value">-</span></li>
-        <li><span class="label">재고:</span> <span id="detail-quantity" class="value">-</span></li>
-        <li><span class="label">등록일:</span> <span id="detail-created-at" class="value">-</span></li>
+        <li><span class="label">?�태:</span> <span id="detail-state" class="value">-</span></li>
+        <li><span class="label">?�조??</span> <span id="detail-manufacturer" class="value">-</span></li>
+        <li><span class="label">?�고:</span> <span id="detail-quantity" class="value">-</span></li>
+        <li><span class="label">?�록??</span> <span id="detail-created-at" class="value">-</span></li>
       </ul>
     </div>
   </div>
 
   <!-- Location Info (Full Width) -->
   <div class="detail-location-section">
-    <strong>보관 위치:</strong>
+    <strong>보�? ?�치:</strong>
     <p id="detail-location" class="location-text">-</p>
   </div>
 
@@ -44,14 +44,14 @@
         <!-- Zoom Controls (Overlay) -->
         <div class="zoom-controls"
           style="position: absolute; top: 10px; right: 10px; z-index: 10; display: flex; flex-direction: column; gap: 5px;">
-          <button id="btn-zoom-in" class="view-mode-btn" title="확대"
+          <button id="btn-zoom-in" class="view-mode-btn" title="?��?"
             style="background: rgba(255,255,255,0.9); box-shadow: 0 1px 3px rgba(0,0,0,0.2);">+</button>
           <button id="btn-zoom-out" class="view-mode-btn" title="축소"
             style="background: rgba(255,255,255,0.9); box-shadow: 0 1px 3px rgba(0,0,0,0.2);">-</button>
         </div>
 
         <div id="detail-structure" class="structure-box mode-2d">
-          <span class="structure-placeholder">구조 이미지 없음</span>
+          <span class="structure-placeholder">구조 ?��?지 ?�음</span>
         </div>
         <div id="detail-structure-3d" class="structure-box mode-3d" style="display:none; position: relative;">
           <!-- 3D Viewer -->
@@ -68,31 +68,31 @@
 
       <div class="chem-info">
         <div class="chem-info-row">
-          <span class="label">끓는점:</span>
+          <span class="label">?�는??</span>
           <span id="detail-boiling" class="value">-</span>
         </div>
         <div class="chem-info-row">
-          <span class="label">녹는점:</span>
+          <span class="label">?�는??</span>
           <span id="detail-melting" class="value">-</span>
         </div>
         <div class="chem-info-row">
-          <span class="label">밀도:</span>
+          <span class="label">밀??</span>
           <span id="detail-density" class="value density-value">-</span>
         </div>
         <div class="chem-info-row">
-          <span class="label">농도:</span>
+          <span class="label">?�도:</span>
           <span id="detail-concentration" class="value">-</span>
         </div>
         <div class="chem-info-row">
-          <span id="conv-label-1" class="label">변환농도 1:</span>
+          <span id="conv-label-1" class="label">변?�농??1:</span>
           <span id="conv-value-1" class="value">-</span>
         </div>
         <div class="chem-info-row">
-          <span id="conv-label-2" class="label">변환농도 2:</span>
+          <span id="conv-label-2" class="label">변?�농??2:</span>
           <span id="conv-value-2" class="value">-</span>
         </div>
         <!-- 7th Row: Download Buttons -->
-        <div class="chem-info-row button-row" style="border-bottom: none; padding: 10px 0 0 0;">
+        <div class="chem-info-row button-row">
           <button id="btn-download-mol-row" class="download-action-btn">
             <span class="material-symbols-outlined icon">download</span>
             <span class="btn-text">Mol</span>
@@ -112,7 +112,7 @@
     <h3>MSDS (Material Safety Data Sheet)</h3>
     <div id="msds-accordion" class="accordion">
       <!-- JS will populate 16 items here -->
-      <p>MSDS 정보 로드 중...</p>
+      <p>MSDS ?�보 로드 �?..</p>
     </div>
   </div>
 
@@ -121,16 +121,16 @@
 
   <!-- 5. Hazard Info -->
   <div class="detail-section hazard-section">
-    <h3>유해화학물질 분류 정보</h3>
+    <h3>?�해?�학물질 분류 ?�보</h3>
     <div id="hazard-info-container" class="hazard-card">
-      <p class="hazard-placeholder">분류 정보 로드 중...</p>
+      <p class="hazard-placeholder">분류 ?�보 로드 �?..</p>
     </div>
   </div>
 
   <!-- 6. Actions -->
   <div class="detail-action-group">
-    <button id="detail-back-btn" class="detail-action detail-action--secondary">목록으로</button>
-    <button id="edit-inventory-btn" class="detail-action detail-action--primary">수정</button>
-    <button id="delete-inventory-btn" class="detail-action detail-action--danger">삭제</button>
+    <button id="detail-back-btn" class="detail-action detail-action--secondary">목록?�로</button>
+    <button id="edit-inventory-btn" class="detail-action detail-action--primary">?�정</button>
+    <button id="delete-inventory-btn" class="detail-action detail-action--danger">??��</button>
   </div>
 </div>
