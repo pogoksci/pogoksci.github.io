@@ -59,41 +59,50 @@
 
         <div class="structure-footer"
           style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: nowrap;">
-          <span class="license-notice" style="font-size: 10px; color: #aaa; white-space: nowrap;">3D Viewer powered by PubChem</span>
-          <div class="view-mode-group" style="display: flex; gap: 8px; align-items: center;">
-            <button id="btn-view-2d" class="view-mode-btn active">2D</button>
-            <button id="btn-view-3d" class="view-mode-btn">3D</button>
-            <button id="btn-mol-download" class="view-mode-btn" style="display:none; font-size: 12px; padding: 2px 6px;"
-              title="Mol 파일 다운로드">⬇ Mol</button>
-          </div>
+          <span class="license-notice" style="font-size: 10px; color: #aaa; white-space: nowrap;">3D Viewer powered by
+            PubChem</span>
+          <button id="btn-view-2d" class="view-mode-btn active">2D</button>
+          <button id="btn-view-3d" class="view-mode-btn">3D</button>
         </div>
       </div>
-      <div class="chem-info">
-        <div class="chem-info-row">
-          <span class="label">끓는점:</span>
-          <span id="detail-boiling" class="value">-</span>
-        </div>
-        <div class="chem-info-row">
-          <span class="label">녹는점:</span>
-          <span id="detail-melting" class="value">-</span>
-        </div>
-        <div class="chem-info-row">
-          <span class="label">밀도:</span>
-          <span id="detail-density" class="value density-value">-</span>
-        </div>
-        <div class="chem-info-row">
-          <span class="label">농도:</span>
-          <span id="detail-concentration" class="value">-</span>
-        </div>
-        <div class="chem-info-row">
-          <span id="conv-label-1" class="label">변환농도 1:</span>
-          <span id="conv-value-1" class="value">-</span>
-        </div>
-        <div class="chem-info-row">
-          <span id="conv-label-2" class="label">변환농도 2:</span>
-          <span id="conv-value-2" class="value">-</span>
-        </div>
+    </div>
+    <div class="chem-info">
+      <div class="chem-info-row">
+        <span class="label">끓는점:</span>
+        <span id="detail-boiling" class="value">-</span>
       </div>
+      <div class="chem-info-row">
+        <span class="label">녹는점:</span>
+        <span id="detail-melting" class="value">-</span>
+      </div>
+      <div class="chem-info-row">
+        <span class="label">밀도:</span>
+        <span id="detail-density" class="value density-value">-</span>
+      </div>
+      <div class="chem-info-row">
+        <span class="label">농도:</span>
+        <span id="detail-concentration" class="value">-</span>
+      </div>
+      <div class="chem-info-row">
+        <span id="conv-label-1" class="label">변환농도 1:</span>
+        <span id="conv-value-1" class="value">-</span>
+      </div>
+      <div class="chem-info-row">
+        <span id="conv-label-2" class="label">변환농도 2:</span>
+        <span id="conv-value-2" class="value">-</span>
+      </div>
+      <!-- 7th Row: Download Buttons -->
+      <div class="chem-info-row button-row" style="border-bottom: none; padding: 10px 0 0 0;">
+        <button id="btn-download-mol-row" class="download-action-btn">
+          <span class="material-symbols-outlined icon">download</span>
+          <span class="btn-text">Mol</span>
+        </button>
+        <button id="btn-download-msds-row" class="download-action-btn">
+          <span class="material-symbols-outlined icon">picture_as_pdf</span>
+          <span class="btn-text">MSDS PDF</span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -106,15 +115,8 @@
   </div>
 </div>
 
-<!-- 4. MSDS PDF Link -->
-<div class="detail-section msds-pdf-section">
-  <div id="msds-pdf-container" style="display: none;">
-    <a id="msds-pdf-link" href="#" target="_blank" class="pdf-download-btn">
-      <span class="pdf-icon">📄</span> MSDS PDF 보기/다운로드
-    </a>
-  </div>
-  <p id="no-msds-pdf" style="color: #888; display: none;">등록된 MSDS PDF 파일이 없습니다.</p>
-</div>
+<!-- 4. MSDS PDF Link (Removed - Moved to button row) -->
+<!-- <div class="detail-section msds-pdf-section"> ... </div> -->
 
 <!-- 5. Hazard Info -->
 <div class="detail-section hazard-section">

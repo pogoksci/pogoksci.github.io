@@ -1997,3 +1997,60 @@ input[type="date"] {
   height: 100% !important;
   outline: none;
 }
+
+/* =================================================================
+   Inventory Detail Redesign (Download Buttons)
+================================================================= */
+.chem-info-row.button-row {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.download-action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 5px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #333;
+}
+
+.download-action-btn:hover:not(:disabled) {
+  background-color: #e0e0e0;
+  border-color: #ccc;
+}
+
+.download-action-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.download-action-btn .icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+  color: #555;
+}
+
+.download-action-btn .btn-text {
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Disabled State */
+.download-action-btn:disabled {
+  background-color: #f9f9f9;
+  border-color: #eee;
+  color: #aaa;
+  cursor: default;
+}
+
+.download-action-btn:disabled .icon {
+  color: #ccc;
+}

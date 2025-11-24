@@ -401,17 +401,28 @@
           .join("");
       }
 
-      const pdfContainer = document.getElementById("msds-pdf-container");
-      const noPdfMsg = document.getElementById("no-msds-pdf");
-      const pdfLink = document.getElementById("msds-pdf-link");
+      // ---------------------------------------------------------
+      // MSDS PDF Button Logic (Redesigned)
+      // ---------------------------------------------------------
+      const btnDownloadMsds = document.getElementById("btn-download-msds-row");
+      if (btnDownloadMsds) {
+        const icon = btnDownloadMsds.querySelector(".icon");
+        const text = btnDownloadMsds.querySelector(".btn-text");
 
-      if (data.msds_pdf_url) {
-        if (pdfContainer) pdfContainer.style.display = "block";
-        if (noPdfMsg) noPdfMsg.style.display = "none";
-        if (pdfLink) pdfLink.href = data.msds_pdf_url;
-      } else {
-        if (pdfContainer) pdfContainer.style.display = "none";
-        if (noPdfMsg) noPdfMsg.style.display = "block";
+        if (data.msds_pdf_url) {
+          btnDownloadMsds.disabled = false;
+          if (icon) icon.textContent = "picture_as_pdf";
+          if (text) text.textContent = "MSDS PDF";
+
+          btnDownloadMsds.onclick = () => {
+            window.open(data.msds_pdf_url, "_blank");
+          };
+        } else {
+          btnDownloadMsds.disabled = true;
+          if (icon) icon.textContent = "block";
+          if (text) text.textContent = "MSDS PDF 없음";
+          btnDownloadMsds.onclick = null;
+        }
       }
 
       const hazardContainer = document.getElementById("hazard-info-container");
@@ -583,12 +594,18 @@
         };
 
         // ---------------------------------------------------------
-        // MOL Download Logic
+        // MOL Download Logic (Redesigned)
         // ---------------------------------------------------------
-        const btnDownloadMol = document.getElementById("btn-mol-download");
+        const btnDownloadMol = document.getElementById("btn-download-mol-row");
         if (btnDownloadMol) {
+          const icon = btnDownloadMol.querySelector(".icon");
+          const text = btnDownloadMol.querySelector(".btn-text");
+
           if (data.Substance?.has_molfile) {
-            btnDownloadMol.style.display = "inline-flex"; // Show button
+            btnDownloadMol.disabled = false;
+            if (icon) icon.textContent = "download";
+            if (text) text.textContent = "Mol";
+
             btnDownloadMol.onclick = async () => {
               const substanceId = data.Substance.id;
               const casRn = data.Substance.cas_rn;
@@ -602,13 +619,11 @@
                   return;
                 }
 
-                // Use window.open or create a link to trigger download
                 const downloadUrl = `${fnBase}/casimport?type=download_mol&substance_id=${substanceId}`;
 
-                // Create a temporary link to force download
                 const link = document.createElement('a');
                 link.href = downloadUrl;
-                link.setAttribute('download', `${casRn || 'structure'}.mol`); // Hint filename
+                link.setAttribute('download', `${casRn || 'structure'}.mol`);
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -619,7 +634,10 @@
               }
             };
           } else {
-            btnDownloadMol.style.display = "none"; // Hide if no molfile
+            btnDownloadMol.disabled = true;
+            if (icon) icon.textContent = "block";
+            if (text) text.textContent = "Mol 파일 없음";
+            btnDownloadMol.onclick = null;
           }
         }
 
