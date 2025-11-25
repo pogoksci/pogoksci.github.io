@@ -426,7 +426,7 @@
     if (typeof globalThis.loadInventoryDetail === "function") return;
     await new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      script.src = "./js/ui/inventory-detail.js?v=" + Date.now();
+      script.src = "./js/ui/inventory-detail.js";
       script.defer = true;
       script.onload = resolve;
       script.onerror = () => reject(new Error("inventory-detail.js 로드 실패"));
