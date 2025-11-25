@@ -3207,12 +3207,14 @@ input[type="date"] {
 
 .text-conversion-undefined {
   font-size: 10px;
-  color: #d9534f; /* red */
+  color: #d9534f;
+  /* red */
 }
 
 .text-conversion-na {
   font-size: 10px;
-  color: #0074d9; /* blue */
+  color: #0074d9;
+  /* blue */
 }
 
 .text-conversion-paren {
@@ -3483,6 +3485,8 @@ input[type="date"] {
   font-size: 15px;
 
   font-weight: 600;
+
+  color: #333;
 
   cursor: pointer;
 
@@ -4188,4 +4192,35 @@ input[type="date"] {
 
 .chem-grid .chem-info {
   min-height: calc(var(--chem-row-height, 40px) * 7);
+}
+
+/* =================================================================
+   Hazard Accordion Styles (Added)
+================================================================= */
+.hazard-acc-header {
+  color: #333;
+  font-weight: 600;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  background-color: #f9f9f9;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hazard-acc-header:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.hazard-table {
+  border-bottom: none !important;
+}
+
+.hazard-table tr:last-child td {
+  border-bottom: none !important;
 }
