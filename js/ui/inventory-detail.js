@@ -70,6 +70,8 @@
         concentration_value, concentration_unit,
         converted_concentration_value_1, converted_concentration_unit_1,
         converted_concentration_value_2, converted_concentration_unit_2,
+        school_hazardous_chemical, special_health_checkup_hazardous_factor,
+        toxic_substance, permitted_substance, restricted_substance, prohibited_substance,
         Substance (
           id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, svg_image, has_molfile,
           Properties ( name, property ),
@@ -82,6 +84,18 @@
         .single();
 
       if (error) throw error;
+
+      // Populate Hazard Summary Table
+      const setHazardVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val || "-";
+      };
+      setHazardVal("val-school-hazard", data.school_hazardous_chemical);
+      setHazardVal("val-special-health", data.special_health_checkup_hazardous_factor);
+      setHazardVal("val-toxic", data.toxic_substance);
+      setHazardVal("val-permitted", data.permitted_substance);
+      setHazardVal("val-restricted", data.restricted_substance);
+      setHazardVal("val-prohibited", data.prohibited_substance);
 
       const korName = data.Substance?.chem_name_kor || data.Substance?.substance_name || "이름 없음";
       const engName = data.Substance?.substance_name || "";
