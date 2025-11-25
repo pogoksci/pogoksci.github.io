@@ -3291,7 +3291,7 @@ input[type="date"] {
   min-height: var(--chem-btn-height, 40px);
   max-height: var(--chem-btn-height, 40px);
   padding: 0 10px;
-  gap: 20px;
+  gap: 5px;
   align-items: center;
   border-bottom: none;
 }
