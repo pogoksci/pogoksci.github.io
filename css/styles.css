@@ -1648,6 +1648,8 @@ FAB
 
   padding: 0 12px 12px 12px;
 
+  margin-top: 10px;
+
 }
 
 
@@ -2972,7 +2974,7 @@ input[type="date"] {
 
   margin: 0;
 
-  font-size: 1rem;
+  font-size: 15px;
 
   color: #333;
 
@@ -3478,7 +3480,7 @@ input[type="date"] {
 
   border: none;
 
-  font-size: 1rem;
+  font-size: 15px;
 
   font-weight: 600;
 
@@ -3627,6 +3629,8 @@ input[type="date"] {
   border-radius: 0.375rem;
 
   overflow: hidden;
+
+  margin-top: 10px;
 
 }
 
