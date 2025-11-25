@@ -20,12 +20,14 @@
 
   <!-- 초기 스플래시 최소 스타일 (CSS 로드 전에 플래시 방지) -->
   <style>
-    html, body {
+    html,
+    body {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
     }
+
     #splash-screen {
       display: flex;
       flex-direction: column;
@@ -38,12 +40,14 @@
       padding: 40px 20px;
       box-sizing: border-box;
     }
+
     #splash-screen .main-logo {
       width: 150px;
       height: auto;
       display: block;
       margin: 0 auto 5px auto;
     }
+
     #splash-screen h1,
     #splash-screen p {
       margin: 0;
@@ -89,7 +93,7 @@
     <p id="app-version" class="app-version" style="display: none;"></p>
 
     <!-- 학교 이름: APP_CONFIG.SCHOOL -->
-    <p id="school-name" class="school-name">잠시만 기다려주세요.</p>
+    <p id="school-name" class="school-name">로딩 중</p>
   </div>
 
   <!-- 메인 컨텐츠 -->
