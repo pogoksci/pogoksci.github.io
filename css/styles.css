@@ -3203,6 +3203,31 @@ input[type="date"] {
   color: #aaa;
 }
 
+.text-conversion-undefined {
+  font-size: 10px;
+  color: #d9534f; /* red */
+}
+
+.text-conversion-na {
+  font-size: 10px;
+  color: #0074d9; /* blue */
+}
+
+.text-conversion-paren {
+  font-size: 10px;
+  color: #aaa;
+}
+
+.text-conversion-undefined-text {
+  font-size: 10px;
+  color: #d9534f;
+}
+
+.text-conversion-na-text {
+  font-size: 10px;
+  color: #0074d9;
+}
+
 
 
 .structure-error {
@@ -3355,10 +3380,8 @@ input[type="date"] {
 
 
 
-.chem-info-row:last-child {
-
+.chem-info-row:last-child:not(.button-row) {
   border-bottom: 1px solid #eee;
-
 }
 
 
@@ -3449,7 +3472,7 @@ input[type="date"] {
 
   text-align: left;
 
-  padding: 15px;
+  padding: 12px 14px;
 
   background-color: #f9f9f9;
 
@@ -3509,7 +3532,7 @@ input[type="date"] {
 
   display: none;
 
-  padding: 15px;
+  padding: 0 12px 12px 12px;
 
   background-color: #fff;
 
