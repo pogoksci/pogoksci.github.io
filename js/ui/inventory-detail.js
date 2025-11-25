@@ -116,26 +116,25 @@
       const v = data.door_vertical || "";
       const h = data.door_horizontal || "";
       const hCount = Number(data.Cabinet?.door_horizontal_count || data.door_horizontal_count || 0);
-
       let locText = "";
       if (area) locText += `${area} `;
-      if (cab) locText += `??{cab}??`;
+      if (cab) locText += `${cab} `;
 
       let doorPart = "";
       const doorHVal = String(h || "").trim();
       let doorHLabel = "";
       if (hCount > 1) {
-        if (doorHVal === "1") doorHLabel = "?쇱そ";
-        else if (doorHVal === "2") doorHLabel = "?ㅻⅨ履?;
+        if (doorHVal === "1") doorHLabel = "left";
+        else if (doorHVal === "2") doorHLabel = "right";
         else doorHLabel = doorHVal;
       }
 
       if (v && doorHLabel) {
-        doorPart = `${v}痢?${doorHLabel}臾?;
+        doorPart = `${v}F ${doorHLabel}`;
       } else if (v) {
-        doorPart = `${v}痢듬Ц`;
+        doorPart = `${v}F`;
       } else if (doorHLabel) {
-        doorPart = `${doorHLabel}臾?;
+        doorPart = doorHLabel;
       }
 
       let shelfPart = "";
@@ -143,17 +142,18 @@
       const colVal = data.storage_column;
 
       if (shelfVal && colVal) {
-        shelfPart = `${shelfVal}痢?${colVal}??;
+        shelfPart = `${shelfVal} shelf ${colVal} col`;
       } else {
-        if (shelfVal) shelfPart += `${shelfVal}痢?;
-        if (colVal) shelfPart += (shelfPart ? " " : "") + `${colVal}??;
+        if (shelfVal) shelfPart += `${shelfVal} shelf`;
+        if (colVal) shelfPart += (shelfPart ? " " : "") + `${colVal} col`;
       }
 
       const detailParts = [doorPart, shelfPart].filter(Boolean).join(", ");
       if (detailParts) locText += detailParts;
 
-      locText = locText.trim() || "?꾩튂: 誘명솗??;
+      locText = locText.trim() || "Location: N/A";
       document.getElementById("detail-location").textContent = locText;
+
 
       const dateStr = data.purchase_date || data.created_at;
       let formattedDate = "-";
@@ -785,3 +785,4 @@
 
   globalThis.loadInventoryDetail = loadInventoryDetail;
 })();
+

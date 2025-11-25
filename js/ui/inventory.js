@@ -422,11 +422,34 @@
   // ------------------------------------------------------------
   // 4️⃣ 상세 보기
   // ------------------------------------------------------------
+  async function ensureInventoryDetailLoaded() {
+    if (typeof globalThis.loadInventoryDetail === "function") return;
+    await new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "./js/ui/inventory-detail.js";
+      script.defer = true;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error("inventory-detail.js 로드 실패"));
+      document.head.appendChild(script);
+    });
+  }
+
   async function loadDetail(id) {
     // ✅ inventory-detail.js에 정의된 최신 로직 사용
+    if (typeof globalThis.loadInventoryDetail !== "function") {
+      try {
+        await ensureInventoryDetailLoaded();
+      } catch (err) {
+        console.error("❌ inventory-detail.js를 동적으로 로드하지 못했습니다.", err);
+        alert("상세 페이지 로직을 불러오지 못했습니다.");
+        return;
+      }
+    }
+
     if (typeof globalThis.loadInventoryDetail === "function") {
       return await globalThis.loadInventoryDetail(id);
     }
+
     console.error("❌ loadInventoryDetail 함수를 찾을 수 없습니다. inventory-detail.js가 로드되었는지 확인하세요.");
     alert("상세 페이지 로직을 불러오지 못했습니다.");
   }
