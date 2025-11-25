@@ -1,0 +1,75 @@
+/* =========================================================================
+   Mobile (smartphone portrait) overrides
+   Target: handset widths up to 640px. Desktop/tablet styles live in styles.css.
+======================================================================== */
+
+@media (max-width: 640px) {
+  .hazard-card {
+    padding: 10px 12px;
+  }
+
+  .hazard-table {
+    font-size: 13px;
+  }
+
+  .hazard-table thead th,
+  .hazard-table tbody td {
+    padding: 8px 6px;
+  }
+}
+
+@media (max-width: 600px) {
+  .chem-grid {
+    flex-direction: column;
+  }
+
+  .structure-wrapper {
+    width: 100%;
+    flex: none;
+    max-width: 240px;
+    margin: 0 auto;
+  }
+
+  .chem-info .label {
+    width: 90px;
+  }
+}
+
+@media (max-width: 600px) {
+  .detail-grid {
+    flex-direction: column;
+    flex-wrap: wrap;
+  }
+
+  .detail-left {
+    width: 100%;
+    max-width: 100%;
+    flex: none;
+    margin: 0 auto;
+  }
+
+  .detail-left .photo-preview-box {
+    margin: 0 auto;
+    width: 100%;
+    max-width: 360px;
+    height: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .msds-row {
+    flex-direction: column;
+  }
+
+  .msds-header {
+    flex: none;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #f3f4f6;
+  }
+
+  .msds-content {
+    width: 100%;
+  }
+}

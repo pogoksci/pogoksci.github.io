@@ -13,63 +13,70 @@
   <!-- 구글 아이콘 폰트 -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
-  <!-- ✅ Supabase SDK -->
+  <!-- Supabase SDK -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
-  <!-- ✅ Supabase Client 초기화
-  <script src="js/supabaseClient.js"></script> -->
+  <!-- Supabase Client 초기화 <script src="js/supabaseClient.js"></script> -->
 
-  <!-- ✅ 메인 스타일 -->
-  <link rel="stylesheet" href="css/styles.css?v=2" />
+  <!-- 화면 폭에 따라 하나의 CSS만 로드 -->
+  <script>
+    (function () {
+      var isMobilePortrait = window.matchMedia('(max-width: 640px)').matches;
+      var cssHref = isMobilePortrait ? 'css/styles_mobile.css?v=1' : 'css/styles.css?v=3';
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = cssHref;
+      document.head.appendChild(link);
+    })();
+  </script>
 
   <script>
-    // GitHub Pages: 사용자/조직 사이트(루트) vs 프로젝트 사이트(/scimanager/) 모두 대응
+    // GitHub Pages: (루트) vs (서브루트 /scimanager/) 모두 대응
     (function () {
-      // 자동 추론: 현재 경로에 /scimanager/가 포함되면 그걸 베이스로 사용
       var guessed = location.pathname.includes('/scimanager/')
         ? '/scimanager/'
         : '/';
 
-      window.APP_BASE_PATH = guessed.replace(/\/+$/, '/')  // 끝에 / 하나만
+      window.APP_BASE_PATH = guessed.replace(/\/+$/, '/'); // 끝에 / 하나로 정리
     })();
   </script>
 
-  <!-- ✅ 앱 진입 스크립트 -->
+  <!-- 초기가입 진입 스크립트 -->
   <script src="js/index.js" defer></script>
 </head>
 
 <body class="home-active">
-  <!-- 🧪 스플래시(로딩) 화면 -->
+  <!-- 초기 스플래시(로딩) 화면 -->
   <div id="splash-screen">
     <img src="css/logo.png" alt="SciManager Logo" class="main-logo" />
 
-    <!-- ✅ 앱 이름: APP_CONFIG.APPNAME -->
+    <!-- 앱이름: APP_CONFIG.APPNAME -->
     <h1 id="app-title" class="app-title">SciManager</h1>
 
-    <!-- ✅ 버전: APP_CONFIG.VERSION -->
+    <!-- 앱버전: APP_CONFIG.VERSION -->
     <p id="app-version" class="app-version" style="display: none;"></p>
 
-    <!-- ✅ 학교 이름: APP_CONFIG.SCHOOL -->
+    <!-- 학교 이름: APP_CONFIG.SCHOOL -->
     <p id="school-name" class="school-name">잠시만 기다려주세요.</p>
   </div>
 
-  <!-- 🔹 메인 컨텐츠 -->
+  <!-- 메인 컨텐츠 -->
   <div id="form-container"></div>
 
-  <!-- 🧭 하단 네비게이션 -->
+  <!-- 하단 내비게이션 -->
   <div id="navbar-container"></div>
 
-  <!-- ➕ 플로팅 액션 버튼 -->
+  <!-- 플로팅 액션 버튼 -->
   <button class="fab" id="fab-button" style="display: none;"></button>
 
-  <!-- 📸 카메라 모달 -->
+  <!-- 카메라 모달 -->
   <div id="camera-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
       <video id="camera-view" autoplay playsinline></video>
       <canvas id="photo-canvas" style="display: none;"></canvas>
       <div class="modal-controls">
-        <button type="button" id="capture-btn">📸 사진 찍기</button>
-        <button type="button" id="cancel-camera-btn">❌ 닫기</button>
+        <button type="button" id="capture-btn">사진 찍기</button>
+        <button type="button" id="cancel-camera-btn">취소하기</button>
       </div>
     </div>
   </div>
