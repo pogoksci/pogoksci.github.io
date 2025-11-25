@@ -74,6 +74,8 @@
         toxic_substance, permitted_substance, restricted_substance, prohibited_substance,
         Substance (
           id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, svg_image, has_molfile,
+          school_hazardous_chemical_standard, special_health_checkup_hazardous_factor_standard,
+          toxic_substance_standard, permitted_substance_standard, restricted_substance_standard, prohibited_substance_standard,
           Properties ( name, property ),
           MSDS ( section_number, content ),
           HazardClassifications (*)
@@ -90,6 +92,16 @@
         const el = document.getElementById(id);
         if (el) el.textContent = val || "-";
       };
+
+      // 1. Standard Values (from Substance)
+      setHazardVal("std-school-hazard", data.Substance?.school_hazardous_chemical_standard);
+      setHazardVal("std-special-health", data.Substance?.special_health_checkup_hazardous_factor_standard);
+      setHazardVal("std-toxic", data.Substance?.toxic_substance_standard);
+      setHazardVal("std-permitted", data.Substance?.permitted_substance_standard);
+      setHazardVal("std-restricted", data.Substance?.restricted_substance_standard);
+      setHazardVal("std-prohibited", data.Substance?.prohibited_substance_standard);
+
+      // 2. Inventory Values (from Inventory)
       setHazardVal("val-school-hazard", data.school_hazardous_chemical);
       setHazardVal("val-special-health", data.special_health_checkup_hazardous_factor);
       setHazardVal("val-toxic", data.toxic_substance);
