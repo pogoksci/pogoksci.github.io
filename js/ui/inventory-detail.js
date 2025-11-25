@@ -50,7 +50,7 @@
         console.warn("SVG parsing failed:", e);
       }
     }
-    target.innerHTML = `<span class="structure-placeholder">구조식 이미지 없음</span>`;
+    target.innerHTML = `<span class="structure-placeholder">구조???��?지 ?�음</span>`;
   }
 
   async function loadInventoryDetail(id = null) {
@@ -58,7 +58,7 @@
       const supabase = getSupabase();
       const inventoryId = id || localStorage.getItem("selected_inventory_id");
       if (!inventoryId) {
-        alert("선택된 재고가 없습니다.");
+        alert("?�택???�고가 ?�습?�다.");
         return;
       }
 
@@ -83,7 +83,7 @@
 
       if (error) throw error;
 
-      const korName = data.Substance?.chem_name_kor || data.Substance?.substance_name || "이름 없음";
+      const korName = data.Substance?.chem_name_kor || data.Substance?.substance_name || "?�름 ?�음";
       const engName = data.Substance?.substance_name || "";
 
       document.getElementById("detail-name-kor").textContent = korName;
@@ -92,10 +92,10 @@
       const photoDiv = document.getElementById("detail-photo");
       const photoUrl = data.photo_url_320 || data.photo_url_160 || "";
       photoDiv.innerHTML = photoUrl
-        ? `<img src="${photoUrl}" alt="시약 사진">`
-        : `<span>사진 없음</span>`;
+        ? `<img src="${photoUrl}" alt="?�약 ?�진">`
+        : `<span>?�진 ?�음</span>`;
 
-      document.getElementById("detail-name-kor").textContent = data.Substance?.chem_name_kor || "이름 없음";
+      document.getElementById("detail-name-kor").textContent = data.Substance?.chem_name_kor || "?�름 ?�음";
       document.getElementById("detail-name-eng").textContent = data.Substance?.substance_name || "";
       if (data.Substance?.id) {
         document.getElementById("detail-substance-id").textContent = `No.${data.Substance.id}`;
@@ -117,25 +117,25 @@
       const h = data.door_horizontal || "";
       const hCount = Number(data.Cabinet?.door_horizontal_count || data.door_horizontal_count || 0);
 
-      let locText = "";
+            let locText = "";
       if (area) locText += `${area} `;
-      if (cab) locText += `『${cab}』 `;
+      if (cab) locText += `${cab} `;
 
       let doorPart = "";
       const doorHVal = String(h || "").trim();
       let doorHLabel = "";
       if (hCount > 1) {
-        if (doorHVal === "1") doorHLabel = "왼쪽";
-        else if (doorHVal === "2") doorHLabel = "오른쪽";
+        if (doorHVal === "1") doorHLabel = "\uC67C\uCABD";
+        else if (doorHVal === "2") doorHLabel = "\uC624\uB978\uCABD";
         else doorHLabel = doorHVal;
       }
 
       if (v && doorHLabel) {
-        doorPart = `${v}층 ${doorHLabel}문`;
+        doorPart = `${v}\uCE35 ${doorHLabel}\uBB38`;
       } else if (v) {
-        doorPart = `${v}층문`;
+        doorPart = `${v}\uCE35\uBB38`;
       } else if (doorHLabel) {
-        doorPart = `${doorHLabel}문`;
+        doorPart = `${doorHLabel}\uBB38`;
       }
 
       let shelfPart = "";
@@ -143,16 +143,16 @@
       const colVal = data.storage_column;
 
       if (shelfVal && colVal) {
-        shelfPart = `${shelfVal}층 ${colVal}열`;
+        shelfPart = `${shelfVal}\uCE35 ${colVal}\uC5F4`;
       } else {
-        if (shelfVal) shelfPart += `${shelfVal}층`;
-        if (colVal) shelfPart += (shelfPart ? " " : "") + `${colVal}열`;
+        if (shelfVal) shelfPart += `${shelfVal}\uCE35`;
+        if (colVal) shelfPart += (shelfPart ? " " : "") + `${colVal}\uC5F4`;
       }
 
       const detailParts = [doorPart, shelfPart].filter(Boolean).join(", ");
       if (detailParts) locText += detailParts;
 
-      locText = locText.trim() || "위치: 미확인";
+      locText = locText.trim() || "\uC704\uCE58: \uBBF8\uD655\uC778";
       document.getElementById("detail-location").textContent = locText;
 
       const dateStr = data.purchase_date || data.created_at;
@@ -206,7 +206,7 @@
           if (data.Substance?.svg_image) {
             renderSvg(data.Substance.svg_image, structureBox);
           } else {
-            structureBox.innerHTML = '<span class="structure-placeholder">이미지 없음</span>';
+            structureBox.innerHTML = '<span class="structure-placeholder">?��?지 ?�음</span>';
           }
         }
       })();
@@ -230,8 +230,8 @@
       };
 
       const convState = {
-        label1: "변환농도1",
-        label2: "변환농도2",
+        label1: "변?�농??",
+        label2: "변?�농??",
         value1: "-",
         value2: "-",
       };
@@ -239,8 +239,8 @@
       if (data.converted_concentration_value_1) {
         const unit1 = data.converted_concentration_unit_1;
         const unit1Norm = (unit1 || "").trim();
-        if (unit1Norm.toUpperCase().startsWith("M")) convState.label1 = "몰농도:";
-        else if (unit1Norm.includes("%")) convState.label1 = "퍼센트농도:";
+        if (unit1Norm.toUpperCase().startsWith("M")) convState.label1 = "몰농??";
+        else if (unit1Norm.includes("%")) convState.label1 = "?�센?�농??";
         else convState.label1 = "Conversion";
         convState.value1 = formatConvVal(data.converted_concentration_value_1, unit1);
       }
@@ -248,8 +248,8 @@
       if (data.converted_concentration_value_2) {
         const unit2 = data.converted_concentration_unit_2;
         const unit2Norm = (unit2 || "").trim();
-        if (unit2Norm.toLowerCase().startsWith("m")) convState.label2 = "몰랄농도:";
-        else if (unit2Norm.includes("%")) convState.label2 = "퍼센트농도:";
+        if (unit2Norm.toLowerCase().startsWith("m")) convState.label2 = "몰랄?�도:";
+        else if (unit2Norm.includes("%")) convState.label2 = "?�센?�농??";
         else convState.label2 = "Conversion";
         convState.value2 = formatConvVal(data.converted_concentration_value_2, unit2);
       }
@@ -258,43 +258,59 @@
       const convLabel2El = document.getElementById("conv-label-2");
       const convValue1El = document.getElementById("conv-value-1");
       const convValue2El = document.getElementById("conv-value-2");
+                  const renderConvValue = (el, rawVal) => {
+        if (!el) return;
+        const str = rawVal == null ? "-" : String(rawVal);
+        const statusKey = str.includes("\uC758\uBBF8 \uC5C6\uC74C")
+          ? "\uC758\uBBF8 \uC5C6\uC74C"
+          : str.includes("\uC815\uC758 \uBD88\uAC00")
+            ? "\uC815\uC758 \uBD88\uAC00"
+            : null;
+        el.classList.remove("text-muted-small");
+        el.textContent = "";
+
+        if (statusKey) {
+          const statusToken = `(${statusKey})`;
+          const baseText = str.replace(statusToken, "").trimEnd() || "-";
+          const statusSpan = document.createElement("span");
+          statusSpan.textContent = statusToken;
+          statusSpan.className =
+            statusKey === "\uC758\uBBF8 \uC5C6\uC74C" ? "text-conversion-na-text" : "text-conversion-undefined-text";
+          statusSpan.style.whiteSpace = "nowrap";
+
+          el.textContent = baseText;
+          if (baseText && !baseText.endsWith(" ")) {
+            el.appendChild(document.createTextNode(" "));
+          }
+          el.appendChild(statusSpan);
+        } else {
+          el.textContent = str;
+        }
+      };
 
       if (convLabel1El) convLabel1El.textContent = convState.label1;
       if (convLabel2El) convLabel2El.textContent = convState.label2;
-      if (convValue1El) {
-        convValue1El.textContent = convState.value1;
-        if (convState.value1.includes("(의미 없음)") || convState.value1.includes("(정의 불가)")) {
-          convValue1El.classList.add("text-muted-small");
-        } else {
-          convValue1El.classList.remove("text-muted-small");
-        }
-      }
-      if (convValue2El) {
-        convValue2El.textContent = convState.value2;
-        if (convState.value2.includes("(의미 없음)") || convState.value2.includes("(정의 불가)")) {
-          convValue2El.classList.add("text-muted-small");
-        } else {
-          convValue2El.classList.remove("text-muted-small");
-        }
-      }
+      if (convValue1El) renderConvValue(convValue1El, convState.value1);
+      if (convValue2El) renderConvValue(convValue2El, convState.value2);
 
-      const msdsTitles = [
-        "1. 화학제품과 회사에 관한 정보",
-        "2. 유해성·위험성",
-        "3. 구성성분의 명칭 및 함유량",
-        "4. 응급조치 요령",
-        "5. 화재 시 조치방법",
-        "6. 누출 시 조치방법",
-        "7. 취급 및 저장방법",
-        "8. 노출방지 및 개인보호구",
-        "9. 물리화학적 특성",
-        "10. 안정성 및 반응성",
-        "11. 독성에 관한 정보",
-        "12. 환경에 미치는 영향",
-        "13. 폐기 시 주의사항",
-        "14. 운송에 필요한 정보",
-        "15. 법적 규제현황",
-        "16. 그 밖의 참고사항",
+
+            const msdsTitles = [
+        "1. \uD654\uD559\uC81C\uD488\uACFC \uD68C\uC0AC\uC5D0 \uB300\uD55C \uC815\uBCF4",
+        "2. \uC720\uD574\uC131\u00B7\uC704\uD5D8\uC131",
+        "3. \uAD6C\uC131\uC131\uBD84\uC758 \uBA85\uCE6D \uBC0F \uD568\uC720\uB7C9",
+        "4. \uC751\uAE09\uC870\uCE58 \uC694\uB839",
+        "5. \uD654\uC7A5 \uC2DC \uC870\uCE58\uBC29\uBC95",
+        "6. \uB204\uCD9C \uC2DC \uC870\uCE58\uBC29\uBC95",
+        "7. \uCDE8\uAE09 \uBC0F \uC800\uC7A5\uBC29\uBC95",
+        "8. \uB178\uCD9C\uBC29\uC9C0 \uBC0F \uAC1C\uC778\uBCF4\uD638\uAD6C",
+        "9. \uBB3C\uB9AC\uD654\uD559\uC801 \uD2B9\uC131",
+        "10. \uC548\uC815\uC131 \uBC0F \uBC18\uC751\uC131",
+        "11. \uB3C5\uC131\uC5D0 \uAD00\uD55C \uC815\uBCF4",
+        "12. \uD658\uACBD\uC5D0 \uBBF8\uCE5C\uB294 \uC601\uD5A5",
+        "13. \uD3D0\uAE30 \uC2DC \uC8FC\uC758\uC0AC\uD56D",
+        "14. \uC6B4\uC1A1\uC5D0 \uD544\uC694\uD55C \uC815\uBCF4",
+        "15. \uBC95\uC801 \uADDC\uC81C\uD604\uD669",
+        "16. \uADF8 \uBC16\uC758 \uCC38\uACE0\uC0AC\uD56D",
       ];
 
       const ghsMapping = {
@@ -317,7 +333,7 @@
           .map((title, index) => {
             const sectionNum = index + 1;
             const sectionData = msdsData.find((d) => d.section_number === sectionNum);
-            let contentHtml = '<p class="text-gray-500 italic p-4">내용 없음 (데이터 동기화 필요)</p>';
+            let contentHtml = '<p class="text-gray-500 italic p-4">?�용 ?�음 (?�이???�기???�요)</p>';
 
             if (sectionData && sectionData.content) {
               if (sectionNum === 2 && sectionData.content.includes("|||그림문자|||")) {
@@ -337,7 +353,7 @@
                               if (match) {
                                 const num = match[1];
                                 const imgUrl = `https://hazmat.nfa.go.kr/design/images/contents/ghs-icon${num}.gif`;
-                                const fullDesc = ghsMapping[num] || "분류 정보 없음";
+                                const fullDesc = ghsMapping[num] || "분류 ?�보 ?�음";
                                 const lines = fullDesc.split("\n");
                                 const titleLine = lines[0];
                                 const detailLines = lines.slice(1).join("<br>");
@@ -434,7 +450,7 @@
         } else {
           btnDownloadMsds.disabled = true;
           if (icon) icon.textContent = "block";
-          if (text) text.textContent = "MSDS PDF 없음";
+          if (text) text.textContent = "MSDS PDF ?�음";
           btnDownloadMsds.onclick = null;
         }
       }
@@ -449,8 +465,8 @@
         .eq("substance_id", substanceId);
 
       if (hazardError) {
-        console.error("유해화학물질 정보 조회 오류:", hazardError);
-        if (hazardContainer) hazardContainer.innerHTML = `<p class="text-red-500">정보 조회 실패</p>`;
+        console.error("?�해?�학물질 ?�보 조회 ?�류:", hazardError);
+        if (hazardContainer) hazardContainer.innerHTML = `<p class="text-red-500">?�보 조회 ?�패</p>`;
       } else if (hazardData && hazardData.length > 0) {
         if (hazardContainer) {
           const accordion = hazardData
@@ -465,16 +481,16 @@
                 <div class="hazard-acc-item">
                   <button class="hazard-acc-header" type="button">
                     <span class="hazard-acc-title">${displayTitle}</span>
-                    <span class="hazard-acc-arrow" aria-hidden="true">▼</span>
+                    <span class="hazard-acc-arrow" aria-hidden="true">??/span>
                   </button>
                   <div class="hazard-acc-content">
                     <table class="hazard-table">
                       <thead>
                         <tr>
                           <th>고유 번호</th>
-                          <th>내용</th>
-                          <th>고시 정보</th>
-                          <th>고시 일자</th>
+                          <th>?�용</th>
+                          <th>고시 ?�보</th>
+                          <th>고시 ?�자</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -502,7 +518,7 @@
         }
       } else {
         if (hazardContainer) {
-          hazardContainer.innerHTML = "<p class='text-gray-500'>해당 물질의 유해화학물질 분류 정보가 없습니다.</p>";
+          hazardContainer.innerHTML = "<p class='text-gray-500'>?�당 물질???�해?�학물질 분류 ?�보가 ?�습?�다.</p>";
         }
       }
 
@@ -513,7 +529,7 @@
       });
 
       document.getElementById("delete-inventory-btn")?.addEventListener("click", async () => {
-        if (!confirm("정말 삭제하시겠습니까?")) return;
+        if (!confirm("?�말 ??��?�시겠습?�까?")) return;
 
         if (data.msds_pdf_url) {
           try {
@@ -524,11 +540,11 @@
               const { error: storageError } = await supabase.storage.from("msds-pdf").remove([fileName]);
 
               if (storageError) {
-                console.warn("PDF 파일 삭제 실패:", storageError);
+                console.warn("PDF ?�일 ??�� ?�패:", storageError);
               }
             }
           } catch (err) {
-            console.warn("PDF 삭제 처리 오류:", err);
+            console.warn("PDF ??�� 처리 ?�류:", err);
           }
         }
 
@@ -536,7 +552,7 @@
         const fnBase =
           app.projectFunctionsBaseUrl || (app.supabaseUrl ? `${app.supabaseUrl}/functions/v1` : "");
         if (!fnBase) {
-          alert("함수 호출 경로를 찾을 수 없습니다.");
+          alert("?�수 ?�출 경로�?찾을 ???�습?�다.");
           return;
         }
         const headers = app.supabaseAnonKey
@@ -549,10 +565,10 @@
         const res = await fetch(fnUrl, { method: "DELETE", headers });
         if (!res.ok) {
           const msg = await res.text();
-          alert("삭제 실패: " + msg);
+          alert("??�� ?�패: " + msg);
           return;
         }
-        alert("삭제되었습니다.");
+        alert("??��?�었?�니??");
         if (getApp().Inventory?.showListPage) {
           await getApp().Inventory.showListPage();
         }
@@ -564,7 +580,7 @@
             getApp().Forms.initInventoryForm("edit", data),
           );
         } else {
-          alert("편집 모드로 전환 (구현 필요)");
+          alert("?�집 모드�??�환 (구현 ?�요)");
         }
       });
 
@@ -643,7 +659,7 @@
                 const app = getApp();
                 const fnBase = app.projectFunctionsBaseUrl || (app.supabaseUrl ? `${app.supabaseUrl}/functions/v1` : "");
                 if (!fnBase) {
-                  alert("함수 호출 경로를 찾을 수 없습니다.");
+                  alert("?�수 ?�출 경로�?찾을 ???�습?�다.");
                   return;
                 }
 
@@ -658,13 +674,13 @@
 
               } catch (e) {
                 console.error("Download failed:", e);
-                alert("다운로드 요청 중 오류가 발생했습니다.");
+                alert("?�운로드 ?�청 �??�류가 발생?�습?�다.");
               }
             };
           } else {
             btnDownloadMol.disabled = true;
             if (icon) icon.textContent = "block";
-            if (text) text.textContent = "Mol 파일 없음";
+            if (text) text.textContent = "Mol ?�일 ?�음";
             btnDownloadMol.onclick = null;
           }
         }
@@ -675,7 +691,7 @@
           const show3dFallback = () => {
             box3d.style.backgroundColor = "#f9f9f9";
             box3d.innerHTML =
-              '<div class="structure-error" style="display:flex;align-items:center;justify-content:center;height:100%;">이 물질은 PubChem에서 3D 구조 데이터를 제공하지 않습니다.</div>';
+              '<div class="structure-error" style="display:flex;align-items:center;justify-content:center;height:100%;">??물질?� PubChem?�서 3D 구조 ?�이?��? ?�공?��? ?�습?�다.</div>';
           };
 
           // ?? iframe? ??? ?? ???? ??
@@ -688,7 +704,7 @@
           }
 
           try {
-            box3d.innerHTML = '<div class="structure-error" style="display:flex; align-items:center; justify-content:center; height:100%; color:#666;">PubChem 3D 구조를 읽는 중...</div>';
+            box3d.innerHTML = '<div class="structure-error" style="display:flex; align-items:center; justify-content:center; height:100%; color:#666;">PubChem 3D 구조�??�는 �?..</div>';
 
             // 1. Get CID
             const cid = await loadPubChemCid();
@@ -781,10 +797,11 @@
         checkUpdate();
       }
     } catch (err) {
-      console.error("상세 페이지 로드 오류:", err);
-      document.getElementById("detail-page-container").innerHTML = `<p>오류: ${err.message}</p>`;
+      console.error("?�세 ?�이지 로드 ?�류:", err);
+      document.getElementById("detail-page-container").innerHTML = `<p>?�류: ${err.message}</p>`;
     }
   }
 
   globalThis.loadInventoryDetail = loadInventoryDetail;
 })();
+
