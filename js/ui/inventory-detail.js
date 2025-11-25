@@ -429,7 +429,7 @@
           if (text) text.textContent = "MSDS PDF";
 
           btnDownloadMsds.onclick = () => {
-            window.open(data.msds_pdf_url, "_blank");
+            globalThis.open(data.msds_pdf_url, "_blank");
           };
         } else {
           btnDownloadMsds.disabled = true;
@@ -633,7 +633,7 @@
             if (icon) icon.textContent = "download";
             if (text) text.textContent = "Mol";
 
-            btnDownloadMol.onclick = async () => {
+            btnDownloadMol.onclick = () => {
               const substanceId = data.Substance.id;
               const casRn = data.Substance.cas_rn;
               if (!substanceId) return;
