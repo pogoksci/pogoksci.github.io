@@ -3273,13 +3273,9 @@ input[type="date"] {
 
 
 .chem-info-row:not(.button-row) {
-
-  height: var(--chem-row-height, 50px);
-
-  min-height: var(--chem-row-height, 50px);
-
-  max-height: var(--chem-row-height, 50px);
-
+  height: var(--chem-row-height, 40px);
+  min-height: var(--chem-row-height, 40px);
+  max-height: var(--chem-row-height, 40px);
 }
 
 
@@ -3291,9 +3287,9 @@ input[type="date"] {
 }
 
 .chem-info-row.button-row {
-  height: var(--chem-btn-height, 50px);
-  min-height: var(--chem-btn-height, 50px);
-  max-height: var(--chem-btn-height, 50px);
+  height: var(--chem-btn-height, 40px);
+  min-height: var(--chem-btn-height, 40px);
+  max-height: var(--chem-btn-height, 40px);
   padding: 0 10px;
   gap: 20px;
   align-items: center;
@@ -3301,9 +3297,7 @@ input[type="date"] {
 
 .download-action-btn {
   flex: 1;
-  height: 20px;
-  min-height: 20px;
-  max-height: 20px;
+  height: 100%;
   padding: 0;
   display: flex;
   align-items: center;
@@ -3315,6 +3309,14 @@ input[type="date"] {
 .download-action-btn .btn-text {
   font-size: 12px;
   line-height: 1;
+}
+
+.structure-footer .view-mode-btn {
+  height: var(--chem-btn-height, 40px);
+  min-height: var(--chem-btn-height, 40px);
+  max-height: var(--chem-btn-height, 40px);
+  display: inline-flex;
+  align-items: center;
 }
 
 
@@ -3780,9 +3782,9 @@ input[type="date"] {
 ================================================================= */
 
 :root {
-  --chem-row-height: 50px;
+  --chem-row-height: 40px;
   --chem-info-rows-height: calc(var(--chem-row-height) * 6);
-  --chem-btn-height: 50px;
+  --chem-btn-height: 40px;
   --view-toggle-height: var(--chem-btn-height);
   --chem-btn-font-size: 12px;
   --chem-download-icon-size: 12px;
@@ -3791,10 +3793,10 @@ input[type="date"] {
 .structure-wrapper {
   display: flex;
   flex-direction: column;
-  width: 300px;
-  max-width: 300px;
-  flex: 0 0 300px;
-  min-width: 300px;
+  width: 240px;
+  max-width: 240px;
+  flex: 0 0 240px;
+  min-width: 240px;
   font-size: var(--chem-btn-font-size, 12px);
   background-color: transparent;
   padding: 0;
@@ -4117,25 +4119,25 @@ input[type="date"] {
 .chem-grid .structure-wrapper {
   background: transparent;
   padding: 0;
-  width: 300px;
-  max-width: 300px;
-  min-width: 300px;
-  flex: 0 0 300px;
+  width: 240px;
+  max-width: 240px;
+  min-width: 240px;
+  flex: 0 0 240px;
 }
 
 .chem-grid .structure-box {
-  width: 300px;
-  height: 300px;
-  min-width: 300px;
-  max-width: 300px;
-  min-height: 300px;
-  max-height: 300px;
+  width: 240px;
+  height: 240px;
+  min-width: 240px;
+  max-width: 240px;
+  min-height: 240px;
+  max-height: 240px;
 }
 
 .chem-grid .structure-box.mode-3d {
-  height: 300px;
+  height: 240px;
 }
 
 .chem-grid .chem-info {
-  min-height: calc(var(--chem-row-height, 50px) * 7);
+  min-height: calc(var(--chem-row-height, 40px) * 7);
 }
