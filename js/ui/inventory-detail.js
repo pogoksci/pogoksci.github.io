@@ -259,23 +259,37 @@
       const convValue1El = document.getElementById("conv-value-1");
       const convValue2El = document.getElementById("conv-value-2");
 
+      const formatWithParenSmall = (val) => {
+        if (!val) return "-";
+        const str = String(val);
+        const idx = str.indexOf("(");
+        if (idx !== -1) {
+          const main = str.substring(0, idx);
+          const sub = str.substring(idx);
+          return `${main}<span style="font-size: 10px;">${sub}</span>`;
+        }
+        return str;
+      };
+
       if (convLabel1El) convLabel1El.textContent = convState.label1;
       if (convLabel2El) convLabel2El.textContent = convState.label2;
       if (convValue1El) {
-        convValue1El.textContent = convState.value1;
+        // Check plain text for logic
         if (convState.value1.includes("(의미 없음)") || convState.value1.includes("(정의 불가)")) {
           convValue1El.classList.add("text-muted-small");
         } else {
           convValue1El.classList.remove("text-muted-small");
         }
+        // Render with formatting
+        convValue1El.innerHTML = formatWithParenSmall(convState.value1);
       }
       if (convValue2El) {
-        convValue2El.textContent = convState.value2;
         if (convState.value2.includes("(의미 없음)") || convState.value2.includes("(정의 불가)")) {
           convValue2El.classList.add("text-muted-small");
         } else {
           convValue2El.classList.remove("text-muted-small");
         }
+        convValue2El.innerHTML = formatWithParenSmall(convState.value2);
       }
 
       const msdsTitles = [
