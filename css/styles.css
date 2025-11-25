@@ -4014,35 +4014,6 @@ input[type="date"] {
 
 
   /* =================================================================
-
-   Inventory Detail Redesign (Download Buttons)
-
-================================================================= */
-
-  .chem-info-row.button-row {
-
-    display: flex;
-
-    gap: 12px;
-
-    justify-content: space-between;
-
-    align-items: stretch;
-
-    padding: 0 10px !important;
-
-    border-bottom: 1px solid #eee;
-
-    box-sizing: border-box;
-
-    height: var(--view-toggle-height, var(--chem-btn-height, 30px));
-
-  }
-
-
-
-  #btn-download-mol-row {
-
     flex: 1 1 0;
 
   }
@@ -4052,55 +4023,6 @@ input[type="date"] {
   #btn-download-msds-row {
 
     flex: 0 0 auto;
-
-  }
-
-
-
-  .download-action-btn {
-
-    flex: 1 1 0;
-
-    min-width: 0;
-
-    display: flex;
-
-    flex-direction: row;
-
-    align-items: center;
-
-    justify-content: center;
-
-    padding: 0 10px;
-
-    background-color: #f0f0f0;
-
-    border: 1px solid #ddd;
-
-    border-radius: 6px;
-
-    cursor: pointer;
-
-    transition: all 0.2s ease;
-
-    color: #333;
-
-    height: 100%;
-
-    white-space: nowrap;
-
-    overflow: hidden;
-
-    font-size: var(--chem-btn-font-size, 12px);
-
-    line-height: 1;
-
-  }
-
-  .download-action-btn:hover:not(:disabled) {
-    background-color: #e0e0e0;
-    border-color: #ccc;
-  }
 
   .download-action-btn:active:not(:disabled) {
     transform: translateY(1px);
