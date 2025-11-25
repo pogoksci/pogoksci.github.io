@@ -3302,11 +3302,17 @@ input[type="date"] {
   min-height: 30px;
   max-height: 30px;
   margin-top: 10px;
-  padding: 0;
-  display: flex;
+  padding: 0 10px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  color: #555;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
 .download-action-btn .material-symbols-outlined,
@@ -3315,12 +3321,36 @@ input[type="date"] {
   line-height: 1;
 }
 
+.download-action-btn:hover:not(:disabled) {
+  background-color: #eee;
+  border-color: #ccc;
+}
+
+.download-action-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.download-action-btn:disabled {
+  background-color: #f9f9f9;
+  border-color: #eee;
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.download-action-btn:disabled .material-symbols-outlined,
+.download-action-btn:disabled .icon {
+  color: #ccc;
+}
+
 .structure-footer .view-mode-btn {
-  height: var(--chem-btn-height, 30px);
-  min-height: var(--chem-btn-height, 30px);
-  max-height: var(--chem-btn-height, 30px);
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  box-sizing: border-box;
 }
 
 
