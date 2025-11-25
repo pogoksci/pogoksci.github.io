@@ -3935,28 +3935,6 @@ input[type="date"] {
 
     font-size: var(--chem-btn-font-size, 12px);
 
-    border: 1px solid #ddd;
-
-    background-color: #f9f9f9;
-
-    cursor: pointer;
-
-    border-radius: 4px;
-
-    color: #555;
-
-    transition: all 0.2s;
-
-    height: var(--view-toggle-height, var(--chem-btn-height, 30px));
-
-    line-height: 1;
-
-  }
-
-
-
-  .view-mode-btn:hover {
-
     background-color: #eee;
 
   }
