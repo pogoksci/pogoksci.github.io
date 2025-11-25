@@ -3198,6 +3198,11 @@ input[type="date"] {
 
 }
 
+.text-muted-small {
+  font-size: 10px;
+  color: #aaa;
+}
+
 
 
 .structure-error {
@@ -3283,6 +3288,33 @@ input[type="date"] {
 
   border-top: 1px solid #eee;
 
+}
+
+.chem-info-row.button-row {
+  height: var(--chem-btn-height, 50px);
+  min-height: var(--chem-btn-height, 50px);
+  max-height: var(--chem-btn-height, 50px);
+  padding: 0 10px;
+  gap: 20px;
+  align-items: center;
+}
+
+.download-action-btn {
+  flex: 1;
+  height: 20px;
+  min-height: 20px;
+  max-height: 20px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.download-action-btn .material-symbols-outlined,
+.download-action-btn .btn-text {
+  font-size: 12px;
+  line-height: 1;
 }
 
 
@@ -3748,37 +3780,24 @@ input[type="date"] {
 ================================================================= */
 
 :root {
-
-  --chem-row-height: 30px;
-
+  --chem-row-height: 50px;
   --chem-info-rows-height: calc(var(--chem-row-height) * 6);
-
-  --chem-btn-height: 30px;
-
+  --chem-btn-height: 50px;
   --view-toggle-height: var(--chem-btn-height);
-
   --chem-btn-font-size: 12px;
-
   --chem-download-icon-size: 12px;
-
 }
 
-
-
 .structure-wrapper {
-
   display: flex;
-
   flex-direction: column;
-
-  width: 100%;
-
-  padding: 4px 10px;
-
+  width: 300px;
+  max-width: 300px;
+  flex: 0 0 300px;
+  min-width: 300px;
   font-size: var(--chem-btn-font-size, 12px);
-
-  background-color: #eee;
-
+  background-color: transparent;
+  padding: 0;
 }
 
 
@@ -3836,21 +3855,13 @@ input[type="date"] {
 
 
 .structure-box.mode-3d {
-
   width: 100%;
-
   height: 200px;
-
   /* Match existing structure box height */
-
   border: 1px solid #ddd;
-
   border-radius: 8px;
-
   background-color: #fff;
-
   overflow: hidden;
-
 }
 
 
@@ -4100,11 +4111,31 @@ input[type="date"] {
 
 /* Layout Fixes (Merged from duplicates) */
 .structure-box {
-  min-height: var(--chem-info-rows-height, 300px);
-  max-height: var(--chem-info-rows-height, 300px);
+  margin: 0;
 }
 
-.chem-grid .structure-wrapper,
+.chem-grid .structure-wrapper {
+  background: transparent;
+  padding: 0;
+  width: 300px;
+  max-width: 300px;
+  min-width: 300px;
+  flex: 0 0 300px;
+}
+
+.chem-grid .structure-box {
+  width: 300px;
+  height: 300px;
+  min-width: 300px;
+  max-width: 300px;
+  min-height: 300px;
+  max-height: 300px;
+}
+
+.chem-grid .structure-box.mode-3d {
+  height: 300px;
+}
+
 .chem-grid .chem-info {
-  min-height: calc(var(--chem-info-rows-height, 300px) + var(--view-toggle-height, var(--chem-btn-height, 30px)));
+  min-height: calc(var(--chem-row-height, 50px) * 7);
 }
