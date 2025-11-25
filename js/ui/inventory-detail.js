@@ -455,7 +455,8 @@
         if (hazardContainer) {
           const accordion = hazardData
             .map((item, idx) => {
-              const title = item.sbstnClsfTypeNm || `분류 ${idx + 1}`;
+              const baseTitle = (item.sbstnClsfTypeNm || "").trim() || `분류 ${idx + 1}`;
+              const displayTitle = `${idx + 1}. ${baseTitle}`;
               const unq = item.unqNo || "-";
               const cont = item.contInfo || "-";
               const info = item.ancmntInfo || "-";
@@ -463,7 +464,7 @@
               return `
                 <div class="hazard-acc-item">
                   <button class="hazard-acc-header" type="button">
-                    <span class="hazard-acc-title">${title}</span>
+                    <span class="hazard-acc-title">${displayTitle}</span>
                     <span class="hazard-acc-arrow" aria-hidden="true">▼</span>
                   </button>
                   <div class="hazard-acc-content">
