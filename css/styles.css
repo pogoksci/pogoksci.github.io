@@ -3242,20 +3242,6 @@ input[type="date"] {
 
   padding: 0 12px;
 
-}
-
-
-
-.license-notice {
-
-  font-size: 9px !important;
-
-}
-
-
-
-.density-temp {
-
   font-size: 9px;
 
   color: #777;
@@ -3907,7 +3893,7 @@ input[type="date"] {
 
   :root {
 
-    --chem-row-height: 50px;
+    --chem-row-height: 30px;
 
     --chem-info-rows-height: calc(var(--chem-row-height) * 6);
 
