@@ -4224,6 +4224,7 @@ input[type="date"] {
 .hazard-table tr:last-child td {
   border-bottom: none !important;
 }
+
 /* =================================================================
    Hazard Info Table Styles (Added)
 ================================================================= */
@@ -4233,7 +4234,10 @@ input[type="date"] {
 
 .hazard-summary-table {
   width: 100%;
-  border-collapse: separate; /* Allow border-radius */
+  table-layout: fixed;
+  /* Enforce equal widths */
+  border-collapse: separate;
+  /* Allow border-radius */
   border-spacing: 0;
   margin-bottom: 10px;
   font-size: 13px;
@@ -4247,8 +4251,11 @@ input[type="date"] {
 .hazard-summary-table td {
   border-right: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
-  padding: 8px 4px;
+  padding: 4px 2px;
+  /* Reduced padding */
   vertical-align: middle;
+  word-break: break-all;
+  /* Prevent overflow */
 }
 
 .hazard-summary-table th:last-child,
@@ -4261,7 +4268,8 @@ input[type="date"] {
 }
 
 .hazard-summary-table th {
-  background-color: #f9f9f9; /* Match accordion header if needed, or keep f5f5f5 */
+  background-color: #f9f9f9;
+  /* Match accordion header if needed, or keep f5f5f5 */
   font-weight: 600;
   color: #333;
   line-height: 1.3;
@@ -4275,7 +4283,8 @@ input[type="date"] {
   font-size: 11px;
   white-space: nowrap;
   padding: 4px 2px;
-  letter-spacing: -0.5px; /* Help fit in one line */
+  letter-spacing: -0.5px;
+  /* Help fit in one line */
 }
 
 .hazard-note {
@@ -4284,4 +4293,3 @@ input[type="date"] {
   margin: 0;
   line-height: 1.4;
 }
-
