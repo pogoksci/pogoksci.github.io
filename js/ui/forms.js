@@ -734,6 +734,44 @@
               updatePayload.photo_url_160 = state.photo_base64 || null;
             }
 
+            // ----------------------------------------------------------------
+            // 🆕 Calculate Hazard Flags (Dynamic Update)
+            // ----------------------------------------------------------------
+            if (substanceInfo) {
+              // Helper: Compare concentration with standard
+              const compareAndSet = (standardStr) => {
+                if (!standardStr) return "-";
+
+                // Determine percentage value to compare
+                let percentValue = null;
+                if (concentrationUnit === "%") {
+                  percentValue = Number(concentrationValue);
+                } else if (updatePayload.converted_concentration_unit_1 === "%") {
+                  percentValue = updatePayload.converted_concentration_value_1;
+                } else if (updatePayload.converted_concentration_unit_2 === "%") {
+                  percentValue = updatePayload.converted_concentration_value_2;
+                }
+
+                if (percentValue === null || isNaN(percentValue)) return "-";
+
+                // Extract number from standard (e.g., "25%" -> 25)
+                const match = standardStr.match(/(\d+(\.\d+)?)/);
+                if (!match) return "-";
+                const standardVal = parseFloat(match[0]);
+
+                if (percentValue >= standardVal) return "○";
+                return "-";
+              };
+
+              updatePayload.school_hazardous_chemical = compareAndSet(substanceInfo.school_hazardous_chemical_standard);
+              updatePayload.school_accident_precaution_chemical = compareAndSet(substanceInfo.school_accident_precaution_chemical_standard);
+              updatePayload.special_health_checkup_hazardous_factor = compareAndSet(substanceInfo.special_health_checkup_hazardous_factor_standard);
+              updatePayload.toxic_substance = compareAndSet(substanceInfo.toxic_substance_standard);
+              updatePayload.permitted_substance = compareAndSet(substanceInfo.permitted_substance_standard);
+              updatePayload.restricted_substance = compareAndSet(substanceInfo.restricted_substance_standard);
+              updatePayload.prohibited_substance = compareAndSet(substanceInfo.prohibited_substance_standard);
+            }
+
             const { error } = await supabase.from("Inventory").update(updatePayload).eq("id", detail.id);
             if (error) throw error;
             alert("✅ 약품 정보가 수정되었어요.");
