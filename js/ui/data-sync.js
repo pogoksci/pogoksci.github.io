@@ -115,17 +115,32 @@
 
             let processedCount = 0;
 
+            // 헬퍼: 앞뒤 공백 제거 및 맨 앞의 따옴표(') 제거
+            const clean = (val) => {
+                if (!val) return "";
+                let s = val.trim();
+                if (s.startsWith("'")) {
+                    s = s.substring(1);
+                }
+                return s;
+            };
+
             for (const row of rows) {
                 // 인덱스 기반 접근
                 // 0: 순번, 1: 근거, 2: 구분, 3: 구분2, 4: 구분3, 5: 구분기호, 6: CAS, 7: 기준, 8: 기준농도, 9: 물질명
                 if (row.length < 10) continue;
 
-                const cas = row[6]?.trim();
+                const cas = clean(row[6]);
                 if (!cas) continue;
 
-                const regulationType = row[2]?.trim(); // 구분
-                const standardValue = row[8]?.trim(); // 기준농도 (예: 1%)
-                const name = row[9]?.trim(); // 물질명
+                const regulationType = clean(row[2]); // 구분
+                const standardValue = clean(row[8]); // 기준농도 (예: 1%)
+                let name = clean(row[9]); // 물질명
+
+                // 물질명 정규화 (앞의 번호 제거: "1) ", "가. " 등)
+                if (name) {
+                    name = name.replace(/^(\d+\)|[가-하]\.)\s*/, "");
+                }
 
                 // CAS 번호 정규화 (||| -> , )
                 const normalizedCas = cas.replace(/\|\|\|/g, ", ");
@@ -135,6 +150,7 @@
                         cas_nos: normalizedCas,
                         chem_name: name, // 첫 번째 발견된 이름 사용
                         // 초기값 null
+                        hazard_class: null, // 유해화학물질 분류 (구분)
                         school_hazardous_standard: null,
                         school_accident_precaution_standard: null,
                         special_health_standard: null,
@@ -153,14 +169,27 @@
                     chemData.chem_name = name;
                 }
 
-                // 규제 정보 매핑
-                // 포함된 키워드로 매핑 시도
-                let mappedCol = null;
-                for (const [key, col] of Object.entries(regulationMap)) {
-                    if (regulationType.includes(key)) {
-                        mappedCol = col;
-                        break;
+                // hazard_class (구분) 병합
+                if (regulationType) {
+                    if (chemData.hazard_class) {
+                        // 중복되지 않게 추가
+                        if (!chemData.hazard_class.includes(regulationType)) {
+                            chemData.hazard_class += `, ${regulationType}`;
+                        }
+                    } else {
+                        chemData.hazard_class = regulationType;
                     }
+                }
+
+                // 규제 정보 매핑 (앞글자 2개 기준)
+                let mappedCol = null;
+                if (regulationType && regulationType.length >= 2) {
+                    const prefix = regulationType.substring(0, 2);
+                    if (prefix === "특수") mappedCol = "special_health_standard";
+                    else if (prefix === "유독") mappedCol = "toxic_standard";
+                    else if (prefix === "제한") mappedCol = "restricted_standard";
+                    else if (prefix === "금지") mappedCol = "prohibited_standard";
+                    else if (prefix === "허가") mappedCol = "permitted_standard";
                 }
 
                 if (mappedCol) {
