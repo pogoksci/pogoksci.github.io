@@ -8,6 +8,7 @@
     addCabinet: "pages/cabinet-form.html",
     inventory: "pages/inventory-list.html",
     addInventory: "pages/inventory-form.html",
+    dataSync: "pages/data-sync.html",
   };
 
   /**
@@ -63,6 +64,13 @@
         if (App?.Forms?.initInventoryForm) {
           console.log("🧩 Router → Inventory Form 초기화 실행");
           await App.Forms.initInventoryForm("create");
+        }
+        break;
+
+      case "dataSync":
+        if (App?.DataSync?.init) {
+          console.log("🔄 Router → DataSync.init() 실행");
+          App.DataSync.init();
         }
         break;
 

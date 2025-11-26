@@ -27,6 +27,7 @@
     "./js/ui/inventory.js",
     "./js/ui/inventory-detail.js",
     "./js/ui/navbar.js",
+    "./js/ui/data-sync.js",
   ];
   const componentModules = [
     "./js/components/sort-dropdown.js", // 🔹 여기 추가됨

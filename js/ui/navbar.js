@@ -172,6 +172,17 @@
         setActive("menu-lablog");
       });
     }
+
+    const menuDataSync = document.getElementById("menu-datasync");
+    if (menuDataSync) {
+      menuDataSync.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        await App.Router.go("dataSync");
+        closeStartMenu();
+        setActive("menu-datasync");
+      });
+    }
   }
 
   // ---- 초기화 ----
