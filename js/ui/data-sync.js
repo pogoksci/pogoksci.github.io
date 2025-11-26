@@ -171,7 +171,7 @@
                         chemData[mappedCol] = standardValue || "해당"; // 값이 없으면 '해당' 등으로 표시
                     }
                 }
-                
+
                 processedCount++;
             }
 
@@ -185,7 +185,7 @@
             }
 
             this.log("🗑️ 기존 데이터 삭제 중...");
-            const { error: deleteError } = await supabase
+            const { error: deleteError } = await App.supabase
                 .from("HazardList")
                 .delete()
                 .neq("id", 0); // 모든 데이터 삭제
@@ -207,7 +207,7 @@
                 const end = start + BATCH_SIZE;
                 const batch = upsertData.slice(start, end);
 
-                const { error } = await supabase
+                const { error } = await App.supabase
                     .from("HazardList")
                     .insert(batch);
 
