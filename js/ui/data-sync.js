@@ -70,16 +70,18 @@
                 const csvText = await response.text();
                 this.log(`✅ 파일 읽기 성공 (${csvText.length} bytes)`);
 
-                // 3. 파싱
+                // 3. 파싱 (Header: false로 설정하여 인덱스로 접근)
                 Papa.parse(csvText, {
-                    header: true,
+                    header: false, // 헤더 없이 인덱스로 접근
                     skipEmptyLines: true,
                     complete: async (results) => {
                         if (results.errors.length > 0) {
                             this.log(`⚠️ 파싱 중 경고 발생: ${results.errors[0].message}`, "error");
                         }
 
-                        await this.processData(results.data);
+                        // 첫 번째 행(헤더) 제거
+                        const rows = results.data.slice(1);
+                        await this.processData(rows);
                         if (btn) btn.disabled = false;
                     },
                     error: (err) => {
@@ -94,41 +96,90 @@
         },
 
         processData: async function (rows) {
-            this.log(`📊 총 ${rows.length}개 데이터 발견. 처리 준비 중...`);
+            this.log(`📊 총 ${rows.length}개 규제 데이터 발견. 물질별 병합 준비 중...`);
 
-            const upsertData = [];
-            const headers = Object.keys(rows[0]);
-            this.log(`ℹ️ CSV 헤더: ${headers.join(", ")}`);
+            // CAS 번호 기준으로 데이터 병합
+            const chemicalMap = new Map();
 
-            // 컬럼 매핑 확인
-            const map = {};
-            for (const [dbCol, csvCandidates] of Object.entries(this.columnMapping)) {
-                const found = headers.find(h => csvCandidates.includes(h.trim()));
-                if (found) {
-                    map[dbCol] = found;
-                }
-            }
+            // 규제 구분 -> DB 컬럼 매핑
+            const regulationMap = {
+                "특수건강진단대상 유해인자": "special_health_standard",
+                "유독물질": "toxic_standard",
+                "허가물질": "permitted_standard",
+                "제한물질": "restricted_standard",
+                "금지물질": "prohibited_standard",
+                "사고대비물질": "accident_precaution_standard",
+                // CSV에 학교 관련 기준이 명시적으로 없다면 추후 로직 추가 필요
+                // 현재 CSV 샘플에는 '특수...', '유독...' 등이 보임
+            };
 
-            // 데이터 변환
+            let processedCount = 0;
+
             for (const row of rows) {
-                const item = {};
+                // 인덱스 기반 접근
+                // 0: 순번, 1: 근거, 2: 구분, 3: 구분2, 4: 구분3, 5: 구분기호, 6: CAS, 7: 기준, 8: 기준농도, 9: 물질명
+                if (row.length < 10) continue;
 
-                // 매핑된 컬럼 데이터 추출
-                for (const [dbCol, csvHeader] of Object.entries(map)) {
-                    let val = row[csvHeader];
+                const cas = row[6]?.trim();
+                if (!cas) continue;
 
-                    // CAS 번호 변환 (||| -> , )
-                    if (dbCol === "cas_nos" && val) {
-                        val = val.replace(/\|\|\|/g, ", ");
-                    }
+                const regulationType = row[2]?.trim(); // 구분
+                const standardValue = row[8]?.trim(); // 기준농도 (예: 1%)
+                const name = row[9]?.trim(); // 물질명
 
-                    item[dbCol] = val;
+                // CAS 번호 정규화 (||| -> , )
+                const normalizedCas = cas.replace(/\|\|\|/g, ", ");
+
+                if (!chemicalMap.has(normalizedCas)) {
+                    chemicalMap.set(normalizedCas, {
+                        cas_nos: normalizedCas,
+                        chem_name: name, // 첫 번째 발견된 이름 사용
+                        // 초기값 null
+                        school_hazardous_standard: null,
+                        school_accident_precaution_standard: null,
+                        special_health_standard: null,
+                        toxic_standard: null,
+                        permitted_standard: null,
+                        restricted_standard: null,
+                        prohibited_standard: null,
+                        accident_precaution_standard: null
+                    });
                 }
-                upsertData.push(item);
+
+                const chemData = chemicalMap.get(normalizedCas);
+
+                // 이름이 더 긴 것이 있다면 업데이트 (정보가 더 많을 수 있으므로)
+                if (name && name.length > chemData.chem_name.length) {
+                    chemData.chem_name = name;
+                }
+
+                // 규제 정보 매핑
+                // 포함된 키워드로 매핑 시도
+                let mappedCol = null;
+                for (const [key, col] of Object.entries(regulationMap)) {
+                    if (regulationType.includes(key)) {
+                        mappedCol = col;
+                        break;
+                    }
+                }
+
+                if (mappedCol) {
+                    // 이미 값이 있으면 이어붙이기 (혹은 덮어쓰기)
+                    if (chemData[mappedCol]) {
+                        chemData[mappedCol] += `, ${standardValue}`;
+                    } else {
+                        chemData[mappedCol] = standardValue || "해당"; // 값이 없으면 '해당' 등으로 표시
+                    }
+                }
+                
+                processedCount++;
             }
+
+            const upsertData = Array.from(chemicalMap.values());
+            this.log(`✅ 병합 완료: 총 ${upsertData.length}개 고유 화학물질 (원본 ${processedCount}행)`);
 
             // 4. 기존 데이터 삭제 (전체 삭제 후 재입력 방식)
-            if (!confirm("기존 데이터를 모두 삭제하고 CSV 데이터로 덮어쓰시겠습니까?")) {
+            if (!confirm(`총 ${upsertData.length}개의 물질 데이터를 업데이트합니다.\n기존 데이터를 모두 삭제하고 덮어쓰시겠습니까?`)) {
                 this.log("🚫 작업이 취소되었습니다.", "error");
                 return;
             }
@@ -137,7 +188,7 @@
             const { error: deleteError } = await supabase
                 .from("HazardList")
                 .delete()
-                .neq("id", 0); // 모든 데이터 삭제 (id가 0이 아닌 것)
+                .neq("id", 0); // 모든 데이터 삭제
 
             if (deleteError) {
                 this.log(`❌ 삭제 실패: ${deleteError.message}`, "error");
