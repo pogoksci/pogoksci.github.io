@@ -163,18 +163,23 @@
       <table class="hazard-summary-table">
         <thead>
           <tr>
-            <th>학교사용<br>유해화학물질</th>
-            <th>특수건강진단<br>유해인자</th>
-            <th>유독물질</th>
-            <th>허가물질</th>
-            <th>제한물질</th>
-            <th>금지물질</th>
+            <th colspan="2" class="merged-header">학교사용</th>
+            <th rowspan="2">특수건강진단<br>유해인자</th>
+            <th rowspan="2">유독물질</th>
+            <th rowspan="2">허가물질</th>
+            <th rowspan="2">제한물질</th>
+            <th rowspan="2">금지물질</th>
+          </tr>
+          <tr>
+            <th class="small-font">유해물질</th>
+            <th class="small-font">사고대비물질</th>
           </tr>
         </thead>
         <tbody>
           <!-- Standard Value Row -->
           <tr class="hazard-standard-row">
-            <td id="std-school-hazard">-</td>
+            <td id="std-school-hazard-toxic">-</td>
+            <td id="std-school-hazard-accident">-</td>
             <td id="std-special-health">-</td>
             <td id="std-toxic">-</td>
             <td id="std-permitted">-</td>
@@ -183,7 +188,8 @@
           </tr>
           <!-- Value Row -->
           <tr>
-            <td id="val-school-hazard">-</td>
+            <td id="val-school-hazard-toxic">-</td>
+            <td id="val-school-hazard-accident">-</td>
             <td id="val-special-health">-</td>
             <td id="val-toxic">-</td>
             <td id="val-permitted">-</td>
