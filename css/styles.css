@@ -4263,6 +4263,11 @@ input[type="date"] {
   border-right: none;
 }
 
+/* Restore border for the split header cell */
+.hazard-summary-table thead tr:nth-child(2) th:last-child {
+  border-right: 1px solid #ddd;
+}
+
 .hazard-summary-table tr:last-child td {
   border-bottom: none;
 }
