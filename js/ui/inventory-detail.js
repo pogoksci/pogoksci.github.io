@@ -129,7 +129,7 @@
         document.getElementById("detail-substance-id").textContent = `No.${data.Substance.id}`;
       }
       document.getElementById("detail-cas").textContent = data.Substance?.cas_rn || "-";
-      document.getElementById("detail-formula").textContent = data.Substance?.molecular_formula || "-";
+      document.getElementById("detail-formula").innerHTML = data.Substance?.molecular_formula || "-";
       document.getElementById("detail-class").textContent = data.classification || "-";
       document.getElementById("detail-state").textContent = data.state || "-";
       document.getElementById("detail-manufacturer").textContent = data.manufacturer || "-";
@@ -739,22 +739,8 @@
               return;
             }
 
-            // 2. Check 3D availability via JSON; ??? iframe ????
-            let has3d = false;
-            try {
-              const resp = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/JSON`);
-              if (resp.ok) {
-                const dataJson = await resp.json();
-                const coords = dataJson?.PC_Compounds?.[0]?.coords || [];
-                has3d = coords.some((c) => c?.type?.dimension === 3);
-              }
-            } catch (_) {
-              has3d = false;
-            }
-            if (!has3d) {
-              show3dFallback();
-              return;
-            }
+            // 2. Embed Iframe directly (Skip JSON check)
+            // PubChem 3D Viewer handles missing data gracefully or we catch load errors below.
 
             // 3. Embed Iframe directly
             const embedUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}#section=3D-Conformer&embed=true`;
