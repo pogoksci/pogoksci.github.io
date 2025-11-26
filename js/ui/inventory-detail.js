@@ -620,12 +620,12 @@
       const box2d = document.getElementById("detail-structure");
       const box3d = document.getElementById("detail-structure-3d");
       const structureWrapper = document.querySelector(".structure-wrapper");
-      const _viewer3d = null;
+      let _viewer3d = null;
       let currentZoom = 1.0;
 
       const applyZoom = () => {
-        const target = box2d.style.display !== "none" ? box2d.querySelector("img, svg") : box3d.querySelector("iframe, canvas");
-        if (target) {
+        const target = box2d.querySelector("img, svg");
+        if (target && box2d.style.display !== "none") {
           target.style.transform = `scale(${currentZoom})`;
         }
       };
@@ -639,8 +639,13 @@
         btn3d.classList.toggle("active", !is2d);
         box2d.style.display = is2d ? "block" : "none";
         box3d.style.display = is2d ? "none" : "block";
-        currentZoom = 1.0; // Reset zoom on switch
-        applyZoom();
+
+        if (is2d) {
+          currentZoom = 1.0;
+          applyZoom();
+        } else {
+          // 3D mode: zoom is handled by viewer
+        }
       };
 
       if (btn2d && btn3d && box2d && box3d) {
@@ -650,12 +655,20 @@
 
         if (btnZoomIn && btnZoomOut) {
           btnZoomIn.onclick = () => {
-            currentZoom += 0.2;
-            applyZoom();
+            if (box2d.style.display !== "none") {
+              currentZoom += 0.2;
+              applyZoom();
+            } else if (_viewer3d) {
+              _viewer3d.zoom(1.2);
+            }
           };
           btnZoomOut.onclick = () => {
-            currentZoom = Math.max(0.2, currentZoom - 0.2);
-            applyZoom();
+            if (box2d.style.display !== "none") {
+              currentZoom = Math.max(0.2, currentZoom - 0.2);
+              applyZoom();
+            } else if (_viewer3d) {
+              _viewer3d.zoom(0.8);
+            }
           };
         }
 
@@ -714,14 +727,20 @@
         btn3d.onclick = async () => {
           setViewMode("3d");
 
-          const show3dFallback = () => {
+          const show3dFallback = (msg) => {
             box3d.style.backgroundColor = "#f9f9f9";
             box3d.innerHTML =
-              '<div class="structure-error" style="display:flex;align-items:center;justify-content:center;height:100%;">이 물질은 PubChem에서 3D 구조 데이터를 제공하지 않습니다.</div>';
+              `<div class="structure-error" style="display:flex;align-items:center;justify-content:center;height:100%;">${msg || '3D 구조 데이터 없음'}</div>`;
           };
 
-          // ?? iframe? ??? ?? ???? ??
-          if (box3d.querySelector("iframe")) return;
+          // If viewer already exists and has models, just render (optional optimization)
+          // But for simplicity and safety, we reload if it's empty or check if initialized.
+          // Since we might switch substances in SPA (though this is detail page), let's check if we have data.
+          // For now, let's always try to load if not loaded.
+
+          if (_viewer3d && _viewer3d.getModelCount() > 0) {
+            return;
+          }
 
           const casRn = data.Substance?.cas_rn;
           if (!casRn) {
@@ -730,7 +749,7 @@
           }
 
           try {
-            box3d.innerHTML = '<div class="structure-error" style="display:flex; align-items:center; justify-content:center; height:100%; color:#666;">PubChem 3D 구조를 읽는 중...</div>';
+            box3d.innerHTML = '<div class="structure-error" style="display:flex; align-items:center; justify-content:center; height:100%; color:#666;">3D 구조 로딩 중...</div>';
 
             // 1. Get CID
             const cid = await loadPubChemCid();
@@ -739,42 +758,37 @@
               return;
             }
 
-            // 2. Embed Iframe directly (Skip JSON check)
-            // PubChem 3D Viewer handles missing data gracefully or we catch load errors below.
+            // 2. Fetch SDF
+            const sdfUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/SDF?record_type=3d`;
+            const resp = await fetch(sdfUrl);
+            if (!resp.ok) {
+              show3dFallback("3D 데이터 다운로드 실패");
+              return;
+            }
+            const sdfData = await resp.text();
 
-            // 3. Embed Iframe directly
-            const embedUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}#section=3D-Conformer&embed=true`;
-            box3d.style.backgroundColor = "#f9f9f9";
-            box3d.innerHTML = `
-              <iframe 
-                src="${embedUrl}" 
-                style="width: 100%; height: 100%; border: none;" 
-                title="PubChem 3D Viewer"
-                loading="lazy">
-              </iframe>
-            `;
+            // 3. Init 3Dmol
+            box3d.innerHTML = ""; // Clear loading msg
+            // Ensure box3d has size
+            if (!box3d.style.height) box3d.style.height = "100%";
 
-            // 4. Fallback if iframe never loads or errors
-            const iframeEl = box3d.querySelector("iframe");
-            let loaded = false;
-            const timeoutId = setTimeout(() => {
-              if (!loaded) show3dFallback();
-            }, 4000);
-
-            if (iframeEl) {
-              iframeEl.onload = () => {
-                loaded = true;
-                clearTimeout(timeoutId);
-              };
-              iframeEl.onerror = () => {
-                loaded = true;
-                clearTimeout(timeoutId);
-                show3dFallback();
-              };
+            if (!_viewer3d) {
+              // @ts-ignore
+              _viewer3d = $3Dmol.createViewer(box3d, {
+                backgroundColor: "black",
+                id: "molviewer"
+              });
             }
 
-          } catch (_e) {
-            show3dFallback();
+            _viewer3d.removeAllModels();
+            _viewer3d.addModel(sdfData, "sdf");
+            _viewer3d.setStyle({}, { stick: {}, sphere: { scale: 0.3 } }); // Ball and Stick
+            _viewer3d.zoomTo();
+            _viewer3d.render();
+
+          } catch (e) {
+            console.error("3D Load Error:", e);
+            show3dFallback("오류 발생");
           }
         };
       }
