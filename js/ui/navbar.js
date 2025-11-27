@@ -129,9 +129,92 @@
     if (menuDbReset) {
       menuDbReset.addEventListener("click", async (e) => {
         e.preventDefault();
-        if (confirm("정말로 DB를 초기화하시겠습니까? (주의: 되돌릴 수 없습니다)")) {
-          alert("DB 초기화 기능은 준비 중입니다.");
+
+        // 🚨 3-Step Confirmation
+        if (!confirm("⚠️ 경고 (1/3)\n\n정말로 모든 데이터를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.")) return;
+        if (!confirm("⚠️ 경고 (2/3)\n\n확실합니까?\n모든 재고, MSDS 파일, 설정된 시약장 정보가 영구적으로 삭제됩니다.")) return;
+        if (!confirm("⚠️ 마지막 경고 (3/3)\n\n정말로 초기화하시겠습니까?\n삭제 후에는 절대 복구할 수 없습니다.\n\n진행하려면 [확인]을 누르세요.")) return;
+
+        // 🗑️ Execute Reset
+        try {
+          const supabase = globalThis.App?.supabase;
+          if (!supabase) throw new Error("Supabase client not found");
+
+          console.log("🔥 DB Reset Started...");
+
+          // 1. Delete Storage Files (msds-pdf)
+          const { data: files, error: listError } = await supabase.storage.from("msds-pdf").list();
+          if (listError) throw listError;
+
+          if (files && files.length > 0) {
+            const filesToRemove = files.map((f) => f.name);
+            const { error: removeError } = await supabase.storage.from("msds-pdf").remove(filesToRemove);
+            if (removeError) throw removeError;
+            console.log(`🗑️ Deleted ${files.length} files from msds-pdf`);
+          }
+
+          // 2. Delete Table Data (Order matters for FK constraints)
+          // Inventory -> Cabinet -> Area
+          const { error: invError } = await supabase.from("Inventory").delete().neq("id", 0); // Delete all
+          if (invError) throw invError;
+          console.log("🗑️ Deleted all Inventory data");
+
+          const { error: cabError } = await supabase.from("Cabinet").delete().neq("id", 0);
+          if (cabError) throw cabError;
+          console.log("🗑️ Deleted all Cabinet data");
+
+          const { error: areaError } = await supabase.from("Area").delete().neq("id", 0);
+          if (areaError) throw areaError;
+          console.log("🗑️ Deleted all Area data");
+
+          // 3. Delete Substance Data (Master Data)
+          // Children first: Properties, MSDS, HazardClassifications
+          const { error: propError } = await supabase.from("Properties").delete().neq("id", 0);
+          if (propError) throw propError;
+          console.log("🗑️ Deleted all Properties data");
+
+          const { error: msdsError } = await supabase.from("MSDS").delete().neq("id", 0);
+          if (msdsError) throw msdsError;
+          console.log("🗑️ Deleted all MSDS data");
+
+          const { error: hazardError } = await supabase.from("HazardClassifications").delete().neq("id", 0);
+          if (hazardError) throw hazardError;
+          console.log("🗑️ Deleted all HazardClassifications data");
+
+          // New tables to delete before Substance
+          const { error: synError } = await supabase.from("Synonyms").delete().neq("id", 0);
+          if (synError) throw synError;
+          console.log("🗑️ Deleted all Synonyms data");
+
+          const { error: repError } = await supabase.from("ReplacedRns").delete().neq("id", 0);
+          if (repError) throw repError;
+          console.log("🗑️ Deleted all ReplacedRns data");
+
+          const { error: citError } = await supabase.from("Citations").delete().neq("id", 0);
+          if (citError) throw citError;
+          console.log("🗑️ Deleted all Citations data");
+
+          const { error: subError } = await supabase.from("Substance").delete().neq("id", 0);
+          if (subError) throw subError;
+          console.log("🗑️ Deleted all Substance data");
+
+          // 4. Delete Sync/Reference Data
+          const { error: hazardListError } = await supabase.from("HazardList").delete().neq("id", 0);
+          if (hazardListError) throw hazardListError;
+          console.log("🗑️ Deleted all HazardList data");
+
+          const { error: subRefError } = await supabase.from("SubstanceRef").delete().neq("id", 0);
+          if (subRefError) throw subRefError;
+          console.log("🗑️ Deleted all SubstanceRef data");
+
+          alert("✅ DB 초기화가 완료되었습니다.");
+          location.reload(); // Refresh to clear UI
+
+        } catch (err) {
+          console.error("❌ DB Reset Failed:", err);
+          alert(`초기화 중 오류가 발생했습니다:\n${err.message}`);
         }
+
         closeStartMenu();
       });
     }
