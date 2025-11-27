@@ -210,7 +210,7 @@
       `)
       .order("created_at", { ascending: false });
 
-    console.log("Inventory select result", { count: data?.length ?? 0, error });
+
 
     if (error) {
       console.error("❌ 목록 조회 오류:", error);
@@ -298,10 +298,7 @@
       const replacedRnsList = row.Substance?.ReplacedRns || [];
       const replacedRns = replacedRnsList.map((r) => r.replaced_rn).filter(Boolean).join(", ");
 
-      // Debug log for verification (first 5 items)
-      if (index < 5 && (synonymsName || replacedRns)) {
-        console.log(`🔍 Search Data [${row.id}]:`, { synonymsName, synonymsEng, replacedRns });
-      }
+
 
       return {
         id: row.id,
@@ -488,7 +485,7 @@
   // 6️⃣ 정렬 & 버튼 UI
   // ------------------------------------------------------------
   function bindListPage() {
-    console.log("🧭 bindListPage() 실행됨");
+
 
     // ✅ SortDropdown 초기화
     if (App.SortDropdown && App.SortDropdown.init) {

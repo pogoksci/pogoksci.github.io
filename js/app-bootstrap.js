@@ -88,18 +88,7 @@
 
         if (!App.Inventory?.__manualMount) {
           App.Inventory?.bindListPage?.();
-          App.SortDropdown?.init?.({
-            onChange: (value) => {
-              console.log("🔀 정렬 변경", value);
-              App.Inventory?.loadList?.(value);
-            },
-            onRefresh: () => {
-              console.log("🔄 새로고침 클릭됨");
-              App.Inventory?.loadList?.();
-            },
-            defaultLabel: "카테고리(한글)",
-            defaultValue: "category_name_kor",
-          });
+          // App.SortDropdown?.init call removed to avoid duplicate initialization
           App.Inventory?.loadList?.();
         } else {
           delete App.Inventory.__manualMount;
