@@ -73,7 +73,7 @@
         school_hazardous_chemical, school_accident_precaution_chemical, special_health_checkup_hazardous_factor,
         toxic_substance, permitted_substance, restricted_substance, prohibited_substance,
         Substance (
-          id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, svg_image, has_molfile,
+          id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, chem_name_kor_mod, substance_name_mod, molecular_formula_mod, svg_image, has_molfile,
           school_hazardous_chemical_standard, school_accident_precaution_chemical_standard, special_health_checkup_hazardous_factor_standard,
           toxic_substance_standard, permitted_substance_standard, restricted_substance_standard, prohibited_substance_standard,
           Properties ( name, property ),
@@ -111,8 +111,10 @@
       setHazardVal("val-restricted", data.restricted_substance);
       setHazardVal("val-prohibited", data.prohibited_substance);
 
-      const korName = data.Substance?.chem_name_kor || data.Substance?.substance_name || "이름 없음";
-      const engName = data.Substance?.substance_name || "";
+      // ✅ Override Logic
+      const korName = data.Substance?.chem_name_kor_mod || data.Substance?.chem_name_kor || data.Substance?.substance_name_mod || data.Substance?.substance_name || "이름 없음";
+      const engName = data.Substance?.substance_name_mod || data.Substance?.substance_name || "";
+      const formula = data.Substance?.molecular_formula_mod || data.Substance?.molecular_formula || "-";
 
       document.getElementById("detail-name-kor").textContent = korName;
       document.getElementById("detail-name-eng").textContent = engName !== korName ? engName : "";
@@ -123,13 +125,11 @@
         ? `<img src="${photoUrl}" alt="시약 사진">`
         : `<span>사진 없음</span>`;
 
-      document.getElementById("detail-name-kor").textContent = data.Substance?.chem_name_kor || "이름 없음";
-      document.getElementById("detail-name-eng").textContent = data.Substance?.substance_name || "";
       if (data.Substance?.id) {
         document.getElementById("detail-substance-id").textContent = `No.${data.Substance.id}`;
       }
       document.getElementById("detail-cas").textContent = data.Substance?.cas_rn || "-";
-      document.getElementById("detail-formula").innerHTML = data.Substance?.molecular_formula || "-";
+      document.getElementById("detail-formula").innerHTML = formula;
       document.getElementById("detail-class").textContent = data.classification || "-";
       document.getElementById("detail-state").textContent = data.state || "-";
       document.getElementById("detail-manufacturer").textContent = data.manufacturer || "-";

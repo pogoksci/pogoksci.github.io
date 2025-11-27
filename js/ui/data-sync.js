@@ -48,6 +48,16 @@
             });
         },
 
+        // 헬퍼: 앞뒤 공백 제거 및 맨 앞의 따옴표(') 제거
+        clean: function (val) {
+            if (!val) return "";
+            let s = val.trim();
+            if (s.startsWith("'")) {
+                s = s.substring(1);
+            }
+            return s;
+        },
+
         syncData: async function () {
             const btn = document.getElementById("btn-start-sync");
             if (btn) btn.disabled = true;
@@ -59,7 +69,7 @@
                 await this.loadPapaParse();
                 this.log("✅ CSV 파서 로드 완료");
 
-                // 2. CSV 파일 가져오기
+                // 2. CSV 파일 가져오기 (HazardList)
                 this.log("📂 data/HazardList.csv 파일 읽는 중...");
                 const response = await fetch("data/HazardList.csv");
 
@@ -82,6 +92,10 @@
                         // 첫 번째 행(헤더) 제거
                         const rows = results.data.slice(1);
                         await this.processData(rows);
+                        
+                        // HazardList 완료 후 SubstanceRef 동기화 시작
+                        await this.syncSubstanceRef();
+
                         if (btn) btn.disabled = false;
                     },
                     error: (err) => {
@@ -115,27 +129,17 @@
 
             let processedCount = 0;
 
-            // 헬퍼: 앞뒤 공백 제거 및 맨 앞의 따옴표(') 제거
-            const clean = (val) => {
-                if (!val) return "";
-                let s = val.trim();
-                if (s.startsWith("'")) {
-                    s = s.substring(1);
-                }
-                return s;
-            };
-
             for (const row of rows) {
                 // 인덱스 기반 접근
                 // 0: 순번, 1: 근거, 2: 구분, 3: 구분2, 4: 구분3, 5: 구분기호, 6: CAS, 7: 기준, 8: 기준농도, 9: 물질명
                 if (row.length < 10) continue;
 
-                const cas = clean(row[6]);
+                const cas = this.clean(row[6]);
                 if (!cas) continue;
 
-                const regulationType = clean(row[2]); // 구분
-                const standardValue = clean(row[8]); // 기준농도 (예: 1%)
-                let name = clean(row[9]); // 물질명
+                const regulationType = this.clean(row[2]); // 구분
+                const standardValue = this.clean(row[8]); // 기준농도 (예: 1%)
+                let name = this.clean(row[9]); // 물질명
 
                 // 물질명 정규화 (앞의 번호 제거: "1) ", "가. " 등)
                 if (name) {
@@ -213,7 +217,7 @@
                 return;
             }
 
-            this.log("🗑️ 기존 데이터 삭제 중...");
+            this.log("🗑️ 기존 HazardList 데이터 삭제 중...");
             const { error: deleteError } = await App.supabase
                 .from("HazardList")
                 .delete()
@@ -223,13 +227,13 @@
                 this.log(`❌ 삭제 실패: ${deleteError.message}`, "error");
                 return;
             }
-            this.log("✅ 기존 데이터 삭제 완료");
+            this.log("✅ 기존 HazardList 데이터 삭제 완료");
 
             // 5. Supabase 업로드 (배치 처리)
             const BATCH_SIZE = 100;
             const totalBatches = Math.ceil(upsertData.length / BATCH_SIZE);
 
-            this.log(`💾 DB 저장 시작 (총 ${totalBatches} 배치)`);
+            this.log(`💾 HazardList DB 저장 시작 (총 ${totalBatches} 배치)`);
 
             for (let i = 0; i < totalBatches; i++) {
                 const start = i * BATCH_SIZE;
@@ -247,7 +251,85 @@
                 }
             }
 
-            this.log("🎉 모든 동기화 작업이 완료되었습니다!", "success");
+            this.log("🎉 HazardList 동기화 작업이 완료되었습니다!", "success");
+        },
+
+        syncSubstanceRef: async function () {
+            this.log("🚀 SubstanceRef 동기화 시작...");
+            
+            try {
+                this.log("📂 data/casimport-correct.csv 파일 읽는 중...");
+                const response = await fetch("data/casimport-correct.csv");
+                
+                if (!response.ok) {
+                    throw new Error(`SubstanceRef 파일을 찾을 수 없습니다. (Status: ${response.status})`);
+                }
+
+                const csvText = await response.text();
+                this.log(`✅ 파일 읽기 성공 (${csvText.length} bytes)`);
+
+                // 파싱
+                const results = Papa.parse(csvText, {
+                    header: true, // 헤더 사용
+                    skipEmptyLines: true
+                });
+
+                if (results.errors.length > 0) {
+                    this.log(`⚠️ 파싱 중 경고 발생: ${results.errors[0].message}`, "error");
+                }
+
+                const rows = results.data;
+                this.log(`📊 총 ${rows.length}개 SubstanceRef 데이터 발견.`);
+
+                const insertData = rows.map(row => {
+                    return {
+                        cas_ref: this.clean(row.cas_ref),
+                        chem_name_kor_ref: this.clean(row.chem_name_kor_ref),
+                        substance_name_ref: this.clean(row.substance_name_ref),
+                        molecular_formula_ref: this.clean(row.molecular_formula_ref)
+                    };
+                }).filter(item => item.cas_ref); // CAS 번호 없는 행 제외
+
+                // 기존 데이터 삭제
+                this.log("🗑️ 기존 SubstanceRef 데이터 삭제 중...");
+                const { error: deleteError } = await App.supabase
+                    .from("SubstanceRef")
+                    .delete()
+                    .neq("id", 0);
+
+                if (deleteError) {
+                    this.log(`❌ SubstanceRef 삭제 실패: ${deleteError.message}`, "error");
+                    return;
+                }
+                this.log("✅ 기존 SubstanceRef 데이터 삭제 완료");
+
+                // DB 저장 (배치)
+                const BATCH_SIZE = 100;
+                const totalBatches = Math.ceil(insertData.length / BATCH_SIZE);
+
+                this.log(`💾 SubstanceRef DB 저장 시작 (총 ${totalBatches} 배치)`);
+
+                for (let i = 0; i < totalBatches; i++) {
+                    const start = i * BATCH_SIZE;
+                    const end = start + BATCH_SIZE;
+                    const batch = insertData.slice(start, end);
+
+                    const { error } = await App.supabase
+                        .from("SubstanceRef")
+                        .insert(batch);
+
+                    if (error) {
+                        this.log(`❌ SubstanceRef 배치 ${i + 1} 실패: ${error.message}`, "error");
+                    } else {
+                        this.log(`✅ SubstanceRef 배치 ${i + 1}/${totalBatches} 완료`);
+                    }
+                }
+
+                this.log("🎉 SubstanceRef 동기화 작업이 완료되었습니다!", "success");
+
+            } catch (err) {
+                this.log(`❌ SubstanceRef 오류 발생: ${err.message}`, "error");
+            }
         }
     };
 

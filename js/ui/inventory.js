@@ -200,7 +200,7 @@
         id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         concentration_value, concentration_unit,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, Synonyms ( synonyms_name, synonyms_eng ), ReplacedRns:ReplacedRns!ReplacedRns_substance_id_fkey ( replaced_rn ) ),
+        Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, chem_name_kor_mod, substance_name_mod, molecular_formula_mod, Synonyms ( synonyms_name, synonyms_eng ), ReplacedRns:ReplacedRns!ReplacedRns_substance_id_fkey ( replaced_rn ) ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .order("created_at", { ascending: false });
@@ -256,8 +256,11 @@
       if (detailParts) locationText += detailParts;
 
       locationText = locationText.trim() || "위치 정보 없음";
-      const substanceName = row.Substance?.substance_name || "";
-      const chemNameKor = row.Substance?.chem_name_kor || "";
+
+      // ✅ Override Logic
+      const substanceName = row.Substance?.substance_name_mod || row.Substance?.substance_name || "";
+      const chemNameKor = row.Substance?.chem_name_kor_mod || row.Substance?.chem_name_kor || "";
+      const molecularFormula = row.Substance?.molecular_formula_mod || row.Substance?.molecular_formula || "-";
 
       // HTML 구조로 변경 (JS에서 처리하기 위해)
       let displayLabelHtml = "";
@@ -299,12 +302,12 @@
         photo_url_160: row.photo_url_160 || null,
         display_label_html: displayLabelHtml, // HTML로 전달
         location_text: locationText,
-        formula: row.Substance?.molecular_formula || "-",
+        formula: molecularFormula,
         current_text: currentText,
         concentration_text: concentrationText,
         Cabinet: row.Cabinet,
-        name_kor: row.Substance?.chem_name_kor || "",
-        name_eng: row.Substance?.substance_name || "",
+        name_kor: chemNameKor,
+        name_eng: substanceName,
         cas_rn: row.Substance?.cas_rn || "",
         molecular_mass: row.Substance?.molecular_mass,
         synonyms_name: synonymsName,
