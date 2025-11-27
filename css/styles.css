@@ -4301,12 +4301,17 @@ input[type="date"] {
 /* =================================================================
    약품 관리 화면 레이아웃 (Sticky Header & Scrollable List)
 ================================================================= */
+/* =================================================================
+   약품 관리 화면 레이아웃 (Sticky Header & Scrollable List)
+================================================================= */
 #inventory-list-page {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
   /* 전체 페이지 스크롤 방지 */
+  box-sizing: border-box;
+  /* 추가 */
 }
 
 .list-header {
@@ -4319,14 +4324,53 @@ input[type="date"] {
   /* 검색창 영역 크기 고정 */
   padding-bottom: 10px;
   /* 리스트와 간격 */
+  box-sizing: border-box;
+  /* 추가 */
 }
 
 #inventory-list-container {
   flex-grow: 1;
   overflow-y: auto;
   /* 리스트만 스크롤 */
-  padding-bottom: 80px;
-  /* 하단 FAB 버튼에 가려지지 않도록 여백 추가 */
+  padding-bottom: 60px;
+  /* 하단 FAB 버튼에 가려지지 않도록 여백 추가 (80px -> 60px) */
+  border-top: 1px solid #eee;
+  /* 리스트 상단 구분선 추가 */
+}
+
+/* FAB 버튼 스타일 (누락되었거나 재정의) */
+.fab {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #00a0b2;
+  color: white;
+  border: none;
+  border-radius: 28px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 160, 178, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 100;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: auto;
+  /* 너비 자동 */
+}
+
+.fab:hover {
+  background-color: #008fa0;
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 160, 178, 0.4);
+}
+
+.fab .material-symbols-outlined {
+  font-size: 20px;
 }
 
 /* 검색창 스타일 (인라인 스타일 대체) */
@@ -4339,8 +4383,15 @@ input[type="date"] {
   border: 1px solid #ddd;
   border-radius: 6px;
   padding: 0 8px;
-  height: 40px;
-  /* 높이 명시 */
+  height: 30px;
+  /* 40px -> 30px (75%) */
+  box-sizing: border-box;
+  /* 테두리 포함 크기 계산 */
+}
+
+.search-container .material-symbols-outlined {
+  font-size: 16px !important;
+  /* 아이콘 크기 축소 (20px -> 16px) */
 }
 
 #inventory-search-input {
@@ -4353,4 +4404,23 @@ input[type="date"] {
   /* 부모 높이 채우기 */
   line-height: normal;
   /* 텍스트 수직 중앙 정렬 보조 */
+  background: transparent;
+  /* 배경 투명 */
+}
+
+/* 드롭다운 및 버튼 높이 조절 */
+#sort-toggle,
+#refresh-btn {
+  height: 30px !important;
+  /* 40px -> 30px (75%) */
+  font-size: 13px;
+  /* 폰트 크기 약간 축소 */
+  display: flex;
+  align-items: center;
+}
+
+#sort-toggle .material-symbols-outlined,
+#refresh-btn .material-symbols-outlined {
+  font-size: 18px;
+  /* 아이콘 크기 조정 */
 }
