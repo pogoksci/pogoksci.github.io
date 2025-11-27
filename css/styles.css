@@ -2370,7 +2370,8 @@ input[type="date"] {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  margin: 12px 8px 0;
+  margin: 0 8px;
+  /* 상단 마진 제거 (그룹에서 처리) */
   font-weight: 600;
   color: #333;
   background: #f5f8ff;
@@ -2383,6 +2384,14 @@ input[type="date"] {
   /* 목록보다 위에 표시 */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   /* 고정 시 입체감 추가 */
+}
+
+.inventory-section-group {
+  margin-top: 12px;
+}
+
+.inventory-section-group:first-child {
+  margin-top: 0;
 }
 
 
@@ -4316,8 +4325,8 @@ input[type="date"] {
   /* Sticky 제거 -> 고정 레이아웃 */
   position: relative;
   margin: 0;
-  padding: 0 0 24px 0;
-  /* 검색창 하단 여백 24px */
+  padding: 0 0 18px 0;
+  /* 검색창 하단 여백 18px로 축소 */
   background-color: transparent;
   z-index: auto;
 }
@@ -4343,6 +4352,15 @@ input[type="date"] {
   /* 리스트 내부 스크롤 */
   padding-bottom: 55px;
   /* FAB 버튼과의 간격 확보 */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+#inventory-list-container::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
 }
 
 
