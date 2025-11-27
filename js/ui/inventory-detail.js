@@ -264,9 +264,26 @@
         value2: "-",
       };
 
+      const annotateUnit = (unit) => {
+        const stateVal = String(data.state || "").trim().toLowerCase();
+        const solids = ["파우더", "조각", "비드", "펠렛", "리본", "막대", "벌크", "고체"];
+        const isSolid = solids.some((k) => stateVal.includes(k));
+        const isGas = stateVal.includes("기체") || stateVal.includes("gas");
+        const isLiquid = stateVal === "액체" || stateVal.includes("liquid");
+
+        // 이미 텍스트가 포함되어 있다면 중복 추가 방지
+        if (unit.includes("(") || unit.includes(")")) return unit;
+
+        if (unit === "M" && (isSolid || isGas)) return `${unit} (의미 없음)`;
+        if (unit === "m" && (isLiquid || isGas)) return `${unit} (정의 불가)`;
+        return unit;
+      };
+
       if (data.converted_concentration_value_1) {
-        const unit1 = data.converted_concentration_unit_1;
+        let unit1 = data.converted_concentration_unit_1 || "";
+        unit1 = annotateUnit(unit1); // ✅ Apply Annotation
         const unit1Norm = (unit1 || "").trim();
+
         if (unit1Norm.toUpperCase().startsWith("M")) convState.label1 = "몰농도:";
         else if (unit1Norm.includes("%")) convState.label1 = "퍼센트농도:";
         else convState.label1 = "Conversion";
@@ -274,8 +291,10 @@
       }
 
       if (data.converted_concentration_value_2) {
-        const unit2 = data.converted_concentration_unit_2;
+        let unit2 = data.converted_concentration_unit_2 || "";
+        unit2 = annotateUnit(unit2); // ✅ Apply Annotation
         const unit2Norm = (unit2 || "").trim();
+
         if (unit2Norm.toLowerCase().startsWith("m")) convState.label2 = "몰랄농도:";
         else if (unit2Norm.includes("%")) convState.label2 = "퍼센트농도:";
         else convState.label2 = "Conversion";
