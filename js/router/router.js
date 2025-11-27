@@ -63,9 +63,7 @@
           // 일단은 기존 showListPage 사용 (약간의 중복 로드 감수)
           // await App.Inventory.showListPage(); 
 
-          // 최적화: 이미 로드되었으므로 bind와 load만 수행
-          if (App.Inventory.bindListPage) App.Inventory.bindListPage();
-          if (App.Inventory.loadList) await App.Inventory.loadList();
+          // 최적화: includeHTML(app-bootstrap.js)에서 이미 bindListPage와 loadList를 호출하므로 중복 호출 제거
           if (App.Fab?.setVisibility) App.Fab.setVisibility(false);
         }
         break;
