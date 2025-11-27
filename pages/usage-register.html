@@ -1,0 +1,369 @@
+<!-- /pages/usage-register.html -->
+<div id="usage-register-page" class="split-view-container">
+
+    <!-- 1. Left Panel: Inventory List -->
+    <div class="left-panel">
+        <div class="panel-header">
+            <h3>약품 선택</h3>
+            <div class="search-box">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" id="usage-search-input" placeholder="약품명 검색...">
+            </div>
+        </div>
+        <div id="usage-inventory-list" class="scrollable-list">
+            <!-- List items will be injected here -->
+            <div class="loading-spinner">목록을 불러오는 중...</div>
+        </div>
+    </div>
+
+    <!-- 2. Right Panel: Detail & Form -->
+    <div class="right-panel">
+        <div id="usage-detail-container" style="display:none;">
+
+            <!-- Header Info -->
+            <div class="detail-header">
+                <h2 id="usage-chem-name">약품명</h2>
+                <div class="chem-meta">
+                    <span id="usage-chem-formula" class="badge">Formula</span>
+                    <span id="usage-chem-cas" class="badge secondary">CAS RN</span>
+                </div>
+                <div class="current-status">
+                    <span class="label">현재 잔량:</span>
+                    <span id="usage-current-amount" class="value">0</span>
+                    <span id="usage-unit" class="unit">mL</span>
+                    <span id="usage-location" class="location-badge">위치</span>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Registration Form -->
+            <div class="usage-form-section">
+                <h3>사용량 등록</h3>
+                <form id="usage-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>날짜</label>
+                            <input type="date" id="usage-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>과목</label>
+                            <select id="usage-subject" required>
+                                <option value="통합과학">통합과학</option>
+                                <option value="과학탐구실험">과학탐구실험</option>
+                                <option value="물리학">물리학</option>
+                                <option value="화학">화학</option>
+                                <option value="생명과학">생명과학</option>
+                                <option value="지구과학">지구과학</option>
+                                <option value="동아리">동아리</option>
+                                <option value="기타">기타</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>교시</label>
+                            <select id="usage-period" required>
+                                <option value="1교시">1교시</option>
+                                <option value="2교시">2교시</option>
+                                <option value="3교시">3교시</option>
+                                <option value="4교시">4교시</option>
+                                <option value="5교시">5교시</option>
+                                <option value="6교시">6교시</option>
+                                <option value="7교시">7교시</option>
+                                <option value="점심시간">점심시간</option>
+                                <option value="방과후">방과후</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>사용량</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="usage-amount" step="0.01" min="0" required placeholder="0.0">
+                                <span id="usage-form-unit">mL</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <span class="material-symbols-outlined">save</span>
+                            등록하기
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <hr>
+
+            <!-- Usage History -->
+            <div class="usage-history-section">
+                <h3>최근 사용 기록</h3>
+                <table class="usage-table">
+                    <thead>
+                        <tr>
+                            <th>날짜</th>
+                            <th>과목</th>
+                            <th>교시</th>
+                            <th>사용량</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usage-history-body">
+                        <!-- History rows -->
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <!-- Empty State -->
+        <div id="usage-empty-state">
+            <span class="material-symbols-outlined">science</span>
+            <p>왼쪽 목록에서 약품을 선택하세요.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Split View Layout */
+    .split-view-container {
+        display: flex;
+        height: calc(100vh - 60px);
+        /* Navbar height adjustment */
+        overflow: hidden;
+        background-color: #f5f7fa;
+    }
+
+    /* Left Panel */
+    .left-panel {
+        width: 320px;
+        background: white;
+        border-right: 1px solid #ddd;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+    }
+
+    .panel-header {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        background: #fff;
+    }
+
+    .panel-header h3 {
+        margin: 0 0 10px 0;
+        font-size: 1.1rem;
+        color: #333;
+    }
+
+    .search-box {
+        display: flex;
+        align-items: center;
+        background: #f0f2f5;
+        padding: 8px 12px;
+        border-radius: 8px;
+    }
+
+    .search-box input {
+        border: none;
+        background: transparent;
+        margin-left: 8px;
+        width: 100%;
+        outline: none;
+    }
+
+    .scrollable-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .usage-item {
+        padding: 12px 15px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .usage-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .usage-item.active {
+        background-color: #e3f2fd;
+        border-left: 4px solid #2196f3;
+    }
+
+    .item-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    .item-meta {
+        font-size: 0.85rem;
+        color: #666;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* Right Panel */
+    .right-panel {
+        flex: 1;
+        padding: 20px 30px;
+        overflow-y: auto;
+        background: #fff;
+    }
+
+    .detail-header {
+        margin-bottom: 20px;
+    }
+
+    .detail-header h2 {
+        margin: 0 0 10px 0;
+        font-size: 1.8rem;
+        color: #1a1a1a;
+    }
+
+    .chem-meta {
+        margin-bottom: 15px;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: #eee;
+        font-size: 0.85rem;
+        color: #555;
+        margin-right: 6px;
+    }
+
+    .badge.secondary {
+        background: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .current-status {
+        background: #fff3e0;
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 1px solid #ffe0b2;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .current-status .value {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #e65100;
+    }
+
+    .location-badge {
+        background: #fff;
+        border: 1px solid #ddd;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        color: #666;
+        margin-left: auto;
+    }
+
+    /* Form */
+    .usage-form-section {
+        background: #fafafa;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #eee;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .form-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        font-size: 0.9rem;
+        color: #555;
+        margin-bottom: 6px;
+    }
+
+    .form-group select,
+    .form-group input {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+    }
+
+    .input-with-unit {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .input-with-unit input {
+        flex: 1;
+    }
+
+    .btn-primary {
+        background: #2196f3;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+    }
+
+    .btn-primary:hover {
+        background: #1976d2;
+    }
+
+    /* Table */
+    .usage-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    .usage-table th,
+    .usage-table td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .usage-table th {
+        background: #f9f9f9;
+        font-weight: 600;
+        color: #555;
+    }
+
+    /* Empty State */
+    #usage-empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #aaa;
+    }
+
+    #usage-empty-state .material-symbols-outlined {
+        font-size: 4rem;
+        margin-bottom: 10px;
+    }
+</style>

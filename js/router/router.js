@@ -9,6 +9,7 @@
     inventory: "pages/inventory-list.html",
     addInventory: "pages/inventory-form.html",
     inventoryDetail: "pages/inventory-detail.html", // ✅ 상세 페이지 추가
+    usageRegister: "pages/usage-register.html", // ✅ 사용량 등록 페이지 추가
     dataSync: "pages/data-sync.html",
   };
 
@@ -71,6 +72,12 @@
       case "inventoryDetail":
         if (App?.Inventory?.loadDetail && params.id) {
           await App.Inventory.loadDetail(params.id);
+        }
+        break;
+
+      case "usageRegister":
+        if (App?.UsageRegister?.init) {
+          await App.UsageRegister.init();
         }
         break;
 

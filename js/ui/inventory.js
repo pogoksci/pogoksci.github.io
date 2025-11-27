@@ -339,8 +339,19 @@
 
     // ✅ 검색 필터링
     let filtered = allInventoryData;
+
+    // 1) 상태 필터링 (소모완료약품 vs 일반)
+    if (currentSort === "exhausted") {
+      // 소모완료약품 모드: '전량소진'인 것만 표시
+      filtered = filtered.filter((item) => item.status === "전량소진");
+    } else {
+      // 일반 모드: '전량소진' 제외
+      filtered = filtered.filter((item) => item.status !== "전량소진");
+    }
+
+    // 2) 검색어 필터링
     if (query) {
-      filtered = allInventoryData.filter((item) => {
+      filtered = filtered.filter((item) => {
         const targetFields = [
           item.cas_rn,
           item.name_eng, // substance_name
