@@ -826,7 +826,7 @@ button:disabled {
 
 .cabinet-card .card-info .area-name::before {
 
-  content: "쨌";
+  content: "·";
 
   margin: 0 6px 0 2px;
 
