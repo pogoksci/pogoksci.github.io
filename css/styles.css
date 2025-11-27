@@ -4297,3 +4297,60 @@ input[type="date"] {
   margin: 0;
   line-height: 1.4;
 }
+
+/* =================================================================
+   약품 관리 화면 레이아웃 (Sticky Header & Scrollable List)
+================================================================= */
+#inventory-list-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  /* 전체 페이지 스크롤 방지 */
+}
+
+.list-header {
+  flex-shrink: 0;
+  /* 헤더 크기 고정 */
+}
+
+.header-actions {
+  flex-shrink: 0;
+  /* 검색창 영역 크기 고정 */
+  padding-bottom: 10px;
+  /* 리스트와 간격 */
+}
+
+#inventory-list-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  /* 리스트만 스크롤 */
+  padding-bottom: 80px;
+  /* 하단 FAB 버튼에 가려지지 않도록 여백 추가 */
+}
+
+/* 검색창 스타일 (인라인 스타일 대체) */
+.search-container {
+  flex: 1;
+  /* 남은 공간 차지 */
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0 8px;
+  height: 40px;
+  /* 높이 명시 */
+}
+
+#inventory-search-input {
+  border: none;
+  outline: none;
+  padding: 0 8px;
+  font-size: 14px;
+  width: 100%;
+  height: 100%;
+  /* 부모 높이 채우기 */
+  line-height: normal;
+  /* 텍스트 수직 중앙 정렬 보조 */
+}
