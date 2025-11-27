@@ -205,7 +205,7 @@
         id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         concentration_value, concentration_unit,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
-        Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, chem_name_kor_mod, substance_name_mod, molecular_formula_mod, Synonyms ( synonyms_name, synonyms_eng ), ReplacedRns:ReplacedRns!ReplacedRns_substance_id_fkey ( replaced_rn ) ),
+        Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, chem_name_kor_mod, substance_name_mod, molecular_formula_mod, Synonyms ( synonyms_name, synonyms_eng ), ReplacedRns ( replaced_rn ) ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
       .order("created_at", { ascending: false });
@@ -218,7 +218,7 @@
       return;
     }
 
-    const mapped = (data || []).map((row) => {
+    const mapped = (data || []).map((row, index) => {
       const area = row.Cabinet?.Area?.area_name || "";
       const cabinetName = row.Cabinet?.cabinet_name || "";
       const doorVertical = row.door_vertical || "";
@@ -294,8 +294,14 @@
       const synonymsEng = synonymsList.map((s) => s.synonyms_eng).filter(Boolean).join(", ");
 
       // ✅ ReplacedRns 처리
+      // Note: Query uses 'ReplacedRns' alias (or table name)
       const replacedRnsList = row.Substance?.ReplacedRns || [];
       const replacedRns = replacedRnsList.map((r) => r.replaced_rn).filter(Boolean).join(", ");
+
+      // Debug log for verification (first 5 items)
+      if (index < 5 && (synonymsName || replacedRns)) {
+        console.log(`🔍 Search Data [${row.id}]:`, { synonymsName, synonymsEng, replacedRns });
+      }
 
       return {
         id: row.id,
