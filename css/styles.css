@@ -2370,8 +2370,8 @@ input[type="date"] {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  margin: 0 8px;
-  /* 상단 마진 제거 (그룹에서 처리) */
+  margin: 0 8px 12px 8px;
+  /* 상단 0, 좌우 8px, 하단 12px (목록과 간격) */
   font-weight: 600;
   color: #333;
   background: #f5f8ff;
@@ -4396,7 +4396,7 @@ input[type="date"] {
   width: 100%;
   height: 100%;
   /* 부모 높이 채우기 */
-  line-height: normal;
+  line-height: 28px;
   /* 텍스트 수직 중앙 정렬 보조 */
   background: transparent;
   /* 배경 투명 */
