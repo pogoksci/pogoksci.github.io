@@ -59,13 +59,14 @@
         const listContainer = document.getElementById("usage-inventory-list");
         if (listContainer) listContainer.innerHTML = '<div class="loading-spinner">목록을 불러오는 중...</div>';
 
-        // 필요한 필드 모두 조회
+        // 필요한 필드 모두 조회 (이미지 URL 추가)
         const { data, error } = await supabase
             .from("Inventory")
             .select(`
         id, current_amount, unit, status,
         concentration_value, concentration_unit,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
+        photo_url_320, photo_url_160,
         Substance ( substance_name, cas_rn, chem_name_kor, chem_name_kor_mod, molecular_formula ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
@@ -108,44 +109,86 @@
         listContainer.innerHTML = filtered.map(item => renderItemCard(item)).join("");
     }
 
-    // 아이템 카드 HTML 생성 (목록 및 상세 상단 공용)
+    // 아이템 카드 HTML 생성 (inventory-card 스타일 적용)
     function renderItemCard(item, isDetail = false) {
-        const name = item.Substance?.chem_name_kor_mod || item.Substance?.chem_name_kor || item.Substance?.substance_name || "이름 없음";
-        const cas = item.Substance?.cas_rn || "";
-        const formula = item.Substance?.molecular_formula || "";
+        const name = item.Substance?.chem_name_kor_mod || item.Substance?.chem_name_kor || "이름 없음";
 
-        // 농도 표시
-        let concStr = "";
+        // 농도 텍스트
+        let concStr = "-";
         if (item.concentration_value) {
-            concStr = `${item.concentration_value} ${item.concentration_unit || ""}`;
+            concStr = `${item.concentration_value}${item.concentration_unit || ""}`;
         }
 
-        // 위치 상세 정보
+        // 위치 텍스트 포맷팅 (inventory.js 로직 적용)
         const area = item.Cabinet?.Area?.area_name || "";
-        const cabinet = item.Cabinet?.cabinet_name || "";
+        const cabinetName = item.Cabinet?.cabinet_name || "";
+        const doorVertical = item.door_vertical || "";
+        const doorHorizontal = item.door_horizontal || "";
+        const shelfLevel = item.internal_shelf_level;
+        const column = item.storage_column;
 
-        // 위치 상세 문자열 조합 (inventory.js 로직 참조)
-        let locDetail = "";
-        if (item.door_vertical) locDetail += `${item.door_vertical} `;
-        if (item.door_horizontal) locDetail += `${item.door_horizontal} `;
-        if (item.internal_shelf_level) locDetail += `${item.internal_shelf_level} `;
-        if (item.storage_column) locDetail += `${item.storage_column}`;
+        let locationText = "";
+        if (area) locationText += area + " ";
+        if (cabinetName) locationText += `『${cabinetName}』 `;
 
-        const fullLocation = `${area} ${cabinet} ${locDetail}`.trim();
+        // 도어 정보
+        let doorPart = "";
+        const doorHVal = String(doorHorizontal || "").trim();
+        let doorHLabel = "";
+        if (doorHVal === "1") doorHLabel = "왼쪽";
+        else if (doorHVal === "2") doorHLabel = "오른쪽";
+        else doorHLabel = doorHVal;
 
-        // 클릭 이벤트는 목록일 때만
+        if (doorVertical && doorHLabel) {
+            doorPart = `${doorVertical}층 ${doorHLabel}문`;
+        } else if (doorVertical) {
+            doorPart = `${doorVertical}층문`;
+        } else if (doorHLabel) {
+            doorPart = `${doorHLabel}문`;
+        }
+
+        // 선반/열 정보
+        let shelfPart = "";
+        if (shelfLevel && column) {
+            shelfPart = `${shelfLevel}단 ${column}열`;
+        } else {
+            if (shelfLevel) shelfPart += `${shelfLevel}단`;
+            if (column) shelfPart += (shelfPart ? " " : "") + `${column}열`;
+        }
+
+        const detailParts = [doorPart, shelfPart].filter(Boolean).join(", ");
+        if (detailParts) locationText += detailParts;
+        locationText = locationText.trim() || "위치 정보 없음";
+
+        // 이미지 처리
+        const imageSrc = item.photo_url_320 || item.photo_url_160 || "";
+        const imageBlock = imageSrc
+            ? `<div class="inventory-card__image">
+           <img src="${imageSrc}" alt="Inventory Image" />
+         </div>`
+            : `<div class="inventory-card__image inventory-card__image--empty">
+           <span class="inventory-card__placeholder">사진 없음</span>
+         </div>`;
+
+        // 클릭 이벤트
         const onClickAttr = isDetail ? "" : `onclick="App.UsageRegister.selectItem(${item.id})"`;
 
+        // ✅ inventory-card 구조 사용 (간소화된 내용)
         return `
-      <div class="usage-inventory-item" ${onClickAttr}>
-        <div class="item-header">
-          <span class="item-title">${name}</span>
-          <span class="item-id">No.${item.id}</span>
-        </div>
-        <div class="item-details">
-          ${concStr ? `<span class="detail-chip">${concStr}</span>` : ""}
-          <span class="detail-chip amount">잔량: ${item.current_amount} ${item.unit}</span>
-          <span class="detail-chip location">${fullLocation}</span>
+      <div class="inventory-card" ${onClickAttr}>
+        ${imageBlock}
+        <div class="inventory-card__body">
+          <div class="inventory-card__left">
+            <div class="inventory-card__line1">
+              <span class="inventory-card__no">No.${item.id}</span>
+            </div>
+            <div class="inventory-card__line2 name-kor">${name}</div>
+            <div class="inventory-card__line4 inventory-card__location" style="margin-top: auto;">${locationText}</div>
+          </div>
+          <div class="inventory-card__meta">
+            <div class="meta-line3" style="margin-top: auto;">${concStr}</div>
+            <div class="meta-line4">${item.current_amount}${item.unit}</div>
+          </div>
         </div>
       </div>
     `;
