@@ -4319,8 +4319,10 @@ input[type="date"] {
   top: 0;
   background-color: #fff;
   z-index: 90;
-  padding-bottom: 10px;
-  /* 헤더 하단 여백 */
+  margin: -20px -20px 0 -20px;
+  /* 부모 패딩 상쇄 */
+  padding: 20px 20px 24px 20px;
+  /* 상단 패딩 복구 + 하단 여백 24px */
 }
 
 .list-header {
@@ -4335,15 +4337,13 @@ input[type="date"] {
 
 .header-actions {
   flex-shrink: 0;
-  /* padding-bottom: 10px; 제거 - sticky 컨테이너에서 처리 */
   box-sizing: border-box;
 }
 
 #inventory-list-container {
   flex-grow: 1;
-  /* overflow-y: auto; 제거 - body 스크롤 사용 */
-  padding-bottom: 60px;
-  /* 하단 FAB 버튼에 가려지지 않도록 여백 추가 */
+  padding-bottom: 50px;
+  /* 하단 FAB 버튼과의 간격 조정 (부모 패딩 80px + 50px = 130px) */
   border-top: 1px solid #eee;
   /* 리스트 상단 구분선 추가 */
 }
