@@ -1925,9 +1925,8 @@ body:not(.home-active) #splash-screen {
 
 
 body.home-active #splash-screen {
-
-  animation: splashFadeIn 0.4s ease-out;
-
+  /* animation: splashFadeIn 0.4s ease-out; */
+  opacity: 1;
 }
 
 
