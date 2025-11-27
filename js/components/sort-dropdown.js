@@ -41,8 +41,10 @@
 
     // ✅ 드롭다운 토글
     toggle.addEventListener("click", (e) => {
+      console.log("🖱️ Sort Toggle Clicked");
       e.stopPropagation();
       menu.classList.toggle("open");
+      console.log("📂 Menu Open State:", menu.classList.contains("open"));
     });
 
     // ✅ 옵션 클릭 처리

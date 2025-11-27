@@ -130,8 +130,8 @@
   try {
     await loadModulesSequentially(baseModules, "Base");
     await loadModulesSequentially(coreModules, "Core");
+    await loadModulesSequentially(componentModules, "Components"); // ✅ UI보다 먼저 로드
     await loadModulesSequentially(uiModules, "UI");
-    await loadModulesSequentially(componentModules, "Components");
     await loadModulesSequentially(routerModules, "Router");
     console.log("🧩 모든 모듈 로드 완료!");
 

@@ -2144,7 +2144,10 @@ body.home-active #splash-screen {
   /* ??踰꾪듉 ?믪씠 */
 
   box-sizing: border-box;
+}
 
+#sort-label {
+  pointer-events: none;
 }
 
 

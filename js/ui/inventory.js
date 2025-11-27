@@ -332,7 +332,7 @@
     const container = document.getElementById("inventory-list-container");
     const status = document.getElementById("status-message-inventory-list");
     const searchInput = document.getElementById("inventory-search-input");
-    const query = (searchInput?.value || "").trim().toLowerCase();
+    const query = (searchInput?.value || "").trim().toLowerCase().replace(/\s+/g, "");
 
     // ✅ 검색 필터링
     let filtered = allInventoryData;
@@ -348,7 +348,9 @@
           item.classification,
           item.replaced_rn, // ✅ Replaced RN 검색 추가
         ];
-        return targetFields.some((field) => String(field || "").toLowerCase().includes(query));
+        return targetFields.some((field) =>
+          String(field || "").toLowerCase().replace(/\s+/g, "").includes(query)
+        );
       });
     }
 
@@ -371,15 +373,8 @@
     );
 
     bindListPage();
-    app.SortDropdown?.init?.({
-      onChange: (value) => {
-        currentSort = value || "category_name_kor";
-        loadList();
-      },
-      onRefresh: () => loadList(),
-      defaultLabel: "한글명(분류)",
-      defaultValue: currentSort,
-    });
+    // 중복 호출 제거: bindListPage 내부에서 이미 init 호출함
+    // app.SortDropdown?.init?.({ ... });
 
     await loadList();
     app.Fab?.setVisibility?.(false);
