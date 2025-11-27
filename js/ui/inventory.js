@@ -160,8 +160,8 @@
     container.querySelectorAll(".inventory-card").forEach((card) => {
       const id = Number(card.dataset.id);
       card.addEventListener("click", async () => {
-        const ok = await App.includeHTML("pages/inventory-detail.html", "form-container");
-        if (ok) App.Inventory?.loadDetail?.(id);
+        // ✅ Router를 통해 이동 (뒤로가기 지원)
+        await App.Router.go("inventoryDetail", { id });
       });
     });
 

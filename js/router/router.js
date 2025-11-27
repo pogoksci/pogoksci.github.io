@@ -8,28 +8,41 @@
     addCabinet: "pages/cabinet-form.html",
     inventory: "pages/inventory-list.html",
     addInventory: "pages/inventory-form.html",
+    inventoryDetail: "pages/inventory-detail.html", // ✅ 상세 페이지 추가
     dataSync: "pages/data-sync.html",
   };
+
+  // ✅ 현재 상태 추적 (중복 pushState 방지)
+  let currentState = null;
 
   /**
    * Router.go()
    * @param {string} pageKey - 이동할 페이지 키
-   * @param {string} targetId - HTML을 로드할 컨테이너 ID
-   * @param {function} [callback] - 후처리 콜백
+   * @param {object} [params] - 페이지 파라미터 (예: { id: 123 })
+   * @param {object} [options] - 옵션 (skipPush: history push 생략 여부)
    */
-  async function go(pageKey, targetId = "form-container", callback = null) {
+  async function go(pageKey, params = {}, options = {}) {
     const file = routes[pageKey];
     if (!file) {
       console.warn(`❌ Router: ${pageKey} 라우트 없음`);
       return;
     }
 
-    console.log(`🧭 Router → ${pageKey}`);
+    console.log(`🧭 Router → ${pageKey}`, params);
+
+    // ✅ History Push (뒤로가기 지원)
+    if (!options.skipPush) {
+      const state = { pageKey, params };
+      // URL은 변경하지 않음 (null)
+      history.pushState(state, "", null);
+      currentState = state;
+    }
 
     // ✅ HTML include
+    const targetId = "form-container";
     await App.includeHTML(file, targetId);
 
-    // ✅ 렌더 안정화를 위해 2프레임 대기 (layout + paint 보장)
+    // ✅ 렌더 안정화를 위해 2프레임 대기
     await new Promise((resolve) =>
       requestAnimationFrame(() => requestAnimationFrame(resolve))
     );
@@ -37,55 +50,74 @@
     // ✅ 페이지별 후처리
     switch (pageKey) {
       case "cabinets":
-        if (App?.Cabinet?.loadList) {
-          console.log("📦 Router → Cabinet.loadList() 실행");
-          await App.Cabinet.loadList();
-        }
+        if (App?.Cabinet?.loadList) await App.Cabinet.loadList();
         break;
 
       case "inventory":
         if (App?.Inventory?.showListPage) {
-          console.log("📦 Router → Inventory.showListPage() 실행");
-          await App.Inventory.showListPage();
+          // showListPage는 내부적으로 includeHTML을 또 호출하므로, 
+          // 여기서는 bindListPage와 loadList만 호출하는 것이 효율적일 수 있으나,
+          // 기존 로직 유지를 위해 showListPage 호출 (단, 무한루프 주의)
+          // 하지만 showListPage가 includeHTML을 호출하면 비효율적임.
+          // Router가 이미 includeHTML을 했으므로, bind와 load만 수행하도록 변경 권장.
+          // 일단은 기존 showListPage 사용 (약간의 중복 로드 감수)
+          // await App.Inventory.showListPage(); 
+
+          // 최적화: 이미 로드되었으므로 bind와 load만 수행
+          if (App.Inventory.bindListPage) App.Inventory.bindListPage();
+          if (App.Inventory.loadList) await App.Inventory.loadList();
+          if (App.Fab?.setVisibility) App.Fab.setVisibility(false);
         }
-        if (App?.Inventory?.bindListPage) {
-          App.Inventory.bindListPage();
+        break;
+
+      case "inventoryDetail":
+        if (App?.Inventory?.loadDetail && params.id) {
+          await App.Inventory.loadDetail(params.id);
         }
         break;
 
       case "addCabinet":
         if (App?.Forms?.initCabinetForm) {
-          console.log("🧩 Router → Cabinet Form 초기화 실행");
           await App.Forms.initCabinetForm("create");
         }
         break;
 
       case "addInventory":
         if (App?.Forms?.initInventoryForm) {
-          console.log("🧩 Router → Inventory Form 초기화 실행");
           await App.Forms.initInventoryForm("create");
         }
         break;
 
       case "dataSync":
-        if (App?.DataSync?.init) {
-          console.log("🔄 Router → DataSync.init() 실행");
-          App.DataSync.init();
-        }
+        if (App?.DataSync?.init) App.DataSync.init();
         break;
 
       case "main":
-        console.log("🏠 Router → 메인 화면 진입");
-        break;
-
-      default:
-        console.warn(`⚠️ Router: ${pageKey}에 대한 후처리 없음`);
+        // 메인 화면 로직
         break;
     }
 
-    // ✅ 콜백이 있으면 실행
-    if (typeof callback === "function") await callback();
+    // ✅ 스크롤 상단 이동
+    window.scrollTo(0, 0);
   }
+
+  // ✅ 뒤로가기 감지 (PopState)
+  window.addEventListener("popstate", (event) => {
+    const state = event.state;
+    if (state && state.pageKey) {
+      console.log("🔙 뒤로가기 감지:", state);
+      go(state.pageKey, state.params, { skipPush: true });
+    } else {
+      // 초기 상태거나 state가 없는 경우 -> 메인으로
+      console.log("🔙 초기 상태 복귀 -> Main");
+      go("main", {}, { skipPush: true });
+    }
+  });
+
+  // ✅ 초기 로드 시 현재 상태 저장 (Replace)
+  // document.addEventListener("DOMContentLoaded", () => {
+  //   history.replaceState({ pageKey: "main" }, "", null);
+  // });
 
   globalThis.App = globalThis.App || {};
   globalThis.App.Router = { go, routes };
