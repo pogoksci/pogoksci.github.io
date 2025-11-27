@@ -2162,23 +2162,18 @@ body.home-active #splash-screen {
 
 
 .dropdown-toggle .arrow {
-
   margin-left: 4px;
-
   transition: transform 0.25s ease;
-
+  pointer-events: none;
+  /* 클릭 이벤트가 버튼으로 전달되도록 설정 */
 }
 
-
-
 .dropdown-toggle .material-symbols-outlined {
-
   font-size: 18px;
-
   vertical-align: middle;
-
   color: #555;
-
+  pointer-events: none;
+  /* 클릭 이벤트가 버튼으로 전달되도록 설정 */
 }
 
 
