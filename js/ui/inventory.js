@@ -504,6 +504,8 @@
         defaultLabel: "한글명(분류)",
         defaultValue: "category_name_kor",
       });
+    } else {
+      console.error("❌ App.SortDropdown 모듈이 로드되지 않았습니다.");
     }
 
     // ✅ 검색 입력 이벤트

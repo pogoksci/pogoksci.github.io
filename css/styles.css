@@ -2209,7 +2209,7 @@ body.home-active #splash-screen {
 
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
-  z-index: 10;
+  z-index: 2000;
 
   display: none;
 
