@@ -7,6 +7,7 @@
 
     let allInventory = [];
     let selectedItem = null;
+    let currentSort = "category_name_kor"; // 기본 정렬
 
     // ------------------------------------------------------------
     // 1️⃣ 초기화
@@ -18,6 +19,21 @@
         const dateInput = document.getElementById("usage-date");
         if (dateInput) {
             dateInput.valueAsDate = new Date();
+        }
+
+        // 정렬 드롭다운 초기화
+        if (App.SortDropdown && App.SortDropdown.init) {
+            App.SortDropdown.init({
+                onChange: (val) => {
+                    currentSort = val;
+                    filterAndRenderList(document.getElementById("usage-search-input")?.value || "");
+                },
+                onRefresh: () => {
+                    loadInventoryList();
+                },
+                defaultLabel: "한글명(분류)",
+                defaultValue: "category_name_kor"
+            });
         }
 
         // 이벤트 리스너 등록
@@ -59,11 +75,11 @@
         const listContainer = document.getElementById("usage-inventory-list");
         if (listContainer) listContainer.innerHTML = '<div class="loading-spinner">목록을 불러오는 중...</div>';
 
-        // 필요한 필드 모두 조회 (이미지 URL 추가)
+        // 필요한 필드 모두 조회 (classification 추가)
         const { data, error } = await supabase
             .from("Inventory")
             .select(`
-        id, current_amount, unit, status,
+        id, current_amount, unit, status, classification,
         concentration_value, concentration_unit,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         photo_url_320, photo_url_160,
@@ -83,13 +99,57 @@
         filterAndRenderList("");
     }
 
+    // 정렬 함수 (inventory.js와 동일)
+    function sortData(rows, key) {
+        const collateKo = (a, b) => String(a || "").localeCompare(String(b || ""), "ko");
+        const collateEn = (a, b) => String(a || "").localeCompare(String(b || ""), "en", { sensitivity: "base" });
+
+        switch (key) {
+            case "category_name_kor": // 한글명(분류)
+                return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateKo(a.Substance?.chem_name_kor, b.Substance?.chem_name_kor));
+            case "category_name_eng": // 영문명(분류)
+                return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateEn(a.Substance?.substance_name, b.Substance?.substance_name));
+            case "name_kor": // 한글명(전체)
+                return rows.sort((a, b) => collateKo(a.Substance?.chem_name_kor, b.Substance?.chem_name_kor));
+            case "name_eng": // 영문명(전체)
+                return rows.sort((a, b) => collateEn(a.Substance?.substance_name, b.Substance?.substance_name));
+            case "formula": // 화학식
+                return rows.sort((a, b) => collateEn(a.Substance?.molecular_formula, b.Substance?.molecular_formula));
+            case "storage_location": // 위치
+                return rows.sort((a, b) => {
+                    const locA = (a.Cabinet?.Area?.area_name || "") + (a.Cabinet?.cabinet_name || "");
+                    const locB = (b.Cabinet?.Area?.area_name || "") + (b.Cabinet?.cabinet_name || "");
+                    return collateKo(locA, locB);
+                });
+            case "created_at_desc": // 등록순서
+                return rows.sort((a, b) => b.id - a.id);
+            default:
+                return rows;
+        }
+    }
+
+    // 그룹화 함수
+    function groupData(rows, key) {
+        if (key === "category_name_kor" || key === "category_name_eng") {
+            const groups = {};
+            rows.forEach(item => {
+                const cls = item.classification || "미분류";
+                if (!groups[cls]) groups[cls] = [];
+                groups[cls].push(item);
+            });
+            // 키 정렬
+            return Object.keys(groups).sort().map(cls => [cls, groups[cls]]);
+        }
+        return [["", rows]]; // 그룹 없음
+    }
+
     function filterAndRenderList(query) {
         const listContainer = document.getElementById("usage-inventory-list");
         if (!listContainer) return;
 
         const lowerQuery = query.toLowerCase().trim();
 
-        const filtered = allInventory.filter(item => {
+        let filtered = allInventory.filter(item => {
             const nameKor = item.Substance?.chem_name_kor || "";
             const nameKorMod = item.Substance?.chem_name_kor_mod || "";
             const nameEng = item.Substance?.substance_name || "";
@@ -106,10 +166,31 @@
             return;
         }
 
-        listContainer.innerHTML = filtered.map(item => renderItemCard(item)).join("");
+        // 정렬
+        filtered = sortData(filtered, currentSort);
+
+        // 그룹화 및 렌더링
+        const grouped = groupData(filtered, currentSort);
+
+        listContainer.innerHTML = grouped.map(([groupTitle, items]) => {
+            let header = "";
+            if (groupTitle) {
+                header = `
+            <div class="inventory-section-header" style="margin-top: 10px; margin-bottom: 5px; padding: 5px 10px; background: #e3f2fd; border-left: 4px solid #00a0b2; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+              <span class="section-title" style="font-weight: bold; color: #333;">${groupTitle}</span>
+              <span class="section-count" style="background: #b3e5fc; color: #0277bd; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">${items.length}</span>
+            </div>`;
+            }
+            return `
+            <div class="inventory-section-group">
+                ${header}
+                ${items.map(item => renderItemCard(item)).join("")}
+            </div>
+        `;
+        }).join("");
     }
 
-    // 아이템 카드 HTML 생성 (inventory-card 스타일 적용)
+    // 아이템 카드 HTML 생성 (사진 제거, 2x2 레이아웃)
     function renderItemCard(item, isDetail = false) {
         const name = item.Substance?.chem_name_kor_mod || item.Substance?.chem_name_kor || "이름 없음";
 
@@ -119,7 +200,7 @@
             concStr = `${item.concentration_value}${item.concentration_unit || ""}`;
         }
 
-        // 위치 텍스트 포맷팅 (inventory.js 로직 적용)
+        // 위치 텍스트
         const area = item.Cabinet?.Area?.area_name || "";
         const cabinetName = item.Cabinet?.cabinet_name || "";
         const doorVertical = item.door_vertical || "";
@@ -131,7 +212,6 @@
         if (area) locationText += area + " ";
         if (cabinetName) locationText += `『${cabinetName}』 `;
 
-        // 도어 정보
         let doorPart = "";
         const doorHVal = String(doorHorizontal || "").trim();
         let doorHLabel = "";
@@ -147,7 +227,6 @@
             doorPart = `${doorHLabel}문`;
         }
 
-        // 선반/열 정보
         let shelfPart = "";
         if (shelfLevel && column) {
             shelfPart = `${shelfLevel}단 ${column}열`;
@@ -160,34 +239,25 @@
         if (detailParts) locationText += detailParts;
         locationText = locationText.trim() || "위치 정보 없음";
 
-        // 이미지 처리
-        const imageSrc = item.photo_url_320 || item.photo_url_160 || "";
-        const imageBlock = imageSrc
-            ? `<div class="inventory-card__image">
-           <img src="${imageSrc}" alt="Inventory Image" />
-         </div>`
-            : `<div class="inventory-card__image inventory-card__image--empty">
-           <span class="inventory-card__placeholder">사진 없음</span>
-         </div>`;
-
         // 클릭 이벤트
         const onClickAttr = isDetail ? "" : `onclick="App.UsageRegister.selectItem(${item.id})"`;
 
-        // ✅ inventory-card 구조 사용 (간소화된 내용)
+        // ✅ 사진 제거 및 2x2 레이아웃 적용
+        // 왼쪽: No + 이름 / 위치
+        // 오른쪽: 농도 / 잔량
         return `
-      <div class="inventory-card" ${onClickAttr}>
-        ${imageBlock}
+      <div class="inventory-card" ${onClickAttr} style="padding: 12px;">
         <div class="inventory-card__body">
           <div class="inventory-card__left">
             <div class="inventory-card__line1">
               <span class="inventory-card__no">No.${item.id}</span>
+              <span class="name-kor" style="font-size: 1.1rem; font-weight: bold; margin-left: 6px; color: #333;">${name}</span>
             </div>
-            <div class="inventory-card__line2 name-kor">${name}</div>
-            <div class="inventory-card__line4 inventory-card__location" style="margin-top: auto;">${locationText}</div>
+            <div class="inventory-card__line4 inventory-card__location" style="margin-top: 8px; color: #666;">${locationText}</div>
           </div>
-          <div class="inventory-card__meta">
-            <div class="meta-line3" style="margin-top: auto;">${concStr}</div>
-            <div class="meta-line4">${item.current_amount}${item.unit}</div>
+          <div class="inventory-card__meta" style="text-align: right; min-width: 80px;">
+            <div class="meta-line3" style="font-weight: bold; color: #555;">${concStr}</div>
+            <div class="meta-line4" style="margin-top: 8px; color: #00a0b2; font-weight: bold;">${item.current_amount}${item.unit}</div>
           </div>
         </div>
       </div>

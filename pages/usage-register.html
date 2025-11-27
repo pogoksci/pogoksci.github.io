@@ -3,10 +3,64 @@
 
     <!-- 1. List Section -->
     <div id="usage-list-section">
-        <div class="search-header">
-            <div class="search-box">
-                <span class="material-symbols-outlined">search</span>
-                <input type="text" id="usage-search-input" placeholder="약품명 검색...">
+        <div class="inventory-sticky-top">
+            <div class="list-header">
+                <h2>약품 사용량 등록</h2>
+            </div>
+
+            <div class="header-actions"
+                style="display: flex; width: 100%; gap: 8px; justify-content: space-between; align-items: stretch;">
+                <!-- 검색창 -->
+                <div class="search-container">
+                    <span class="material-symbols-outlined" style="color: #888;">search</span>
+                    <input type="text" id="usage-search-input" placeholder="약품 검색...">
+                </div>
+
+                <!-- 정렬 드롭다운 (ID는 SortDropdown 컴포넌트와 일치시켜야 함) -->
+                <div class="custom-dropdown" id="sort-dropdown">
+                    <button class="dropdown-toggle" id="sort-toggle" aria-haspopup="true" aria-expanded="false"
+                        style="height: 100%;">
+                        <span class="material-symbols-outlined">sort</span>
+                        <span id="sort-label" data-value="category_name_kor">한글명(분류)</span>
+                        <span class="material-symbols-outlined arrow">expand_more</span>
+                    </button>
+
+                    <div class="dropdown-menu" id="sort-menu" role="menu">
+                        <div class="dropdown-item" data-value="category_name_kor">
+                            <span class="material-symbols-outlined">category</span>
+                            한글명(분류)
+                        </div>
+                        <div class="dropdown-item" data-value="category_name_eng">
+                            <span class="material-symbols-outlined">category</span>
+                            영문명(분류)
+                        </div>
+                        <div class="dropdown-item" data-value="name_kor">
+                            <span class="material-symbols-outlined">sort_by_alpha</span>
+                            한글명(전체)
+                        </div>
+                        <div class="dropdown-item" data-value="name_eng">
+                            <span class="material-symbols-outlined">sort_by_alpha</span>
+                            영문명(전체)
+                        </div>
+                        <div class="dropdown-item" data-value="formula">
+                            <span class="material-symbols-outlined">science</span>
+                            화학식
+                        </div>
+                        <div class="dropdown-item" data-value="storage_location">
+                            <span class="material-symbols-outlined">location_on</span>
+                            위치
+                        </div>
+                        <div class="dropdown-item" data-value="created_at_desc">
+                            <span class="material-symbols-outlined">schedule</span>
+                            등록순서
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 새로고침 버튼 -->
+                <button id="refresh-btn" title="목록 새로고침" aria-label="새로고침" style="height: 100%;">
+                    <span class="material-symbols-outlined">refresh</span>
+                </button>
             </div>
         </div>
 
@@ -113,191 +167,171 @@
         /* Bottom spacing */
     }
 
-    /* Search Header */
-    .search-header {
-        margin-bottom: 20px;
-        position: sticky;
-        top: 0;
-        background: #f5f7fa;
-        /* Match body bg */
-        z-index: 10;
-        padding-bottom: 10px;
+    /* Detail View */
+    .detail-top-bar {
+        margin-bottom: 15px;
     }
 
-    .search-box {
+    .btn-text {
+        background: none;
+        border: none;
+        color: #666;
         display: flex;
         align-items: center;
-        background: white;
-        padding: 12px 16px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        border: 1px solid #eee;
+        gap: 5px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        padding: 0;
     }
 
-    .search-box input {
+    .btn-text:hover {
+        color: #333;
+        text-decoration: underline;
+    }
+
+    /* Selected Item (Reused style but no hover/cursor) */
+    #selected-item-display .inventory-card {
+        cursor: default;
+        transform: none;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 2px solid #2196f3;
+        /* Highlight */
+        background: #f8fbff;
+    }
+
+    /* Form Card */
+    .form-container-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 20px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-container-card h3 {
+        margin: 0 0 20px 0;
+        font-size: 1.2rem;
+        color: #333;
+    }
+
+    .form-group-date {
+        margin-bottom: 20px;
+    }
+
+    .form-group-date input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 6px;
+        font-weight: 500;
+    }
+
+    .form-group select,
+    .form-group input {
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        background: #fff;
+    }
+
+    .amount-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .amount-input-wrapper input {
+        flex: 1;
+        text-align: right;
+        font-weight: bold;
+        color: #1565c0;
+    }
+
+    .btn-submit {
+        width: 100%;
+        background: #00897b;
+        /* Teal color from image */
+        color: white;
         border: none;
+        padding: 14px;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 10px;
+        transition: background 0.2s;
+    }
 
-        .btn-text {
-            background: none;
-            border: none;
-            color: #666;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.95rem;
-            cursor: pointer;
-            padding: 0;
-        }
+    .btn-submit:hover {
+        background: #00796b;
+    }
 
-        .btn-text:hover {
-            color: #333;
-            text-decoration: underline;
-        }
+    /* History Card */
+    .history-container-card {
+        margin-top: 30px;
+    }
 
-        /* Selected Item (Reused style but no hover/cursor) */
-        #selected-item-display .usage-inventory-item {
-            cursor: default;
-            transform: none;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            border: 2px solid #2196f3;
-            /* Highlight */
-            background: #f8fbff;
-        }
+    .history-container-card h3 {
+        font-size: 1.1rem;
+        color: #555;
+        margin-bottom: 15px;
+    }
 
-        /* Form Card */
-        .form-container-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            margin-top: 20px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-        }
+    .usage-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
 
-        .form-container-card h3 {
-            margin: 0 0 20px 0;
-            font-size: 1.2rem;
-            color: #333;
-        }
+    .usage-table th,
+    .usage-table td {
+        padding: 12px 15px;
+        text-align: center;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.95rem;
+    }
 
-        .form-group-date {
-            margin-bottom: 20px;
-        }
+    .usage-table th {
+        background: #fafafa;
+        font-weight: 600;
+        color: #666;
+    }
 
-        .form-group-date input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
+    .usage-table td {
+        color: #333;
+    }
 
-        .form-row {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group label {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-
-        .form-group select,
-        .form-group input {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            background: #fff;
-        }
-
-        .amount-input-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .amount-input-wrapper input {
-            flex: 1;
-            text-align: right;
-            font-weight: bold;
-            color: #1565c0;
-        }
-
-        .btn-submit {
-            width: 100%;
-            background: #00897b;
-            /* Teal color from image */
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 10px;
-            transition: background 0.2s;
-        }
-
-        .btn-submit:hover {
-            background: #00796b;
-        }
-
-        /* History Card */
-        .history-container-card {
-            margin-top: 30px;
-        }
-
-        .history-container-card h3 {
-            font-size: 1.1rem;
-            color: #555;
-            margin-bottom: 15px;
-        }
-
-        .usage-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-
-        .usage-table th,
-        .usage-table td {
-            padding: 12px 15px;
-            text-align: center;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.95rem;
-        }
-
-        .usage-table th {
-            background: #fafafa;
-            font-weight: 600;
-            color: #666;
-        }
-
-        .usage-table td {
-            color: #333;
-        }
-
-        .empty-msg {
-            text-align: center;
-            padding: 30px;
-            color: #999;
-        }
+    .empty-msg {
+        text-align: center;
+        padding: 30px;
+        color: #999;
     }
 </style>
