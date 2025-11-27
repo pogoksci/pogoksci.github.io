@@ -2380,8 +2380,8 @@ input[type="date"] {
   position: sticky;
   /* 스크롤 시 상단 고정 */
   top: 0;
-  z-index: 10;
-  /* 목록보다 위에 표시 */
+  z-index: 100;
+  /* 목록보다 위에 표시 (확실하게) */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   /* 고정 시 입체감 추가 */
 }
@@ -2427,6 +2427,9 @@ input[type="date"] {
   background: #fff;
 
   cursor: pointer;
+
+  position: relative;
+  z-index: 1;
 
 }
 
