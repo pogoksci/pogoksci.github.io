@@ -249,10 +249,10 @@
       <div class="inventory-card" ${onClickAttr} style="padding: 10px 12px;">
         <div class="inventory-card__body">
           <div class="inventory-card__left">
-            <div class="inventory-card__line1">
-              <span class="inventory-card__no">No.${item.id}</span>
+            <div class="inventory-card__line1" style="display: flex !important; flex-direction: row !important; align-items: center !important;">
+              <span class="inventory-card__no" style="margin-right: 8px !important;">No.${item.id}</span>
+              <span class="name-kor" style="font-weight: bold !important; font-size: 1.1em !important; margin: 0 !important;">${name}</span>
             </div>
-            <div class="inventory-card__line2 name-kor">${name}</div>
             <div class="inventory-card__line4 inventory-card__location" style="margin-top: 4px; color: #666;">${locationText}</div>
           </div>
           <div class="inventory-card__meta" style="text-align: right; min-width: 80px;">

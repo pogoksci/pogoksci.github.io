@@ -28,7 +28,7 @@
     "./js/ui/inventory-detail.js",
     "./js/ui/navbar.js",
     "./js/ui/data-sync.js",
-    "./js/ui/usage-register.js?v=2", // ✅ 캐시 갱신을 위해 버전 추가
+    "./js/ui/usage-register.js?v=4", // ✅ 캐시 갱신을 위해 버전 추가
   ];
   const componentModules = [
     "./js/components/sort-dropdown.js", // 🔹 여기 추가됨
