@@ -147,7 +147,12 @@
           })
           .join("");
 
-        return header + cards;
+        return `
+          <div class="inventory-section-group">
+            ${header}
+            ${cards}
+          </div>
+        `;
       })
       .join("");
 

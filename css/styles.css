@@ -2366,27 +2366,23 @@ input[type="date"] {
 /* 占싸븝옙占썰리 카占쏙옙 占쏙옙占싱아울옙 */
 
 .inventory-section-header {
-
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
-
   padding: 8px 16px;
-
   margin: 12px 8px 0;
-
   font-weight: 600;
-
   color: #333;
-
   background: #f5f8ff;
-
   border-left: 4px solid #00a0b2;
-
   border-radius: 4px;
-
+  position: sticky;
+  /* 스크롤 시 상단 고정 */
+  top: 0;
+  z-index: 10;
+  /* 목록보다 위에 표시 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  /* 고정 시 입체감 추가 */
 }
 
 
@@ -4309,20 +4305,21 @@ input[type="date"] {
 #inventory-list-page {
   display: flex;
   flex-direction: column;
-  /* height: 100%; 제거 - body 스크롤 사용 */
-  /* overflow: hidden; 제거 */
+  height: calc(100vh - 100px);
+  /* 20px top + 80px bottom padding 제외 */
+  overflow: hidden;
+  /* 내부 스크롤 사용 */
   box-sizing: border-box;
 }
 
 .inventory-sticky-top {
-  position: sticky;
-  top: 0;
-  background-color: #fff;
-  z-index: 90;
-  margin: -20px -20px 0 -20px;
-  /* 부모 패딩 상쇄 */
-  padding: 20px 20px 24px 20px;
-  /* 상단 패딩 복구 + 하단 여백 24px */
+  /* Sticky 제거 -> 고정 레이아웃 */
+  position: relative;
+  margin: 0;
+  padding: 0 0 24px 0;
+  /* 검색창 하단 여백 24px */
+  background-color: transparent;
+  z-index: auto;
 }
 
 .list-header {
@@ -4342,10 +4339,10 @@ input[type="date"] {
 
 #inventory-list-container {
   flex-grow: 1;
-  padding-bottom: 50px;
-  /* 하단 FAB 버튼과의 간격 조정 (부모 패딩 80px + 50px = 130px) */
-  border-top: 1px solid #eee;
-  /* 리스트 상단 구분선 추가 */
+  overflow-y: auto;
+  /* 리스트 내부 스크롤 */
+  padding-bottom: 55px;
+  /* FAB 버튼과의 간격 확보 */
 }
 
 
