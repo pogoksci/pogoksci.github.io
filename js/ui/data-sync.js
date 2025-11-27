@@ -10,8 +10,8 @@
             "toxic_standard": ["유독물질 기준", "유독물질", "toxic_standard"],
             "permitted_standard": ["허가물질 기준", "허가물질", "permitted_standard"],
             "restricted_standard": ["제한물질 기준", "제한물질", "restricted_standard"],
-            "prohibited_standard": ["금지물질 기준", "금지물질", "prohibited_standard"],
-            "accident_precaution_standard": ["사고대비물질 기준", "사고대비물질", "accident_precaution_standard"]
+            "prohibited_standard": ["금지물질 기준", "금지물질", "prohibited_standard"]
+            // "accident_precaution_standard": ["사고대비물질 기준", "사고대비물질", "accident_precaution_standard"] // DB 컬럼 없음
         },
 
         init: function () {
@@ -50,8 +50,9 @@
 
         // 헬퍼: 앞뒤 공백 제거 및 맨 앞의 따옴표(') 제거
         clean: function (val) {
-            if (!val) return "";
-            let s = val.trim();
+            if (!val) return null;
+            let s = String(val).trim();
+            if (s === "") return null;
             if (s.startsWith("'")) {
                 s = s.substring(1);
             }
@@ -92,7 +93,7 @@
                         // 첫 번째 행(헤더) 제거
                         const rows = results.data.slice(1);
                         await this.processData(rows);
-                        
+
                         // HazardList 완료 후 SubstanceRef 동기화 시작
                         await this.syncSubstanceRef();
 
@@ -122,7 +123,7 @@
                 "허가물질": "permitted_standard",
                 "제한물질": "restricted_standard",
                 "금지물질": "prohibited_standard",
-                "사고대비물질": "accident_precaution_standard",
+                // "사고대비물질": "accident_precaution_standard", // DB 컬럼 없음
                 // CSV에 학교 관련 기준이 명시적으로 없다면 추후 로직 추가 필요
                 // 현재 CSV 샘플에는 '특수...', '유독...' 등이 보임
             };
@@ -162,7 +163,7 @@
                         permitted_standard: null,
                         restricted_standard: null,
                         prohibited_standard: null,
-                        accident_precaution_standard: null
+                        // accident_precaution_standard: null
                     });
                 }
 
@@ -256,11 +257,11 @@
 
         syncSubstanceRef: async function () {
             this.log("🚀 SubstanceRef 동기화 시작...");
-            
+
             try {
                 this.log("📂 data/casimport-correct.csv 파일 읽는 중...");
                 const response = await fetch("data/casimport-correct.csv");
-                
+
                 if (!response.ok) {
                     throw new Error(`SubstanceRef 파일을 찾을 수 없습니다. (Status: ${response.status})`);
                 }
