@@ -35,18 +35,45 @@
 <!-- Start 메뉴 팝업 -->
 <div id="start-menu" class="start-menu-popup">
   <div class="menu-list">
-    <a href="#" id="menu-location" class="menu-item">
-      <span class="material-symbols-outlined">warehouse</span> 시약장 설정
+    <!-- 1. 약품 -->
+    <a href="#" id="menu-inventory-btn" class="menu-item">
+      <span class="material-symbols-outlined">science</span> 약품
     </a>
-    <a href="#" id="menu-equipment" class="menu-item">
-      <span class="material-symbols-outlined">biotech</span> 교구·물품 설정
+
+    <!-- 2. 교구·물품·설비 -->
+    <a href="#" id="menu-equipment-btn" class="menu-item">
+      <span class="material-symbols-outlined">biotech</span> 교구·물품·설비
     </a>
-    <a href="#" id="menu-lablog" class="menu-item">
-      <span class="material-symbols-outlined">calendar_month</span> 과학실 기록·예약
+
+    <!-- 3. 과학실 사용기록·예약 -->
+    <a href="#" id="menu-lablog-btn" class="menu-item">
+      <span class="material-symbols-outlined">calendar_month</span> 과학실 사용기록·예약
     </a>
-    <a href="#" id="menu-datasync" class="menu-item">
-      <span class="material-symbols-outlined">sync</span> 데이터 동기화
-    </a>
+
+    <!-- 4. 설정 (서브메뉴) -->
+    <div class="menu-group">
+      <a href="#" id="menu-settings-toggle" class="menu-item">
+        <span class="material-symbols-outlined">settings</span> 설정
+        <span class="material-symbols-outlined toggle-icon"
+          style="margin-left: auto; font-size: 20px;">expand_more</span>
+      </a>
+      <div id="submenu-settings" class="submenu" style="display: none; padding-left: 12px;">
+        <a href="#" id="menu-location" class="menu-item submenu-item">
+          <span class="material-symbols-outlined">warehouse</span> 시약장 설정
+        </a>
+        <a href="#" id="menu-equipment-cabinet" class="menu-item submenu-item">
+          <span class="material-symbols-outlined">shelves</span> 교구·물품장 설정
+        </a>
+        <a href="#" id="menu-datasync" class="menu-item submenu-item">
+          <span class="material-symbols-outlined">sync</span> 데이터 동기화
+        </a>
+        <a href="#" id="menu-dbreset" class="menu-item submenu-item">
+          <span class="material-symbols-outlined">restart_alt</span> DB초기화
+        </a>
+      </div>
+    </div>
+
+    <!-- 5. 홈 -->
     <a href="#" id="menu-home" class="menu-item menu-item-home">
       <span class="material-symbols-outlined">home</span> 홈
     </a>

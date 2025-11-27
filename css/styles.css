@@ -1296,6 +1296,32 @@ button:disabled {
 
 }
 
+/* Submenu Styles */
+.submenu {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.submenu-item {
+  font-size: 14px;
+  padding: 10px 12px 10px 24px;
+  /* Indent submenu items */
+  color: #555;
+}
+
+.submenu-item .material-symbols-outlined {
+  font-size: 20px;
+  /* Slightly smaller icons for submenu */
+}
+
+.toggle-icon {
+  transition: transform 0.3s ease;
+}
+
+.menu-item.expanded .toggle-icon {
+  transform: rotate(180deg);
+}
+
 
 
 .user-id {

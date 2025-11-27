@@ -48,6 +48,19 @@
 
   // ---- 단일 바인딩: 정확한 ID들만 연결 ----
   function setupExactIdLinks() {
+    // 0) 설정 토글 (Settings Toggle)
+    const settingsToggle = document.getElementById("menu-settings-toggle");
+    const submenuSettings = document.getElementById("submenu-settings");
+    if (settingsToggle && submenuSettings) {
+      settingsToggle.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation(); // 메뉴 닫힘 방지
+        const isHidden = submenuSettings.style.display === "none";
+        submenuSettings.style.display = isHidden ? "block" : "none";
+        settingsToggle.classList.toggle("expanded", isHidden);
+      });
+    }
+
     // 1) Start 메뉴 안의 버튼들
     const menuInventory = document.getElementById("menu-inventory-btn");
     if (menuInventory) {
@@ -60,14 +73,66 @@
       });
     }
 
-    const menuCabinet = document.getElementById("menu-cabinet-btn");
-    if (menuCabinet) {
-      menuCabinet.addEventListener("click", async (e) => {
+    const menuEquipment = document.getElementById("menu-equipment-btn");
+    if (menuEquipment) {
+      menuEquipment.addEventListener("click", async (e) => {
+        e.preventDefault();
+        // TODO: 교구/물품 페이지 연결
+        alert("교구·물품·설비 페이지는 준비 중입니다.");
+        closeStartMenu();
+      });
+    }
+
+    const menuLablog = document.getElementById("menu-lablog-btn");
+    if (menuLablog) {
+      menuLablog.addEventListener("click", async (e) => {
+        e.preventDefault();
+        // TODO: 과학실 기록 페이지 연결
+        alert("과학실 사용기록·예약 페이지는 준비 중입니다.");
+        closeStartMenu();
+      });
+    }
+
+    // --- 설정 서브메뉴 항목들 ---
+    const menuLocation = document.getElementById("menu-location");
+    if (menuLocation) {
+      menuLocation.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
         await loadPage("pages/location-list.html", () => App.Cabinet?.loadList?.());
         closeStartMenu();
-        setActive("menu-cabinet-btn");
+        setActive("menu-location");
+      });
+    }
+
+    const menuEquipCabinet = document.getElementById("menu-equipment-cabinet");
+    if (menuEquipCabinet) {
+      menuEquipCabinet.addEventListener("click", async (e) => {
+        e.preventDefault();
+        alert("교구·물품장 설정은 준비 중입니다.");
+        closeStartMenu();
+      });
+    }
+
+    const menuDataSync = document.getElementById("menu-datasync");
+    if (menuDataSync) {
+      menuDataSync.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        await App.Router.go("dataSync");
+        closeStartMenu();
+        setActive("menu-datasync");
+      });
+    }
+
+    const menuDbReset = document.getElementById("menu-dbreset");
+    if (menuDbReset) {
+      menuDbReset.addEventListener("click", async (e) => {
+        e.preventDefault();
+        if (confirm("정말로 DB를 초기화하시겠습니까? (주의: 되돌릴 수 없습니다)")) {
+          alert("DB 초기화 기능은 준비 중입니다.");
+        }
+        closeStartMenu();
       });
     }
 
@@ -76,9 +141,9 @@
       menuHome.addEventListener("click", (e) => {
         e.preventDefault();
         document.body.classList.add("home-active"); // 로고 화면
-        document.body.classList.remove("loaded"); // 필요하면 유지, 아니면 빼도 됨
+        document.body.classList.remove("loaded");
 
-        // 2️⃣ form-container 비우기 (이전에 열려있던 페이지 흔적 제거)
+        // 2️⃣ form-container 비우기
         const container = document.getElementById("form-container");
         if (container) container.innerHTML = "";
 
@@ -88,13 +153,17 @@
 
         // 🔥 school-name, app-title, version 갱신
         const { APPNAME, VERSION, SCHOOL } = globalThis.APP_CONFIG || {};
-        document.getElementById("app-title").textContent = APPNAME;
-        document.getElementById("app-version").textContent = VERSION;
-        document.getElementById("school-name").textContent = SCHOOL;
+        const titleEl = document.getElementById("app-title");
+        const verEl = document.getElementById("app-version");
+        const schoolEl = document.getElementById("school-name");
+
+        if (titleEl) titleEl.textContent = APPNAME;
+        if (verEl) verEl.textContent = VERSION;
+        if (schoolEl) schoolEl.textContent = SCHOOL;
       });
     }
 
-    // 2) 상단 Navbar 영역(정확 ID)
+    // 2) 상단 Navbar 영역(정확 ID) - 기존 유지
     const navInventory = document.getElementById("nav-inventory");
     if (navInventory) {
       navInventory.addEventListener("click", async (e) => {
@@ -136,51 +205,6 @@
         await App.Inventory?.showListPage?.(); // 임시 동일 페이지
         closeStartMenu();
         setActive("nav-kit");
-      });
-    }
-
-    // 3) Start 메뉴의 기타 항목(정확 ID)
-    const menuLocation = document.getElementById("menu-location");
-    if (menuLocation) {
-      menuLocation.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await loadPage("pages/location-list.html", () => App.Cabinet?.loadList?.());
-        closeStartMenu();
-        setActive("menu-location");
-      });
-    }
-
-    const menuEquipment = document.getElementById("menu-equipment");
-    if (menuEquipment) {
-      menuEquipment.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await App.Inventory?.showListPage?.(); // 임시
-        closeStartMenu();
-        setActive("menu-equipment");
-      });
-    }
-
-    const menuLablog = document.getElementById("menu-lablog");
-    if (menuLablog) {
-      menuLablog.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await App.Inventory?.showListPage?.(); // 임시
-        closeStartMenu();
-        setActive("menu-lablog");
-      });
-    }
-
-    const menuDataSync = document.getElementById("menu-datasync");
-    if (menuDataSync) {
-      menuDataSync.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await App.Router.go("dataSync");
-        closeStartMenu();
-        setActive("menu-datasync");
       });
     }
   }
