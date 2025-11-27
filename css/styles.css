@@ -1319,37 +1319,39 @@ FAB
 
 
 .fab {
-
   position: fixed;
-
-  bottom: 70px;
-
+  bottom: 72px;
+  /* Navbar 60px + 12px gap */
   left: 50%;
-
   transform: translateX(-50%);
-
-  width: 100%;
-
-  max-width: 600px;
-
-  padding: 12px 20px;
-
-  border-radius: 8px;
-
-  font-size: 16px;
-
-  font-weight: bold;
-
-  text-align: center;
-
   background-color: #00a0b2;
-
   color: white;
-
   border: none;
+  border-radius: 28px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 160, 178, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 1001;
+  /* Navbar(1000)보다 위 */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: auto;
+  max-width: 600px;
+}
 
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+.fab:hover {
+  background-color: #008fa0;
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 160, 178, 0.4);
+}
 
+.fab .material-symbols-outlined {
+  font-size: 20px;
 }
 
 
@@ -4307,71 +4309,45 @@ input[type="date"] {
 #inventory-list-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  /* 전체 페이지 스크롤 방지 */
+  /* height: 100%; 제거 - body 스크롤 사용 */
+  /* overflow: hidden; 제거 */
   box-sizing: border-box;
-  /* 추가 */
+}
+
+.inventory-sticky-top {
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 90;
+  padding-bottom: 10px;
+  /* 헤더 하단 여백 */
 }
 
 .list-header {
   flex-shrink: 0;
-  /* 헤더 크기 고정 */
+}
+
+.list-header h2 {
+  margin: 0;
+  margin-bottom: 12px;
+  /* 제목과 검색창 사이 간격 12px */
 }
 
 .header-actions {
   flex-shrink: 0;
-  /* 검색창 영역 크기 고정 */
-  padding-bottom: 10px;
-  /* 리스트와 간격 */
+  /* padding-bottom: 10px; 제거 - sticky 컨테이너에서 처리 */
   box-sizing: border-box;
-  /* 추가 */
 }
 
 #inventory-list-container {
   flex-grow: 1;
-  overflow-y: auto;
-  /* 리스트만 스크롤 */
+  /* overflow-y: auto; 제거 - body 스크롤 사용 */
   padding-bottom: 60px;
-  /* 하단 FAB 버튼에 가려지지 않도록 여백 추가 (80px -> 60px) */
+  /* 하단 FAB 버튼에 가려지지 않도록 여백 추가 */
   border-top: 1px solid #eee;
   /* 리스트 상단 구분선 추가 */
 }
 
-/* FAB 버튼 스타일 (누락되었거나 재정의) */
-.fab {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #00a0b2;
-  color: white;
-  border: none;
-  border-radius: 28px;
-  padding: 12px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0, 160, 178, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  z-index: 100;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: auto;
-  /* 너비 자동 */
-}
-
-.fab:hover {
-  background-color: #008fa0;
-  transform: translateX(-50%) translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 160, 178, 0.4);
-}
-
-.fab .material-symbols-outlined {
-  font-size: 20px;
-}
 
 /* 검색창 스타일 (인라인 스타일 대체) */
 .search-container {
