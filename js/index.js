@@ -28,6 +28,7 @@
     "./js/ui/inventory-detail.js",
     "./js/ui/navbar.js",
     "./js/ui/data-sync.js",
+    "./js/ui/usage-register.js", // ✅ 사용량 등록 모듈 추가
   ];
   const componentModules = [
     "./js/components/sort-dropdown.js", // 🔹 여기 추가됨
