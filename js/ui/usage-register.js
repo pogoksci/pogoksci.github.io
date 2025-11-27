@@ -176,9 +176,9 @@
             let header = "";
             if (groupTitle) {
                 header = `
-            <div class="inventory-section-header" style="margin-top: 10px; margin-bottom: 5px; padding: 5px 10px; background: #e3f2fd; border-left: 4px solid #00a0b2; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
-              <span class="section-title" style="font-weight: bold; color: #333;">${groupTitle}</span>
-              <span class="section-count" style="background: #b3e5fc; color: #0277bd; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">${items.length}</span>
+            <div class="inventory-section-header">
+              <span class="section-title">${groupTitle}</span>
+              <span class="section-count">${items.length}</span>
             </div>`;
             }
             return `
@@ -243,21 +243,21 @@
         const onClickAttr = isDetail ? "" : `onclick="App.UsageRegister.selectItem(${item.id})"`;
 
         // ✅ 사진 제거 및 2x2 레이아웃 적용
-        // 왼쪽: No + 이름 / 위치
-        // 오른쪽: 농도 / 잔량
+        // 높이 75% 축소 요청 -> padding 10px 12px (기존 14px 16px 대비 축소)
+        // 폰트 사이즈: .name-kor 클래스 사용 (기본 스타일 따름)
         return `
-      <div class="inventory-card" ${onClickAttr} style="padding: 12px;">
+      <div class="inventory-card" ${onClickAttr} style="padding: 10px 12px;">
         <div class="inventory-card__body">
           <div class="inventory-card__left">
             <div class="inventory-card__line1">
               <span class="inventory-card__no">No.${item.id}</span>
-              <span class="name-kor" style="font-size: 1.1rem; font-weight: bold; margin-left: 6px; color: #333;">${name}</span>
             </div>
-            <div class="inventory-card__line4 inventory-card__location" style="margin-top: 8px; color: #666;">${locationText}</div>
+            <div class="inventory-card__line2 name-kor">${name}</div>
+            <div class="inventory-card__line4 inventory-card__location" style="margin-top: 4px; color: #666;">${locationText}</div>
           </div>
           <div class="inventory-card__meta" style="text-align: right; min-width: 80px;">
             <div class="meta-line3" style="font-weight: bold; color: #555;">${concStr}</div>
-            <div class="meta-line4" style="margin-top: 8px; color: #00a0b2; font-weight: bold;">${item.current_amount}${item.unit}</div>
+            <div class="meta-line4" style="margin-top: 4px; color: #00a0b2; font-weight: bold;">${item.current_amount}${item.unit}</div>
           </div>
         </div>
       </div>
