@@ -2370,8 +2370,8 @@ input[type="date"] {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  margin: 0 8px 12px 8px;
-  /* 상단 0, 좌우 8px, 하단 12px (목록과 간격) */
+  margin: 0 8px;
+  /* 상단 마진 제거 (그룹에서 처리) */
   font-weight: 600;
   color: #333;
   background: #f5f8ff;
@@ -2388,10 +2388,55 @@ input[type="date"] {
 
 .inventory-section-group {
   margin-top: 12px;
+  scroll-snap-align: start;
+  /* 그룹 시작 부분에 스냅 */
+  scroll-margin-top: 50px;
+  /* 스냅 시 헤더 높이만큼 여백 확보 */
 }
 
 .inventory-section-group:first-child {
   margin-top: 0;
+}
+
+/* ... (중략) ... */
+
+#inventory-list-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  /* 리스트 내부 스크롤 */
+  padding-bottom: 55px;
+  /* FAB 버튼과의 간격 확보 */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+
+  /* ✅ Scroll Snap 적용 */
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 50px;
+  /* Sticky Header 높이(약 40~45px) + 여유공간 */
+}
+
+#inventory-list-container::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+/* ... (중략) ... */
+
+.inventory-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e3e3e3;
+  background: #fff;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+
+  scroll-snap-align: start;
+  /* 카드 시작 부분에 스냅 */
 }
 
 
