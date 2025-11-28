@@ -85,7 +85,7 @@
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         photo_url_320, photo_url_160,
         Substance ( 
-            substance_name, cas_rn, chem_name_kor, chem_name_kor_mod, molecular_formula,
+            substance_name, cas_rn, chem_name_kor, chem_name_kor_mod, molecular_formula, molecular_formula_mod, molecular_mass,
             Properties ( name, property )
         ),
         Cabinet ( cabinet_name, Area ( area_name ) )
@@ -260,7 +260,7 @@
                      </div>`;
 
             const engName = item.Substance?.substance_name || "-";
-            const formula = item.Substance?.molecular_formula || "-";
+            const formula = item.Substance?.molecular_formula_mod || item.Substance?.molecular_formula || "-";
             const casRn = item.Substance?.cas_rn || "";
             const molMass = item.Substance?.molecular_mass || "-";
 
