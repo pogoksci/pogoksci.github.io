@@ -4534,9 +4534,15 @@ input[type="date"] {
 /* Inventory Detail Page Padding */
 .inventory-detail-page {
   padding: 16px;
-  padding-bottom: 120px;
+  padding-bottom: 90px;
   /* Ensure buttons clear navbar */
   background-color: #fff;
   min-height: 100%;
   box-sizing: border-box;
+}
+
+/* Inventory Form Padding */
+#inventory-form {
+  padding-bottom: 90px;
+  /* Ensure save button clears navbar */
 }

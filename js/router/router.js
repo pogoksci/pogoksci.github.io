@@ -89,7 +89,9 @@
 
       case "addInventory":
         if (App?.Forms?.initInventoryForm) {
-          await App.Forms.initInventoryForm("create");
+          const mode = params.mode || "create";
+          const detail = params.detail || null;
+          await App.Forms.initInventoryForm(mode, detail);
         }
         break;
 

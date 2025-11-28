@@ -620,10 +620,8 @@
       });
 
       document.getElementById("edit-inventory-btn")?.addEventListener("click", async () => {
-        if (getApp().Router?.go && getApp().Forms?.initInventoryForm) {
-          await getApp().Router.go("addInventory", "form-container", () =>
-            getApp().Forms.initInventoryForm("edit", data),
-          );
+        if (getApp().Router?.go) {
+          await getApp().Router.go("addInventory", { mode: "edit", detail: data });
         } else {
           alert("편집 모드로 전환 (구현 필요)");
         }
