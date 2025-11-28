@@ -4508,6 +4508,8 @@ input[type="date"] {
   overflow-y: auto;
   padding-bottom: 88px;
   /* FAB 공간 확보 */
+  min-height: 0;
+  /* Flexbox scrolling fix */
 }
 
 /* Custom Scrollbar for .scrollable-list-container */
