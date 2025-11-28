@@ -707,9 +707,21 @@
           }
 
           if (mode === "edit" && detail?.id) {
+            // ✅ 사용량 조회 및 current_amount 재계산
+            let totalUsage = 0;
+            const { data: usageLogs, error: usageError } = await supabase
+              .from("UsageLog")
+              .select("amount")
+              .eq("inventory_id", detail.id);
+
+            if (!usageError && usageLogs) {
+              totalUsage = usageLogs.reduce((sum, log) => sum + (Number(log.amount) || 0), 0);
+            }
+            const newCurrentAmount = volume - totalUsage;
+
             const updatePayload = {
               initial_amount: volume,
-              current_amount: volume,
+              current_amount: newCurrentAmount, // ✅ 재계산된 현재 수량
               unit,
               state: state.state || null,
               classification: state.classification || null,
