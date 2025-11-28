@@ -4386,8 +4386,8 @@ input[type="date"] {
 #inventory-list-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 100px);
-  /* 20px top + 80px bottom padding 제외 */
+  height: calc(100vh - 20px);
+  /* 20px top padding 제외, 하단은 꽉 채움 */
   overflow: hidden;
   /* 내부 스크롤 사용 */
   box-sizing: border-box;
