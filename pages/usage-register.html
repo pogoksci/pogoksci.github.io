@@ -137,8 +137,7 @@
                         </div>
                     </div>
                 </div>
-                <p class="usage-note">(※<span class="highlight-red">'사용량'을 모를 경우</span>, 시약병의 질량을 측정하여 '사용 후 시약병 질량'에
-                    입력하세요.)</p>
+                <p class="usage-note">(※'사용량'을 모를 경우, 시약병의 질량을 측정하여 '사용 후 시약병 질량'에 입력하세요.)</p>
                 <button type="submit" class="btn-submit">
                     <span class="material-symbols-outlined">save</span>
                     등록하기
@@ -265,6 +264,9 @@
         border-radius: 8px;
         font-size: 1rem;
         background: #fff;
+        height: 48px;
+        /* Force equal height */
+        box-sizing: border-box;
     }
 
     .amount-input-wrapper {
@@ -359,13 +361,9 @@
     }
 
     .usage-note {
-        font-size: 10px;
+        font-size: 12px;
         color: #666;
         margin-top: -4px;
         margin-bottom: 20px;
-    }
-
-    .highlight-red {
-        color: red;
     }
 </style>
