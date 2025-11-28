@@ -449,9 +449,9 @@
 
         // 인라인 입력창으로 변환
         row.innerHTML = `
-            <td><input type="date" id="edit-date-${logId}" value="${date}" style="width:100px;"></td>
+            <td><input type="date" id="edit-date-${logId}" value="${date}" style="width:130px;"></td>
             <td>
-                <select id="edit-subject-${logId}" style="width:80px;">
+                <select id="edit-subject-${logId}" style="width:120px;">
                     <option value="통합과학">통합과학</option>
                     <option value="과학탐구실험">과학탐구실험</option>
                     <option value="물리학">물리학</option>
@@ -463,7 +463,7 @@
                 </select>
             </td>
             <td>
-                <select id="edit-period-${logId}" style="width:80px;">
+                <select id="edit-period-${logId}" style="width:100px;">
                     <option value="1교시">1교시</option>
                     <option value="2교시">2교시</option>
                     <option value="3교시">3교시</option>
@@ -475,7 +475,7 @@
                     <option value="방과후">방과후</option>
                 </select>
             </td>
-            <td><input type="number" id="edit-amount-${logId}" value="${amount}" step="0.01" style="width:60px;"></td>
+            <td><input type="number" id="edit-amount-${logId}" value="${amount}" step="0.01" style="width:80px;"></td>
             <td>
                 <button class="btn-mini btn-save" onclick="App.UsageRegister.saveLog(${logId}, ${amount})">저장</button>
                 <button class="btn-mini btn-cancel" onclick="App.UsageRegister.cancelEdit(${selectedItem.id})">취소</button>

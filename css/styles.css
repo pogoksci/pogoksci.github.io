@@ -4530,3 +4530,13 @@ input[type="date"] {
 .btn-mini:hover {
   opacity: 0.8;
 }
+
+/* Inventory Detail Page Padding */
+.inventory-detail-page {
+  padding: 16px;
+  padding-bottom: 120px;
+  /* Ensure buttons clear navbar */
+  background-color: #fff;
+  min-height: 100%;
+  box-sizing: border-box;
+}
