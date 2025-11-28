@@ -4363,7 +4363,8 @@ input[type="date"] {
 /* =================================================================
    약품 관리 화면 레이아웃 (Sticky Header & Scrollable List)
 ================================================================= */
-.inventory-page-container {
+.inventory-page-container,
+.usage-page-container {
   max-width: 1200px;
   margin: 0 auto;
 }
