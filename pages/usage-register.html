@@ -241,7 +241,7 @@
     .form-row {
         display: flex;
         gap: 15px;
-        margin-bottom: 12px;
+        margin-bottom: 12px !important;
     }
 
     .form-group {
@@ -267,6 +267,8 @@
         height: 48px;
         /* Force equal height */
         box-sizing: border-box;
+        margin: 0;
+        /* Remove default margin */
     }
 
     .amount-input-wrapper {
@@ -363,7 +365,8 @@
     .usage-note {
         font-size: 12px;
         color: #666;
-        margin-top: 0;
+        margin-top: 0 !important;
         margin-bottom: 20px;
+        line-height: 1.4;
     }
 </style>
