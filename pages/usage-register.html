@@ -137,7 +137,8 @@
                         </div>
                     </div>
                 </div>
-                <p>(※'사용량'을 모를 경우, 시약병의 질량을 측정하여 '사용 후 시약병 질량'에 입력하세요.)</p>
+                <p class="usage-note">(※<span class="highlight-red">'사용량'을 모를 경우</span>, 시약병의 질량을 측정하여 '사용 후 시약병 질량'에
+                    입력하세요.)</p>
                 <button type="submit" class="btn-submit">
                     <span class="material-symbols-outlined">save</span>
                     등록하기
@@ -241,7 +242,7 @@
     .form-row {
         display: flex;
         gap: 15px;
-        margin-bottom: 20px;
+        margin-bottom: 12px;
     }
 
     .form-group {
@@ -355,5 +356,16 @@
         height: 100%;
         font-size: 14px;
         padding: 0 8px;
+    }
+
+    .usage-note {
+        font-size: 10px;
+        color: #666;
+        margin-top: -4px;
+        margin-bottom: 20px;
+    }
+
+    .highlight-red {
+        color: red;
     }
 </style>
