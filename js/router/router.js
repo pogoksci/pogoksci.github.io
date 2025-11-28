@@ -39,6 +39,11 @@
       currentState = state;
     }
 
+    // ✅ 브라우저 자동 스크롤 복원 방지
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
     // ✅ HTML include
     const targetId = "form-container";
     await App.includeHTML(file, targetId);
