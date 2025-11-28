@@ -4422,8 +4422,8 @@ input[type="date"] {
   flex-grow: 1;
   overflow-y: auto;
   /* 리스트 내부 스크롤 */
-  padding-bottom: 0px;
-  /* FAB 버튼과의 간격 확보 -> 제거 */
+  padding-bottom: 88px;
+  /* FAB 버튼 높이(56px) + 여백(20px) + 추가 여백(12px) */
   -ms-overflow-style: none;
   /* IE and Edge */
   scrollbar-width: none;
