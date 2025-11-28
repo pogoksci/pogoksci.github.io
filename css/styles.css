@@ -4383,14 +4383,9 @@ input[type="date"] {
 /* =================================================================
    약품 관리 화면 레이아웃 (Sticky Header & Scrollable List)
 ================================================================= */
-#inventory-list-page {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 20px);
-  /* 20px top padding 제외, 하단은 꽉 채움 */
-  overflow: hidden;
-  /* 내부 스크롤 사용 */
-  box-sizing: border-box;
+.inventory-page-container {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .inventory-sticky-top {
