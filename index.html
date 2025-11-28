@@ -69,17 +69,10 @@
     }
   </style>
 
-  <!-- 화면 폭에 따라 하나의 CSS만 로드 -->
-  <script>
-    (function () {
-      var isMobilePortrait = window.matchMedia('(max-width: 640px)').matches;
-      var cssHref = isMobilePortrait ? 'css/styles_mobile.css?v=1' : 'css/styles.css?v=3';
-      var link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = cssHref;
-      document.head.appendChild(link);
-    })();
-  </script>
+  <!-- CSS Files -->
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles_tablet.css" media="(min-width: 601px) and (max-width: 1024px)">
+  <link rel="stylesheet" href="css/styles_mobile.css" media="(max-width: 600px)">
 
   <script>
     // GitHub Pages: (루트) vs (서브루트 /scimanager/) 모두 대응

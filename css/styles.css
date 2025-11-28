@@ -74,13 +74,13 @@ h3 {
 
 #form-container {
 
-  max-width: 600px;
+  max-width: 1200px;
 
   margin: 0 auto;
 
   padding: 20px 20px 80px 20px;
 
-  /* ??????醫??щ갚 */
+  /* 좌우 여백 */
 
   box-sizing: border-box;
 
