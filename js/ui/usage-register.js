@@ -81,9 +81,13 @@
             .select(`
         id, current_amount, unit, status, classification,
         concentration_value, concentration_unit,
+        bottle_mass,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         photo_url_320, photo_url_160,
-        Substance ( substance_name, cas_rn, chem_name_kor, chem_name_kor_mod, molecular_formula ),
+        Substance ( 
+            substance_name, cas_rn, chem_name_kor, chem_name_kor_mod, molecular_formula,
+            Properties ( name, property )
+        ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
             .neq("status", "전량소진") // 필터링
@@ -392,14 +396,114 @@
         const date = document.getElementById("usage-date").value;
         const subject = document.getElementById("usage-subject").value;
         const period = document.getElementById("usage-period").value;
-        const amount = parseFloat(document.getElementById("usage-amount").value);
 
-        if (isNaN(amount) || amount <= 0) {
-            alert("올바른 사용량을 입력하세요.");
+        const usageInput = document.getElementById("usage-amount");
+        const massInput = document.getElementById("usage-remaining-mass");
+
+        const usageVal = usageInput.value ? parseFloat(usageInput.value) : null;
+        const massVal = massInput.value ? parseFloat(massInput.value) : null;
+
+        // 1. 입력 유효성 검사 (둘 중 하나만 입력)
+        if (usageVal !== null && massVal !== null) {
+            alert("사용량과 사용 후 시약병 질량 중 하나만 입력해주세요.");
             return;
         }
 
-        if (!confirm(`${amount}${selectedItem.unit} 사용을 등록하시겠습니까?`)) return;
+        if (usageVal === null && massVal === null) {
+            alert("사용량 또는 사용 후 시약병 질량을 입력해주세요.");
+            return;
+        }
+
+        let calculatedUsage = 0;
+
+        // 2. 사용량 계산 로직
+        if (usageVal !== null) {
+            // Case A: 사용량을 직접 입력한 경우
+            if (usageVal <= 0) {
+                alert("올바른 사용량을 입력하세요.");
+                return;
+            }
+            calculatedUsage = usageVal;
+
+        } else if (massVal !== null) {
+            // Case B: 사용 후 시약병 질량을 입력한 경우
+            if (massVal < 0) {
+                alert("올바른 질량을 입력하세요.");
+                return;
+            }
+
+            const bottleMass = selectedItem.bottle_mass;
+            if (bottleMass == null) { // null or undefined
+                alert("이 약품은 공병 질량 정보가 없어 계산할 수 없습니다.\n사용량을 직접 입력해주세요.");
+                return;
+            }
+
+            const currentAmount = selectedItem.current_amount;
+            const unit = selectedItem.unit;
+
+            // 시약병에 남은 내용물의 질량
+            const remainingContentMass = massVal - bottleMass;
+            if (remainingContentMass < 0) {
+                alert(`입력한 질량(${massVal}g)이 공병 질량(${bottleMass}g)보다 작습니다.`);
+                return;
+            }
+
+            if (unit === 'g' || unit === 'kg' || unit === 'mg') {
+                // 질량 단위인 경우: 단순 차이 계산
+                // Usage = (Current Amount + Bottle Mass) - Input Mass
+                // 또는 Usage = Current Amount - Remaining Content Mass
+                // (단위가 g라고 가정. kg 등은 변환 필요하지만, 일단 g로 통일 가정)
+                calculatedUsage = currentAmount - remainingContentMass;
+
+            } else if (unit === 'mL' || unit === 'L') {
+                // 부피 단위인 경우: 밀도 필요
+                const props = selectedItem.Substance?.Properties || [];
+                const densityProp = props.find(p => p.name === "Density");
+
+                if (!densityProp || !densityProp.property) {
+                    alert("이 약품은 밀도 정보가 없어 부피를 계산할 수 없습니다.\n사용량을 직접 입력해주세요.");
+                    return;
+                }
+
+                // 밀도 값 파싱 (예: "1.84 g/cm3 @ 20 °C" -> 1.84)
+                let density = parseFloat(densityProp.property);
+                if (isNaN(density)) {
+                    alert(`밀도 정보를 해석할 수 없습니다: ${densityProp.property}`);
+                    return;
+                }
+
+                // 농도 보정 (퍼센트 농도인 경우)
+                // 식: 밀도 = (원액밀도 * 농도%) + (물밀도1 * (1-농도%))
+                if (selectedItem.concentration_unit === '%') {
+                    const conc = parseFloat(selectedItem.concentration_value);
+                    if (!isNaN(conc)) {
+                        const ratio = conc / 100;
+                        density = (density * ratio) + (1.0 * (1 - ratio));
+                    }
+                }
+
+                // 남은 부피 계산 (Volume = Mass / Density)
+                const remainingVolume = remainingContentMass / density;
+
+                // 사용량 = 현재 잔량 - 남은 부피
+                calculatedUsage = currentAmount - remainingVolume;
+
+                // 소수점 처리 (예: 소수점 2자리)
+                calculatedUsage = Math.round(calculatedUsage * 100) / 100;
+            } else {
+                alert(`지원하지 않는 단위입니다: ${unit}`);
+                return;
+            }
+        }
+
+        if (calculatedUsage <= 0) {
+            // 계산된 사용량이 0 이하인 경우 (잔량이 더 늘어난 경우 등)
+            // 사용자가 실수했을 수 있으므로 경고하되, 마이너스 사용량(충전?)은 일단 막음
+            alert(`계산된 사용량이 유효하지 않습니다 (${calculatedUsage}${selectedItem.unit}).\n입력 값을 확인해주세요.`);
+            return;
+        }
+
+        if (!confirm(`${calculatedUsage}${selectedItem.unit} 사용을 등록하시겠습니까?`)) return;
 
         try {
             // 1. UsageLog 삽입
@@ -410,14 +514,14 @@
                     usage_date: date,
                     subject: subject,
                     period: period,
-                    amount: amount,
+                    amount: calculatedUsage,
                     unit: selectedItem.unit
                 });
 
             if (logError) throw logError;
 
             // 2. Inventory 업데이트 (차감)
-            const newAmount = selectedItem.current_amount - amount;
+            const newAmount = selectedItem.current_amount - calculatedUsage;
             const newStatus = newAmount <= 0 ? "전량소진" : selectedItem.status;
             const finalAmount = newAmount < 0 ? 0 : newAmount;
 
@@ -435,6 +539,7 @@
 
             // 폼 초기화
             document.getElementById("usage-amount").value = "";
+            document.getElementById("usage-remaining-mass").value = "";
 
             // 데이터 갱신
             selectedItem.current_amount = finalAmount;

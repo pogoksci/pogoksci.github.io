@@ -1966,17 +1966,11 @@ body.home-active #splash-screen {
 ---------------------------*/
 
 #inventory-list-page {
-
   display: flex;
-
   flex-direction: column;
-
   gap: 10px;
-
-  padding: 8px 16px;
-
+  /* padding moved to .fixed-page-layout */
   box-sizing: border-box;
-
 }
 
 
@@ -4477,6 +4471,8 @@ input[type="date"] {
   /* 20px top padding 제외 */
   overflow: hidden;
   box-sizing: border-box;
+  padding: 8px 16px;
+  /* Common padding for both Inventory and Usage pages */
 }
 
 .scrollable-list-container {
