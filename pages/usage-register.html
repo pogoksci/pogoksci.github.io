@@ -2,7 +2,7 @@
 <div id="usage-register-page" class="usage-page-container">
 
     <!-- 1. List Section -->
-    <div id="usage-list-section">
+    <div id="usage-list-section" class="fixed-page-layout">
         <div class="inventory-sticky-top">
             <div class="list-header">
                 <h2>약품 사용량 등록</h2>
@@ -64,13 +64,14 @@
             </div>
         </div>
 
-        <div id="usage-inventory-list" class="inventory-list">
+        <div id="usage-inventory-list" class="inventory-list scrollable-list-container">
             <div class="loading-spinner">목록을 불러오는 중...</div>
         </div>
     </div>
 
     <!-- 2. Detail Section (Hidden by default) -->
     <div id="usage-detail-section" style="display: none;">
+
 
         <div class="detail-top-bar">
             <button type="button" id="btn-back-to-list" class="btn-text">
@@ -162,9 +163,11 @@
     .usage-page-container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 20px;
+        /* padding removed for fixed layout */
+    }
+
+    #usage-detail-section {
         padding-bottom: 80px;
-        /* Bottom spacing */
     }
 
     /* Detail View */

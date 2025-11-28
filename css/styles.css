@@ -4424,15 +4424,21 @@ input[type="date"] {
   /* 리스트 내부 스크롤 */
   padding-bottom: 88px;
   /* FAB 버튼 높이(56px) + 여백(20px) + 추가 여백(12px) */
-  -ms-overflow-style: none;
-  /* IE and Edge */
-  scrollbar-width: none;
-  /* Firefox */
 }
 
+/* Custom Scrollbar */
 #inventory-list-container::-webkit-scrollbar {
-  display: none;
-  /* Chrome, Safari, Opera */
+  width: 6px;
+  display: block;
+}
+
+#inventory-list-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+#inventory-list-container::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 
@@ -4504,4 +4510,38 @@ input[type="date"] {
   color: #666;
   margin-top: 5px;
   font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* =================================================================
+   Common Layout Classes (Standardized Header & List)
+   ================================================================= */
+.fixed-page-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 20px);
+  /* 20px top padding 제외 */
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.scrollable-list-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 88px;
+  /* FAB 공간 확보 */
+}
+
+/* Custom Scrollbar for .scrollable-list-container */
+.scrollable-list-container::-webkit-scrollbar {
+  width: 6px;
+  display: block;
+}
+
+.scrollable-list-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.scrollable-list-container::-webkit-scrollbar-track {
+  background: transparent;
 }
