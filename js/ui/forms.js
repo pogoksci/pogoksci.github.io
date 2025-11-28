@@ -12,6 +12,35 @@
   // -------------------------------------------------
   // 💾 시약장 저장
   // -------------------------------------------------
+
+  // -------------------------------------------------
+  // 🧮 공병 질량 계산 함수
+  // -------------------------------------------------
+  function calculateBottleMass(volume, type) {
+    if (!volume || !type) return null;
+
+    const v = Number(volume);
+    const t = String(type).trim().replace(/\s+/g, ""); // 공백 제거
+
+    // 1. 유리 (갈색유리, 투명유리)
+    if (t.includes("유리")) {
+      if (v === 25) return 65;
+      if (v === 100) return 120;
+      if (v === 500) return 400;
+      if (v === 1000) return 510;
+    }
+
+    // 2. 플라스틱
+    if (t.includes("플라스틱")) {
+      if (v === 500) {
+        if (t.includes("반투명")) return 40;
+        if (t.includes("갈색")) return 80;
+        if (t.includes("흰색")) return 75;
+      }
+    }
+
+    return null; // 매칭되는 조건 없음
+  }
   async function handleSave() {
     try {
       const state = dump();
@@ -301,6 +330,9 @@
       "state_buttons",
       "unit_buttons",
       "concentration_unit_buttons",
+      "unit_buttons",
+      "bottle_type_buttons", // ✅ 추가
+      "concentration_unit_buttons",
       "manufacturer_buttons",
     ];
 
@@ -350,7 +382,7 @@
         const group = document.getElementById(groupId);
         if (group) group.querySelectorAll(".active").forEach((btn) => btn.classList.remove("active"));
       });
-      ["classification", "state", "unit", "concentration_unit", "manufacturer"].forEach((key) => set(key, null));
+      ["classification", "state", "unit", "bottle_type", "concentration_unit", "manufacturer"].forEach((key) => set(key, null));
       const otherGroup = document.getElementById("other_manufacturer_group");
       if (otherGroup) otherGroup.style.display = "none";
       const otherInput = document.getElementById("manufacturer_other");
@@ -365,6 +397,12 @@
       classification_buttons: (d) => d?.classification ?? null,
       state_buttons: (d) => d?.state ?? null,
       unit_buttons: (d) => d?.unit ?? null,
+      bottle_type_buttons: (d) => d?.bottle_type ?? null, // ✅ 추가 (DB에 bottle_type 컬럼이 없어도 state 관리를 위해 사용 권장, 현재는 bottle_mass만 저장하지만 UI 복원을 위해 필요하다면 bottle_type도 저장해야 함. 사용자 요청은 bottle_mass만 저장. 하지만 UI 복원을 위해 bottle_type도 어딘가 저장하거나, bottle_mass 역산은 불가능하므로 bottle_type도 저장하는 것이 좋음. 일단 요청대로 bottle_mass만 저장하고, UI 복원은 생략하거나 추후 논의. -> 아, "조합조건은 나중에 수정할 수도 있으니까" 라고 했으니 bottle_type도 저장하는게 맞을듯? 아니면 bottle_mass만 저장하라고 했으니... 일단 UI state는 관리해야 함.)
+      // *수정*: 사용자가 "db에 저장을 할 때에는 버튼 값을 저장하는게 아니고... bottle_mass 컬럼에 저장할거야" 라고 명시함.
+      // 즉, bottle_type 컬럼은 없을 가능성이 높음. 그렇다면 Edit 모드에서 이 버튼을 어떻게 복원하지?
+      // 복원 못함. (bottle_mass만으로는 역산 불가).
+      // 사용자 의도는 "입력 편의"를 위한 도구로 보임. Edit 모드에서 복원 안 되어도 되는지?
+      // 일단 state에는 저장해서 "등록" 시에는 계산되게 함. Edit 시에는 빈 값으로 둠.
       concentration_unit_buttons: (d) => d?.concentration_unit ?? null,
       manufacturer_buttons: (d) => d?.manufacturer ?? null,
     };
@@ -600,6 +638,7 @@
             storage_column: state.storage_column || null,
             concentration_value: concentrationValue ? Number(concentrationValue) : null,
             concentration_unit: concentrationUnit || null,
+            bottle_mass: calculateBottleMass(volume, state.bottle_type), // ✅ 공병 질량 계산 및 저장
           };
 
           // 📤 MSDS PDF 업로드
@@ -683,6 +722,7 @@
               storage_column: state.storage_column || null,
               concentration_value: concentrationValue ? Number(concentrationValue) : null,
               concentration_unit: concentrationUnit || null,
+              bottle_mass: calculateBottleMass(volume, state.bottle_type), // ✅ 공병 질량 계산 및 저장 (수정 시)
               msds_pdf_url: inventoryDetails.msds_pdf_url || null,
               msds_pdf_hash: inventoryDetails.msds_pdf_hash || null, // Hash 추가
             };

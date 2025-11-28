@@ -190,9 +190,22 @@
         }).join("");
     }
 
-    // 아이템 카드 HTML 생성 (사진 제거, 2x2 레이아웃)
+    // 아이템 카드 HTML 생성 (inventory.js와 동일한 4줄 레이아웃 + 이미지)
     function renderItemCard(item, isDetail = false) {
+        const imageSrc = item.photo_url_320 || item.photo_url_160 || "";
+        const imageBlock = imageSrc
+            ? `<div class="inventory-card__image">
+                   <img src="${imageSrc}" alt="Inventory Image" />
+                 </div>`
+            : `<div class="inventory-card__image inventory-card__image--empty">
+                   <span class="inventory-card__placeholder">사진 없음</span>
+                 </div>`;
+
         const name = item.Substance?.chem_name_kor_mod || item.Substance?.chem_name_kor || "이름 없음";
+        const engName = item.Substance?.substance_name || "-";
+        const formula = item.Substance?.molecular_formula || "-";
+        const casRn = item.Substance?.cas_rn || "";
+        const molMass = item.Substance?.molecular_mass || "-";
 
         // 농도 텍스트
         let concStr = "-";
@@ -242,22 +255,28 @@
         // 클릭 이벤트
         const onClickAttr = isDetail ? "" : `onclick="App.UsageRegister.selectItem(${item.id})"`;
 
-        // ✅ 사진 제거 및 2x2 레이아웃 적용
-        // 높이 75% 축소 요청 -> padding 10px 12px (기존 14px 16px 대비 축소)
-        // 폰트 사이즈: .name-kor 클래스 사용 (기본 스타일 따름)
+        // ✅ Inventory List와 동일한 4줄 레이아웃 적용
         return `
-      <div class="inventory-card" ${onClickAttr} style="padding: 10px 12px;">
+      <div class="inventory-card" ${onClickAttr} ${isDetail ? 'style="cursor: default;"' : ''}>
+        ${imageBlock}
         <div class="inventory-card__body">
           <div class="inventory-card__left">
-            <div class="inventory-card__line1" style="display: flex !important; flex-direction: row !important; align-items: center !important;">
-              <span class="inventory-card__no" style="margin-right: 8px !important;">No.${item.id}</span>
-              <span class="name-kor" style="font-weight: bold !important; font-size: 1.1em !important; margin: 0 !important;">${name}</span>
+            <div class="inventory-card__line1">
+              <span class="inventory-card__no">No.${item.id}</span>
+              ${casRn ? `<span class="cas-rn">${casRn}</span>` : ""}
             </div>
-            <div class="inventory-card__line4 inventory-card__location" style="margin-top: 4px; color: #666;">${locationText}</div>
+            <div class="inventory-card__line2 name-kor">${name}</div>
+            <div class="inventory-card__line3 name-eng">${engName}</div>
+            <div class="inventory-card__line4 inventory-card__location">${locationText}</div>
           </div>
-          <div class="inventory-card__meta" style="text-align: right; min-width: 80px;">
-            <div class="meta-line3" style="font-weight: bold; color: #555;">${concStr}</div>
-            <div class="meta-line4" style="margin-top: 4px; color: #00a0b2; font-weight: bold;">${item.current_amount}${item.unit}</div>
+          <div class="inventory-card__meta">
+            <div class="meta-line1">${formula}</div>
+            <div class="meta-line2">
+              <span class="meta-label">화학식량</span>
+              <span class="meta-value">${molMass}</span>
+            </div>
+            <div class="meta-line3">${concStr}</div>
+            <div class="meta-line4">${item.current_amount}${item.unit}</div>
           </div>
         </div>
       </div>

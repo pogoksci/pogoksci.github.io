@@ -4481,8 +4481,8 @@ input[type="date"] {
 .scrollable-list-container {
   flex-grow: 1;
   overflow-y: auto;
-  padding-bottom: 88px;
-  /* FAB 공간 확보 */
+  padding-bottom: 120px;
+  /* FAB 공간 확보 (88px -> 120px) */
   min-height: 0;
   /* Flexbox scrolling fix */
 }
