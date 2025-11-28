@@ -4496,3 +4496,37 @@ input[type="date"] {
 .scrollable-list-container::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* Mini Buttons for Usage History */
+.btn-mini {
+  padding: 4px 8px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 4px;
+}
+
+.btn-edit {
+  background-color: #f0ad4e;
+  color: white;
+}
+
+.btn-delete {
+  background-color: #d9534f;
+  color: white;
+}
+
+.btn-save {
+  background-color: #5cb85c;
+  color: white;
+}
+
+.btn-cancel {
+  background-color: #999;
+  color: white;
+}
+
+.btn-mini:hover {
+  opacity: 0.8;
+}

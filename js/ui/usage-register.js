@@ -354,7 +354,7 @@
         const tbody = document.getElementById("usage-history-body");
         if (!tbody) return;
 
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">로딩 중...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">로딩 중...</td></tr>';
 
         const { data, error } = await supabase
             .from("UsageLog")
@@ -366,23 +366,200 @@
 
         if (error) {
             console.error("❌ 사용 기록 로드 실패:", error);
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">기록을 불러오지 못했습니다.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">기록을 불러오지 못했습니다.</td></tr>';
             return;
         }
 
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">사용 기록이 없습니다.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">사용 기록이 없습니다.</td></tr>';
             return;
         }
 
         tbody.innerHTML = data.map(log => `
-      <tr>
-        <td>${log.usage_date}</td>
-        <td>${log.subject}</td>
-        <td>${log.period}</td>
-        <td>${log.amount} ${log.unit || ""}</td>
+      <tr id="log-row-${log.id}">
+        <td class="col-date">${log.usage_date}</td>
+        <td class="col-subject">${log.subject}</td>
+        <td class="col-period">${log.period}</td>
+        <td class="col-amount">${log.amount} ${log.unit || ""}</td>
+        <td>
+            <button class="btn-mini btn-edit" onclick="App.UsageRegister.editLog(${log.id})">수정</button>
+            <button class="btn-mini btn-delete" onclick="App.UsageRegister.deleteLog(${log.id}, ${log.amount})">삭제</button>
+        </td>
       </tr>
     `).join("");
+    }
+
+    // ------------------------------------------------------------
+    // 4-1. 로그 삭제
+    // ------------------------------------------------------------
+    async function deleteLog(logId, amount) {
+        if (!confirm("정말 이 사용 기록을 삭제하시겠습니까?\n삭제된 사용량은 재고에 다시 합산됩니다.")) return;
+
+        const supabase = App.supabase;
+        try {
+            // 1. 로그 삭제
+            const { error: delError } = await supabase
+                .from("UsageLog")
+                .delete()
+                .eq("id", logId);
+
+            if (delError) throw delError;
+
+            // 2. 재고 복구 (현재 재고 + 삭제된 사용량)
+            if (selectedItem) {
+                const newAmount = selectedItem.current_amount + amount;
+                const { error: invError } = await supabase
+                    .from("Inventory")
+                    .update({ current_amount: newAmount })
+                    .eq("id", selectedItem.id);
+
+                if (invError) throw invError;
+
+                // 데이터 갱신
+                selectedItem.current_amount = newAmount;
+                if (newAmount > 0 && selectedItem.status === "전량소진") {
+                    selectedItem.status = "사용가능"; // 상태 복구 (필요 시 로직 정교화)
+                    // 전량소진 상태였다면 상태 업데이트도 필요
+                    await supabase.from("Inventory").update({ status: "사용가능" }).eq("id", selectedItem.id);
+                }
+            }
+
+            alert("✅ 기록이 삭제되었습니다.");
+            refreshUI();
+
+        } catch (err) {
+            console.error("삭제 실패:", err);
+            alert("삭제 중 오류가 발생했습니다.");
+        }
+    }
+
+    // ------------------------------------------------------------
+    // 4-2. 로그 수정 (인라인 모드 전환)
+    // ------------------------------------------------------------
+    function editLog(logId) {
+        const row = document.getElementById(`log-row-${logId}`);
+        if (!row) return;
+
+        // 기존 값 가져오기
+        const date = row.querySelector(".col-date").textContent;
+        const subject = row.querySelector(".col-subject").textContent;
+        const period = row.querySelector(".col-period").textContent;
+        const amountText = row.querySelector(".col-amount").textContent;
+        const amount = parseFloat(amountText.split(" ")[0]); // "100 mL" -> 100
+
+        // 인라인 입력창으로 변환
+        row.innerHTML = `
+            <td><input type="date" id="edit-date-${logId}" value="${date}" style="width:100px;"></td>
+            <td>
+                <select id="edit-subject-${logId}" style="width:80px;">
+                    <option value="통합과학">통합과학</option>
+                    <option value="과학탐구실험">과학탐구실험</option>
+                    <option value="물리학">물리학</option>
+                    <option value="화학">화학</option>
+                    <option value="생명과학">생명과학</option>
+                    <option value="지구과학">지구과학</option>
+                    <option value="동아리">동아리</option>
+                    <option value="기타">기타</option>
+                </select>
+            </td>
+            <td>
+                <select id="edit-period-${logId}" style="width:80px;">
+                    <option value="1교시">1교시</option>
+                    <option value="2교시">2교시</option>
+                    <option value="3교시">3교시</option>
+                    <option value="4교시">4교시</option>
+                    <option value="5교시">5교시</option>
+                    <option value="6교시">6교시</option>
+                    <option value="7교시">7교시</option>
+                    <option value="점심시간">점심시간</option>
+                    <option value="방과후">방과후</option>
+                </select>
+            </td>
+            <td><input type="number" id="edit-amount-${logId}" value="${amount}" step="0.01" style="width:60px;"></td>
+            <td>
+                <button class="btn-mini btn-save" onclick="App.UsageRegister.saveLog(${logId}, ${amount})">저장</button>
+                <button class="btn-mini btn-cancel" onclick="App.UsageRegister.cancelEdit(${selectedItem.id})">취소</button>
+            </td>
+        `;
+
+        // Select 값 설정
+        document.getElementById(`edit-subject-${logId}`).value = subject;
+        document.getElementById(`edit-period-${logId}`).value = period;
+    }
+
+    // ------------------------------------------------------------
+    // 4-3. 로그 저장
+    // ------------------------------------------------------------
+    async function saveLog(logId, oldAmount) {
+        const newDate = document.getElementById(`edit-date-${logId}`).value;
+        const newSubject = document.getElementById(`edit-subject-${logId}`).value;
+        const newPeriod = document.getElementById(`edit-period-${logId}`).value;
+        const newAmount = parseFloat(document.getElementById(`edit-amount-${logId}`).value);
+
+        if (!newDate || !newSubject || !newPeriod || isNaN(newAmount) || newAmount <= 0) {
+            alert("입력 값을 확인해주세요.");
+            return;
+        }
+
+        const supabase = App.supabase;
+        try {
+            // 1. 로그 업데이트
+            const { error: updateError } = await supabase
+                .from("UsageLog")
+                .update({
+                    usage_date: newDate,
+                    subject: newSubject,
+                    period: newPeriod,
+                    amount: newAmount
+                })
+                .eq("id", logId);
+
+            if (updateError) throw updateError;
+
+            // 2. 재고 조정 (차이만큼 반영)
+            // 차이 = 새로운 사용량 - 기존 사용량
+            // 재고 = 현재 재고 - 차이
+            // 예: 기존 100, 신규 120 -> 차이 20 -> 재고 20 감소
+            // 예: 기존 100, 신규 80 -> 차이 -20 -> 재고 20 증가
+            const diff = newAmount - oldAmount;
+            if (selectedItem && diff !== 0) {
+                const newCurrentAmount = selectedItem.current_amount - diff;
+
+                // 음수 방지 로직 (선택 사항)
+                if (newCurrentAmount < 0) {
+                    alert("수정된 사용량이 현재 재고보다 많습니다. 재고가 0으로 처리됩니다.");
+                }
+                const finalAmount = Math.max(0, newCurrentAmount);
+
+                const { error: invError } = await supabase
+                    .from("Inventory")
+                    .update({ current_amount: finalAmount })
+                    .eq("id", selectedItem.id);
+
+                if (invError) throw invError;
+                selectedItem.current_amount = finalAmount;
+            }
+
+            alert("✅ 수정되었습니다.");
+            refreshUI();
+
+        } catch (err) {
+            console.error("수정 실패:", err);
+            alert("수정 중 오류가 발생했습니다.");
+        }
+    }
+
+    function cancelEdit(inventoryId) {
+        loadUsageHistory(inventoryId);
+    }
+
+    function refreshUI() {
+        if (selectedItem) {
+            // 상세 카드 갱신
+            document.getElementById("selected-item-display").innerHTML = renderItemCard(selectedItem, true);
+            // 목록 갱신
+            loadUsageHistory(selectedItem.id);
+        }
     }
 
     // ------------------------------------------------------------
@@ -577,6 +754,10 @@
     globalThis.App = globalThis.App || {};
     globalThis.App.UsageRegister = {
         init,
-        selectItem
+        selectItem,
+        deleteLog,
+        editLog,
+        saveLog,
+        cancelEdit
     };
 })();
