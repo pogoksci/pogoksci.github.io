@@ -339,7 +339,7 @@
     function goBackToList() {
         selectedItem = null;
         document.getElementById("usage-detail-section").style.display = "none";
-        document.getElementById("usage-list-section").style.display = "block";
+        document.getElementById("usage-list-section").style.display = ""; // Restore CSS display (flex)
 
         // 폼 초기화
         document.getElementById("usage-amount").value = "";
