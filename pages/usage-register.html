@@ -87,12 +87,11 @@
             <h3>사용량 등록</h3>
 
             <form id="usage-form">
-                <div class="form-group-date">
-                    <label>날짜</label>
-                    <input type="date" id="usage-date" required>
-                </div>
-
                 <div class="form-row">
+                    <div class="form-group">
+                        <label>날짜</label>
+                        <input type="date" id="usage-date" required>
+                    </div>
                     <div class="form-group">
                         <label>과목</label>
                         <select id="usage-subject" required>
@@ -122,11 +121,20 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>사용량</label>
-                    <div class="amount-input-wrapper">
-                        <input type="number" id="usage-amount" step="0.01" min="0" required placeholder="0.0">
-                        <span id="usage-form-unit">mL</span>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>사용량</label>
+                        <div class="amount-input-wrapper">
+                            <input type="number" id="usage-amount" step="0.01" min="0" required placeholder="0.0">
+                            <span id="usage-form-unit">mL</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>사용 후 시약병 질량</label>
+                        <div class="amount-input-wrapper">
+                            <input type="number" id="usage-remaining-mass" step="0.01" min="0" placeholder="0.0">
+                            <span>g</span>
+                        </div>
                     </div>
                 </div>
 
