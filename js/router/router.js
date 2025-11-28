@@ -102,6 +102,21 @@
         break;
     }
 
+    // ✅ Navbar Active State Sync
+    const navMapping = {
+      inventory: "nav-inventory",
+      inventoryDetail: "nav-inventory", // 상세 페이지도 약품 관리 활성화
+      usageRegister: "nav-usage",
+      cabinets: "menu-location",
+      dataSync: "menu-datasync",
+      main: "menu-home"
+    };
+
+    const navId = navMapping[pageKey];
+    if (navId && App.Navbar?.setActive) {
+      App.Navbar.setActive(navId);
+    }
+
     // ✅ 스크롤 상단 이동
     window.scrollTo(0, 0);
   }
