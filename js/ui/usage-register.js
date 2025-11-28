@@ -400,17 +400,13 @@
         const usageInput = document.getElementById("usage-amount");
         const massInput = document.getElementById("usage-remaining-mass");
 
-        const usageVal = usageInput.value ? parseFloat(usageInput.value) : null;
-        const massVal = massInput.value ? parseFloat(massInput.value) : null;
+        const usageVal = usageInput.value && !isNaN(parseFloat(usageInput.value)) ? parseFloat(usageInput.value) : null;
+        const massVal = massInput.value && !isNaN(parseFloat(massInput.value)) ? parseFloat(massInput.value) : null;
 
-        // 1. 입력 유효성 검사 (둘 중 하나만 입력)
-        if (usageVal !== null && massVal !== null) {
+        // 1. 입력 유효성 검사 (XOR 조건 위배 시 경고)
+        // 둘 다 값이 있거나, 둘 다 값이 없는 경우
+        if ((usageVal !== null && massVal !== null) || (usageVal === null && massVal === null)) {
             alert("사용량과 사용 후 시약병 질량 중 하나만 입력해주세요.");
-            return;
-        }
-
-        if (usageVal === null && massVal === null) {
-            alert("사용량 또는 사용 후 시약병 질량을 입력해주세요.");
             return;
         }
 
