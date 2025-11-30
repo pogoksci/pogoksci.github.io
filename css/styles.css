@@ -696,7 +696,13 @@ button:disabled {
   /* flex-basis: calc(16.66% - 10px); */
   /* flex-grow: 0; */
   /* 기존 flex 스타일 제거 및 공통 스타일 유지 */
-  padding: 10px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
   border: 1px solid #ccc;
   background-color: #f9f9f9;
   cursor: pointer;
