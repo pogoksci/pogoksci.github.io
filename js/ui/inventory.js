@@ -197,7 +197,7 @@
       `;
     };
 
-    showStatus("🔄 약품 목록을 불러오는 중...");
+    showStatus('<span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 5px;">sync</span>약품 목록을 불러오는 중...');
 
     const { data, error } = await supabase
       .from("Inventory")
