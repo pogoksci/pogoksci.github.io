@@ -465,6 +465,7 @@
       }
     });
 
+
     // ✅ Bottle Type Restoration (from bottle_mass)
     if (mode === "edit" && detail && detail.bottle_mass && detail.initial_amount) {
       const mass = Number(detail.bottle_mass);
