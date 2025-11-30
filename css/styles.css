@@ -751,6 +751,18 @@ button:disabled {
   row-gap: 12px;
 }
 
+/* Fix placeholder text wrapping in grid layout */
+#location_door_vertical_group span,
+#location_door_horizontal_group span,
+#location_internal_shelf_group span,
+#location_storage_column_group span {
+  grid-column: 1 / -1;
+  /* Span all columns */
+  width: 100%;
+  display: block;
+  /* Ensure it behaves like a block to fill width */
+}
+
 /* Reset flex behavior for these grid items */
 #location_door_vertical_group button,
 #location_door_horizontal_group button,
