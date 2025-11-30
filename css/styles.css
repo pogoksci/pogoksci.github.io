@@ -697,7 +697,7 @@ button:disabled {
 
 .form-group-location .location-step select {
   /* margin: 0 12px; */
-  width: calc(100% - 24px);
+  /* width: calc(100% - 24px); */
   box-sizing: border-box;
 }
 

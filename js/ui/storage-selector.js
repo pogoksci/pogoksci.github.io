@@ -28,6 +28,13 @@
     const group = document.createElement("div");
     group.className = "button-group";
 
+    // Dynamic Grid Columns: 항목 수에 맞춰 그리드 컬럼 수 자동 조정
+    if (options.length > 0 && options.length <= 12) {
+      group.style.display = "grid";
+      group.style.gridTemplateColumns = `repeat(${options.length}, 1fr)`;
+      group.style.gap = "10px 0"; // CSS와 동일하게 gap 설정
+    }
+
     options.forEach((opt) => {
       const btn = document.createElement("button");
       btn.type = "button";
