@@ -240,7 +240,12 @@ button:disabled {
   text-align: center;
 
   transition: all 0.2s ease;
+  outline: none;
+  white-space: nowrap;
+}
 
+.button-group button:focus {
+  outline: none;
 }
 
 
@@ -627,7 +632,7 @@ button:disabled {
 
 .form-group-location {
 
-  margin-bottom: 25px;
+  margin-bottom: 12px;
 
   padding: 15px;
 
@@ -688,27 +693,57 @@ button:disabled {
 }
 
 .button-group .btn-location {
-
-  flex-basis: calc(16.66% - 10px);
-
-  flex-grow: 0;
-
+  /* flex-basis: calc(16.66% - 10px); */
+  /* flex-grow: 0; */
+  /* 기존 flex 스타일 제거 및 공통 스타일 유지 */
   padding: 10px;
-
   border: 1px solid #ccc;
-
   background-color: #f9f9f9;
-
   cursor: pointer;
-
   text-align: center;
-
   border-radius: 5px;
-
   transition: background-color 0.2s, border-color 0.2s;
-
   box-sizing: border-box;
+}
 
+/* Storage Location Grid Layout */
+#location_door_vertical_group,
+#location_door_horizontal_group,
+#location_internal_shelf_group,
+#location_storage_column_group {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+/* Reset flex behavior for these grid items */
+#location_door_vertical_group button,
+#location_door_horizontal_group button,
+#location_internal_shelf_group button,
+#location_storage_column_group button {
+  width: 100%;
+  flex: none;
+  /* Disable flex scaling */
+}
+
+/* 2 items -> span 3 */
+#location_door_vertical_group button {
+  grid-column: span 3;
+}
+
+/* 1 item -> span 6 */
+#location_door_horizontal_group button {
+  grid-column: span 6;
+}
+
+/* 3 items -> span 2 */
+#location_internal_shelf_group button {
+  grid-column: span 2;
+}
+
+/* 6 items -> span 1 */
+#location_storage_column_group button {
+  grid-column: span 1;
 }
 
 
