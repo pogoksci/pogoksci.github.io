@@ -684,7 +684,7 @@ button:disabled {
 
 /* ?꾩튂 ?좏깮 踰꾪듉 (btn-location) ?ㅽ???*/
 
-.btn-location {
+.button-group .btn-location {
 
   flex-basis: calc(16.66% - 10px);
 
@@ -703,6 +703,8 @@ button:disabled {
   border-radius: 5px;
 
   transition: background-color 0.2s, border-color 0.2s;
+
+  box-sizing: border-box;
 
 }
 
