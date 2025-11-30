@@ -90,7 +90,6 @@
         ),
         Cabinet ( cabinet_name, Area ( area_name ) )
       `)
-            .neq("status", "전량소진") // 필터링
             .order("id", { ascending: true });
 
         if (error) {
@@ -153,7 +152,17 @@
 
         const lowerQuery = query.toLowerCase().trim();
 
-        let filtered = allInventory.filter(item => {
+        let filtered = allInventory;
+
+        // 1) 상태 필터링
+        if (currentSort === "exhausted") {
+            filtered = filtered.filter(item => item.status === "전량소진");
+        } else {
+            filtered = filtered.filter(item => item.status !== "전량소진");
+        }
+
+        // 2) 검색어 필터링
+        filtered = filtered.filter(item => {
             const nameKor = item.Substance?.chem_name_kor || "";
             const nameKorMod = item.Substance?.chem_name_kor_mod || "";
             const nameEng = item.Substance?.substance_name || "";

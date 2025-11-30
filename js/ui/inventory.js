@@ -203,7 +203,7 @@
       .from("Inventory")
       .select(`
         id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
-        concentration_value, concentration_unit,
+        concentration_value, concentration_unit, status,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, chem_name_kor_mod, substance_name_mod, molecular_formula_mod, Synonyms ( synonyms_name, synonyms_eng ), ReplacedRns!ReplacedRns_substance_id_fkey ( replaced_rn ) ),
         Cabinet ( cabinet_name, Area ( area_name ) )
@@ -306,6 +306,7 @@
         current_amount: row.current_amount,
         unit: row.unit,
         classification: row.classification || "기타",
+        status: row.status,
         photo_url_320: row.photo_url_320 || null,
         photo_url_160: row.photo_url_160 || null,
         display_label_html: displayLabelHtml, // HTML로 전달
