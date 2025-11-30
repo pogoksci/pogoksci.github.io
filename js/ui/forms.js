@@ -320,6 +320,10 @@
     reset();
     set("mode", mode);
 
+    if (mode === "edit" && detail) {
+      console.log("📝 Edit Mode Detail:", detail);
+    }
+
     const title = document.querySelector("#inventory-form h1");
     const submitBtn = document.getElementById("inventory-submit-button");
     const statusMsg = document.getElementById("statusMessage");
@@ -460,6 +464,38 @@
         }
       }
     });
+
+    // ✅ Bottle Type Restoration (from bottle_mass)
+    if (mode === "edit" && detail && detail.bottle_mass && detail.initial_amount) {
+      const mass = Number(detail.bottle_mass);
+      const vol = Number(detail.initial_amount);
+      let restoredType = null;
+
+      // Reverse logic of calculateBottleMass
+      // Glass: 25->65, 100->120, 500->400, 1000->510
+      if ((vol === 25 && mass === 65) ||
+        (vol === 100 && mass === 120) ||
+        (vol === 500 && mass === 400) ||
+        (vol === 1000 && mass === 510)) {
+        // Default to Brown Glass as it's common. User can change if needed.
+        restoredType = "갈색유리";
+      }
+      // Plastic: 500->(40, 80, 75)
+      else if (vol === 500) {
+        if (mass === 40) restoredType = "반투명플라스틱";
+        else if (mass === 80) restoredType = "갈색플라스틱";
+        else if (mass === 75) restoredType = "흰색플라스틱";
+      }
+
+      if (restoredType) {
+        const btn = document.querySelector(`#bottle_type_buttons button[data-value="${restoredType}"]`);
+        if (btn) {
+          document.querySelectorAll(`#bottle_type_buttons button`).forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          set("bottle_type", restoredType);
+        }
+      }
+    }
 
     // ✅ 사진 처리
     const photoInput = document.getElementById("photo-input");
