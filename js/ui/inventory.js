@@ -342,12 +342,13 @@
     let filtered = allInventoryData;
 
     // 1) 상태 필터링 (소모완료약품 vs 일반)
+    // "전량소진" 문자열에 공백이 있을 수 있으므로 제거하고 비교
     if (currentSort === "exhausted") {
       // 소모완료약품 모드: '전량소진'인 것만 표시
-      filtered = filtered.filter((item) => item.status === "전량소진");
+      filtered = filtered.filter((item) => String(item.status || "").replace(/\s+/g, "") === "전량소진");
     } else {
       // 일반 모드: '전량소진' 제외
-      filtered = filtered.filter((item) => item.status !== "전량소진");
+      filtered = filtered.filter((item) => String(item.status || "").replace(/\s+/g, "") !== "전량소진");
     }
 
     // 2) 검색어 필터링
@@ -375,10 +376,12 @@
   }
 
   async function showListPage() {
-    const app = getApp();
     const inventoryApi = app.Inventory || {};
     inventoryApi.__manualMount = true;
     app.Inventory = inventoryApi;
+
+    // ✅ 페이지 진입 시 정렬 상태 초기화
+    currentSort = "category_name_kor";
 
     const ok = await app.includeHTML?.("pages/inventory-list.html", "form-container");
     if (!ok) return;
