@@ -626,7 +626,7 @@
             // 시약병에 남은 내용물의 질량
             const remainingContentMass = massVal - bottleMass;
             if (remainingContentMass < 0) {
-                alert(`입력한 질량(${massVal}g)이 공병 질량(${bottleMass}g)보다 작습니다.`);
+                alert(`이 시약병의 공병 질량(약 ${bottleMass}g)보다 작은 숫자를 입력할 수 없습니다.`);
                 return;
             }
 
