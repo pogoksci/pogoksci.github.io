@@ -680,9 +680,11 @@ button:disabled {
 
 
 .location-step {
-
   margin-bottom: 15px;
+}
 
+.location-step:last-child {
+  margin-bottom: 0;
 }
 
 
