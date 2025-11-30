@@ -569,7 +569,9 @@
       }
 
       document.getElementById("detail-back-btn")?.addEventListener("click", async () => {
-        if (getApp().Inventory?.showListPage) {
+        if (getApp().Router?.go) {
+          await getApp().Router.go("inventory");
+        } else if (getApp().Inventory?.showListPage) {
           await getApp().Inventory.showListPage();
         }
       });
@@ -615,7 +617,9 @@
           return;
         }
         alert("삭제되었습니다.");
-        if (getApp().Inventory?.showListPage) {
+        if (getApp().Router?.go) {
+          await getApp().Router.go("inventory");
+        } else if (getApp().Inventory?.showListPage) {
           await getApp().Inventory.showListPage();
         }
       });
