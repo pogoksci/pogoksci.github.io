@@ -823,7 +823,7 @@
                 const match = standardStr.match(/(\d+(\.\d+)?)/);
                 if (!match) return "-";
                 const standardVal = parseFloat(match[0]);
-                if (percentValue >= standardVal) return "○";
+                if (percentValue >= standardVal) return "◯";
                 return "-";
               };
 
