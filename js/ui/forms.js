@@ -317,7 +317,584 @@
   // -------------------------------------------------
   async function initInventoryForm(mode = "create", detail = null) {
     console.log("🧪 initInventoryForm()", mode, detail);
-    // content removed for debugging
+    reset();
+    set("mode", mode);
+
+    if (mode === "edit" && detail) {
+      console.log("📝 Edit Mode Detail:", detail);
+    }
+
+    const title = document.querySelector("#inventory-form h1");
+    const submitBtn = document.getElementById("inventory-submit-button");
+    const statusMsg = document.getElementById("statusMessage");
+    if (title) title.textContent = mode === "edit" ? "약품 정보 수정" : "약품 입고 정보 입력";
+
+    const BUTTON_GROUP_IDS = [
+      "classification_buttons",
+      "state_buttons",
+      "unit_buttons",
+      "concentration_unit_buttons",
+      "unit_buttons",
+      "bottle_type_buttons",
+      "concentration_unit_buttons",
+      "manufacturer_buttons",
+    ];
+
+    // ✅ Substance 정보 저장 (계산용)
+    if (detail?.Substance) {
+      set("substance_info", detail.Substance);
+    } else {
+      set("substance_info", null);
+    }
+
+    // ✅ 수정 모드 기본 데이터 반영
+    if (mode === "edit" && detail) {
+      const fieldMap = {
+        cas_rn: detail.Substance?.cas_rn ?? "",
+        purchase_volume: detail.initial_amount ?? "",
+        concentration_value: detail.concentration_value ?? "",
+        purchase_date: detail.purchase_date ?? "",
+      };
+
+      Object.entries(fieldMap).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const normalized = typeof value === "string" ? value.split("T")[0] : value ?? "";
+        el.value = normalized;
+        set(id, normalized);
+      });
+
+      const existingPhoto = detail.photo_url_320 || detail.photo_url_160 || null;
+      if (existingPhoto) {
+        const preview = document.getElementById("photo-preview");
+        if (preview) {
+          preview.innerHTML = `<img src="${existingPhoto}" alt="Preview">`;
+        }
+        set("photo_base64", existingPhoto);
+      }
+      set("photo_updated", false);
+    } else {
+      const clearInputs = ["cas_rn", "purchase_volume", "concentration_value", "purchase_date", "manufacturer_other"];
+      clearInputs.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.value = "";
+          el.setAttribute("value", ""); // DOM 속성도 강제 초기화
+        }
+      });
+      BUTTON_GROUP_IDS.forEach((groupId) => {
+        const group = document.getElementById(groupId);
+        if (group) group.querySelectorAll(".active").forEach((btn) => btn.classList.remove("active"));
+      });
+      ["classification", "state", "unit", "bottle_type", "concentration_unit", "manufacturer"].forEach((key) => set(key, null));
+      const otherGroup = document.getElementById("other_manufacturer_group");
+      if (otherGroup) otherGroup.style.display = "none";
+      const otherInput = document.getElementById("manufacturer_other");
+      if (otherInput) otherInput.value = "";
+      set("msds_pdf_file", null);
+      set("photo_base64", null);
+      set("photo_updated", false);
+    }
+
+    // ✅ 버튼 그룹 초기화 및 복원
+    const buttonFieldMap = {
+      classification_buttons: (d) => d?.classification ?? null,
+      state_buttons: (d) => d?.state ?? null,
+      unit_buttons: (d) => d?.unit ?? null,
+      bottle_type_buttons: (d) => d?.bottle_type ?? null,
+      concentration_unit_buttons: (d) => d?.concentration_unit ?? null,
+      manufacturer_buttons: (d) => d?.manufacturer ?? null,
+    };
+
+    Object.entries(buttonFieldMap).forEach(([groupId, getter]) => {
+      const stateKey = groupId.replace("_buttons", "");
+      setupButtonGroup(groupId, (btn) => {
+        set(stateKey, btn.dataset.value);
+        if (groupId === "manufacturer_buttons") {
+          const group = document.getElementById("other_manufacturer_group");
+          if (group) group.style.display = btn.dataset.value === "기타" ? "block" : "none";
+        }
+      });
+
+      if (mode === "edit" && detail) {
+        const raw = getter(detail);
+        const normalizedValue = raw == null ? "" : String(raw).trim();
+        if (!normalizedValue) return;
+        const buttons = Array.from(document.querySelectorAll(`#${groupId} button`));
+        const sanitize = (v) => v.replace(/\s+/g, "").toLowerCase();
+        let targetBtn = buttons.find((btn) => {
+          const candidate = (btn.dataset.value || btn.textContent || "").trim();
+          return candidate === normalizedValue;
+        });
+        if (!targetBtn) {
+          targetBtn = buttons.find((btn) => {
+            const candidate = (btn.dataset.value || btn.textContent || "").trim();
+            return sanitize(candidate) === sanitize(normalizedValue);
+          });
+        }
+        if (targetBtn) {
+          buttons.forEach((btn) => btn.classList.remove("active"));
+          targetBtn.classList.add("active");
+          const appliedValue = targetBtn.dataset.value || targetBtn.textContent.trim();
+          set(stateKey, appliedValue);
+          if (groupId === "manufacturer_buttons") {
+            const group = document.getElementById("other_manufacturer_group");
+            if (group) group.style.display = appliedValue === "기타" ? "block" : "none";
+            if (appliedValue === "기타") {
+              const otherInput = document.getElementById("manufacturer_other");
+              if (otherInput && normalizedValue !== "기타") otherInput.value = normalizedValue;
+            }
+          }
+        } else if (groupId === "manufacturer_buttons") {
+          const otherBtn = document.querySelector(`#${groupId} button[data-value="기타"]`);
+          if (otherBtn) {
+            buttons.forEach((btn) => btn.classList.remove("active"));
+            otherBtn.classList.add("active");
+            set("manufacturer", "기타");
+            const otherInput = document.getElementById("manufacturer_other");
+            if (otherInput) otherInput.value = normalizedValue;
+            const group = document.getElementById("other_manufacturer_group");
+            if (group) group.style.display = "block";
+          }
+        }
+      }
+    });
+
+    // ✅ Bottle Type Restoration (from bottle_mass)
+    if (mode === "edit" && detail && detail.bottle_mass && detail.initial_amount) {
+      const mass = Number(detail.bottle_mass);
+      const vol = Number(detail.initial_amount);
+      let restoredType = null;
+
+      // Reverse logic of calculateBottleMass
+      if ((vol === 25 && mass === 65) ||
+        (vol === 100 && mass === 120) ||
+        (vol === 500 && mass === 400) ||
+        (vol === 1000 && mass === 510)) {
+        restoredType = "갈색유리";
+      }
+      else if (vol === 500) {
+        if (mass === 40) restoredType = "반투명플라스틱";
+        else if (mass === 80) restoredType = "갈색플라스틱";
+        else if (mass === 75) restoredType = "흰색플라스틱";
+      }
+
+      if (restoredType) {
+        const btn = document.querySelector(`#bottle_type_buttons button[data-value="${restoredType}"]`);
+        if (btn) {
+          document.querySelectorAll(`#bottle_type_buttons button`).forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          set("bottle_type", restoredType);
+        }
+      }
+    }
+
+    // ✅ 사진 처리
+    const photoInput = document.getElementById("photo-input");
+    const cameraInput = document.getElementById("camera-input");
+    const preview = document.getElementById("photo-preview");
+    const photoBtn = document.getElementById("photo-btn");
+    const cameraBtn = document.getElementById("camera-btn");
+    const handleFile = (file) => {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const src = e.target.result;
+        preview.innerHTML = `<img src="${src}" alt="Preview">`;
+        set("photo_base64", src);
+        set("photo_updated", true);
+      };
+      reader.readAsDataURL(file);
+    };
+    if (photoBtn && photoInput) photoBtn.onclick = () => photoInput.click();
+    if (cameraBtn && typeof startCamera === "function") {
+      cameraBtn.onclick = () => startCamera();
+      setupModalListeners?.();
+    } else if (cameraBtn && cameraInput) {
+      cameraBtn.onclick = () => cameraInput.click();
+    }
+    if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
+    if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
+
+    // ✅ MSDS PDF 처리
+    const msdsInput = document.getElementById("msds-pdf-input");
+    if (msdsInput) {
+      msdsInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          if (file.size > 10 * 1024 * 1024) {
+            alert("파일 크기는 10MB 이하여야 합니다.");
+            msdsInput.value = "";
+            set("msds_pdf_file", null);
+            return;
+          }
+          set("msds_pdf_file", file);
+        }
+      };
+    }
+
+    // ✅ 위치 (Area → Cabinet → 도어/단/열)
+    const areaSelect = document.getElementById("location_area_select");
+    const cabSelect = document.getElementById("location_cabinet_select");
+
+    if (areaSelect && cabSelect && supabase) {
+      const defaultAreaOptions =
+        (areaSelect.__defaultOptions ?? areaSelect.innerHTML) ||
+        `<option value="">-- 선택 안 함 --</option>`;
+      areaSelect.__defaultOptions = defaultAreaOptions;
+
+      const { data: areas } = await supabase.from("Area").select("id, area_name").order("area_name");
+      areaSelect.innerHTML =
+        defaultAreaOptions +
+        (areas?.map?.((a) => `<option value="${a.id}">${a.area_name}</option>`).join("") || "");
+
+      if (mode === "edit" && detail) {
+        const areaId = detail.area_id || detail.Cabinet?.area_id || detail.Cabinet?.Area?.id || null;
+        if (areaId) {
+          areaSelect.value = areaId;
+          set("area_id", areaId);
+
+          const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", areaId);
+          cabSelect.innerHTML =
+            `<option value="">-- 선택 안 함 --</option>` +
+            (cabs || []).map(({ id, cabinet_name }) => `<option value="${id}">${cabinet_name}</option>`).join("");
+          cabSelect.disabled = false;
+
+          const cabinetId = detail.cabinet_id || detail.Cabinet?.id || null;
+          if (cabinetId) {
+            cabSelect.value = cabinetId;
+            set("cabinet_id", cabinetId);
+          }
+
+          ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => {
+            let value = detail[key] ?? null;
+            if (key === "door_vertical") value = normalizeChoice(value, "vertical");
+            if (key === "door_horizontal") value = normalizeChoice(value, "horizontal");
+            set(key, value);
+          });
+          const normalizedDetail = {
+            ...detail,
+            door_vertical: get("door_vertical"),
+            door_horizontal: get("door_horizontal"),
+            internal_shelf_level: get("internal_shelf_level"),
+            storage_column: get("storage_column"),
+          };
+          await renderCabinetButtons(cabinetId, normalizedDetail);
+        }
+      }
+
+      areaSelect.onchange = async (e) => {
+        const areaId = e.target.value || null;
+        set("area_id", areaId);
+        cabSelect.disabled = !areaId;
+        if (!areaId) {
+          cabSelect.innerHTML = `<option value="">-- 선택 안 함 --</option>`;
+          set("cabinet_id", null);
+          ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
+          await renderCabinetButtons(null, null);
+          return;
+        }
+        const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", areaId);
+        cabSelect.innerHTML =
+          `<option value="">-- 선택 안 함 --</option>` +
+          (cabs || []).map((c) => `<option value="${c.id}">${c.cabinet_name}</option>`).join("");
+        cabSelect.value = "";
+        set("cabinet_id", null);
+        ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
+        await renderCabinetButtons(null, null);
+      };
+    }
+
+    if (cabSelect) {
+      cabSelect.onchange = async (e) => {
+        const cabId = e.target.value;
+        set("cabinet_id", cabId || null);
+        ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
+        await renderCabinetButtons(cabId || null, null);
+      };
+    }
+
+    // ✅ 스크롤 상단 강제 이동
+    window.scrollTo(0, 0);
+
+    // ✅ 저장 로직
+    if (submitBtn) {
+      submitBtn.onclick = async (e) => {
+        e.preventDefault();
+        statusMsg.textContent = "💾 저장 중...";
+
+        try {
+          const state = dump();
+          const cas = document.getElementById("cas_rn").value.trim();
+          const volumeValue = document.getElementById("purchase_volume").value;
+          const volume = Number.parseFloat(volumeValue);
+          const unit = state.unit;
+          const concentrationValue = document.getElementById("concentration_value").value;
+          const concentrationUnit = state.concentration_unit;
+
+          if (!cas) {
+            alert("CAS 번호는 필수 입력 항목입니다.");
+            statusMsg.textContent = "";
+            return;
+          }
+
+          if (!Number.isFinite(volume) || volume <= 0) {
+            alert("구입용량을 바르게 입력해 주세요.");
+            statusMsg.textContent = "";
+            return;
+          }
+
+          if (!unit) {
+            alert("구입용량 단위를 선택해 주세요.");
+            statusMsg.textContent = "";
+            return;
+          }
+
+          const manufacturerValue =
+            state.manufacturer === "기타"
+              ? document.getElementById("manufacturer_other").value.trim() || null
+              : state.manufacturer || null;
+          const purchaseDate = document.getElementById("purchase_date").value || null;
+          const inventoryDetails = {
+            purchase_volume: volume,
+            unit,
+            state: state.state || null,
+            classification: state.classification || null,
+            manufacturer: manufacturerValue,
+            purchase_date: purchaseDate,
+            cabinet_id: state.cabinet_id || null,
+            door_vertical: state.door_vertical || null,
+            door_horizontal: state.door_horizontal || null,
+            internal_shelf_level: state.internal_shelf_level || null,
+            storage_column: state.storage_column || null,
+            concentration_value: concentrationValue ? Number(concentrationValue) : null,
+            concentration_unit: concentrationUnit || null,
+            bottle_mass: calculateBottleMass(volume, state.bottle_type),
+          };
+
+          // 📤 MSDS PDF 업로드
+          if (state.msds_pdf_file) {
+            statusMsg.textContent = "📄 MSDS PDF 처리 중...";
+            try {
+              const file = state.msds_pdf_file;
+              const arrayBuffer = await file.arrayBuffer();
+              const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+              const hashArray = Array.from(new Uint8Array(hashBuffer));
+              const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+              console.log("File Hash:", hashHex);
+
+              const { data: existingFile } = await supabase
+                .from('Inventory')
+                .select('msds_pdf_url')
+                .eq('msds_pdf_hash', hashHex)
+                .limit(1)
+                .maybeSingle();
+
+              if (existingFile?.msds_pdf_url) {
+                console.log("♻️ Duplicate file found. Reusing URL:", existingFile.msds_pdf_url);
+                inventoryDetails.msds_pdf_url = existingFile.msds_pdf_url;
+                inventoryDetails.msds_pdf_hash = hashHex;
+              } else {
+                console.log("📤 New file. Uploading...");
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+                const { data: _uploadData, error: uploadError } = await supabase.storage
+                  .from('msds-pdf')
+                  .upload(fileName, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: publicUrlData } = supabase.storage
+                  .from('msds-pdf')
+                  .getPublicUrl(fileName);
+
+                inventoryDetails.msds_pdf_url = publicUrlData.publicUrl;
+                inventoryDetails.msds_pdf_hash = hashHex;
+                console.log("✅ MSDS PDF Uploaded:", inventoryDetails.msds_pdf_url);
+              }
+            } catch (err) {
+              console.error("PDF Processing Error:", err);
+              alert("MSDS PDF 처리 중 오류가 발생했습니다: " + err.message);
+              statusMsg.textContent = "";
+              return;
+            }
+          } else if (mode === "edit" && detail?.msds_pdf_url) {
+            inventoryDetails.msds_pdf_url = detail.msds_pdf_url;
+            inventoryDetails.msds_pdf_hash = detail.msds_pdf_hash;
+          }
+
+          if (state.photo_base64) {
+            inventoryDetails.photo_320_base64 = state.photo_base64;
+            inventoryDetails.photo_160_base64 = state.photo_base64;
+          }
+
+          if (mode === "edit" && detail?.id) {
+            let totalUsage = 0;
+            const { data: usageLogs, error: usageError } = await supabase
+              .from("UsageLog")
+              .select("amount")
+              .eq("inventory_id", detail.id);
+
+            if (!usageError && usageLogs) {
+              totalUsage = usageLogs.reduce((sum, log) => sum + (Number(log.amount) || 0), 0);
+            }
+            const newCurrentAmount = volume - totalUsage;
+
+            const updatePayload = {
+              initial_amount: volume,
+              current_amount: newCurrentAmount,
+              unit,
+              state: state.state || null,
+              classification: state.classification || null,
+              manufacturer: manufacturerValue,
+              purchase_date: purchaseDate,
+              cabinet_id: state.cabinet_id || null,
+              door_vertical: state.door_vertical || null,
+              door_horizontal: state.door_horizontal || null,
+              internal_shelf_level: state.internal_shelf_level || null,
+              storage_column: state.storage_column || null,
+              concentration_value: concentrationValue ? Number(concentrationValue) : null,
+              concentration_unit: concentrationUnit || null,
+              bottle_mass: calculateBottleMass(volume, state.bottle_type),
+              msds_pdf_url: inventoryDetails.msds_pdf_url || null,
+              msds_pdf_hash: inventoryDetails.msds_pdf_hash || null,
+            };
+
+            const substanceInfo = state.substance_info;
+            if (substanceInfo && concentrationValue && concentrationUnit) {
+              const propsList = substanceInfo.Properties || [];
+              const getPropVal = (nameKey) => {
+                const found = propsList.find((p) => p.name && p.name.toLowerCase().includes(nameKey.toLowerCase()));
+                return found ? found.property : null;
+              };
+              const densityVal = getPropVal("Density");
+
+              const conversions = computeConversions({
+                value: concentrationValue,
+                unit: concentrationUnit,
+                molarMass: substanceInfo.molecular_mass,
+                density: densityVal
+              });
+
+              const annotateUnit = (unit) => {
+                const stateVal = String(state.state || "").trim().toLowerCase();
+                const solids = ["파우더", "조각", "비드", "펠렛", "리본", "막대", "벌크", "고체"];
+                const isSolid = solids.some((k) => stateVal.includes(k));
+                const isGas = stateVal.includes("기체") || stateVal.includes("gas");
+                const isLiquid = stateVal === "액체" || stateVal.includes("liquid");
+                if (unit === "M" && (isSolid || isGas)) return `${unit} (의미 없음)`;
+                if (unit === "m" && (isLiquid || isGas)) return `${unit} (정의 불가)`;
+                return unit;
+              };
+
+              if (conversions) {
+                if (concentrationUnit === "%") {
+                  updatePayload.converted_concentration_value_1 = conversions.molarity;
+                  updatePayload.converted_concentration_unit_1 = annotateUnit("M");
+                  updatePayload.converted_concentration_value_2 = conversions.molality;
+                  updatePayload.converted_concentration_unit_2 = annotateUnit("m");
+                } else if (concentrationUnit === "M" || concentrationUnit === "N") {
+                  updatePayload.converted_concentration_value_1 = conversions.percent;
+                  updatePayload.converted_concentration_unit_1 = "%";
+                  updatePayload.converted_concentration_value_2 = conversions.molality;
+                  updatePayload.converted_concentration_unit_2 = annotateUnit("m");
+                }
+              }
+            }
+            if (state.photo_updated) {
+              updatePayload.photo_url_320 = state.photo_base64 || null;
+              updatePayload.photo_url_160 = state.photo_base64 || null;
+            }
+
+            if (substanceInfo) {
+              const compareAndSet = (standardStr) => {
+                if (!standardStr) return "-";
+                let percentValue = null;
+                if (concentrationUnit === "%") {
+                  percentValue = Number(concentrationValue);
+                } else if (updatePayload.converted_concentration_unit_1 === "%") {
+                  percentValue = updatePayload.converted_concentration_value_1;
+                } else if (updatePayload.converted_concentration_unit_2 === "%") {
+                  percentValue = updatePayload.converted_concentration_value_2;
+                }
+                if (percentValue === null || isNaN(percentValue)) return "-";
+                const match = standardStr.match(/(\d+(\.\d+)?)/);
+                if (!match) return "-";
+                const standardVal = parseFloat(match[0]);
+                if (percentValue >= standardVal) return "○";
+                return "-";
+              };
+
+              updatePayload.school_hazardous_chemical = compareAndSet(substanceInfo.school_hazardous_chemical_standard);
+              updatePayload.school_accident_precaution_chemical = compareAndSet(substanceInfo.school_accident_precaution_chemical_standard);
+              updatePayload.special_health_checkup_hazardous_factor = compareAndSet(substanceInfo.special_health_checkup_hazardous_factor_standard);
+              updatePayload.toxic_substance = compareAndSet(substanceInfo.toxic_substance_standard);
+              updatePayload.permitted_substance = compareAndSet(substanceInfo.permitted_substance_standard);
+              updatePayload.restricted_substance = compareAndSet(substanceInfo.restricted_substance_standard);
+              updatePayload.prohibited_substance = compareAndSet(substanceInfo.prohibited_substance_standard);
+            }
+
+            const { error } = await supabase.from("Inventory").update(updatePayload).eq("id", detail.id);
+            if (error) throw error;
+            alert("✅ 약품 정보가 수정되었어요.");
+          } else {
+            const { data, error } = await supabase.functions.invoke("casimport", {
+              method: "POST",
+              body: {
+                casRns: [cas],
+                inventoryDetails,
+              },
+            });
+
+            if (error) throw error;
+            console.log("📦 등록 결과:", data);
+
+            try {
+              let createdId = data?.inventoryId || data?.id || data?.[0]?.id;
+              if (!createdId) {
+                const { data: latest, error: latestError } = await supabase
+                  .from("Inventory")
+                  .select("id")
+                  .order("created_at", { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+                if (!latestError && latest) {
+                  createdId = latest.id;
+                }
+              }
+
+              if (createdId) {
+                const { area_id: _area_id, purchase_volume: _purchase_volume, photo_320_base64: _photo_320_base64, photo_160_base64: _photo_160_base64, ...updatePayload } = inventoryDetails;
+                const { error: updateError } = await supabase
+                  .from("Inventory")
+                  .update(updatePayload)
+                  .eq("id", createdId);
+
+                if (updateError) {
+                  console.warn("⚠️ 추가 정보(농도/위치) 업데이트 실패:", updateError);
+                } else {
+                  console.log("✅ 추가 정보(농도/위치) 업데이트 완료");
+                }
+              } else {
+                console.warn("⚠️ 생성된 Inventory ID를 찾을 수 없어 추가 업데이트를 건너뜁니다.");
+              }
+            } catch (err) {
+              console.warn("⚠️ 추가 업데이트 중 예외 발생:", err);
+            }
+
+            alert("✅ 약품이 성공적으로 등록되었어요.");
+          }
+
+          await App.Inventory?.showListPage?.();
+        } catch (err) {
+          console.error("❌ 저장 오류:", err);
+          statusMsg.textContent = "❌ 저장 실패. 콘솔을 확인해 주세요.";
+        }
+      };
+    }
+    console.log(`✅ 약품 폼 초기화 완료 (${mode})`);
   }
 
   // -------------------------------------------------
