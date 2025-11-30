@@ -972,6 +972,13 @@
         return `<button type="button" data-value="${value}">${value}열</button>`;
       }).join("");
 
+      // Dynamic Grid Columns
+      if (columnCount > 0 && columnCount <= 12) {
+        cBox.style.display = "grid";
+        cBox.style.gridTemplateColumns = `repeat(${columnCount}, 1fr)`;
+        cBox.style.gap = "10px 0";
+      }
+
       setupButtonGroup("location_storage_column_group", (btn) => {
         set("storage_column", btn.dataset.value);
       });
@@ -1003,6 +1010,13 @@
         const label = `${labelNum}단`;
         return `<button type="button" data-value="${value}">${label}</button>`;
       }).join("");
+
+      // Dynamic Grid Columns
+      if (shelfCount > 0 && shelfCount <= 12) {
+        sBox.style.display = "grid";
+        sBox.style.gridTemplateColumns = `repeat(${shelfCount}, 1fr)`;
+        sBox.style.gap = "10px 0";
+      }
 
       setupButtonGroup("location_internal_shelf_group", (btn) => {
         set("internal_shelf_level", btn.dataset.value);
@@ -1045,6 +1059,13 @@
         return `<button type="button" data-value="${value}">${label}</button>`;
       }).join("");
 
+      // Dynamic Grid Columns
+      if (horizontalCount > 0 && horizontalCount <= 12) {
+        hBox.style.display = "grid";
+        hBox.style.gridTemplateColumns = `repeat(${horizontalCount}, 1fr)`;
+        hBox.style.gap = "10px 0";
+      }
+
       setupButtonGroup("location_door_horizontal_group", (btn) => {
         set("door_horizontal", btn.dataset.value);
         set("internal_shelf_level", null);
@@ -1077,6 +1098,13 @@
         const label = `${verticalCount - idx}층`;
         return `<button type="button" data-value="${value}">${label}</button>`;
       }).join("");
+
+      // Dynamic Grid Columns
+      if (verticalCount > 0 && verticalCount <= 12) {
+        vBox.style.display = "grid";
+        vBox.style.gridTemplateColumns = `repeat(${verticalCount}, 1fr)`;
+        vBox.style.gap = "10px 0";
+      }
 
       setupButtonGroup("location_door_vertical_group", (btn) => {
         set("door_vertical", btn.dataset.value);
