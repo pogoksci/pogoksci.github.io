@@ -248,6 +248,21 @@ button:disabled {
   outline: none;
 }
 
+/* Specific layout for Category and Manufacturer buttons */
+#classification_buttons button,
+#manufacturer_buttons button {
+  flex: 1 1 auto;
+  /* Allow growth based on content */
+  min-width: calc(12.5% - 10px);
+  /* Min width to fit ~8 per line */
+  max-width: 100%;
+  /* Prevent overflow */
+  white-space: nowrap;
+  /* Keep text on one line */
+  padding: 8px 15px;
+  /* Ensure sufficient padding */
+}
+
 
 
 .button-group button:hover {
@@ -698,11 +713,11 @@ button:disabled {
   /* 기존 flex 스타일 제거 및 공통 스타일 유지 */
   height: 40px;
   padding: 0;
-  margin: 0;
+  margin: 0 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  width: calc(100% - 24px);
   max-width: 100%;
   border: 1px solid #ccc;
   background-color: #f9f9f9;
@@ -720,7 +735,7 @@ button:disabled {
 #location_storage_column_group {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
+  gap: 10px 0;
 }
 
 /* Reset flex behavior for these grid items */
