@@ -226,7 +226,7 @@ button:disabled {
 
 .button-group button {
 
-  flex-grow: 1;
+  flex: 1;
 
   padding: 8px 10px;
 
