@@ -43,6 +43,28 @@
         old.parentNode.replaceChild(s, old);
       }
 
+      // ✅ 폐수 관리 모듈 동적 로드 (필요 시)
+      if (file.includes("waste-list.html") || file.includes("waste-form.html")) {
+        if (!App.Waste) {
+          const script = document.createElement("script");
+          script.src = "./js/ui/waste.js";
+          script.onload = () => {
+            console.log("✅ waste.js loaded successfully");
+            if (file.includes("waste-list.html")) App.Waste.bindListPage();
+            if (file.includes("waste-form.html")) App.Waste.initForm();
+          };
+          script.onerror = (e) => {
+            console.error("❌ Failed to load waste.js", e);
+            alert("폐수 관리 모듈을 불러오는데 실패했습니다.");
+          };
+          document.head.appendChild(script);
+        } else {
+          // Module already loaded, just call the relevant function
+          if (file.includes("waste-list.html")) App.Waste.bindListPage();
+          if (file.includes("waste-form.html")) App.Waste.initForm();
+        }
+      }
+
       // -------------------------------------------------
       // 페이지별 후처리
       // -------------------------------------------------
