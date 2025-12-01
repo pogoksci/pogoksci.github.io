@@ -504,6 +504,18 @@
 
     // ✅ SortDropdown 초기화
     if (App.SortDropdown && App.SortDropdown.init) {
+      const sortLabelMap = {
+        category_name_kor: "한글명(분류)",
+        category_name_eng: "영문명(분류)",
+        name_kor: "한글명(전체)",
+        name_eng: "영문명(전체)",
+        formula: "화학식",
+        storage_location: "위치",
+        created_at_desc: "등록순서",
+        exhausted: "소모완료약품",
+      };
+      const currentLabel = sortLabelMap[currentSort] || "한글명(분류)";
+
       App.SortDropdown.init({
         onChange: (val) => {
           console.log(`🔽 정렬 변경: ${val}`);
@@ -514,8 +526,8 @@
           console.log("🔄 목록 새로고침");
           loadList();
         },
-        defaultLabel: "한글명(분류)",
-        defaultValue: "category_name_kor",
+        defaultLabel: currentLabel,
+        defaultValue: currentSort,
       });
     } else {
       console.error("❌ App.SortDropdown 모듈이 로드되지 않았습니다.");
