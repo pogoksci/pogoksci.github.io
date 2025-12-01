@@ -565,7 +565,10 @@
                     loadList();
                 },
                 defaultLabel: "등록순(분류별)",
-                defaultValue: "created_asc_group"
+                defaultValue: "created_asc_group",
+                toggleId: "waste-sort-toggle",
+                menuId: "waste-sort-menu",
+                labelId: "waste-sort-label"
             });
         }
 

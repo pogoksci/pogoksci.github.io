@@ -23,11 +23,14 @@
       onRefresh = () => { },
       defaultLabel = "정렬 기준",
       defaultValue = "",
+      toggleId = "sort-toggle",
+      menuId = "sort-menu",
+      labelId = "sort-label"
     } = opts;
 
-    const toggle = document.getElementById("sort-toggle");
-    const menu = document.getElementById("sort-menu");
-    const label = document.getElementById("sort-label");
+    const toggle = document.getElementById(toggleId);
+    const menu = document.getElementById(menuId);
+    const label = document.getElementById(labelId);
     const refreshBtn = document.getElementById("refresh-btn");
 
     if (!toggle || !menu || !label) {
