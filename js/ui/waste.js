@@ -15,6 +15,7 @@
         const container = document.getElementById("waste-list-container");
         if (!container) return;
 
+        const useRecentDisposal = document.getElementById("use-recent-disposal-date")?.checked;
         const startDate = document.getElementById("waste-start-date").value;
         const endDate = document.getElementById("waste-end-date").value;
         const sortLabel = document.getElementById("sort-label");
@@ -32,42 +33,32 @@
             return;
         }
 
-        // 일반 목록 조회
-        let query = supabase
-            .from("WasteLog")
-            .select("*");
+        // 1. 폐수 처리 이력 조회 (최근 처리일 파악용)
+        let lastDisposalMap = {};
+        if (useRecentDisposal) {
+            const { data: disposalHistory } = await supabase
+                .from("WasteDisposal")
+                .select("classification, date")
+                .order("date", { ascending: true });
 
-        // 날짜 필터 적용
-        if (startDate) query = query.gte("date", startDate);
-        if (endDate) query = query.lte("date", endDate);
-
-        // 🚨 스마트 필터링 로직
-        // 1. 최근 폐수 처리일 조회
-        const { data: lastDisposal } = await supabase
-            .from("WasteDisposal")
-            .select("date")
-            .order("date", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-        const lastDisposalDate = lastDisposal ? lastDisposal.date : null;
-
-        // 2. 조건부 필터 적용
-        // - 시작 날짜가 지정되지 않았거나 (전체 기간)
-        // - 시작 날짜가 최근 처리일 이후(또는 당일)인 경우
-        // -> "현재 보관 중인(미처리)" 폐수만 보여줌 (처리된 내역 제외)
-        // - 반대로, 시작 날짜가 최근 처리일보다 과거라면 -> "히스토리 조회"로 간주하여 처리된 내역도 포함
-
-        let showActiveOnly = false;
-
-        if (!startDate) {
-            showActiveOnly = true;
-        } else if (lastDisposalDate && startDate >= lastDisposalDate) {
-            showActiveOnly = true;
+            if (disposalHistory) {
+                disposalHistory.forEach(d => {
+                    if (!lastDisposalMap[d.classification] || d.date > lastDisposalMap[d.classification]) {
+                        lastDisposalMap[d.classification] = d.date;
+                    }
+                });
+            }
         }
 
-        if (showActiveOnly) {
-            query = query.is("disposal_id", null);
+        // 2. 목록 조회
+        let query = supabase.from("WasteLog").select("*");
+
+        // 날짜 필터 적용
+        if (useRecentDisposal) {
+            if (endDate) query = query.lte("date", endDate);
+        } else {
+            if (startDate) query = query.gte("date", startDate);
+            if (endDate) query = query.lte("date", endDate);
         }
 
         // 정렬 적용
@@ -83,12 +74,22 @@
             return;
         }
 
-        if (!data || data.length === 0) {
+        let filteredData = data || [];
+
+        // 3. 메모리 필터링 (최근 위탁 처리일 모드일 경우)
+        if (useRecentDisposal) {
+            filteredData = filteredData.filter(item => {
+                const lastDate = lastDisposalMap[item.classification] || "2000-01-01";
+                return item.date >= lastDate;
+            });
+        }
+
+        if (filteredData.length === 0) {
             container.innerHTML = `<p style="padding:0 15px; color:#888;">표시할 폐수 내역이 없습니다.</p>`;
             return;
         }
 
-        renderList(data, container, currentSort);
+        renderList(filteredData, container, currentSort);
     }
 
     // 폐수업체 처리 이력 조회
@@ -503,16 +504,18 @@
     // ------------------------------------------------------------
     // 3️⃣ 페이지 바인딩
     // ------------------------------------------------------------
-    async function bindListPage() {
+    function bindListPage() {
         const searchBtn = document.getElementById("waste-search-btn");
         if (searchBtn) searchBtn.onclick = loadList;
 
         const newBtn = document.getElementById("new-waste-btn");
         if (newBtn) newBtn.onclick = () => App.Router.go("wasteForm");
 
-        // 날짜 초기화
-        const today = new Date();
+        const startInput = document.getElementById("waste-start-date");
+        const endInput = document.getElementById("waste-end-date");
+        const recentCheckbox = document.getElementById("use-recent-disposal-date");
 
+        // 날짜 유틸리티
         const toDateString = (date) => {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -520,25 +523,35 @@
             return `${y}-${m}-${d}`;
         };
 
-        const startInput = document.getElementById("waste-start-date");
-        const endInput = document.getElementById("waste-end-date");
+        const today = new Date();
 
-        // 최근 폐수 처리일 가져오기
-        const { data: lastDisposal } = await supabase
-            .from("WasteDisposal")
-            .select("date")
-            .order("date", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-        // 디폴트 시작일: 최근 처리일이 있으면 그 날짜, 없으면 이번 달 1일
-        let defaultStartDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        if (lastDisposal && lastDisposal.date) {
-            defaultStartDate = new Date(lastDisposal.date);
+        // 🏫 학년도 기준 시작일 계산 (3월 1일)
+        // 현재 월이 3월(2) 이상이면 올해 3월 1일, 아니면 작년 3월 1일
+        let academicYearStart;
+        if (today.getMonth() >= 2) { // 0-indexed, 2 is March
+            academicYearStart = new Date(today.getFullYear(), 2, 1);
+        } else {
+            academicYearStart = new Date(today.getFullYear() - 1, 2, 1);
         }
 
-        if (startInput && !startInput.value) startInput.value = toDateString(defaultStartDate);
+        // 초기값 설정
+        if (startInput && !startInput.value) startInput.value = toDateString(academicYearStart);
         if (endInput && !endInput.value) endInput.value = toDateString(today);
+
+        // 체크박스 이벤트
+        if (recentCheckbox) {
+            recentCheckbox.addEventListener("change", (e) => {
+                if (e.target.checked) {
+                    startInput.disabled = true;
+                    startInput.style.color = "#ccc";
+                    startInput.style.backgroundColor = "#f5f5f5";
+                } else {
+                    startInput.disabled = false;
+                    startInput.style.color = "#333";
+                    startInput.style.backgroundColor = "transparent";
+                }
+            });
+        }
 
         // 정렬 드롭다운 초기화
         if (App.SortDropdown) {
