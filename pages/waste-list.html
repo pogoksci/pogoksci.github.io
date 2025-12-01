@@ -3,6 +3,32 @@
     <div id="waste-list-page" class="fixed-page-layout">
         <div class="inventory-sticky-top">
             <div class="list-header">
+                <h2>폐수 관리</h2>
+            </div>
+
+            <div class="header-actions"
+                style="display: flex; width: 100%; gap: 8px; justify-content: flex-end; align-items: center;">
+
+                <!-- Date Range Picker -->
+                <div
+                    style="display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #c4c4c4; border-radius: 6px; padding: 0 8px; height: 30px; box-sizing: border-box; overflow: hidden;">
+                    <label
+                        style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer; white-space: nowrap; margin: 0;">
+                        <input type="checkbox" id="use-recent-disposal-date" style="margin: 0;">
+                        <span style="padding-top: 2px;">최근위탁처리일</span>
+                    </label>
+                    <div style="width: 1px; height: 14px; background: #ddd;"></div>
+                    <input type="date" id="waste-start-date"
+                        style="border: none; outline: none; font-size: 11px; color: #333; width: 105px; background: transparent; padding: 0; margin: 0; font-family: inherit; height: 100%;">
+                    <span style="color: #888; font-size: 11px; padding-top: 2px;">~</span>
+                    <input type="date" id="waste-end-date"
+                        style="border: none; outline: none; font-size: 11px; color: #333; width: 105px; background: transparent; padding: 0; margin: 0; font-family: inherit; height: 100%;">
+                </div>
+
+                <!-- Sort Dropdown -->
+                <div class="custom-dropdown" id="sort-dropdown" style="height: 30px; box-sizing: border-box;">
+                    <button class="dropdown-toggle" id="sort-toggle" aria-haspopup="true" aria-expanded="false"
+                        style="height: 100%; box-sizing: border-box; display: flex; align-items: center;">
                         <span class="material-symbols-outlined" style="font-size: 18px;">sort</span>
                         <span id="sort-label" data-value="created_asc_group" style="font-size: 12px;">등록순(분류별)</span>
                         <span class="material-symbols-outlined arrow" style="font-size: 18px;">expand_more</span>
