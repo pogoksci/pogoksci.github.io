@@ -1,0 +1,52 @@
+<!-- /pages/waste-form.html -->
+<form id="waste-form" autocomplete="off">
+    <h1>폐수 등록</h1>
+
+    <div class="form-group">
+        <label for="waste_date">등록일 *</label>
+        <input type="date" id="waste_date" name="waste_date" required>
+    </div>
+
+    <div class="form-group">
+        <label>분류 *</label>
+        <div class="button-group" id="waste_classification_buttons">
+            <button type="button" data-value="산">산</button>
+            <button type="button" data-value="알칼리">알칼리</button>
+            <button type="button" data-value="유기물">유기물</button>
+            <button type="button" data-value="무기물">무기물</button>
+            <button type="button" data-value="기타">기타</button>
+        </div>
+    </div>
+
+    <div class="form-group"
+        style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
+        <label style="color: #00a0b2; margin-bottom: 12px; display: block;">폐기량 입력 (택 1) *</label>
+
+        <div style="margin-bottom: 15px;">
+            <label for="waste_amount_direct" style="font-size: 13px; color: #555;">1. 폐수량 직접 입력 (g)</label>
+            <input type="number" id="waste_amount_direct" placeholder="추가된 폐수량 (예: 500)" step="any">
+        </div>
+
+        <div style="text-align: center; color: #aaa; font-size: 12px; margin: 10px 0;">- 또는 -</div>
+
+        <div>
+            <label for="waste_total_mass" style="font-size: 13px; color: #555;">2. 폐수통 전체 질량 입력 (g)</label>
+            <input type="number" id="waste_total_mass" placeholder="현재 폐수통 총 무게 (예: 2500)" step="any">
+            <p style="font-size: 11px; color: #888; margin-top: 4px;">* 이전 기록과 비교하여 폐수량을 자동 계산합니다.</p>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="waste_manager">담당</label>
+        <input type="text" id="waste_manager" placeholder="담당자 이름">
+    </div>
+
+    <div class="form-group">
+        <label for="waste_remarks">비고</label>
+        <input type="text" id="waste_remarks" placeholder="특이사항 등">
+    </div>
+
+    <button type="submit" id="waste-submit-button">폐수 정보 저장</button>
+    <button type="button" id="waste-cancel-button"
+        style="background-color: #e0e0e0; color: #333; margin-top: 10px; width: 100%; padding: 12px; border: none; border-radius: 5px; font-size: 16px; font-weight: 600;">취소</button>
+</form>

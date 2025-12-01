@@ -1,0 +1,31 @@
+<!-- /pages/waste-list.html -->
+<div class="inventory-page-container">
+    <div id="waste-list-page" class="fixed-page-layout">
+        <div class="inventory-sticky-top">
+            <div class="list-header">
+                <h2>폐수 관리</h2>
+            </div>
+
+            <div class="header-actions"
+                style="display: flex; width: 100%; gap: 8px; justify-content: flex-end; align-items: center;">
+                <!-- Refresh Button -->
+                <button id="waste-refresh-btn" title="목록 새로고침" aria-label="새로고침"
+                    style="height: 36px; width: 36px; border: 1px solid #c4c4c4; border-radius: 6px; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-outlined" style="font-size: 20px; color: #444;">refresh</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Waste List Container -->
+        <div id="waste-list-container" class="inventory-list scrollable-list-container">
+            <p id="status-message-waste-list" style="padding:0 15px; color:#888;">
+                폐수 목록을 불러오는 중...
+            </p>
+        </div>
+    </div>
+
+    <!-- FAB -->
+    <button class="fab" id="new-waste-btn">
+        <span class="material-symbols-outlined">add</span> 폐수 등록
+    </button>
+</div>
