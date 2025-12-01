@@ -4456,7 +4456,8 @@ input[type="date"] {
   padding: 0 0 18px 0;
   /* 검색창 하단 여백 18px로 축소 */
   background-color: transparent;
-  z-index: auto;
+  z-index: 100;
+  /* Ensure dropdowns appear above list content */
 }
 
 .list-header {
@@ -4641,6 +4642,7 @@ input[type="date"] {
 .custom-dropdown {
   position: relative;
   display: inline-block;
+  overflow: visible;
 }
 
 .dropdown-toggle {
