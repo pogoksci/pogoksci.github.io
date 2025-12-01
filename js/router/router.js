@@ -11,6 +11,8 @@
     inventoryDetail: "pages/inventory-detail.html", // ✅ 상세 페이지 추가
     usageRegister: "pages/usage-register.html", // ✅ 사용량 등록 페이지 추가
     dataSync: "pages/data-sync.html",
+    wasteList: "pages/waste-list.html",
+    wasteForm: "pages/waste-form.html",
   };
 
   // ✅ 현재 상태 추적 (중복 pushState 방지)
@@ -102,6 +104,14 @@
 
       case "dataSync":
         if (App?.DataSync?.init) App.DataSync.init();
+        break;
+
+      case "wasteList":
+        if (App?.Waste?.bindListPage) App.Waste.bindListPage();
+        break;
+
+      case "wasteForm":
+        if (App?.Waste?.initForm) App.Waste.initForm();
         break;
 
       case "main":
