@@ -250,6 +250,11 @@
 
     // 폐수 처리 실행
     async function handleDisposal(classification, totalAmount) {
+        // 🚨 1단계 경고: 작업의 의미 설명
+        if (!confirm(`[주의] 폐수업체 발송 처리를 진행하시겠습니까?\n\n이 작업을 수행하면 '${classification}' 분류의 현재 폐수 기록이 모두 '처리됨'으로 변경되어 별도 보관됩니다.\n\n이후 등록하는 폐수는 '새로운 폐수통'에 담기는 것으로 간주됩니다.`)) {
+            return;
+        }
+
         const company = prompt(`[${classification}] 폐수를 수거해가는 업체명을 입력해주세요.`);
         if (company === null) return; // 취소
 
