@@ -543,12 +543,14 @@
             recentCheckbox.addEventListener("change", (e) => {
                 if (e.target.checked) {
                     startInput.disabled = true;
-                    startInput.style.color = "#ccc";
-                    startInput.style.backgroundColor = "#f5f5f5";
+                    startInput.style.color = "#aaa";
+                    startInput.style.backgroundColor = "#eee";
+                    startInput.style.pointerEvents = "none"; // 클릭 방지
                 } else {
                     startInput.disabled = false;
                     startInput.style.color = "#333";
                     startInput.style.backgroundColor = "transparent";
+                    startInput.style.pointerEvents = "auto";
                 }
             });
         }
