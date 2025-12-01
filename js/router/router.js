@@ -116,6 +116,8 @@
       usageRegister: "nav-usage",
       cabinets: "menu-location",
       dataSync: "menu-datasync",
+      wasteList: "nav-waste",
+      wasteForm: "nav-waste",
       main: "menu-home"
     };
 
