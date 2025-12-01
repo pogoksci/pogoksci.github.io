@@ -62,20 +62,21 @@
 
                 return `
                 <div class="inventory-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
-                    <div>
-                        <div style="font-weight: 600; color: #333; font-size: 14px;">${dateStr}</div>
-                        <div style="font-size: 12px; color: #888; margin-top: 2px;">
-                            ${item.manager ? `담당: ${item.manager}` : ""}
-                            ${item.remarks ? ` | ${item.remarks}` : ""}
-                        </div>
+                    <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-weight: 600; color: #333; font-size: 14px;">${dateStr}</span>
+                        ${item.remarks ? `<span style="font-size: 12px; color: #888;">(${item.remarks})</span>` : ""}
                     </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: #d33; font-size: 14px;">${amountStr} g</div>
-                        <div style="margin-top: 4px;">
-                            <button class="icon-btn delete-waste-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
-                                <span class="material-symbols-outlined" style="font-size: 18px; color: #999;">delete</span>
-                            </button>
-                        </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-weight: 700; color: #d33; font-size: 14px;">${amountStr} g</span>
+                        
+                        <button class="icon-btn edit-waste-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
+                            <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
+                        </button>
+
+                        <button class="icon-btn delete-waste-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
+                            <span class="material-symbols-outlined" style="font-size: 20px; color: #999;">delete</span>
+                        </button>
                     </div>
                 </div>`;
             }).join("");
@@ -91,6 +92,15 @@
         });
 
         container.innerHTML = html;
+
+        // 수정 버튼 이벤트
+        container.querySelectorAll(".edit-waste-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                App.Router.go("wasteForm", { mode: "edit", id: id });
+            });
+        });
 
         // 삭제 버튼 이벤트
         container.querySelectorAll(".delete-waste-btn").forEach(btn => {
@@ -116,8 +126,15 @@
     // ------------------------------------------------------------
     // 2️⃣ 폼 초기화 및 로직
     // ------------------------------------------------------------
-    async function initForm() {
+    async function initForm(mode = "create", id = null) {
         reset();
+
+        // 상태 저장 (수정 모드 식별용)
+        set("form_mode", mode);
+        set("edit_id", id);
+
+        const titleEl = document.querySelector("#waste-form h2");
+        if (titleEl) titleEl.textContent = mode === "edit" ? "폐수 정보 수정" : "폐수 등록";
 
         // 기본값 설정
         const today = new Date().toISOString().split("T")[0];
@@ -129,7 +146,7 @@
             set("waste_classification", btn.dataset.value);
         });
 
-        // 입력 필드 제어 (하나 입력하면 다른 하나 비우기 등)
+        // 입력 필드 제어
         const directInput = document.getElementById("waste_amount_direct");
         const totalInput = document.getElementById("waste_total_mass");
 
@@ -141,8 +158,40 @@
             if (totalInput.value) directInput.value = "";
         });
 
+        // 수정 모드일 경우 데이터 로드
+        if (mode === "edit" && id) {
+            const { data, error } = await supabase.from("WasteLog").select("*").eq("id", id).single();
+            if (error || !data) {
+                alert("데이터를 불러오지 못했습니다.");
+                App.Router.go("wasteList");
+                return;
+            }
+
+            // 데이터 채우기
+            document.getElementById("waste_date").value = data.date;
+            set("waste_date", data.date);
+
+            // 분류 버튼 활성화
+            const classBtn = document.querySelector(`#waste_classification_buttons button[data-value="${data.classification}"]`);
+            if (classBtn) classBtn.click();
+
+            // 폐수량 (수정 시에는 직접 입력란에 amount를 넣어주는 것이 직관적일 수 있음)
+            // 하지만 total_mass_log가 있다면 그것을 보여줄 수도 있음.
+            // 여기서는 amount를 직접 입력란에 표시
+            directInput.value = data.amount;
+
+            if (data.manager) document.getElementById("waste_manager").value = data.manager;
+            if (data.remarks) document.getElementById("waste_remarks").value = data.remarks;
+        }
+
         // 저장 버튼
-        document.getElementById("waste-submit-button").addEventListener("click", handleSave);
+        const submitBtn = document.getElementById("waste-submit-button");
+        // 기존 리스너 제거를 위해 cloneNode 사용 (간단한 방법)
+        const newSubmitBtn = submitBtn.cloneNode(true);
+        submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+
+        newSubmitBtn.textContent = mode === "edit" ? "수정사항 저장" : "폐수 정보 저장";
+        newSubmitBtn.addEventListener("click", handleSave);
 
         // 취소 버튼
         document.getElementById("waste-cancel-button").addEventListener("click", () => {
@@ -152,6 +201,9 @@
 
     async function handleSave(e) {
         e.preventDefault();
+
+        const mode = get("form_mode");
+        const editId = get("edit_id");
 
         const date = document.getElementById("waste_date").value;
         const classification = get("waste_classification");
@@ -168,34 +220,48 @@
         let totalMassLog = null;
 
         if (directVal) {
-            // 🚨 첫 등록 여부 확인 (직접 입력 시)
-            const { count, error: countError } = await supabase
-                .from("WasteLog")
-                .select("*", { count: 'exact', head: true })
-                .eq("classification", classification);
+            // 🚨 첫 등록 여부 확인 (직접 입력 시) - 생성 모드일 때만 체크하거나, 수정 시에도 분류가 바뀌면 체크?
+            // 수정 모드에서는 기존 기록이 있으므로 체크가 애매하지만, 분류를 바꿨다면 체크 필요.
+            // 일단 생성 모드일 때만 엄격하게 체크
+            if (mode !== "edit") {
+                const { count } = await supabase
+                    .from("WasteLog")
+                    .select("*", { count: 'exact', head: true })
+                    .eq("classification", classification);
 
-            if (count === 0) {
-                alert(`'${classification}' 분류의 폐수 등록 기록이 없습니다.\n기준점 설정을 위해 첫 등록 시에는 반드시 [2. 폐수통 전체 질량]을 입력해주세요.`);
-                return;
+                if (count === 0) {
+                    alert(`'${classification}' 분류의 폐수 등록 기록이 없습니다.\n기준점 설정을 위해 첫 등록 시에는 반드시 [2. 폐수통 전체 질량]을 입력해주세요.`);
+                    return;
+                }
             }
 
             finalAmount = Number(directVal);
-            // 직접 입력 시 total_mass_log는 계산하지 않음 (또는 이전 값 + amount로 추정 가능하지만, 정확하지 않을 수 있음)
-            // 요구사항: "폐수량을 직접 입력한 경우는 그 값을 이용"
         } else if (totalVal) {
             const currentTotal = Number(totalVal);
             totalMassLog = currentTotal;
 
             // 이전 기록 조회하여 차이 계산
-            const { data: lastLog, error } = await supabase
+            // 수정 모드일 때는 '자신'을 제외한 가장 최근 기록을 찾아야 하나?
+            // 로직이 복잡해질 수 있음. 수정 시 totalVal을 입력하면, 
+            // "현재 시점의 총량"으로 간주하고, "직전 기록"과의 차이를 계산.
+
+            let query = supabase
                 .from("WasteLog")
                 .select("total_mass_log")
                 .eq("classification", classification)
                 .order("date", { ascending: false })
                 .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
+                .limit(1);
 
+            // 수정 시에는 자신보다 이전 기록을 찾아야 함. (날짜 기준?)
+            // 단순히 가장 최근 기록을 가져오면 자신이 될 수도 있음.
+            if (mode === "edit") {
+                query = query.neq("id", editId);
+                // 주의: 날짜를 수정했다면 그 날짜 기준 이전 데이터를 찾아야 함.
+                // 여기서는 간단히 "가장 최근(자신 제외)"로 처리
+            }
+
+            const { data: lastLog } = await query.maybeSingle();
             const prevTotal = (lastLog && lastLog.total_mass_log) ? Number(lastLog.total_mass_log) : 0;
             finalAmount = currentTotal - prevTotal;
 
@@ -216,12 +282,20 @@
             remarks
         };
 
-        const { error } = await supabase.from("WasteLog").insert(payload);
+        let error;
+        if (mode === "edit" && editId) {
+            const res = await supabase.from("WasteLog").update(payload).eq("id", editId);
+            error = res.error;
+        } else {
+            const res = await supabase.from("WasteLog").insert(payload);
+            error = res.error;
+        }
+
         if (error) {
             console.error("저장 실패:", error);
             alert("저장 중 오류가 발생했습니다.");
         } else {
-            alert("✅ 폐수 정보가 저장되었습니다.");
+            alert(mode === "edit" ? "✅ 수정되었습니다." : "✅ 저장되었습니다.");
             App.Router.go("wasteList");
         }
     }

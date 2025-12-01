@@ -111,7 +111,11 @@
         break;
 
       case "wasteForm":
-        if (App?.Waste?.initForm) App.Waste.initForm();
+        if (App?.Waste?.initForm) {
+          const mode = params.mode || "create";
+          const id = params.id || null;
+          App.Waste.initForm(mode, id);
+        }
         break;
 
       case "main":
