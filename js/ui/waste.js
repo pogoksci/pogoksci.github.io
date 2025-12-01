@@ -11,9 +11,17 @@
     // ------------------------------------------------------------
     // 1️⃣ 목록 조회 및 렌더링
     // ------------------------------------------------------------
+    // ------------------------------------------------------------
+    // 1️⃣ 목록 조회 및 렌더링
+    // ------------------------------------------------------------
     async function loadList() {
         const container = document.getElementById("waste-list-container");
         if (!container) return;
+
+        const startDate = document.getElementById("waste-start-date").value;
+        const endDate = document.getElementById("waste-end-date").value;
+        const sortLabel = document.getElementById("sort-label");
+        const currentSort = sortLabel ? sortLabel.dataset.value : "created_asc_group";
 
         container.innerHTML = `
             <p style="padding:0 15px; color:#888;">
@@ -21,11 +29,24 @@
                 폐수 목록을 불러오는 중...
             </p>`;
 
-        const { data, error } = await supabase
+        let query = supabase
             .from("WasteLog")
-            .select("*")
-            .order("date", { ascending: false })
-            .order("created_at", { ascending: false });
+            .select("*");
+
+        // 날짜 필터 적용
+        if (startDate) query = query.gte("date", startDate);
+        if (endDate) query = query.lte("date", endDate);
+
+        // 정렬 적용
+        // created_asc_group, created_desc_group, created_asc_all, created_desc_all
+        const isDesc = currentSort.includes("desc");
+
+        // 1차 정렬: 날짜
+        query = query.order("date", { ascending: !isDesc });
+        // 2차 정렬: 등록시간 (같은 날짜 내 순서)
+        query = query.order("created_at", { ascending: !isDesc });
+
+        const { data, error } = await query;
 
         if (error) {
             console.error("❌ 폐수 목록 조회 실패:", error);
@@ -34,65 +55,89 @@
         }
 
         if (!data || data.length === 0) {
-            container.innerHTML = `<p style="padding:0 15px; color:#888;">등록된 폐수 내역이 없습니다.</p>`;
+            container.innerHTML = `<p style="padding:0 15px; color:#888;">해당 기간에 등록된 폐수 내역이 없습니다.</p>`;
             return;
         }
 
-        renderList(data, container);
+        renderList(data, container, currentSort);
     }
 
-    function renderList(rows, container) {
-        // 분류별 그룹화
-        const grouped = rows.reduce((acc, row) => {
-            const key = row.classification || "기타";
-            if (!acc[key]) acc[key] = { items: [], total: 0 };
-            acc[key].items.push(row);
-            acc[key].total += Number(row.amount) || 0;
-            return acc;
-        }, {});
-
-        // 렌더링
+    function renderList(rows, container, currentSort) {
+        const isGrouped = currentSort.includes("group");
         let html = "";
-        Object.entries(grouped).forEach(([classification, group]) => {
-            const totalStr = group.total.toLocaleString();
 
-            let itemsHtml = group.items.map(item => {
-                const dateStr = item.date; // YYYY-MM-DD
-                const amountStr = Number(item.amount).toLocaleString();
+        if (isGrouped) {
+            // 분류별 그룹화
+            const grouped = rows.reduce((acc, row) => {
+                const key = row.classification || "기타";
+                if (!acc[key]) acc[key] = { items: [], total: 0 };
+                acc[key].items.push(row);
+                acc[key].total += Number(row.amount) || 0;
+                return acc;
+            }, {});
 
-                return `
-                <div class="inventory-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
-                    <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
-                        <span style="font-weight: 600; color: #333; font-size: 14px;">${dateStr}</span>
-                        ${item.remarks ? `<span style="font-size: 12px; color: #888;">(${item.remarks})</span>` : ""}
+            Object.entries(grouped).forEach(([classification, group]) => {
+                const totalStr = group.total.toLocaleString();
+                const itemsHtml = renderItems(group.items);
+
+                html += `
+                <div class="inventory-section-group">
+                    <div class="inventory-section-header">
+                        <span class="section-title">${classification}</span>
+                        <span class="section-count" style="background: #ffebee; color: #c62828;">누적: ${totalStr} g</span>
                     </div>
-                    
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <span style="font-weight: 700; color: #d33; font-size: 14px;">${amountStr} g</span>
-                        
-                        <button class="icon-btn edit-waste-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
-                            <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
-                        </button>
-
-                        <button class="icon-btn delete-waste-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
-                            <span class="material-symbols-outlined" style="font-size: 20px; color: #999;">delete</span>
-                        </button>
-                    </div>
+                    ${itemsHtml}
                 </div>`;
-            }).join("");
+            });
+        } else {
+            // 전체 목록 (단일 리스트)
+            // 전체 합계 계산
+            const totalAmount = rows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0);
+            const itemsHtml = renderItems(rows);
 
             html += `
             <div class="inventory-section-group">
                 <div class="inventory-section-header">
-                    <span class="section-title">${classification}</span>
-                    <span class="section-count" style="background: #ffebee; color: #c62828;">누적: ${totalStr} g</span>
+                    <span class="section-title">전체 목록</span>
+                    <span class="section-count" style="background: #ffebee; color: #c62828;">총 누적: ${totalAmount.toLocaleString()} g</span>
                 </div>
                 ${itemsHtml}
             </div>`;
-        });
+        }
 
         container.innerHTML = html;
+        bindListEvents(container);
+    }
 
+    function renderItems(items) {
+        return items.map(item => {
+            const dateStr = item.date; // YYYY-MM-DD
+            const amountStr = Number(item.amount).toLocaleString();
+
+            return `
+            <div class="inventory-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
+                <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-weight: 600; color: #333; font-size: 14px;">${dateStr}</span>
+                    <span style="font-size: 13px; color: #555; background: #eee; padding: 2px 6px; border-radius: 4px;">${item.classification}</span>
+                    ${item.remarks ? `<span style="font-size: 12px; color: #888;">(${item.remarks})</span>` : ""}
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-weight: 700; color: #d33; font-size: 14px;">${amountStr} g</span>
+                    
+                    <button class="icon-btn edit-waste-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
+                        <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
+                    </button>
+
+                    <button class="icon-btn delete-waste-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
+                        <span class="material-symbols-outlined" style="font-size: 20px; color: #999;">delete</span>
+                    </button>
+                </div>
+            </div>`;
+        }).join("");
+    }
+
+    function bindListEvents(container) {
         // 수정 버튼 이벤트
         container.querySelectorAll(".edit-waste-btn").forEach(btn => {
             btn.addEventListener("click", (e) => {
@@ -299,23 +344,6 @@
             App.Router.go("wasteList");
         }
     }
-
-    // ------------------------------------------------------------
-    // 3️⃣ 페이지 바인딩
-    // ------------------------------------------------------------
-    function bindListPage() {
-        const refreshBtn = document.getElementById("waste-refresh-btn");
-        if (refreshBtn) refreshBtn.onclick = loadList;
-
-        const newBtn = document.getElementById("new-waste-btn");
-        if (newBtn) newBtn.onclick = () => App.Router.go("wasteForm");
-
-        loadList();
-    }
-
-    // ------------------------------------------------------------
-    // 전역 등록
-    // ------------------------------------------------------------
     globalThis.App = globalThis.App || {};
     globalThis.App.Waste = {
         loadList,
