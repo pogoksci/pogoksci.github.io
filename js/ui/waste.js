@@ -162,8 +162,9 @@
                 const totalStr = group.total.toLocaleString();
                 const itemsHtml = renderItems(group.items);
 
-                // 폐수위탁처리 버튼: 기본 뷰이고, 미처리 항목이 있을 때만 표시
-                const showDisposalBtn = !document.getElementById("waste-start-date").value && hasActiveItems;
+                // 폐수위탁처리 버튼: 미처리 항목이 있을 때 표시
+                // (날짜 필터와 관계없이, 현재 '미처리' 상태인 항목이 있다면 처리 가능하도록 함)
+                const showDisposalBtn = hasActiveItems;
 
                 html += `
                 <div class="inventory-section-group">
