@@ -26,7 +26,7 @@
                 폐수 목록을 불러오는 중...
             </p>`;
 
-        // 🚛 폐수업체처리(분류별) 보기 모드
+        // 🚛 폐수위탁처리(분류별) 보기 모드
         if (currentSort === "disposal_group") {
             await loadDisposalHistory(container, startDate, endDate);
             return;
@@ -41,9 +41,32 @@
         if (startDate) query = query.gte("date", startDate);
         if (endDate) query = query.lte("date", endDate);
 
-        // 🚨 날짜 필터가 없으면 -> 현재 보관 중인(미처리) 폐수만 표시
-        // 🚨 날짜 필터가 있으면 -> 처리 여부 상관없이 해당 기간 모든 폐수 표시
-        if (!startDate && !endDate) {
+        // 🚨 스마트 필터링 로직
+        // 1. 최근 폐수 처리일 조회
+        const { data: lastDisposal } = await supabase
+            .from("WasteDisposal")
+            .select("date")
+            .order("date", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        const lastDisposalDate = lastDisposal ? lastDisposal.date : null;
+
+        // 2. 조건부 필터 적용
+        // - 시작 날짜가 지정되지 않았거나 (전체 기간)
+        // - 시작 날짜가 최근 처리일 이후(또는 당일)인 경우
+        // -> "현재 보관 중인(미처리)" 폐수만 보여줌 (처리된 내역 제외)
+        // - 반대로, 시작 날짜가 최근 처리일보다 과거라면 -> "히스토리 조회"로 간주하여 처리된 내역도 포함
+
+        let showActiveOnly = false;
+
+        if (!startDate) {
+            showActiveOnly = true;
+        } else if (lastDisposalDate && startDate >= lastDisposalDate) {
+            showActiveOnly = true;
+        }
+
+        if (showActiveOnly) {
             query = query.is("disposal_id", null);
         }
 
@@ -138,7 +161,7 @@
                 const totalStr = group.total.toLocaleString();
                 const itemsHtml = renderItems(group.items);
 
-                // 폐수업체발송 버튼: 기본 뷰이고, 미처리 항목이 있을 때만 표시
+                // 폐수위탁처리 버튼: 기본 뷰이고, 미처리 항목이 있을 때만 표시
                 const showDisposalBtn = !document.getElementById("waste-start-date").value && hasActiveItems;
 
                 html += `
@@ -149,7 +172,7 @@
                             ${showDisposalBtn ? `
                             <button class="disposal-btn" data-class="${classification}" data-total="${group.total}"
                                 style="font-size: 11px; padding: 4px 8px; border: 1px solid #00a0b2; background: #e0f7fa; color: #006064; border-radius: 4px; cursor: pointer; font-weight: 600;">
-                                🚛 폐수업체발송
+                                🚛 폐수위탁처리
                             </button>` : ""}
                         </div>
                         <span class="section-count" style="background: #ffebee; color: #c62828;">누적: ${totalStr} g</span>
@@ -237,7 +260,7 @@
             });
         });
 
-        // 🚛 폐수업체발송 버튼
+        // 🚛 폐수위탁처리 버튼
         container.querySelectorAll(".disposal-btn").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 e.stopPropagation();
@@ -251,17 +274,17 @@
     // 폐수 처리 실행
     async function handleDisposal(classification, totalAmount) {
         // 🚨 1단계 경고: 작업의 의미 설명
-        if (!confirm(`[주의] 폐수업체 발송 처리를 진행하시겠습니까?\n\n이 작업을 수행하면 '${classification}' 분류의 현재 폐수 기록이 모두 '처리됨'으로 변경되어 별도 보관됩니다.\n\n이후 등록하는 폐수는 '새로운 폐수통'에 담기는 것으로 간주됩니다.`)) {
+        if (!confirm(`[주의] 폐수위탁처리를 진행하시겠습니까?\n\n이 작업을 수행하면 '${classification}' 분류의 현재 폐수 기록이 모두 '처리됨'으로 변경되어 별도 보관됩니다.\n\n이후 등록하는 폐수는 '새로운 폐수통'에 담기는 것으로 간주됩니다.`)) {
             return;
         }
 
-        const company = prompt(`[${classification}] 폐수를 수거해가는 업체명을 입력해주세요.`);
+        const company = prompt(`[${classification}] 폐수위탁처리 업체명을 입력해주세요.`);
         if (company === null) return; // 취소
 
         const dateStr = prompt("수거 날짜를 입력해주세요 (YYYY-MM-DD)", new Date().toISOString().split("T")[0]);
         if (!dateStr) return;
 
-        if (!confirm(`'${classification}' 폐수 ${Number(totalAmount).toLocaleString()}g을\n'${company}' 업체로 발송 처리하시겠습니까?\n\n처리 후에는 현재 목록에서 사라지며, [폐수업체처리] 메뉴에서 확인할 수 있습니다.`)) {
+        if (!confirm(`'${classification}' 폐수 ${Number(totalAmount).toLocaleString()}g을\n'${company}' 업체로 발송 처리하시겠습니까?\n\n처리 후에는 현재 목록에서 사라지며, [폐수위탁처리] 메뉴에서 확인할 수 있습니다.`)) {
             return;
         }
 
@@ -480,16 +503,15 @@
     // ------------------------------------------------------------
     // 3️⃣ 페이지 바인딩
     // ------------------------------------------------------------
-    function bindListPage() {
+    async function bindListPage() {
         const searchBtn = document.getElementById("waste-search-btn");
         if (searchBtn) searchBtn.onclick = loadList;
 
         const newBtn = document.getElementById("new-waste-btn");
         if (newBtn) newBtn.onclick = () => App.Router.go("wasteForm");
 
-        // 날짜 초기화 (이번 달 1일 ~ 오늘)
+        // 날짜 초기화
         const today = new Date();
-        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
 
         const toDateString = (date) => {
             const y = date.getFullYear();
@@ -501,7 +523,21 @@
         const startInput = document.getElementById("waste-start-date");
         const endInput = document.getElementById("waste-end-date");
 
-        if (startInput && !startInput.value) startInput.value = toDateString(firstDay);
+        // 최근 폐수 처리일 가져오기
+        const { data: lastDisposal } = await supabase
+            .from("WasteDisposal")
+            .select("date")
+            .order("date", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        // 디폴트 시작일: 최근 처리일이 있으면 그 날짜, 없으면 이번 달 1일
+        let defaultStartDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        if (lastDisposal && lastDisposal.date) {
+            defaultStartDate = new Date(lastDisposal.date);
+        }
+
+        if (startInput && !startInput.value) startInput.value = toDateString(defaultStartDate);
         if (endInput && !endInput.value) endInput.value = toDateString(today);
 
         // 정렬 드롭다운 초기화
@@ -516,8 +552,7 @@
             });
         }
 
-        // loadList(); // bindListPage가 호출될 때 loadList를 호출하면 중복 호출될 수 있음 (router에서 호출)
-        // 하지만 초기화 시점에는 필요할 수 있음.
+        loadList();
     }
 
     // ------------------------------------------------------------
