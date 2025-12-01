@@ -248,9 +248,11 @@ button:disabled {
   outline: none;
 }
 
-/* Specific layout for Category and Manufacturer buttons */
+/* Specific layout for Category, Manufacturer, Container Type, and State buttons */
 #classification_buttons button,
-#manufacturer_buttons button {
+#manufacturer_buttons button,
+#bottle_type_buttons button,
+#state_buttons button {
   flex: 1 1 auto;
   /* Allow growth based on content */
   min-width: calc(12.5% - 10px);
