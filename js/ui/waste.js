@@ -168,6 +168,17 @@
         let totalMassLog = null;
 
         if (directVal) {
+            // 🚨 첫 등록 여부 확인 (직접 입력 시)
+            const { count, error: countError } = await supabase
+                .from("WasteLog")
+                .select("*", { count: 'exact', head: true })
+                .eq("classification", classification);
+
+            if (count === 0) {
+                alert(`'${classification}' 분류의 폐수 등록 기록이 없습니다.\n기준점 설정을 위해 첫 등록 시에는 반드시 [2. 폐수통 전체 질량]을 입력해주세요.`);
+                return;
+            }
+
             finalAmount = Number(directVal);
             // 직접 입력 시 total_mass_log는 계산하지 않음 (또는 이전 값 + amount로 추정 가능하지만, 정확하지 않을 수 있음)
             // 요구사항: "폐수량을 직접 입력한 경우는 그 값을 이용"
