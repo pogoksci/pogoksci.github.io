@@ -327,7 +327,14 @@
     const title = document.querySelector("#inventory-form h1");
     const submitBtn = document.getElementById("inventory-submit-button");
     const statusMsg = document.getElementById("statusMessage");
-    if (title) title.textContent = mode === "edit" ? "약품 정보 수정" : "약품 입고 정보 입력";
+    if (title) {
+      if (mode === "edit" && detail) {
+        const chemName = detail.Substance?.chem_name_kor_mod || detail.Substance?.chem_name_kor || detail.Substance?.substance_name_mod || detail.Substance?.substance_name || detail.Substance?.cas_rn || "알 수 없음";
+        title.innerHTML = `약품 정보 수정: ${chemName} <span style="font-size: 13px; color: #666;">(No.${detail.id})</span>`;
+      } else {
+        title.textContent = "약품 입고 정보 입력";
+      }
+    }
 
     const BUTTON_GROUP_IDS = [
       "classification_buttons",
