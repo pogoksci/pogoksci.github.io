@@ -169,15 +169,16 @@
                 html += `
                 <div class="inventory-section-group">
                     <div class="inventory-section-header">
+                        <span class="section-title">${classification}</span>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="section-title">${classification}</span>
+                            <span class="section-count" style="background: #ffebee; color: #c62828;">누적: ${totalStr} g</span>
                             ${showDisposalBtn ? `
                             <button class="disposal-btn" data-class="${classification}" data-total="${group.total}"
-                                style="font-size: 11px; padding: 4px 8px; border: 1px solid #00a0b2; background: #e0f7fa; color: #006064; border-radius: 4px; cursor: pointer; font-weight: 600;">
-                                🚛 폐수위탁처리
+                                style="font-size: 11px; padding: 4px 8px; border: 1px solid #00a0b2; background: #e0f7fa; color: #006064; border-radius: 4px; cursor: pointer; font-weight: 600; display: flex; align-items: center;">
+                                <span class="material-symbols-outlined" style="font-size: 14px; margin-right: 4px;">local_shipping</span>
+                                폐수위탁처리
                             </button>` : ""}
                         </div>
-                        <span class="section-count" style="background: #ffebee; color: #c62828;">누적: ${totalStr} g</span>
                     </div>
                     ${itemsHtml}
                 </div>`;
