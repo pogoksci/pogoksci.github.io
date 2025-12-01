@@ -11,9 +11,6 @@
     // ------------------------------------------------------------
     // 1️⃣ 목록 조회 및 렌더링
     // ------------------------------------------------------------
-    // ------------------------------------------------------------
-    // 1️⃣ 목록 조회 및 렌더링
-    // ------------------------------------------------------------
     async function loadList() {
         const container = document.getElementById("waste-list-container");
         if (!container) return;
@@ -29,6 +26,13 @@
                 폐수 목록을 불러오는 중...
             </p>`;
 
+        // 🚛 폐수업체처리(분류별) 보기 모드
+        if (currentSort === "disposal_group") {
+            await loadDisposalHistory(container, startDate, endDate);
+            return;
+        }
+
+        // 일반 목록 조회
         let query = supabase
             .from("WasteLog")
             .select("*");
@@ -37,13 +41,15 @@
         if (startDate) query = query.gte("date", startDate);
         if (endDate) query = query.lte("date", endDate);
 
-        // 정렬 적용
-        // created_asc_group, created_desc_group, created_asc_all, created_desc_all
-        const isDesc = currentSort.includes("desc");
+        // 🚨 날짜 필터가 없으면 -> 현재 보관 중인(미처리) 폐수만 표시
+        // 🚨 날짜 필터가 있으면 -> 처리 여부 상관없이 해당 기간 모든 폐수 표시
+        if (!startDate && !endDate) {
+            query = query.is("disposal_id", null);
+        }
 
-        // 1차 정렬: 날짜
+        // 정렬 적용
+        const isDesc = currentSort.includes("desc");
         query = query.order("date", { ascending: !isDesc });
-        // 2차 정렬: 등록시간 (같은 날짜 내 순서)
         query = query.order("created_at", { ascending: !isDesc });
 
         const { data, error } = await query;
@@ -55,11 +61,60 @@
         }
 
         if (!data || data.length === 0) {
-            container.innerHTML = `<p style="padding:0 15px; color:#888;">해당 기간에 등록된 폐수 내역이 없습니다.</p>`;
+            container.innerHTML = `<p style="padding:0 15px; color:#888;">표시할 폐수 내역이 없습니다.</p>`;
             return;
         }
 
         renderList(data, container, currentSort);
+    }
+
+    // 폐수업체 처리 이력 조회
+    async function loadDisposalHistory(container, startDate, endDate) {
+        let query = supabase
+            .from("WasteDisposal")
+            .select("*, WasteLog(*)") // Join WasteLog to show details if needed
+            .order("date", { ascending: false });
+
+        if (startDate) query = query.gte("date", startDate);
+        if (endDate) query = query.lte("date", endDate);
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error("❌ 처리 이력 조회 실패:", error);
+            container.innerHTML = `<p style="padding:0 15px; color:#d33;">처리 이력을 불러오지 못했습니다.</p>`;
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            container.innerHTML = `<p style="padding:0 15px; color:#888;">폐수 처리 이력이 없습니다.</p>`;
+            return;
+        }
+
+        let html = "";
+        data.forEach(disposal => {
+            const totalStr = Number(disposal.total_amount).toLocaleString();
+
+            // 상세 내역 (WasteLog)
+            const logs = disposal.WasteLog || [];
+            const itemsHtml = renderItems(logs, true); // true = readonly (no edit/delete)
+
+            html += `
+            <div class="inventory-section-group" style="border-left: 4px solid #aaa;">
+                <div class="inventory-section-header" style="background: #f0f0f0;">
+                    <div>
+                        <span class="section-title" style="color: #555;">${disposal.classification} (처리완료)</span>
+                        <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                            📅 ${disposal.date} | 🏭 ${disposal.company_name || "업체미지정"} | 👤 ${disposal.manager || "-"}
+                        </div>
+                    </div>
+                    <span class="section-count" style="background: #e0e0e0; color: #555;">총 ${totalStr} g</span>
+                </div>
+                ${itemsHtml}
+            </div>`;
+        });
+
+        container.innerHTML = html;
     }
 
     function renderList(rows, container, currentSort) {
@@ -77,13 +132,26 @@
             }, {});
 
             Object.entries(grouped).forEach(([classification, group]) => {
+                // 이 그룹에 "미처리"된 항목이 하나라도 있는지 확인
+                const hasActiveItems = group.items.some(item => !item.disposal_id);
+
                 const totalStr = group.total.toLocaleString();
                 const itemsHtml = renderItems(group.items);
+
+                // 폐수업체발송 버튼: 기본 뷰이고, 미처리 항목이 있을 때만 표시
+                const showDisposalBtn = !document.getElementById("waste-start-date").value && hasActiveItems;
 
                 html += `
                 <div class="inventory-section-group">
                     <div class="inventory-section-header">
-                        <span class="section-title">${classification}</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="section-title">${classification}</span>
+                            ${showDisposalBtn ? `
+                            <button class="disposal-btn" data-class="${classification}" data-total="${group.total}"
+                                style="font-size: 11px; padding: 4px 8px; border: 1px solid #00a0b2; background: #e0f7fa; color: #006064; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                                🚛 폐수업체발송
+                            </button>` : ""}
+                        </div>
                         <span class="section-count" style="background: #ffebee; color: #c62828;">누적: ${totalStr} g</span>
                     </div>
                     ${itemsHtml}
@@ -91,7 +159,6 @@
             });
         } else {
             // 전체 목록 (단일 리스트)
-            // 전체 합계 계산
             const totalAmount = rows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0);
             const itemsHtml = renderItems(rows);
 
@@ -109,22 +176,34 @@
         bindListEvents(container);
     }
 
-    function renderItems(items) {
+    function renderItems(items, readOnly = false) {
         return items.map(item => {
-            const dateStr = item.date; // YYYY-MM-DD
+            const dateStr = item.date;
             const amountStr = Number(item.amount).toLocaleString();
+            const isDisposed = !!item.disposal_id;
+
+            // 처리된 항목 스타일
+            const cardStyle = isDisposed
+                ? "background-color: #f5f5f5; opacity: 0.7; border: 1px dashed #ccc;"
+                : "";
+
+            const badge = isDisposed
+                ? `<span style="font-size: 11px; color: #fff; background: #999; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">처리됨</span>`
+                : "";
 
             return `
-            <div class="inventory-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
+            <div class="inventory-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; ${cardStyle}">
                 <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
                     <span style="font-weight: 600; color: #333; font-size: 14px;">${dateStr}</span>
                     <span style="font-size: 13px; color: #555; background: #eee; padding: 2px 6px; border-radius: 4px;">${item.classification}</span>
+                    ${badge}
                     ${item.remarks ? `<span style="font-size: 12px; color: #888;">(${item.remarks})</span>` : ""}
                 </div>
                 
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <span style="font-weight: 700; color: #d33; font-size: 14px;">${amountStr} g</span>
+                    <span style="font-weight: 700; color: ${isDisposed ? '#888' : '#d33'}; font-size: 14px;">${amountStr} g</span>
                     
+                    ${!readOnly && !isDisposed ? `
                     <button class="icon-btn edit-waste-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
                         <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
                     </button>
@@ -132,13 +211,14 @@
                     <button class="icon-btn delete-waste-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
                         <span class="material-symbols-outlined" style="font-size: 20px; color: #999;">delete</span>
                     </button>
+                    ` : ""}
                 </div>
             </div>`;
         }).join("");
     }
 
     function bindListEvents(container) {
-        // 수정 버튼 이벤트
+        // 수정/삭제 버튼 (기존 로직)
         container.querySelectorAll(".edit-waste-btn").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 e.stopPropagation();
@@ -147,7 +227,6 @@
             });
         });
 
-        // 삭제 버튼 이벤트
         container.querySelectorAll(".delete-waste-btn").forEach(btn => {
             btn.addEventListener("click", async (e) => {
                 e.stopPropagation();
@@ -157,6 +236,65 @@
                 }
             });
         });
+
+        // 🚛 폐수업체발송 버튼
+        container.querySelectorAll(".disposal-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const classification = btn.dataset.class;
+                const totalAmount = btn.dataset.total;
+                handleDisposal(classification, totalAmount);
+            });
+        });
+    }
+
+    // 폐수 처리 실행
+    async function handleDisposal(classification, totalAmount) {
+        const company = prompt(`[${classification}] 폐수를 수거해가는 업체명을 입력해주세요.`);
+        if (company === null) return; // 취소
+
+        const dateStr = prompt("수거 날짜를 입력해주세요 (YYYY-MM-DD)", new Date().toISOString().split("T")[0]);
+        if (!dateStr) return;
+
+        if (!confirm(`'${classification}' 폐수 ${Number(totalAmount).toLocaleString()}g을\n'${company}' 업체로 발송 처리하시겠습니까?\n\n처리 후에는 현재 목록에서 사라지며, [폐수업체처리] 메뉴에서 확인할 수 있습니다.`)) {
+            return;
+        }
+
+        // 1. WasteDisposal 생성
+        const { data: disposalData, error: disposalError } = await supabase
+            .from("WasteDisposal")
+            .insert({
+                date: dateStr,
+                classification: classification,
+                total_amount: totalAmount,
+                company_name: company,
+                manager: "관리자" // TODO: 실제 로그인 유저명
+            })
+            .select()
+            .single();
+
+        if (disposalError) {
+            console.error(disposalError);
+            alert("처리 기록 생성 실패");
+            return;
+        }
+
+        // 2. WasteLog 업데이트 (disposal_id 연결)
+        // 현재 disposal_id가 없는 해당 분류의 모든 기록을 업데이트
+        const { error: updateError } = await supabase
+            .from("WasteLog")
+            .update({ disposal_id: disposalData.id })
+            .eq("classification", classification)
+            .is("disposal_id", null);
+
+        if (updateError) {
+            console.error(updateError);
+            alert("폐수 기록 업데이트 실패");
+            return;
+        }
+
+        alert("✅ 폐수 처리 완료되었습니다.");
+        loadList();
     }
 
     async function deleteWaste(id) {
@@ -221,8 +359,6 @@
             if (classBtn) classBtn.click();
 
             // 폐수량 (수정 시에는 직접 입력란에 amount를 넣어주는 것이 직관적일 수 있음)
-            // 하지만 total_mass_log가 있다면 그것을 보여줄 수도 있음.
-            // 여기서는 amount를 직접 입력란에 표시
             directInput.value = data.amount;
 
             if (data.manager) document.getElementById("waste_manager").value = data.manager;
@@ -265,17 +401,16 @@
         let totalMassLog = null;
 
         if (directVal) {
-            // 🚨 첫 등록 여부 확인 (직접 입력 시) - 생성 모드일 때만 체크하거나, 수정 시에도 분류가 바뀌면 체크?
-            // 수정 모드에서는 기존 기록이 있으므로 체크가 애매하지만, 분류를 바꿨다면 체크 필요.
-            // 일단 생성 모드일 때만 엄격하게 체크
+            // 🚨 첫 등록 여부 확인 (직접 입력 시)
             if (mode !== "edit") {
                 const { count } = await supabase
                     .from("WasteLog")
                     .select("*", { count: 'exact', head: true })
-                    .eq("classification", classification);
+                    .eq("classification", classification)
+                    .is("disposal_id", null); // ✅ 현재 보관 중인(미처리) 기록만 확인
 
                 if (count === 0) {
-                    alert(`'${classification}' 분류의 폐수 등록 기록이 없습니다.\n기준점 설정을 위해 첫 등록 시에는 반드시 [2. 폐수통 전체 질량]을 입력해주세요.`);
+                    alert(`'${classification}' 분류의 폐수 등록 기록이 없습니다.\n(또는 이전 폐수가 모두 처리되었습니다.)\n\n기준점 설정을 위해 첫 등록 시에는 반드시 [2. 폐수통 전체 질량]을 입력해주세요.`);
                     return;
                 }
             }
@@ -286,10 +421,6 @@
             totalMassLog = currentTotal;
 
             // 이전 기록 조회하여 차이 계산
-            // 수정 모드일 때는 '자신'을 제외한 가장 최근 기록을 찾아야 하나?
-            // 로직이 복잡해질 수 있음. 수정 시 totalVal을 입력하면, 
-            // "현재 시점의 총량"으로 간주하고, "직전 기록"과의 차이를 계산.
-
             let query = supabase
                 .from("WasteLog")
                 .select("total_mass_log")
@@ -298,12 +429,8 @@
                 .order("created_at", { ascending: false })
                 .limit(1);
 
-            // 수정 시에는 자신보다 이전 기록을 찾아야 함. (날짜 기준?)
-            // 단순히 가장 최근 기록을 가져오면 자신이 될 수도 있음.
             if (mode === "edit") {
                 query = query.neq("id", editId);
-                // 주의: 날짜를 수정했다면 그 날짜 기준 이전 데이터를 찾아야 함.
-                // 여기서는 간단히 "가장 최근(자신 제외)"로 처리
             }
 
             const { data: lastLog } = await query.maybeSingle();
@@ -344,6 +471,53 @@
             App.Router.go("wasteList");
         }
     }
+
+    // ------------------------------------------------------------
+    // 3️⃣ 페이지 바인딩
+    // ------------------------------------------------------------
+    function bindListPage() {
+        const searchBtn = document.getElementById("waste-search-btn");
+        if (searchBtn) searchBtn.onclick = loadList;
+
+        const newBtn = document.getElementById("new-waste-btn");
+        if (newBtn) newBtn.onclick = () => App.Router.go("wasteForm");
+
+        // 날짜 초기화 (이번 달 1일 ~ 오늘)
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        const toDateString = (date) => {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        };
+
+        const startInput = document.getElementById("waste-start-date");
+        const endInput = document.getElementById("waste-end-date");
+
+        if (startInput && !startInput.value) startInput.value = toDateString(firstDay);
+        if (endInput && !endInput.value) endInput.value = toDateString(today);
+
+        // 정렬 드롭다운 초기화
+        if (App.SortDropdown) {
+            App.SortDropdown.init({
+                onChange: (val) => {
+                    console.log(`🔽 폐수 정렬 변경: ${val}`);
+                    loadList();
+                },
+                defaultLabel: "등록순(분류별)",
+                defaultValue: "created_asc_group"
+            });
+        }
+
+        // loadList(); // bindListPage가 호출될 때 loadList를 호출하면 중복 호출될 수 있음 (router에서 호출)
+        // 하지만 초기화 시점에는 필요할 수 있음.
+    }
+
+    // ------------------------------------------------------------
+    // 전역 등록
+    // ------------------------------------------------------------
     globalThis.App = globalThis.App || {};
     globalThis.App.Waste = {
         loadList,
