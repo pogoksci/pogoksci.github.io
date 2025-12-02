@@ -55,7 +55,7 @@
         clean: function (val) {
             if (!val) return null;
             let s = String(val).trim();
-            if (s === "") return null;
+            if (s === "" || s === "EMPTY") return null;
             if (s.startsWith("'")) {
                 s = s.substring(1);
             }

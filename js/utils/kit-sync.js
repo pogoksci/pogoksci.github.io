@@ -24,9 +24,12 @@
                     cleanCas = cleanCas.split(',').map(c => c.trim()).filter(c => c).join(', ');
                 }
 
+                const cleanClass = row.kit_class ? row.kit_class.replace(/"/g, '').trim() : null;
+                const finalClass = (cleanClass === 'EMPTY' || cleanClass === '') ? null : cleanClass;
+
                 return {
                     kit_name: row.kit_name,
-                    kit_class: row.kit_class ? row.kit_class.replace(/"/g, '').trim() : null, // Remove quotes from class if present
+                    kit_class: finalClass,
                     kit_cas: cleanCas
                 };
             }).filter(kit => kit.kit_name); // Filter out empty rows
