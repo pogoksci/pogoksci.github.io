@@ -14,7 +14,7 @@
         // 2. Setup FAB
         if (App.Fab) {
             // setVisibility(visible, text, onClickAction)
-            App.Fab.setVisibility(true, null, () => {
+            App.Fab.setVisibility(true, '<span class="material-symbols-outlined">add</span>', () => {
                 openRegisterModal();
             });
         }

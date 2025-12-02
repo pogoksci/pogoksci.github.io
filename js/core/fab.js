@@ -14,7 +14,7 @@
             if (visible) {
                 // 2. 텍스트 설정
                 if (text) {
-                    fab.textContent = text;
+                    fab.innerHTML = text;
                 }
                 // 3. 클릭 이벤트 설정
                 if (onClickAction) {
