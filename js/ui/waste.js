@@ -18,7 +18,7 @@
         const useRecentDisposal = document.getElementById("use-recent-disposal-date")?.checked;
         const startDate = document.getElementById("waste-start-date").value;
         const endDate = document.getElementById("waste-end-date").value;
-        const sortLabel = document.getElementById("sort-label");
+        const sortLabel = document.getElementById("waste-sort-label");
         const currentSort = sortLabel ? sortLabel.dataset.value : "created_asc_group";
 
         container.innerHTML = `
