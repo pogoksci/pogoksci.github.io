@@ -20,6 +20,11 @@
                 let cleanCas = row.kit_cas;
                 if (cleanCas) {
                     cleanCas = cleanCas.replace(/'/g, '').replace(/"/g, '').trim();
+                }
+
+                if (!cleanCas || cleanCas === 'EMPTY') {
+                    cleanCas = null;
+                } else {
                     // Ensure comma separation is clean
                     cleanCas = cleanCas.split(',').map(c => c.trim()).filter(c => c).join(', ');
                 }
