@@ -1,0 +1,183 @@
+<div class="page-container">
+    <header class="page-header">
+        <h2 class="page-title">실험 키트</h2>
+        <div class="header-actions">
+            <button id="btn-sync-kits" class="btn-secondary">
+                <span class="material-symbols-outlined">sync</span>
+                데이터 동기화
+            </button>
+        </div>
+    </header>
+
+    <!-- Sync Status -->
+    <div id="sync-status" class="sync-status-msg"></div>
+
+    <!-- Kit List -->
+    <div id="kit-list" class="kit-list-container">
+        <!-- Items will be injected here -->
+        <div class="empty-state">
+            <span class="material-symbols-outlined">inventory_2</span>
+            <p>등록된 키트가 없습니다.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Register Kit Modal -->
+<div id="modal-register-kit" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <h3 class="modal-title">키트 등록</h3>
+
+        <form id="form-register-kit">
+            <!-- 1. Class Selection -->
+            <div class="form-group">
+                <label for="kit-class-select">분류</label>
+                <select id="kit-class-select" class="form-input" required>
+                    <option value="" disabled selected>분류를 선택하세요</option>
+                    <option value="물리학">물리학</option>
+                    <option value="화학">화학</option>
+                    <option value="생명과학">생명과학</option>
+                    <option value="지구과학">지구과학</option>
+                    <option value="융합과학">융합과학</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+
+            <!-- 2. Kit Name Selection (Filtered) -->
+            <div class="form-group">
+                <label for="kit-name-select">키트명</label>
+                <select id="kit-name-select" class="form-input" disabled required>
+                    <option value="" disabled selected>분류를 먼저 선택하세요</option>
+                </select>
+            </div>
+
+            <!-- 3. Quantity -->
+            <div class="form-group">
+                <label for="kit-quantity">수량</label>
+                <input type="number" id="kit-quantity" class="form-input" value="1" min="1" required>
+            </div>
+
+            <!-- 4. Purchase Date -->
+            <div class="form-group">
+                <label for="kit-date">등록일(구입일)</label>
+                <input type="date" id="kit-date" class="form-input" required>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" id="btn-cancel-kit" class="btn-cancel">취소</button>
+                <button type="submit" id="btn-save-kit" class="btn-primary">등록</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Kit Detail Modal (Chemicals) -->
+<div id="modal-kit-detail" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <h3 id="detail-kit-name" class="modal-title">키트 상세</h3>
+        <p id="detail-kit-info" class="modal-subtitle"></p>
+
+        <div class="kit-chemicals-section">
+            <h4>포함된 약품 (CAS)</h4>
+            <div id="kit-chemical-list" class="chemical-chips">
+                <!-- Buttons injected here -->
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" id="btn-close-detail" class="btn-primary">닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- Chemical Info Modal -->
+<div id="modal-chem-info" class="modal-overlay" style="display: none; z-index: 1100;">
+    <div class="modal-content">
+        <h3 id="chem-info-title" class="modal-title">약품 정보</h3>
+        <div id="chem-info-body" class="chem-info-body">
+            <!-- Details injected here -->
+        </div>
+        <div class="modal-actions">
+            <button type="button" id="btn-close-chem" class="btn-primary">닫기</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .sync-status-msg {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 10px;
+        height: 20px;
+    }
+
+    .kit-list-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+        padding-bottom: 80px;
+        /* FAB Space */
+    }
+
+    .kit-card {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .kit-card:active {
+        transform: scale(0.98);
+    }
+
+    .kit-card h4 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        color: #333;
+    }
+
+    .kit-card p {
+        margin: 4px 0;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .kit-tag {
+        display: inline-block;
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+
+    /* Chemical Chips */
+    .chemical-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .chem-chip {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .chem-chip:hover {
+        background: #e0e0e0;
+    }
+
+    /* Modal Z-Index for nested modals */
+    #modal-chem-info {
+        background: rgba(0, 0, 0, 0.7);
+        /* Darker overlay */
+    }
+</style>

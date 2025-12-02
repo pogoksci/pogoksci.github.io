@@ -288,7 +288,7 @@
       navKit.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
-        await App.Router.go("inventory"); // 임시 동일 페이지
+        await App.Router.go("kits"); // ✅ 키트 페이지 연결
         closeStartMenu();
         setActive("nav-kit");
       });

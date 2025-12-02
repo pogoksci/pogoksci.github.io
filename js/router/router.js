@@ -13,6 +13,7 @@
     dataSync: "pages/data-sync.html",
     wasteList: "pages/waste-list.html",
     wasteForm: "pages/waste-form.html",
+    kits: "pages/kits.html", // ✅ 키트 페이지 추가
   };
 
   // ✅ 현재 상태 추적 (중복 pushState 방지)
@@ -110,11 +111,16 @@
         if (App?.Waste?.bindListPage) App.Waste.bindListPage();
         break;
 
-      case "wasteForm":
         if (App?.Waste?.initForm) {
           const mode = params.mode || "create";
           const id = params.id || null;
           App.Waste.initForm(mode, id);
+        }
+        break;
+
+      case "kits":
+        if (App?.Kits?.init) {
+          await App.Kits.init();
         }
         break;
 
@@ -132,6 +138,7 @@
       dataSync: "menu-datasync",
       wasteList: "nav-waste",
       wasteForm: "nav-waste",
+      kits: "nav-kit",
       main: "menu-home"
     };
 
