@@ -7,20 +7,8 @@
     async function init() {
         console.log("📦 Kit Page Initialized");
 
-        // 1. Setup Sync Button
-        const syncBtn = document.getElementById('btn-sync-kits');
-        if (syncBtn) {
-            syncBtn.addEventListener('click', async () => {
-                if (confirm('데이터 동기화를 시작하시겠습니까? (CSV -> DB)')) {
-                    if (App.Utils?.syncExperimentKits) {
-                        await App.Utils.syncExperimentKits();
-                        await loadCatalog(); // Reload catalog after sync
-                    } else {
-                        alert('동기화 모듈이 로드되지 않았습니다.');
-                    }
-                }
-            });
-        }
+        // 1. Setup Sync Button (Moved to Data Sync Page)
+        // const syncBtn = document.getElementById('btn-sync-kits');
 
         // 2. Setup FAB
         if (App.Fab) {
