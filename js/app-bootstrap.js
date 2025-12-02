@@ -58,10 +58,6 @@
             alert("폐수 관리 모듈을 불러오는데 실패했습니다.");
           };
           document.head.appendChild(script);
-        } else {
-          // Module already loaded, just call the relevant function
-          if (file.includes("waste-list.html")) App.Waste.bindListPage();
-          if (file.includes("waste-form.html")) App.Waste.initForm();
         }
       }
 
