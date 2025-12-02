@@ -11,9 +11,10 @@
         // const syncBtn = document.getElementById('btn-sync-kits');
 
         // 2. Setup FAB
+        // 2. Setup FAB
         if (App.Fab) {
-            App.Fab.setVisibility(true);
-            App.Fab.setClickHandler(() => {
+            // setVisibility(visible, text, onClickAction)
+            App.Fab.setVisibility(true, null, () => {
                 openRegisterModal();
             });
         }
