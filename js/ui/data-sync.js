@@ -159,17 +159,35 @@
 
             const upsertData = Array.from(chemicalMap.values());
 
-            if (!confirm(`총 ${upsertData.length}개의 물질 데이터를 업데이트합니다.\n기존 데이터를 모두 삭제하고 덮어쓰시겠습니까?`)) {
+            if (!confirm(`총 ${upsertData.length}개의 물질 데이터를 업데이트합니다.\n(기존 데이터는 유지/업데이트됩니다)`)) {
                 this.log("🚫 작업이 취소되었습니다.", "error");
                 return;
             }
 
-            this.log("🗑️ 기존 HazardList 데이터 삭제 중...");
-            const { error: deleteError } = await App.supabase.from("HazardList").delete().neq("id", 0);
-            if (deleteError) {
-                this.log(`❌ 삭제 실패: ${deleteError.message}`, "error");
+            this.log("🔍 기존 HazardList 데이터 조회 중...");
+            const { data: existingData, error: fetchError } = await App.supabase
+                .from("HazardList")
+                .select("id, cas_nos");
+
+            if (fetchError) {
+                this.log(`❌ 조회 실패: ${fetchError.message}`, "error");
                 return;
             }
+
+            // Map existing IDs by CAS
+            const idMap = new Map();
+            if (existingData) {
+                existingData.forEach(item => {
+                    if (item.cas_nos) idMap.set(item.cas_nos, item.id);
+                });
+            }
+
+            // Attach IDs to upsertData
+            upsertData.forEach(item => {
+                if (idMap.has(item.cas_nos)) {
+                    item.id = idMap.get(item.cas_nos);
+                }
+            });
 
             const BATCH_SIZE = 100;
             const totalBatches = Math.ceil(upsertData.length / BATCH_SIZE);
@@ -177,7 +195,7 @@
 
             for (let i = 0; i < totalBatches; i++) {
                 const batch = upsertData.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
-                const { error } = await App.supabase.from("HazardList").insert(batch);
+                const { error } = await App.supabase.from("HazardList").upsert(batch, { onConflict: 'id' });
                 if (error) this.log(`❌ 배치 ${i + 1} 실패: ${error.message}`, "error");
                 else this.log(`✅ 배치 ${i + 1}/${totalBatches} 완료`);
             }
@@ -208,21 +226,44 @@
                             molecular_formula_ref: this.clean(row.molecular_formula_ref)
                         })).filter(item => item.cas_ref);
 
-                        if (!confirm(`총 ${insertData.length}개의 참조 데이터를 업데이트합니다.\n기존 데이터를 모두 삭제하고 덮어쓰시겠습니까?`)) {
+                        if (!confirm(`총 ${insertData.length}개의 참조 데이터를 업데이트합니다.\n(기존 데이터는 유지/업데이트됩니다)`)) {
                             this.log("🚫 작업이 취소되었습니다.", "error");
                             if (btn) btn.disabled = false;
                             return;
                         }
 
-                        this.log("🗑️ 기존 SubstanceRef 데이터 삭제 중...");
-                        await App.supabase.from("SubstanceRef").delete().neq("id", 0);
+                        this.log("🔍 기존 SubstanceRef 데이터 조회 중...");
+                        const { data: existingData, error: fetchError } = await App.supabase
+                            .from("SubstanceRef")
+                            .select("id, cas_ref");
+
+                        if (fetchError) {
+                            this.log(`❌ 조회 실패: ${fetchError.message}`, "error");
+                            if (btn) btn.disabled = false;
+                            return;
+                        }
+
+                        // Map existing IDs by CAS
+                        const idMap = new Map();
+                        if (existingData) {
+                            existingData.forEach(item => {
+                                if (item.cas_ref) idMap.set(item.cas_ref, item.id);
+                            });
+                        }
+
+                        // Attach IDs to insertData
+                        insertData.forEach(item => {
+                            if (idMap.has(item.cas_ref)) {
+                                item.id = idMap.get(item.cas_ref);
+                            }
+                        });
 
                         const BATCH_SIZE = 100;
                         const totalBatches = Math.ceil(insertData.length / BATCH_SIZE);
 
                         for (let i = 0; i < totalBatches; i++) {
                             const batch = insertData.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
-                            const { error } = await App.supabase.from("SubstanceRef").insert(batch);
+                            const { error } = await App.supabase.from("SubstanceRef").upsert(batch, { onConflict: 'id' });
                             if (error) this.log(`❌ 배치 ${i + 1} 실패: ${error.message}`, "error");
                             else this.log(`✅ 배치 ${i + 1}/${totalBatches} 완료`);
                         }
