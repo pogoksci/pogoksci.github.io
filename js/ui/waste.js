@@ -558,18 +558,27 @@
         }
 
         // 정렬 드롭다운 초기화
-        if (App.SortDropdown) {
-            App.SortDropdown.init({
-                onChange: (val) => {
-                    console.log(`🔽 폐수 정렬 변경: ${val}`);
-                    loadList();
-                },
-                defaultLabel: "등록순(분류별)",
-                defaultValue: "created_asc_group",
-                toggleId: "waste-sort-toggle",
-                menuId: "waste-sort-menu",
-                labelId: "waste-sort-label"
-            });
+        if (App.SortDropdown && App.SortDropdown.init) {
+            // 요소가 존재하는지 확인
+            const toggle = document.getElementById("waste-sort-toggle");
+            if (toggle) {
+                App.SortDropdown.init({
+                    onChange: (val) => {
+                        console.log(`🔽 폐수 정렬 변경: ${val}`);
+                        loadList();
+                    },
+                    defaultLabel: "등록순(분류별)",
+                    defaultValue: "created_asc_group",
+                    toggleId: "waste-sort-toggle",
+                    menuId: "waste-sort-menu",
+                    labelId: "waste-sort-label"
+                });
+            } else {
+                console.warn("⚠️ 폐수 정렬 토글 버튼을 찾을 수 없습니다. (DOM 로드 지연 가능성)");
+                // 재시도 로직이 필요할 수 있음
+            }
+        } else {
+            console.error("❌ App.SortDropdown 모듈이 로드되지 않았습니다.");
         }
 
         loadList();
