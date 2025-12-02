@@ -613,6 +613,24 @@ button:disabled {
 
   gap: 15px;
 
+  width: 90%;
+
+  max-width: 400px;
+
+  box-sizing: border-box;
+
+}
+
+.modal-actions {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.modal-actions button {
+  flex: 1;
+  width: auto; /* Override global 100% width */
 }
 
 
