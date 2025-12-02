@@ -630,7 +630,42 @@ button:disabled {
 
 .modal-actions button {
   flex: 1;
-  width: auto; /* Override global 100% width */
+  height: 40px;
+  /* Fixed height for consistency */
+  border-radius: 8px;
+  /* Consistent border radius */
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-cancel {
+  background-color: #999;
+  /* Grey background */
+  color: white;
+  border: none;
+}
+
+.btn-cancel:hover {
+  background-color: #777;
+}
+
+/* Ensure inputs take full width */
+.form-group {
+  width: 100%;
+}
+
+.form-input {
+  width: 100%;
+  box-sizing: border-box;
+  /* Include padding in width */
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
 
@@ -4720,3 +4755,26 @@ input[type="date"] {
   font-size: 16px;
   color: #666;
 }
+
+/* FAB Button Style */
+#fab-button {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  background-color: #008CBA;
+  color: white;
+  height: 56px;
+  border-radius: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  z-index: 1000;
+  transition: transform 0.2s, background-color 0.2s;
+  padding: 0 20px;
+  gap: 8px;
+  font-weight: bold;
+  font-size: 14px;
+}
+

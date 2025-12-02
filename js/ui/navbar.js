@@ -153,59 +153,12 @@
             console.log(`🗑️ Deleted ${files.length} files from msds-pdf`);
           }
 
-          // 2. Delete Table Data (Order matters for FK constraints)
-          // Inventory -> Cabinet -> Area
-          const { error: invError } = await supabase.from("Inventory").delete().neq("id", 0); // Delete all
-          if (invError) throw invError;
-          console.log("🗑️ Deleted all Inventory data");
-
-          const { error: cabError } = await supabase.from("Cabinet").delete().neq("id", 0);
-          if (cabError) throw cabError;
-          console.log("🗑️ Deleted all Cabinet data");
-
-          const { error: areaError } = await supabase.from("Area").delete().neq("id", 0);
-          if (areaError) throw areaError;
-          console.log("🗑️ Deleted all Area data");
-
-          // 3. Delete Substance Data (Master Data)
-          // Children first: Properties, MSDS, HazardClassifications
-          const { error: propError } = await supabase.from("Properties").delete().neq("id", 0);
-          if (propError) throw propError;
-          console.log("🗑️ Deleted all Properties data");
-
-          const { error: msdsError } = await supabase.from("MSDS").delete().neq("id", 0);
-          if (msdsError) throw msdsError;
-          console.log("🗑️ Deleted all MSDS data");
-
-          const { error: hazardError } = await supabase.from("HazardClassifications").delete().neq("id", 0);
-          if (hazardError) throw hazardError;
-          console.log("🗑️ Deleted all HazardClassifications data");
-
-          // New tables to delete before Substance
-          const { error: synError } = await supabase.from("Synonyms").delete().neq("id", 0);
-          if (synError) throw synError;
-          console.log("🗑️ Deleted all Synonyms data");
-
-          const { error: repError } = await supabase.from("ReplacedRns").delete().neq("id", 0);
-          if (repError) throw repError;
-          console.log("🗑️ Deleted all ReplacedRns data");
-
-          const { error: citError } = await supabase.from("Citations").delete().neq("id", 0);
-          if (citError) throw citError;
-          console.log("🗑️ Deleted all Citations data");
-
-          const { error: subError } = await supabase.from("Substance").delete().neq("id", 0);
-          if (subError) throw subError;
-          console.log("🗑️ Deleted all Substance data");
-
-          // 4. Delete Sync/Reference Data
-          const { error: hazardListError } = await supabase.from("HazardList").delete().neq("id", 0);
-          if (hazardListError) throw hazardListError;
-          console.log("🗑️ Deleted all HazardList data");
-
-          const { error: subRefError } = await supabase.from("SubstanceRef").delete().neq("id", 0);
-          if (subRefError) throw subRefError;
-          console.log("🗑️ Deleted all SubstanceRef data");
+          // 2. Reset All Table Data (RPC)
+          // This function must be created in Supabase SQL Editor:
+          // TRUNCATE TABLE ... RESTART IDENTITY CASCADE;
+          const { error: rpcError } = await supabase.rpc('reset_all_data');
+          if (rpcError) throw rpcError;
+          console.log("🗑️ All table data reset via RPC (IDs reset to 1)");
 
           alert("✅ DB 초기화가 완료되었습니다.");
           location.reload(); // Refresh to clear UI
