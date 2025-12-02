@@ -47,17 +47,6 @@
       console.log("🖱️ Sort Toggle Clicked");
       e.stopPropagation();
 
-      // ✅ 펼칠 때 선택된 항목을 가장 위로 올림
-      if (!menu.classList.contains("open")) {
-        const currentValue = label.dataset.value;
-        // data-value가 일치하는 아이템 찾기
-        const selectedItem = Array.from(menu.querySelectorAll(".dropdown-item"))
-          .find(item => item.dataset.value === currentValue);
-        
-        if (selectedItem) {
-          menu.prepend(selectedItem);
-        }
-      }
 
       menu.classList.toggle("open");
       console.log("📂 Menu Open State:", menu.classList.contains("open"));
