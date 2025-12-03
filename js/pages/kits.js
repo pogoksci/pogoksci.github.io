@@ -150,25 +150,35 @@
 
             card.innerHTML = `
                 ${imageBlock}
-                <div class="inventory-card__body">
-                    <div class="inventory-card__left" style="height: 100px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div class="inventory-card__body" style="padding: 10px;">
+                    <div class="inventory-card__content" style="flex: 1; height: 100px; display: flex; flex-direction: column; justify-content: space-between;">
+                        <!-- Line 1: Classification -->
                         <div class="inventory-card__line1">
                             <span class="kit-tag" style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:12px;">${kit.kit_class || '미분류'}</span>
                         </div>
-                        <div class="inventory-card__line2 name-kor">${kit.kit_name}</div>
-                        <div class="inventory-card__line3 name-eng" style="font-size: 14px; color: #555;">수량: ${kit.quantity}개</div>
-                    </div>
-                    <div class="inventory-card__right" style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center;">
-                        <div class="inventory-card__meta" style="flex-direction: row; gap: 5px; align-items: center;">
-                             <button class="icon-btn stock-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="재고 관리">
-                                <span class="material-symbols-outlined" style="font-size: 20px; color: #4caf50;">inventory</span>
-                            </button>
-                             <button class="icon-btn edit-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="수정">
-                                <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
-                            </button>
-                            <button class="icon-btn delete-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="삭제">
-                                <span class="material-symbols-outlined" style="font-size: 20px; color: #999;">delete</span>
-                            </button>
+                        
+                        <!-- Line 2: Name & Quantity -->
+                        <div class="inventory-card__line2" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="name-kor" style="font-weight: bold; font-size: 16px;">${kit.kit_name}</div>
+                            <div class="kit-quantity" style="font-size: 14px; color: #555;">수량: ${kit.quantity}개</div>
+                        </div>
+
+                        <!-- Line 3: Location (Future) & Buttons -->
+                        <div class="inventory-card__line3" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="kit-location" style="font-size: 13px; color: #777;">
+                                <!-- Location placeholder -->
+                            </div>
+                            <div class="inventory-card__actions" style="display: flex; gap: 5px;">
+                                <button class="icon-btn stock-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="재고 관리">
+                                    <span class="material-symbols-outlined" style="font-size: 20px; color: #4caf50;">inventory</span>
+                                </button>
+                                <button class="icon-btn edit-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="수정">
+                                    <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
+                                </button>
+                                <button class="icon-btn delete-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="삭제">
+                                    <span class="material-symbols-outlined" style="font-size: 20px; color: #999;">delete</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
