@@ -566,7 +566,7 @@
                     const { data: usageLogs, error } = await supabase
                         .from('kit_usage_log')
                         .select('*')
-                        .eq('kit_id', kit.id)
+                        .eq('user_kit_id', kit.id)
                         .order('log_date', { ascending: false });
 
                     if (error) throw error;
