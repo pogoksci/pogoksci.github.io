@@ -3,27 +3,49 @@
 
     // State
     let catalog = []; // Full list from experiment_kit table
+    let currentSort = 'created_at_desc';
+    let currentSearch = '';
 
     async function init() {
         console.log("📦 Kit Page Initialized");
 
-        // 1. Setup Sync Button (Moved to Data Sync Page)
-        // const syncBtn = document.getElementById('btn-sync-kits');
-
-        // 2. Setup FAB
-        // 2. Setup FAB
+        // 1. Setup FAB
         if (App.Fab) {
-            // setVisibility(visible, text, onClickAction)
             App.Fab.setVisibility(true, '<span class="material-symbols-outlined">add</span> 새 키트 등록', () => {
                 openRegisterModal();
             });
         }
 
-        // 3. Load Data
+        // 2. Setup Sort Dropdown
+        if (App.SortDropdown) {
+            App.SortDropdown.init('kit-sort-dropdown', (value) => {
+                currentSort = value;
+                loadUserKits();
+            });
+        }
+
+        // 3. Setup Search
+        const searchInput = document.getElementById('kit-search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                currentSearch = e.target.value.trim().toLowerCase();
+                loadUserKits();
+            });
+        }
+
+        // 4. Setup Refresh
+        const refreshBtn = document.getElementById('kit-refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                loadUserKits();
+            });
+        }
+
+        // 5. Load Data
         await loadCatalog();
         await loadUserKits();
 
-        // 4. Setup Modals
+        // 6. Setup Modals
         setupRegisterModal();
         setupDetailModals();
     }
@@ -48,13 +70,43 @@
 
         listContainer.innerHTML = '<p>로딩 중...</p>';
 
-        const { data, error } = await supabase
+        let query = supabase
             .from('user_kits')
-            .select('*')
-            .order('created_at', { ascending: false });
+            .select('*');
+
+        // Apply Sort
+        if (currentSort === 'created_at_desc') {
+            query = query.order('created_at', { ascending: false });
+        } else if (currentSort === 'name_kor') {
+            query = query.order('kit_name', { ascending: true });
+        } else if (currentSort === 'quantity_desc') {
+            query = query.order('quantity', { ascending: false });
+        } else if (currentSort === 'quantity_asc') {
+            query = query.order('quantity', { ascending: true });
+        }
+
+        const { data, error } = await query;
 
         if (error) {
             listContainer.innerHTML = `<p class="error">로드 실패: ${error.message}</p>`;
+            return;
+        }
+
+        // Apply Search (Client-side for simplicity as kit_name is text)
+        let filteredData = data;
+        if (currentSearch) {
+            filteredData = data.filter(kit =>
+                kit.kit_name.toLowerCase().includes(currentSearch) ||
+                (kit.kit_class && kit.kit_class.toLowerCase().includes(currentSearch))
+            );
+        }
+
+        if (!filteredData || filteredData.length === 0) {
+            listContainer.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-outlined" style="font-size:48px; color:#ccc;">inventory_2</span>
+                    <p>검색 결과가 없습니다.</p>
+                </div>`;
             return;
         }
 
@@ -68,16 +120,24 @@
         }
 
         listContainer.innerHTML = '';
-        data.forEach(kit => {
+        filteredData.forEach(kit => {
             const card = document.createElement('div');
             card.className = 'inventory-card'; // Use inventory-card style
             card.dataset.id = kit.id;
 
-            // Image block (placeholder for kits)
-            const imageBlock = `
-                <div class="inventory-card__image inventory-card__image--empty">
-                    <span class="material-symbols-outlined" style="font-size: 24px; color: #ccc;">science</span>
-                </div>`;
+            // Image block
+            let imageBlock = '';
+            if (kit.image_url) {
+                imageBlock = `
+                    <div class="inventory-card__image">
+                        <img src="${kit.image_url}" alt="${kit.kit_name}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>`;
+            } else {
+                imageBlock = `
+                    <div class="inventory-card__image inventory-card__image--empty">
+                        <span class="material-symbols-outlined" style="font-size: 24px; color: #ccc;">science</span>
+                    </div>`;
+            }
 
             card.innerHTML = `
                 ${imageBlock}
@@ -148,25 +208,48 @@
     }
 
     // ---- Register/Edit Modal ----
-    let isEditMode = false;
-    let editKitId = null;
-
     function setupRegisterModal() {
         const modal = document.getElementById('modal-register-kit');
         const form = document.getElementById('form-register-kit');
         const btnCancel = document.getElementById('btn-cancel-kit');
         const classSelect = document.getElementById('kit-class-select');
+        const classCheckboxesDiv = document.getElementById('kit-class-checkboxes');
         const nameSelect = document.getElementById('kit-name-select');
-        const dateInput = document.getElementById('kit-date');
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const modalTitle = modal.querySelector('h3');
+        const fileInput = document.getElementById('kit-photo');
+        const previewDiv = document.getElementById('kit-photo-preview');
+        const previewImg = document.getElementById('preview-img');
 
-        // Set default date to today
-        if (dateInput) dateInput.valueAsDate = new Date();
+        // File Preview
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        previewImg.src = e.target.result;
+                        previewDiv.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    previewDiv.style.display = 'none';
+                }
+            });
+        }
+
+        // Close Modal
+        btnCancel.addEventListener('click', () => {
+            modal.style.display = 'none';
+            form.reset();
+            if (previewDiv) previewDiv.style.display = 'none';
+            form.removeAttribute('data-mode');
+            form.removeAttribute('data-id');
+            document.querySelector('.modal-title').textContent = '키트 등록';
+            document.getElementById('btn-save-kit').textContent = '등록';
+        });
 
         // Class Change -> Filter Names
         classSelect.addEventListener('change', (e) => {
-            const selectedClass = e.target.value;
+            const selectedClass = classSelect.value;
             updateNameSelect(selectedClass);
         });
 
@@ -174,8 +257,16 @@
             nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
             nameSelect.disabled = false;
 
-            // Filter catalog: kit_class contains selectedClass
-            const filtered = catalog.filter(k => k.kit_class && k.kit_class.includes(selectedClass));
+            let filtered = [];
+            if (selectedClass === 'all') {
+                filtered = catalog; // Show all
+            } else {
+                // Filter catalog: kit_class contains selectedClass
+                filtered = catalog.filter(k => k.kit_class && k.kit_class.includes(selectedClass));
+            }
+
+            // Sort alphabetically for better UX when showing all
+            filtered.sort((a, b) => a.kit_name.localeCompare(b.kit_name));
 
             filtered.forEach(k => {
                 const opt = document.createElement('option');
@@ -191,129 +282,439 @@
             });
         }
 
-        // Cancel
-        btnCancel.addEventListener('click', () => {
-            modal.style.display = 'none';
-            form.reset();
-            isEditMode = false;
-            editKitId = null;
-        });
-
         // Submit
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-            const kitId = selectedOption.value;
-            const kitName = selectedOption.dataset.name;
-            const kitClass = selectedOption.dataset.class; // Use original class from catalog
-            const kitCas = selectedOption.dataset.cas;
-            const quantity = document.getElementById('kit-quantity').value;
-            const date = document.getElementById('kit-date').value;
 
-            try {
-                if (isEditMode && editKitId) {
-                    // Update
-                    const { error } = await supabase.from('user_kits').update({
-                        kit_id: kitId,
-                        kit_name: kitName,
-                        kit_class: kitClass,
-                        quantity: quantity,
-                        purchase_date: date
-                    }).eq('id', editKitId);
+            let kitClass = '';
+            const mode = form.getAttribute('data-mode'); // 'edit' or null
+            const editId = form.getAttribute('data-id');
 
-                    if (error) throw error;
-                    alert('키트 정보가 수정되었습니다.');
+            if (mode === 'edit') {
+                // Gather from checkboxes
+                const checked = Array.from(classCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
+                    .map(cb => cb.value);
+                kitClass = checked.join(', ');
+            } else {
+                // Gather from select
+                if (classSelect.value === 'all') {
+                    // If 'all' selected, use the class from the selected kit in catalog
+                    const selectedOption = nameSelect.options[nameSelect.selectedIndex];
+                    kitClass = selectedOption.dataset.class || '기타';
                 } else {
-                    // Insert
-                    const { error } = await supabase.from('user_kits').insert({
-                        kit_id: kitId,
-                        kit_name: kitName,
-                        kit_class: kitClass,
-                        quantity: quantity,
-                        purchase_date: date
-                    });
+                    kitClass = classSelect.value;
+                }
+            }
 
-                    if (error) throw error;
+            let finalKitName = '';
+            if (mode === 'edit') {
+                finalKitName = nameSelect.value; // Existing logic
+            } else {
+                const selectedOption = nameSelect.options[nameSelect.selectedIndex];
+                finalKitName = selectedOption.dataset.name;
+            }
 
-                    // Process Chemicals (Background) only on new insert or if needed
-                    if (kitCas) {
-                        processKitChemicals(kitCas);
-                    }
-                    alert('키트가 등록되었습니다.');
+            const quantity = parseInt(document.getElementById('kit-quantity').value, 10);
+            const purchaseDate = document.getElementById('kit-date').value;
+            const file = fileInput ? fileInput.files[0] : null;
+
+            // Upload Image if exists
+            let imageUrl = null;
+            if (file) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}.${fileExt}`;
+                const filePath = `${fileName}`;
+
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('kit-photos')
+                    .upload(filePath, file);
+
+                if (uploadError) {
+                    console.error('Upload failed:', uploadError);
+                    alert('사진 업로드 실패: ' + uploadError.message);
+                    return;
                 }
 
-                modal.style.display = 'none';
-                form.reset();
-                isEditMode = false;
-                editKitId = null;
-                loadUserKits(); // Refresh list
+                const { data: publicUrlData } = supabase.storage
+                    .from('kit-photos')
+                    .getPublicUrl(filePath);
 
-            } catch (err) {
-                alert('저장 실패: ' + err.message);
+                imageUrl = publicUrlData.publicUrl;
+            }
+
+            if (mode === 'edit' && editId) {
+                // Update
+                const updatePayload = {
+                    kit_class: kitClass,
+                    kit_name: finalKitName,
+                    quantity: quantity,
+                    purchase_date: purchaseDate
+                };
+                if (imageUrl) {
+                    updatePayload.image_url = imageUrl;
+                }
+
+                const { error } = await supabase
+                    .from('user_kits')
+                    .update(updatePayload)
+                    .eq('id', editId);
+
+                if (error) {
+                    alert('수정 실패: ' + error.message);
+                } else {
+                    alert('수정되었습니다.');
+                    modal.style.display = 'none';
+                    loadUserKits();
+                    // Check cleanup
+                    if (quantity === 0) {
+                        await checkAndCleanupChemicals(finalKitName);
+                    }
+                }
+            } else {
+                // Insert
+                const { error } = await supabase
+                    .from('user_kits')
+                    .insert({
+                        kit_class: kitClass,
+                        kit_name: finalKitName,
+                        quantity: quantity,
+                        purchase_date: purchaseDate,
+                        image_url: imageUrl
+                    });
+
+                if (error) {
+                    alert('등록 실패: ' + error.message);
+                } else {
+                    alert('등록되었습니다.');
+                    modal.style.display = 'none';
+                    loadUserKits();
+                    // Process Chemicals
+                    await processKitChemicals(finalKitName);
+                }
             }
         });
 
-        // Expose open function for Edit
-        window.openEditKitModal = (kit) => {
-            isEditMode = true;
-            editKitId = kit.id;
-            modalTitle.textContent = '키트 정보 수정';
-            submitBtn.textContent = '수정 완료';
+        // Expose open function
+        window.openRegisterModal = () => {
+            form.reset();
+            if (previewDiv) previewDiv.style.display = 'none';
+            form.removeAttribute('data-mode');
+            form.removeAttribute('data-id');
+            document.querySelector('.modal-title').textContent = '키트 등록';
+            document.getElementById('btn-save-kit').textContent = '등록';
+
+            // Show Select, Hide Checkboxes
+            classSelect.style.display = 'block';
+            classCheckboxesDiv.style.display = 'none';
+            classSelect.required = true;
+
+            nameSelect.disabled = true;
+            nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
+
+            // Set default date to today
+            document.getElementById('kit-date').valueAsDate = new Date();
 
             modal.style.display = 'flex';
+        };
 
-            // Fill form
+        window.openEditKitModal = (kit) => {
+            form.reset();
+            if (previewDiv) previewDiv.style.display = 'none';
+            form.setAttribute('data-mode', 'edit');
+            form.setAttribute('data-id', kit.id);
+            document.querySelector('.modal-title').textContent = '키트 정보 수정';
+            document.getElementById('btn-save-kit').textContent = '수정 완료';
+
+            // Hide Select, Show Checkboxes
+            classSelect.style.display = 'none';
+            classCheckboxesDiv.style.display = 'flex';
+            classSelect.required = false;
+
+            // Populate Checkboxes
+            const currentClasses = (kit.kit_class || '').split(',').map(s => s.trim());
+            classCheckboxesDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.checked = currentClasses.includes(cb.value);
+            });
+
+            // Fill Data
+            const catalogItem = catalog.find(c => c.kit_name === kit.kit_name);
+            if (catalogItem) {
+                updateNameSelect('all', catalogItem.id);
+            } else {
+                nameSelect.innerHTML = `<option value="${kit.kit_name}" selected>${kit.kit_name}</option>`;
+            }
+
             document.getElementById('kit-quantity').value = kit.quantity;
             document.getElementById('kit-date').value = kit.purchase_date;
 
-            // Set Class
-            // Split class if multiple? Assuming single for now or primary
-            // The catalog has comma separated classes maybe? 
-            // Let's try to match one.
-            const cls = kit.kit_class.split(',')[0].trim();
-            classSelect.value = cls;
+            // Show existing image
+            if (kit.image_url) {
+                previewImg.src = kit.image_url;
+                previewDiv.style.display = 'block';
+            }
 
-            // Update Name Select based on class and select the kit
-            updateNameSelect(cls, kit.kit_id);
+            modal.style.display = 'flex';
         };
     }
 
-    function openRegisterModal() {
-        const modal = document.getElementById('modal-register-kit');
-        const modalTitle = modal.querySelector('h3');
-        const submitBtn = document.querySelector('#form-register-kit button[type="submit"]');
+    // ---- Detail Modal ----
+    function setupDetailModals() {
+        // Kit Detail
+        const modalDetail = document.getElementById('modal-kit-detail');
+        const btnCloseDetail = document.getElementById('btn-close-detail');
 
-        isEditMode = false;
-        editKitId = null;
-        modalTitle.textContent = '새 키트 등록';
-        submitBtn.textContent = '등록';
+        btnCloseDetail.addEventListener('click', () => {
+            modalDetail.style.display = 'none';
+        });
 
-        document.getElementById('form-register-kit').reset();
-        document.getElementById('kit-date').valueAsDate = new Date();
+        // Chem Info
+        const modalChem = document.getElementById('modal-chem-info');
+        const btnCloseChem = document.getElementById('btn-close-chem');
 
-        modal.style.display = 'flex';
+        btnCloseChem.addEventListener('click', () => {
+            modalChem.style.display = 'none';
+        });
+
+        window.openKitDetail = async (kit) => {
+            document.getElementById('detail-kit-name').textContent = kit.kit_name;
+            document.getElementById('detail-kit-info').textContent = `분류: ${kit.kit_class} | 수량: ${kit.quantity}`;
+
+            const chemListDiv = document.getElementById('kit-chemical-list');
+            chemListDiv.innerHTML = '<p>로딩 중...</p>';
+            modalDetail.style.display = 'flex';
+
+            // Fetch chemicals from kit_chemicals table
+            // We need to find chemicals linked to this kit.
+            // But wait, kit_chemicals is a flat list of chemicals used in kits, keyed by cas_no?
+            // No, the previous logic was:
+            // 1. Get kit_cas from catalog (experiment_kit)
+            // 2. Split by ','
+            // 3. Show chips.
+            // But we also have `kit_chemicals` table which stores detailed info.
+            // Let's look at how we did it before.
+            // Ah, we need to look up the kit in the catalog to get the CAS list.
+            const catalogItem = catalog.find(c => c.kit_name === kit.kit_name);
+            if (!catalogItem || !catalogItem.kit_cas) {
+                chemListDiv.innerHTML = '<p>등록된 약품 정보가 없습니다.</p>';
+                return;
+            }
+
+            const casList = catalogItem.kit_cas.split(',').map(s => s.trim());
+            chemListDiv.innerHTML = '';
+
+            // Create chips
+            // We also want to show Korean names if available in kit_chemicals
+            // So we should fetch from kit_chemicals where cas_no in casList
+            const { data: chemData } = await supabase
+                .from('kit_chemicals')
+                .select('cas_no, name_ko')
+                .in('cas_no', casList);
+
+            const map = new Map();
+            if (chemData) {
+                chemData.forEach(c => map.set(c.cas_no, c.name_ko));
+            }
+
+            casList.forEach(cas => {
+                if (isCasNo(cas)) {
+                    const btn = document.createElement('button');
+                    btn.className = 'chem-chip';
+                    btn.textContent = map.has(cas) ? `${map.get(cas)} (${cas})` : cas;
+                    btn.dataset.cas = cas;
+                    btn.addEventListener('click', () => openChemInfo(cas));
+                    chemListDiv.appendChild(btn);
+                } else {
+                    const span = document.createElement('span');
+                    span.className = 'chem-chip static';
+                    span.style.cursor = 'default';
+                    span.style.backgroundColor = '#f0f0f0';
+                    span.style.color = '#333';
+                    span.textContent = cas;
+                    chemListDiv.appendChild(span);
+                }
+            });
+        };
+
+        window.openChemInfo = async (cas) => {
+            const modalChem = document.getElementById('modal-chem-info');
+            const title = document.getElementById('chem-info-title');
+            const body = document.getElementById('chem-info-body');
+
+            title.textContent = `약품 정보 (${cas})`;
+            body.innerHTML = '<p>로딩 중...</p>';
+            modalChem.style.display = 'flex';
+
+            const { data, error } = await supabase
+                .from('kit_chemicals')
+                .select('*')
+                .eq('cas_no', cas)
+                .single();
+
+            if (error || !data) {
+                body.innerHTML = '<p>정보를 불러올 수 없습니다.</p>';
+                return;
+            }
+
+            // Render MSDS Data
+            // data.msds_data is JSON
+            const msds = data.msds_data || {};
+
+            let html = `<div style="text-align:left;">`;
+            html += `<p><strong>국문명:</strong> ${data.name_ko || '-'}</p>`;
+            html += `<p><strong>영문명:</strong> ${data.name_en || '-'}</p>`;
+            html += `<hr>`;
+
+            // Simple render of MSDS sections
+            for (const [key, val] of Object.entries(msds)) {
+                html += `<p><strong>${key}:</strong> ${val}</p>`;
+            }
+            html += `</div>`;
+
+            body.innerHTML = html;
+        };
     }
 
-    // ---- Helpers ----
+    // ---- Stock Modal ----
+    function setupStockModal() {
+        // Check if modal exists, if not create it
+        if (document.getElementById('modal-kit-stock')) return;
+
+        const modalHtml = `
+        <div id="modal-kit-stock" class="modal-overlay" style="display: none; z-index: 1200;">
+            <div class="modal-content" style="max-width: 350px;">
+                <h3 class="modal-title">재고 관리</h3>
+                <p id="stock-kit-name" class="modal-subtitle" style="margin-bottom: 15px;"></p>
+                
+                <form id="form-kit-stock">
+                    <div class="form-group">
+                        <label>작업 유형</label>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <label><input type="radio" name="stock-type" value="usage" checked> 사용 (차감)</label>
+                            <label><input type="radio" name="stock-type" value="purchase"> 구입 (추가)</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stock-amount">수량</label>
+                        <input type="number" id="stock-amount" class="form-input" min="1" value="1" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stock-date">날짜</label>
+                        <input type="date" id="stock-date" class="form-input" required>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" id="btn-cancel-stock" class="btn-cancel">취소</button>
+                        <button type="submit" id="btn-save-stock" class="btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>`;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const modal = document.getElementById('modal-kit-stock');
+        const form = document.getElementById('form-kit-stock');
+        const btnCancel = document.getElementById('btn-cancel-stock');
+        let currentKit = null;
+
+        btnCancel.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentKit) return;
+
+            const type = form.querySelector('input[name="stock-type"]:checked').value;
+            const amount = parseInt(document.getElementById('stock-amount').value, 10);
+            const date = document.getElementById('stock-date').value;
+
+            await handleStockChange(currentKit, type, amount, date);
+            modal.style.display = 'none';
+        });
+
+        window.openStockModal = (kit) => {
+            currentKit = kit;
+            document.getElementById('stock-kit-name').textContent = kit.kit_name;
+            document.getElementById('stock-amount').value = 1;
+            document.getElementById('stock-date').valueAsDate = new Date();
+            modal.style.display = 'flex';
+        };
+    }
+
+    async function handleStockChange(kit, type, amount, date) {
+        // 1. Calculate new quantity
+        let change = 0;
+        if (type === 'usage') {
+            change = -amount;
+        } else {
+            change = amount;
+        }
+
+        const newQuantity = kit.quantity + change;
+
+        if (newQuantity < 0) {
+            alert('재고가 부족합니다.');
+            return;
+        }
+
+        // 2. Update user_kits
+        const { error: updateError } = await supabase
+            .from('user_kits')
+            .update({ quantity: newQuantity })
+            .eq('id', kit.id);
+
+        if (updateError) {
+            alert('재고 업데이트 실패: ' + updateError.message);
+            return;
+        }
+
+        // 3. Log to kit_usage_log
+        const { error: logError } = await supabase
+            .from('kit_usage_log')
+            .insert({
+                kit_id: kit.id,
+                change_amount: change,
+                log_date: date,
+                log_type: type === 'usage' ? '사용' : '구입'
+            });
+
+        if (logError) {
+            console.error('Failed to log usage:', logError);
+        }
+
+        alert('저장되었습니다.');
+        loadUserKits();
+
+        // 4. Check Cleanup if quantity became 0
+        if (newQuantity === 0) {
+            await checkAndCleanupChemicals(kit.kit_name);
+        }
+    }
+
+    // ---- Helper Functions ----
     function isCasNo(str) {
-        // Simple CAS regex: digits-digits-digit
-        return /^\d{1,7}-\d{2}-\d$/.test(str);
+        return /^\d{2,7}-\d{2}-\d$/.test(str);
     }
 
-    // ---- Chemical Processing ----
-    async function processKitChemicals(casString) {
-        // casString: "64-17-5, 7758-99-8" (already cleaned by sync)
-        const casList = casString.split(',').map(c => c.trim()).filter(c => c);
+    async function processKitChemicals(kitName) {
+        // 1. Get CAS list from catalog
+        const item = catalog.find(c => c.kit_name === kitName);
+        if (!item || !item.kit_cas) return;
 
-        console.log('Processing chemicals:', casList);
+        const casList = item.kit_cas.split(',').map(s => s.trim());
 
+        // 2. For each CAS, check if it exists in kit_chemicals
+        // If not, fetch from Edge Function
         for (const cas of casList) {
-            // Check if exists in kit_chemicals
+            // Check existence
             const { data } = await supabase
                 .from('kit_chemicals')
-                .select('id')
+                .select('cas_no')
                 .eq('cas_no', cas)
-                .maybeSingle();
+                .single();
 
             if (!data) {
                 if (isCasNo(cas)) {
@@ -344,331 +745,42 @@
         }
     }
 
-    // ---- Detail Modal ----
-    function setupDetailModals() {
-        // Kit Detail Close
-        document.getElementById('btn-close-detail').addEventListener('click', () => {
-            document.getElementById('modal-kit-detail').style.display = 'none';
-        });
+    async function checkAndCleanupChemicals(kitName) {
+        // 1. Get CAS list for this kit
+        const item = catalog.find(c => c.kit_name === kitName);
+        if (!item || !item.kit_cas) return;
+        const targetCasList = item.kit_cas.split(',').map(s => s.trim());
 
-        // Chem Info Close
-        document.getElementById('btn-close-chem').addEventListener('click', () => {
-            document.getElementById('modal-chem-info').style.display = 'none';
-        });
-    }
-
-    async function openKitDetail(userKit) {
-        const modal = document.getElementById('modal-kit-detail');
-        document.getElementById('detail-kit-name').textContent = userKit.kit_name;
-        document.getElementById('detail-kit-info').textContent =
-            `분류: ${userKit.kit_class} | 수량: ${userKit.quantity} | 구입일: ${userKit.purchase_date}`;
-
-        const chemListDiv = document.getElementById('kit-chemical-list');
-        chemListDiv.innerHTML = '로딩 중...';
-
-        // Get CAS from catalog (via join or separate query)
-        // Since user_kits has kit_id, we can fetch from experiment_kit
-        const { data: catalogKit } = await supabase
-            .from('experiment_kit')
-            .select('kit_cas')
-            .eq('id', userKit.kit_id)
-            .single();
-
-        chemListDiv.innerHTML = '';
-
-        if (catalogKit && catalogKit.kit_cas) {
-            const casList = catalogKit.kit_cas.split(',').map(c => c.trim()).filter(c => c);
-
-            if (casList.length === 0) {
-                chemListDiv.innerHTML = '<p>등록된 약품 정보가 없습니다.</p>';
-            } else {
-                for (const cas of casList) {
-                    if (isCasNo(cas)) {
-                        const btn = document.createElement('button');
-                        btn.className = 'chem-chip';
-                        btn.textContent = cas; // Show CAS initially
-                        btn.dataset.cas = cas; // Mark as CAS for enhancement
-                        btn.addEventListener('click', () => openChemInfo(cas));
-                        chemListDiv.appendChild(btn);
-                    } else {
-                        const span = document.createElement('span');
-                        span.className = 'chem-chip static'; // Add static class for styling if needed
-                        span.style.cursor = 'default';
-                        span.style.backgroundColor = '#f0f0f0';
-                        span.style.color = '#333';
-                        span.textContent = cas;
-                        chemListDiv.appendChild(span);
-                    }
-                }
-
-                // Enhance chips with names (only for CAS items)
-                enhanceChemChips(casList.filter(c => isCasNo(c)));
-            }
-        } else {
-            chemListDiv.innerHTML = '<p>등록된 약품 정보가 없습니다.</p>';
-        }
-
-        modal.style.display = 'flex';
-    }
-
-    async function enhanceChemChips(casList) {
-        if (casList.length === 0) return;
-
-        const { data } = await supabase
-            .from('kit_chemicals')
-            .select('cas_no, name_ko, name_en')
-            .in('cas_no', casList);
-
-        if (data) {
-            const map = new Map(data.map(d => [d.cas_no, d.name_ko || d.name_en]));
-            const chips = document.querySelectorAll('.chem-chip[data-cas]'); // Only target CAS chips
-            chips.forEach(chip => {
-                const cas = chip.dataset.cas;
-                if (map.has(cas)) {
-                    chip.textContent = `${map.get(cas)} (${cas})`;
-                }
-            });
-        }
-    }
-
-    async function openChemInfo(cas) {
-        const modal = document.getElementById('modal-chem-info');
-        const body = document.getElementById('chem-info-body');
-        const title = document.getElementById('chem-info-title');
-
-        title.textContent = `약품 정보 (${cas})`;
-        body.innerHTML = '로딩 중...';
-        modal.style.display = 'flex';
-
-        const { data, error } = await supabase
-            .from('kit_chemicals')
-            .select('*')
-            .eq('cas_no', cas)
-            .maybeSingle();
-
-        if (error || !data) {
-            body.innerHTML = '<p>상세 정보가 없습니다. (동기화가 필요할 수 있습니다)</p>';
-            return;
-        }
-
-        // Render Info
-        let msdsHtml = '';
-        if (data.msds_data && Array.isArray(data.msds_data)) {
-            msdsHtml = '<div class="msds-accordion">';
-            data.msds_data.forEach(section => {
-                // Parse content: no|||name|||detail
-                const parts = section.content.split('|||');
-                const title = parts[1] || `항목 ${section.section_number}`;
-                const content = parts[2] || section.content;
-
-                msdsHtml += `
-                    <details>
-                        <summary>${section.section_number}. ${title}</summary>
-                        <div class="msds-content">${content.replace(/\n/g, '<br>')}</div>
-                    </details>
-                `;
-            });
-            msdsHtml += '</div>';
-        }
-
-        body.innerHTML = `
-            <div class="chem-detail-grid">
-                <p><strong>국문명:</strong> ${data.name_ko || '-'}</p>
-                <p><strong>영문명:</strong> ${data.name_en || '-'}</p>
-                <p><strong>화학식:</strong> ${data.formula || '-'}</p>
-                <p><strong>분자량:</strong> ${data.molecular_weight || '-'}</p>
-            </div>
-            <hr>
-            <h4>MSDS 정보</h4>
-            ${msdsHtml}
-        `;
-    }
-
-    // ---- Stock Management ----
-    function setupStockModal() {
-        // Create Modal HTML dynamically if not exists
-        if (!document.getElementById('modal-kit-stock')) {
-            const modalHtml = `
-            <div id="modal-kit-stock" class="modal-overlay" style="display:none;">
-                <div class="modal-content">
-                    <h3>재고 관리</h3>
-                    <p id="stock-kit-name" style="color:#666; margin-bottom:15px;"></p>
-                    
-                    <div class="form-group">
-                        <label>작업 유형</label>
-                        <div class="button-group" id="stock-type-group">
-                            <button type="button" class="active" data-value="usage">사용 (차감)</button>
-                            <button type="button" data-value="purchase">구입 (추가)</button>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>수량</label>
-                        <input type="number" id="stock-amount" min="1" value="1" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>날짜</label>
-                        <input type="date" id="stock-date" />
-                    </div>
-
-                    <div class="modal-actions">
-                        <button id="btn-cancel-stock" class="btn-cancel">취소</button>
-                        <button id="btn-save-stock" style="background-color:#00a0b2; color:white;">저장</button>
-                    </div>
-                </div>
-            </div>`;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-        }
-
-        const modal = document.getElementById('modal-kit-stock');
-        const btnCancel = document.getElementById('btn-cancel-stock');
-        const btnSave = document.getElementById('btn-save-stock');
-        const typeBtns = document.querySelectorAll('#stock-type-group button');
-
-        // Type Toggle
-        typeBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                typeBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
-
-        // Cancel
-        btnCancel.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-
-        // Save
-        btnSave.addEventListener('click', async () => {
-            const type = document.querySelector('#stock-type-group button.active').dataset.value;
-            const amount = parseInt(document.getElementById('stock-amount').value, 10);
-            const date = document.getElementById('stock-date').value;
-            const kitId = modal.dataset.kitId;
-            const currentQty = parseInt(modal.dataset.currentQty, 10);
-
-            if (!amount || amount <= 0) return alert('유효한 수량을 입력하세요.');
-
-            // Calculate new quantity
-            let change = amount;
-            if (type === 'usage') change = -amount;
-
-            const newQty = currentQty + change;
-            if (newQty < 0) return alert('재고가 부족합니다.');
-
-            try {
-                // 1. Update user_kits
-                const { error: updateError } = await supabase
-                    .from('user_kits')
-                    .update({ quantity: newQty })
-                    .eq('id', kitId);
-
-                if (updateError) throw updateError;
-
-                // 2. Insert Log
-                const { error: logError } = await supabase
-                    .from('kit_usage_log')
-                    .insert({
-                        user_kit_id: kitId,
-                        change_amount: change,
-                        log_date: date,
-                        log_type: type
-                    });
-
-                if (logError) console.error('Failed to log:', logError);
-
-                // 3. Cleanup Chemicals if Qty becomes 0
-                if (newQty === 0) {
-                    await checkAndCleanupChemicals(kitId);
-                }
-
-                alert('저장되었습니다.');
-                modal.style.display = 'none';
-                loadUserKits();
-
-            } catch (e) {
-                alert('오류 발생: ' + e.message);
-            }
-        });
-    }
-
-    function openStockModal(kit) {
-        const modal = document.getElementById('modal-kit-stock');
-        document.getElementById('stock-kit-name').textContent = kit.kit_name;
-        document.getElementById('stock-amount').value = 1;
-        document.getElementById('stock-date').valueAsDate = new Date();
-
-        modal.dataset.kitId = kit.id;
-        modal.dataset.currentQty = kit.quantity;
-
-        modal.style.display = 'flex';
-    }
-
-    // ---- Chemical Cleanup Logic ----
-    async function checkAndCleanupChemicals(targetUserKitId) {
-        console.log(`Checking cleanup for kit ${targetUserKitId}...`);
-
-        // 1. Get the CAS list of the target kit
-        // We need to join user_kits -> experiment_kit to get kit_cas
-        const { data: targetKit, error: tError } = await supabase
+        // 2. Find ALL other active kits (quantity > 0)
+        const { data: activeKits } = await supabase
             .from('user_kits')
-            .select('kit_id, experiment_kit(kit_cas)')
-            .eq('id', targetUserKitId)
-            .single();
+            .select('kit_name')
+            .gt('quantity', 0);
 
-        if (tError || !targetKit || !targetKit.experiment_kit?.kit_cas) return;
+        if (!activeKits) return;
 
-        const targetCasList = targetKit.experiment_kit.kit_cas
-            .split(',')
-            .map(c => c.trim())
-            .filter(c => c);
-
-        if (targetCasList.length === 0) return;
-
-        // 2. Get ALL other active kits (qty > 0)
-        const { data: activeKits, error: aError } = await supabase
-            .from('user_kits')
-            .select('id, quantity, experiment_kit(kit_cas)')
-            .gt('quantity', 0); // Only consider kits with stock
-
-        if (aError) {
-            console.error('Failed to fetch active kits:', aError);
-            return;
-        }
-
-        // 3. Build a Set of ALL active CAS numbers from OTHER kits
+        // 3. Collect all CAS numbers used by other active kits
         const activeCasSet = new Set();
         activeKits.forEach(k => {
-            // Skip the target kit itself (even if it says qty>0 in DB, we assume it's effectively 0 or being deleted)
-            // But wait, if we just updated it to 0, the query 'gt 0' should exclude it automatically.
-            // If we are deleting it, it might still be there or not.
-            // Safer to just process the list returned by the query.
-
-            if (k.experiment_kit?.kit_cas) {
-                k.experiment_kit.kit_cas.split(',').forEach(c => {
-                    activeCasSet.add(c.trim());
-                });
+            const catItem = catalog.find(c => c.kit_name === k.kit_name);
+            if (catItem && catItem.kit_cas) {
+                catItem.kit_cas.split(',').forEach(cas => activeCasSet.add(cas.trim()));
             }
         });
 
-        // 4. Identify CAS to delete
-        const casToDelete = targetCasList.filter(cas => !activeCasSet.has(cas));
+        // 4. Identify CAS numbers to remove (in target list but NOT in active set)
+        const toRemove = targetCasList.filter(cas => !activeCasSet.has(cas));
 
-        if (casToDelete.length > 0) {
-            console.log('Deleting unused chemicals:', casToDelete);
-            const { error: delError } = await supabase
+        if (toRemove.length > 0) {
+            console.log(`Cleaning up unused chemicals: ${toRemove.join(', ')}`);
+            await supabase
                 .from('kit_chemicals')
                 .delete()
-                .in('cas_no', casToDelete);
-
-            if (delError) console.error('Failed to delete chemicals:', delError);
-        } else {
-            console.log('No chemicals to delete. All still in use.');
+                .in('cas_no', toRemove);
         }
     }
 
-    // ---- Expose init ----
-    globalThis.App = globalThis.App || {};
-    globalThis.App.Kits = { init };
+    // Initialize
+    document.addEventListener('DOMContentLoaded', init);
 
 })();
