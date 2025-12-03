@@ -3,7 +3,7 @@
 
     // State
     let catalog = []; // Full list from experiment_kit table
-    let currentSort = 'created_at_desc';
+    let currentSort = 'name_class';
     let currentSearch = '';
 
     async function init() {
@@ -75,14 +75,16 @@
             .select('*');
 
         // Apply Sort
-        if (currentSort === 'created_at_desc') {
-            query = query.order('created_at', { ascending: false });
-        } else if (currentSort === 'name_kor') {
+        if (currentSort === 'name_class') {
+            query = query.order('kit_class', { ascending: true }).order('kit_name', { ascending: true });
+        } else if (currentSort === 'name_all') {
             query = query.order('kit_name', { ascending: true });
-        } else if (currentSort === 'quantity_desc') {
-            query = query.order('quantity', { ascending: false });
-        } else if (currentSort === 'quantity_asc') {
-            query = query.order('quantity', { ascending: true });
+        } else if (currentSort === 'location') {
+            // Placeholder for location sort - currently sorting by ID as fallback
+            query = query.order('id', { ascending: true });
+        } else {
+            // Default fallback
+            query = query.order('created_at', { ascending: false });
         }
 
         const { data, error } = await query;
@@ -781,6 +783,10 @@
     }
 
     // Initialize
-    document.addEventListener('DOMContentLoaded', init);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
 })();
