@@ -91,10 +91,13 @@
                         <div class="inventory-card__line4 inventory-card__location">구입일: ${kit.purchase_date || '-'}</div>
                     </div>
                     <div class="inventory-card__meta" style="flex-direction: row; gap: 5px; align-items: center;">
-                         <button class="icon-btn edit-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
+                         <button class="icon-btn stock-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="재고 관리">
+                            <span class="material-symbols-outlined" style="font-size: 20px; color: #4caf50;">inventory</span>
+                        </button>
+                         <button class="icon-btn edit-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="수정">
                             <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
                         </button>
-                        <button class="icon-btn delete-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
+                        <button class="icon-btn delete-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="삭제">
                             <span class="material-symbols-outlined" style="font-size: 20px; color: #999;">delete</span>
                         </button>
                     </div>
@@ -105,6 +108,13 @@
             card.querySelector('.inventory-card__body').addEventListener('click', (e) => {
                 if (e.target.closest('button')) return;
                 openKitDetail(kit);
+            });
+
+            // Stock Button
+            card.querySelector('.stock-kit-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                setupStockModal(); // Ensure modal exists
+                openStockModal(kit);
             });
 
             // Edit Button
@@ -474,7 +484,190 @@
         `;
     }
 
-    // Expose init
+    // ---- Stock Management ----
+    function setupStockModal() {
+        // Create Modal HTML dynamically if not exists
+        if (!document.getElementById('modal-kit-stock')) {
+            const modalHtml = `
+            <div id="modal-kit-stock" class="modal-overlay" style="display:none;">
+                <div class="modal-content">
+                    <h3>재고 관리</h3>
+                    <p id="stock-kit-name" style="color:#666; margin-bottom:15px;"></p>
+                    
+                    <div class="form-group">
+                        <label>작업 유형</label>
+                        <div class="button-group" id="stock-type-group">
+                            <button type="button" class="active" data-value="usage">사용 (차감)</button>
+                            <button type="button" data-value="purchase">구입 (추가)</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>수량</label>
+                        <input type="number" id="stock-amount" min="1" value="1" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>날짜</label>
+                        <input type="date" id="stock-date" />
+                    </div>
+
+                    <div class="modal-actions">
+                        <button id="btn-cancel-stock" class="btn-cancel">취소</button>
+                        <button id="btn-save-stock" style="background-color:#00a0b2; color:white;">저장</button>
+                    </div>
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        const modal = document.getElementById('modal-kit-stock');
+        const btnCancel = document.getElementById('btn-cancel-stock');
+        const btnSave = document.getElementById('btn-save-stock');
+        const typeBtns = document.querySelectorAll('#stock-type-group button');
+
+        // Type Toggle
+        typeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                typeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Cancel
+        btnCancel.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        // Save
+        btnSave.addEventListener('click', async () => {
+            const type = document.querySelector('#stock-type-group button.active').dataset.value;
+            const amount = parseInt(document.getElementById('stock-amount').value, 10);
+            const date = document.getElementById('stock-date').value;
+            const kitId = modal.dataset.kitId;
+            const currentQty = parseInt(modal.dataset.currentQty, 10);
+
+            if (!amount || amount <= 0) return alert('유효한 수량을 입력하세요.');
+
+            // Calculate new quantity
+            let change = amount;
+            if (type === 'usage') change = -amount;
+
+            const newQty = currentQty + change;
+            if (newQty < 0) return alert('재고가 부족합니다.');
+
+            try {
+                // 1. Update user_kits
+                const { error: updateError } = await supabase
+                    .from('user_kits')
+                    .update({ quantity: newQty })
+                    .eq('id', kitId);
+
+                if (updateError) throw updateError;
+
+                // 2. Insert Log
+                const { error: logError } = await supabase
+                    .from('kit_usage_log')
+                    .insert({
+                        user_kit_id: kitId,
+                        change_amount: change,
+                        log_date: date,
+                        log_type: type
+                    });
+
+                if (logError) console.error('Failed to log:', logError);
+
+                // 3. Cleanup Chemicals if Qty becomes 0
+                if (newQty === 0) {
+                    await checkAndCleanupChemicals(kitId);
+                }
+
+                alert('저장되었습니다.');
+                modal.style.display = 'none';
+                loadUserKits();
+
+            } catch (e) {
+                alert('오류 발생: ' + e.message);
+            }
+        });
+    }
+
+    function openStockModal(kit) {
+        const modal = document.getElementById('modal-kit-stock');
+        document.getElementById('stock-kit-name').textContent = kit.kit_name;
+        document.getElementById('stock-amount').value = 1;
+        document.getElementById('stock-date').valueAsDate = new Date();
+
+        modal.dataset.kitId = kit.id;
+        modal.dataset.currentQty = kit.quantity;
+
+        modal.style.display = 'flex';
+    }
+
+    // ---- Chemical Cleanup Logic ----
+    async function checkAndCleanupChemicals(targetUserKitId) {
+        console.log(`Checking cleanup for kit ${targetUserKitId}...`);
+
+        // 1. Get the CAS list of the target kit
+        // We need to join user_kits -> experiment_kit to get kit_cas
+        const { data: targetKit, error: tError } = await supabase
+            .from('user_kits')
+            .select('kit_id, experiment_kit(kit_cas)')
+            .eq('id', targetUserKitId)
+            .single();
+
+        if (tError || !targetKit || !targetKit.experiment_kit?.kit_cas) return;
+
+        const targetCasList = targetKit.experiment_kit.kit_cas
+            .split(',')
+            .map(c => c.trim())
+            .filter(c => c);
+
+        if (targetCasList.length === 0) return;
+
+        // 2. Get ALL other active kits (qty > 0)
+        const { data: activeKits, error: aError } = await supabase
+            .from('user_kits')
+            .select('id, quantity, experiment_kit(kit_cas)')
+            .gt('quantity', 0); // Only consider kits with stock
+
+        if (aError) {
+            console.error('Failed to fetch active kits:', aError);
+            return;
+        }
+
+        // 3. Build a Set of ALL active CAS numbers from OTHER kits
+        const activeCasSet = new Set();
+        activeKits.forEach(k => {
+            // Skip the target kit itself (even if it says qty>0 in DB, we assume it's effectively 0 or being deleted)
+            // But wait, if we just updated it to 0, the query 'gt 0' should exclude it automatically.
+            // If we are deleting it, it might still be there or not.
+            // Safer to just process the list returned by the query.
+
+            if (k.experiment_kit?.kit_cas) {
+                k.experiment_kit.kit_cas.split(',').forEach(c => {
+                    activeCasSet.add(c.trim());
+                });
+            }
+        });
+
+        // 4. Identify CAS to delete
+        const casToDelete = targetCasList.filter(cas => !activeCasSet.has(cas));
+
+        if (casToDelete.length > 0) {
+            console.log('Deleting unused chemicals:', casToDelete);
+            const { error: delError } = await supabase
+                .from('kit_chemicals')
+                .delete()
+                .in('cas_no', casToDelete);
+
+            if (delError) console.error('Failed to delete chemicals:', delError);
+        } else {
+            console.log('No chemicals to delete. All still in use.');
+        }
+    }
+
+    // ---- Expose init ----
     globalThis.App = globalThis.App || {};
     globalThis.App.Kits = { init };
 
