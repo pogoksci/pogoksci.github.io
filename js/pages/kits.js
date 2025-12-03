@@ -143,8 +143,8 @@
                     </div>`;
             } else {
                 imageBlock = `
-                    <div class="inventory-card__image" style="background-color: #eee; display: flex; align-items: center; justify-content: center;">
-                        <span class="material-symbols-outlined" style="font-size: 48px; color: #ccc;">science</span>
+                    <div class="inventory-card__image" style="background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999; font-size: 12px;">
+                        사진 없음
                     </div>`;
             }
 
@@ -156,9 +156,9 @@
                             <span class="kit-tag" style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:12px;">${kit.kit_class || '미분류'}</span>
                         </div>
                         <div class="inventory-card__line2 name-kor">${kit.kit_name}</div>
+                        <div class="inventory-card__line3 name-eng" style="font-size: 14px; color: #555; margin-top: 4px;">수량: ${kit.quantity}개</div>
                     </div>
-                    <div class="inventory-card__right" style="display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between;">
-                        <div class="inventory-card__line3 name-eng" style="font-size: 14px; color: #555; margin-bottom: 5px;">수량: ${kit.quantity}개</div>
+                    <div class="inventory-card__right" style="display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end;">
                         <div class="inventory-card__meta" style="flex-direction: row; gap: 5px; align-items: center;">
                              <button class="icon-btn stock-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="재고 관리">
                                 <span class="material-symbols-outlined" style="font-size: 20px; color: #4caf50;">inventory</span>
