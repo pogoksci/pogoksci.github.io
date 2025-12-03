@@ -70,19 +70,77 @@
         listContainer.innerHTML = '';
         data.forEach(kit => {
             const card = document.createElement('div');
-            card.className = 'kit-card';
+            card.className = 'inventory-card'; // Use inventory-card style
+            card.dataset.id = kit.id;
+
+            // Image block (placeholder for kits)
+            const imageBlock = `
+                <div class="inventory-card__image inventory-card__image--empty">
+                    <span class="material-symbols-outlined" style="font-size: 24px; color: #ccc;">science</span>
+                </div>`;
+
             card.innerHTML = `
-                <span class="kit-tag">${kit.kit_class || '미분류'}</span>
-                <h4>${kit.kit_name}</h4>
-                <p>수량: ${kit.quantity}개</p>
-                <p>구입일: ${kit.purchase_date || '-'}</p>
+                ${imageBlock}
+                <div class="inventory-card__body">
+                    <div class="inventory-card__left">
+                        <div class="inventory-card__line1">
+                            <span class="kit-tag" style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:12px;">${kit.kit_class || '미분류'}</span>
+                        </div>
+                        <div class="inventory-card__line2 name-kor">${kit.kit_name}</div>
+                        <div class="inventory-card__line3 name-eng">수량: ${kit.quantity}개</div>
+                        <div class="inventory-card__line4 inventory-card__location">구입일: ${kit.purchase_date || '-'}</div>
+                    </div>
+                    <div class="inventory-card__meta" style="flex-direction: row; gap: 5px; align-items: center;">
+                         <button class="icon-btn edit-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
+                            <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
+                        </button>
+                        <button class="icon-btn delete-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
+                            <span class="material-symbols-outlined" style="font-size: 20px; color: #999;">delete</span>
+                        </button>
+                    </div>
+                </div>
             `;
-            card.addEventListener('click', () => openKitDetail(kit));
+
+            // Click on card body to open detail (exclude buttons)
+            card.querySelector('.inventory-card__body').addEventListener('click', (e) => {
+                if (e.target.closest('button')) return;
+                openKitDetail(kit);
+            });
+
+            // Edit Button
+            card.querySelector('.edit-kit-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (window.openEditKitModal) {
+                    window.openEditKitModal(kit);
+                }
+            });
+
+            // Delete Button
+            card.querySelector('.delete-kit-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (confirm('정말 삭제하시겠습니까?')) {
+                    await deleteKit(kit.id);
+                }
+            });
+
             listContainer.appendChild(card);
         });
     }
 
-    // ---- Register Modal ----
+    async function deleteKit(id) {
+        try {
+            const { error } = await supabase.from('user_kits').delete().eq('id', id);
+            if (error) throw error;
+            loadUserKits();
+        } catch (e) {
+            alert('삭제 실패: ' + e.message);
+        }
+    }
+
+    // ---- Register/Edit Modal ----
+    let isEditMode = false;
+    let editKitId = null;
+
     function setupRegisterModal() {
         const modal = document.getElementById('modal-register-kit');
         const form = document.getElementById('form-register-kit');
@@ -90,6 +148,8 @@
         const classSelect = document.getElementById('kit-class-select');
         const nameSelect = document.getElementById('kit-name-select');
         const dateInput = document.getElementById('kit-date');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const modalTitle = modal.querySelector('h3');
 
         // Set default date to today
         if (dateInput) dateInput.valueAsDate = new Date();
@@ -97,6 +157,10 @@
         // Class Change -> Filter Names
         classSelect.addEventListener('change', (e) => {
             const selectedClass = e.target.value;
+            updateNameSelect(selectedClass);
+        });
+
+        function updateNameSelect(selectedClass, selectedKitId = null) {
             nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
             nameSelect.disabled = false;
 
@@ -110,14 +174,19 @@
                 opt.dataset.cas = k.kit_cas || ''; // Store CAS for later
                 opt.dataset.name = k.kit_name;
                 opt.dataset.class = k.kit_class;
+                if (selectedKitId && k.id == selectedKitId) {
+                    opt.selected = true;
+                }
                 nameSelect.appendChild(opt);
             });
-        });
+        }
 
         // Cancel
         btnCancel.addEventListener('click', () => {
             modal.style.display = 'none';
             form.reset();
+            isEditMode = false;
+            editKitId = null;
         });
 
         // Submit
@@ -132,36 +201,93 @@
             const date = document.getElementById('kit-date').value;
 
             try {
-                // 1. Insert into user_kits
-                const { error } = await supabase.from('user_kits').insert({
-                    kit_id: kitId,
-                    kit_name: kitName,
-                    kit_class: kitClass,
-                    quantity: quantity,
-                    purchase_date: date
-                });
+                if (isEditMode && editKitId) {
+                    // Update
+                    const { error } = await supabase.from('user_kits').update({
+                        kit_id: kitId,
+                        kit_name: kitName,
+                        kit_class: kitClass,
+                        quantity: quantity,
+                        purchase_date: date
+                    }).eq('id', editKitId);
 
-                if (error) throw error;
+                    if (error) throw error;
+                    alert('키트 정보가 수정되었습니다.');
+                } else {
+                    // Insert
+                    const { error } = await supabase.from('user_kits').insert({
+                        kit_id: kitId,
+                        kit_name: kitName,
+                        kit_class: kitClass,
+                        quantity: quantity,
+                        purchase_date: date
+                    });
 
-                // 2. Process Chemicals (Background)
-                if (kitCas) {
-                    processKitChemicals(kitCas);
+                    if (error) throw error;
+
+                    // Process Chemicals (Background) only on new insert or if needed
+                    if (kitCas) {
+                        processKitChemicals(kitCas);
+                    }
+                    alert('키트가 등록되었습니다.');
                 }
 
-                alert('키트가 등록되었습니다.');
                 modal.style.display = 'none';
                 form.reset();
+                isEditMode = false;
+                editKitId = null;
                 loadUserKits(); // Refresh list
 
             } catch (err) {
-                alert('등록 실패: ' + err.message);
+                alert('저장 실패: ' + err.message);
             }
         });
+
+        // Expose open function for Edit
+        window.openEditKitModal = (kit) => {
+            isEditMode = true;
+            editKitId = kit.id;
+            modalTitle.textContent = '키트 정보 수정';
+            submitBtn.textContent = '수정 완료';
+
+            modal.style.display = 'flex';
+
+            // Fill form
+            document.getElementById('kit-quantity').value = kit.quantity;
+            document.getElementById('kit-date').value = kit.purchase_date;
+
+            // Set Class
+            // Split class if multiple? Assuming single for now or primary
+            // The catalog has comma separated classes maybe? 
+            // Let's try to match one.
+            const cls = kit.kit_class.split(',')[0].trim();
+            classSelect.value = cls;
+
+            // Update Name Select based on class and select the kit
+            updateNameSelect(cls, kit.kit_id);
+        };
     }
 
     function openRegisterModal() {
         const modal = document.getElementById('modal-register-kit');
+        const modalTitle = modal.querySelector('h3');
+        const submitBtn = document.querySelector('#form-register-kit button[type="submit"]');
+
+        isEditMode = false;
+        editKitId = null;
+        modalTitle.textContent = '새 키트 등록';
+        submitBtn.textContent = '등록';
+
+        document.getElementById('form-register-kit').reset();
+        document.getElementById('kit-date').valueAsDate = new Date();
+
         modal.style.display = 'flex';
+    }
+
+    // ---- Helpers ----
+    function isCasNo(str) {
+        // Simple CAS regex: digits-digits-digit
+        return /^\d{1,7}-\d{2}-\d$/.test(str);
     }
 
     // ---- Chemical Processing ----
@@ -180,14 +306,29 @@
                 .maybeSingle();
 
             if (!data) {
-                // Fetch and Insert via Edge Function
-                console.log(`Fetching info for ${cas}...`);
-                try {
-                    await supabase.functions.invoke('kit-casimport', {
-                        body: { cas_rn: cas }
-                    });
-                } catch (e) {
-                    console.error(`Failed to import ${cas}:`, e);
+                if (isCasNo(cas)) {
+                    // Fetch and Insert via Edge Function
+                    console.log(`Fetching info for ${cas}...`);
+                    try {
+                        await supabase.functions.invoke('kit-casimport', {
+                            body: { cas_rn: cas }
+                        });
+                    } catch (e) {
+                        console.error(`Failed to import ${cas}:`, e);
+                    }
+                } else {
+                    // Not a CAS number (Korean Name), insert directly
+                    console.log(`Inserting manual entry for ${cas}...`);
+                    try {
+                        await supabase.from('kit_chemicals').insert({
+                            cas_no: cas, // Use name as ID
+                            name_ko: cas,
+                            name_en: null,
+                            msds_data: null
+                        });
+                    } catch (e) {
+                        console.error(`Failed to insert manual entry ${cas}:`, e);
+                    }
                 }
             }
         }
@@ -232,18 +373,26 @@
                 chemListDiv.innerHTML = '<p>등록된 약품 정보가 없습니다.</p>';
             } else {
                 for (const cas of casList) {
-                    const btn = document.createElement('button');
-                    btn.className = 'chem-chip';
-                    btn.textContent = cas; // Show CAS initially
-
-                    // Fetch name for better display?
-                    // We can do a bulk fetch from kit_chemicals to get names
-                    btn.addEventListener('click', () => openChemInfo(cas));
-                    chemListDiv.appendChild(btn);
+                    if (isCasNo(cas)) {
+                        const btn = document.createElement('button');
+                        btn.className = 'chem-chip';
+                        btn.textContent = cas; // Show CAS initially
+                        btn.dataset.cas = cas; // Mark as CAS for enhancement
+                        btn.addEventListener('click', () => openChemInfo(cas));
+                        chemListDiv.appendChild(btn);
+                    } else {
+                        const span = document.createElement('span');
+                        span.className = 'chem-chip static'; // Add static class for styling if needed
+                        span.style.cursor = 'default';
+                        span.style.backgroundColor = '#f0f0f0';
+                        span.style.color = '#333';
+                        span.textContent = cas;
+                        chemListDiv.appendChild(span);
+                    }
                 }
 
-                // Enhance chips with names
-                enhanceChemChips(casList);
+                // Enhance chips with names (only for CAS items)
+                enhanceChemChips(casList.filter(c => isCasNo(c)));
             }
         } else {
             chemListDiv.innerHTML = '<p>등록된 약품 정보가 없습니다.</p>';
@@ -253,6 +402,8 @@
     }
 
     async function enhanceChemChips(casList) {
+        if (casList.length === 0) return;
+
         const { data } = await supabase
             .from('kit_chemicals')
             .select('cas_no, name_ko, name_en')
@@ -260,9 +411,9 @@
 
         if (data) {
             const map = new Map(data.map(d => [d.cas_no, d.name_ko || d.name_en]));
-            const chips = document.querySelectorAll('.chem-chip');
+            const chips = document.querySelectorAll('.chem-chip[data-cas]'); // Only target CAS chips
             chips.forEach(chip => {
-                const cas = chip.textContent;
+                const cas = chip.dataset.cas;
                 if (map.has(cas)) {
                     chip.textContent = `${map.get(cas)} (${cas})`;
                 }
