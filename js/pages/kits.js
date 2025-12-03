@@ -6,64 +6,268 @@
     let currentSort = 'name_class';
     let currentSearch = '';
 
-    async function init() {
-        console.log("📦 Kit Page Initialized");
+    // Constants for MSDS
+    const msdsTitles = [
+        "1. 화학제품과 회사에 관한 정보", "2. 유해성·위험성", "3. 구성성분의 명칭 및 함유량", "4. 응급조치 요령",
+        "5. 화재 시 조치방법", "6. 누출 시 조치방법", "7. 취급 및 저장방법", "8. 노출방지 및 개인보호구",
+        "9. 물리화학적 특성", "10. 안정성 및 반응성", "11. 독성에 관한 정보", "12. 환경에 미치는 영향",
+        "13. 폐기 시 주의사항", "14. 운송에 필요한 정보", "15. 법적 규제현황", "16. 그 밖의 참고사항"
+    ];
 
-        // 1. Setup FAB
-        if (App.Fab) {
-            App.Fab.setVisibility(true, '<span class="material-symbols-outlined">add</span> 새 키트 등록', () => {
-                openRegisterModal();
-            });
-        }
+    const Kits = {
+        async init() {
+            console.log("📦 Kit Page Initialized");
 
-        // 2. Setup Sort Dropdown
-        if (App.SortDropdown) {
-            App.SortDropdown.init({
-                toggleId: 'kit-sort-toggle',
-                menuId: 'kit-sort-menu',
-                labelId: 'kit-sort-label',
-                defaultLabel: '키트이름(분류)',
-                defaultValue: 'name_class',
-                onChange: (value) => {
-                    currentSort = value;
-                    loadUserKits();
+            // 1. Setup FAB
+            if (App.Fab) {
+                App.Fab.setVisibility(true, '<span class="material-symbols-outlined">add</span> 새 키트 등록', () => {
+                    openRegisterModal();
+                });
+            }
+
+            // 2. Setup Sort Dropdown
+            if (App.SortDropdown) {
+                App.SortDropdown.init({
+                    toggleId: 'kit-sort-toggle',
+                    menuId: 'kit-sort-menu',
+                    labelId: 'kit-sort-label',
+                    defaultLabel: '키트이름(분류)',
+                    defaultValue: 'name_class',
+                    onChange: (value) => {
+                        currentSort = value;
+                        this.loadUserKits();
+                    }
+                });
+            }
+
+            // 3. Setup Search
+            const searchInput = document.getElementById('kit-search-input');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    currentSearch = e.target.value.trim().toLowerCase();
+                    this.loadUserKits();
+                });
+            }
+
+            // 4. Setup Refresh
+            const refreshBtn = document.getElementById('kit-refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    this.loadUserKits();
+                });
+            }
+
+            // 5. Load Data
+            await loadCatalog();
+            await this.loadUserKits();
+
+            // 6. Setup Modals
+            setupRegisterModal();
+            setupStockModal();
+        },
+
+        async loadUserKits() {
+            const listContainer = document.getElementById('kit-list');
+            if (!listContainer) return;
+
+            let query = supabase.from('user_kits').select('*');
+
+            // Apply Sort
+            if (currentSort === 'name_class') {
+                query = query.order('kit_class', { ascending: true }).order('kit_name', { ascending: true });
+            } else if (currentSort === 'name_all') {
+                query = query.order('kit_name', { ascending: true });
+            } else if (currentSort === 'location') {
+                query = query.order('id', { ascending: true });
+            } else {
+                query = query.order('created_at', { ascending: false });
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                listContainer.innerHTML = `<p class="error">로드 실패: ${error.message}</p>`;
+                return;
+            }
+
+            // Apply Search
+            let filteredData = data;
+            if (currentSearch) {
+                filteredData = data.filter(kit =>
+                    kit.kit_name.toLowerCase().includes(currentSearch) ||
+                    (kit.kit_class && kit.kit_class.toLowerCase().includes(currentSearch))
+                );
+            }
+
+            if (!filteredData || filteredData.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-symbols-outlined" style="font-size:48px; color:#ccc;">inventory_2</span>
+                        <p>검색 결과가 없습니다.</p>
+                    </div>`;
+                return;
+            }
+
+            listContainer.innerHTML = '';
+            filteredData.forEach(kit => {
+                const card = document.createElement('div');
+                card.className = 'inventory-card';
+                card.dataset.id = kit.id;
+
+                // Image block
+                let imageBlock = '';
+                if (kit.image_url) {
+                    imageBlock = `
+                        <div class="inventory-card__image">
+                            <img src="${kit.image_url}" alt="${kit.kit_name}">
+                        </div>`;
+                } else {
+                    imageBlock = `
+                        <div class="inventory-card__image inventory-card__image--empty">
+                            <span class="inventory-card__placeholder">사진 없음</span>
+                        </div>`;
                 }
+
+                card.innerHTML = `
+                    ${imageBlock}
+                    <div class="inventory-card__body">
+                        <div class="inventory-card__left">
+                            <div class="inventory-card__line1">
+                                <span class="kit-tag" style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:12px;">${kit.kit_class || '미분류'}</span>
+                            </div>
+                            <div class="inventory-card__line2" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div class="name-kor">${kit.kit_name}</div>
+                                <div class="kit-quantity" style="font-size: 14px; color: #555; font-weight: normal;">수량: ${kit.quantity}개</div>
+                            </div>
+                            <div class="inventory-card__line3" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                                <div class="kit-location" style="font-size: 13px; color: #777;"></div>
+                                <div class="inventory-card__actions" style="display: flex; gap: 5px;">
+                                    <button class="icon-btn stock-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="재고 관리">
+                                        <span class="material-symbols-outlined" style="font-size: 20px; color: #4caf50;">inventory</span>
+                                    </button>
+                                    <button class="icon-btn edit-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="수정">
+                                        <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
+                                    </button>
+                                    <button class="icon-btn delete-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="삭제">
+                                        <span class="material-symbols-outlined" style="font-size: 20px; color: #999;">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Card Click -> Navigate to Detail Page
+                card.addEventListener('click', () => {
+                    App.Router.go('kitDetail', { id: kit.id });
+                });
+
+                // Stock Button
+                const stockBtn = card.querySelector('.stock-kit-btn');
+                if (stockBtn) {
+                    stockBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        setupStockModal();
+                        openStockModal(kit);
+                    });
+                }
+
+                // Edit Button
+                const editBtn = card.querySelector('.edit-kit-btn');
+                if (editBtn) {
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (window.openEditKitModal) {
+                            window.openEditKitModal(kit);
+                        }
+                    });
+                }
+
+                // Delete Button
+                const deleteBtn = card.querySelector('.delete-kit-btn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        if (confirm('정말 삭제하시겠습니까?')) {
+                            await deleteKit(kit.id);
+                        }
+                    });
+                }
+
+                listContainer.appendChild(card);
             });
+        },
+
+        async loadDetail(id) {
+            console.log("📦 Kit Detail Loading for ID:", id);
+
+            // Ensure catalog is loaded (might be needed for chemical mapping)
+            if (catalog.length === 0) await loadCatalog();
+
+            // 1. Fetch Kit Data
+            const { data: kit, error } = await supabase
+                .from('user_kits')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error || !kit) {
+                console.error("Kit not found:", error);
+                const container = document.getElementById('kit-detail-page-container');
+                if (container) container.innerHTML = '<p class="error">키트 정보를 찾을 수 없습니다.</p>';
+                return;
+            }
+
+            // 2. Populate Header & Info
+            document.getElementById('detail-kit-name').textContent = kit.kit_name;
+            document.getElementById('detail-kit-class').textContent = kit.kit_class || '-';
+            document.getElementById('detail-kit-quantity').textContent = kit.quantity;
+            document.getElementById('detail-kit-location').textContent = '(지정되지 않음)';
+
+            // Photo
+            const photoBox = document.getElementById('detail-kit-photo');
+            if (kit.image_url) {
+                photoBox.innerHTML = `<img src="${kit.image_url}" alt="키트 사진" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
+            } else {
+                photoBox.innerHTML = '<div style="width:100%; height:100%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#999; border-radius:8px;">사진 없음</div>';
+            }
+
+            // 3. Bind Actions
+            const btnStock = document.getElementById('btn-kit-stock');
+            if (btnStock) {
+                btnStock.onclick = () => {
+                    setupStockModal();
+                    openStockModal(kit);
+                };
+            }
+
+            const btnEdit = document.getElementById('btn-kit-edit');
+            if (btnEdit) {
+                btnEdit.onclick = () => {
+                    setupRegisterModal();
+                    window.openEditKitModal(kit);
+                };
+            }
+
+            const btnDelete = document.getElementById('btn-kit-delete');
+            if (btnDelete) {
+                btnDelete.onclick = async () => {
+                    if (confirm('정말 삭제하시겠습니까?')) {
+                        await deleteKit(kit.id);
+                        App.Router.go('kits');
+                    }
+                };
+            }
+
+            // 4. Load Chemicals & Logs
+            await loadChemicals(kit);
+            await loadUsageLogs(kit);
         }
+    };
 
-        // 3. Setup Search
-        const searchInput = document.getElementById('kit-search-input');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                currentSearch = e.target.value.trim().toLowerCase();
-                loadUserKits();
-            });
-        }
-
-        // 4. Setup Refresh
-        const refreshBtn = document.getElementById('kit-refresh-btn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                loadUserKits();
-            });
-        }
-
-        // 5. Load Data
-        await loadCatalog();
-        await loadUserKits();
-
-        // 6. Setup Modals
-        setupRegisterModal();
-        setupDetailModals();
-    }
-
-    // ---- Data Loading ----
+    // ---- Data Loading Helpers ----
     async function loadCatalog() {
-        const { data, error } = await supabase
-            .from('experiment_kit')
-            .select('*')
-            .order('kit_name');
-
+        const { data, error } = await supabase.from('experiment_kit').select('*').order('kit_name');
         if (error) {
             console.error('Failed to load catalog:', error);
             return;
@@ -71,174 +275,273 @@
         catalog = data;
     }
 
-    async function loadUserKits() {
-        const listContainer = document.getElementById('kit-list');
-        if (!listContainer) return;
-
-
-
-        let query = supabase
-            .from('user_kits')
-            .select('*');
-
-        // Apply Sort
-        if (currentSort === 'name_class') {
-            query = query.order('kit_class', { ascending: true }).order('kit_name', { ascending: true });
-        } else if (currentSort === 'name_all') {
-            query = query.order('kit_name', { ascending: true });
-        } else if (currentSort === 'location') {
-            // Placeholder for location sort - currently sorting by ID as fallback
-            query = query.order('id', { ascending: true });
-        } else {
-            // Default fallback
-            query = query.order('created_at', { ascending: false });
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-            listContainer.innerHTML = `<p class="error">로드 실패: ${error.message}</p>`;
-            return;
-        }
-
-        // Apply Search (Client-side for simplicity as kit_name is text)
-        let filteredData = data;
-        if (currentSearch) {
-            filteredData = data.filter(kit =>
-                kit.kit_name.toLowerCase().includes(currentSearch) ||
-                (kit.kit_class && kit.kit_class.toLowerCase().includes(currentSearch))
-            );
-        }
-
-        if (!filteredData || filteredData.length === 0) {
-            listContainer.innerHTML = `
-                <div class="empty-state">
-                    <span class="material-symbols-outlined" style="font-size:48px; color:#ccc;">inventory_2</span>
-                    <p>검색 결과가 없습니다.</p>
-                </div>`;
-            return;
-        }
-
-        if (!data || data.length === 0) {
-            listContainer.innerHTML = `
-                <div class="empty-state">
-                    <span class="material-symbols-outlined" style="font-size:48px; color:#ccc;">inventory_2</span>
-                    <p>등록된 키트가 없습니다.</p>
-                </div>`;
-            return;
-        }
-
-        listContainer.innerHTML = '';
-        filteredData.forEach(kit => {
-            const card = document.createElement('div');
-            card.className = 'inventory-card'; // Use inventory-card style
-            card.dataset.id = kit.id;
-
-            // Image block
-            let imageBlock = '';
-            if (kit.image_url) {
-                imageBlock = `
-                    <div class="inventory-card__image">
-                        <img src="${kit.image_url}" alt="${kit.kit_name}">
-                    </div>`;
-            } else {
-                imageBlock = `
-                    <div class="inventory-card__image inventory-card__image--empty">
-                        <span class="inventory-card__placeholder">사진 없음</span>
-                    </div>`;
-            }
-
-            card.innerHTML = `
-                ${imageBlock}
-                <div class="inventory-card__body">
-                    <div class="inventory-card__left">
-                        <!-- Line 1: Classification -->
-                        <div class="inventory-card__line1">
-                            <span class="kit-tag" style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:12px;">${kit.kit_class || '미분류'}</span>
-                        </div>
-                        
-                        <!-- Line 2: Name & Quantity -->
-                        <div class="inventory-card__line2" style="display: flex; justify-content: space-between; align-items: center;">
-                            <div class="name-kor">${kit.kit_name}</div>
-                            <div class="kit-quantity" style="font-size: 14px; color: #555; font-weight: normal;">수량: ${kit.quantity}개</div>
-                        </div>
-
-                        <!-- Line 3: Location & Buttons -->
-                        <div class="inventory-card__line3" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
-                            <div class="kit-location" style="font-size: 13px; color: #777;">
-                                <!-- Location placeholder -->
-                            </div>
-                            <div class="inventory-card__actions" style="display: flex; gap: 5px;">
-                                <button class="icon-btn stock-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="재고 관리">
-                                    <span class="material-symbols-outlined" style="font-size: 20px; color: #4caf50;">inventory</span>
-                                </button>
-                                <button class="icon-btn edit-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="수정">
-                                    <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
-                                </button>
-                                <button class="icon-btn delete-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="삭제">
-                                    <span class="material-symbols-outlined" style="font-size: 20px; color: #999;">delete</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Card Click -> Detail
-            card.addEventListener('click', () => {
-                if (window.openKitDetail) {
-                    window.openKitDetail(kit);
-                }
-            });
-
-            // Stock Button
-            const stockBtn = card.querySelector('.stock-kit-btn');
-            if (stockBtn) {
-                stockBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    setupStockModal(); // Ensure modal exists
-                    openStockModal(kit);
-                });
-            }
-
-            // Edit Button
-            const editBtn = card.querySelector('.edit-kit-btn');
-            if (editBtn) {
-                editBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (window.openEditKitModal) {
-                        window.openEditKitModal(kit);
-                    }
-                });
-            }
-
-            // Delete Button
-            const deleteBtn = card.querySelector('.delete-kit-btn');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    if (confirm('정말 삭제하시겠습니까?')) {
-                        await deleteKit(kit.id);
-                    }
-                });
-            }
-
-            listContainer.appendChild(card);
-        });
-    }
-
     async function deleteKit(id) {
         try {
             const { error } = await supabase.from('user_kits').delete().eq('id', id);
             if (error) throw error;
-            loadUserKits();
+            // If on list page, reload list. If on detail page, router handles it.
+            if (document.getElementById('kit-list')) {
+                Kits.loadUserKits();
+            }
         } catch (e) {
             alert('삭제 실패: ' + e.message);
         }
     }
 
+    async function loadChemicals(kit) {
+        const chemListDiv = document.getElementById('kit-chemical-list');
+        if (!chemListDiv) return;
+
+        chemListDiv.innerHTML = '<p>로딩 중...</p>';
+
+        const catalogItem = catalog.find(c => c.kit_name === kit.kit_name);
+        if (!catalogItem || !catalogItem.kit_cas) {
+            chemListDiv.innerHTML = '<p style="color: #999; font-size: 13px;">등록된 약품 정보가 없습니다.</p>';
+        } else {
+            const casList = catalogItem.kit_cas.split(',').map(s => s.trim());
+            chemListDiv.innerHTML = '';
+
+            // Fetch Korean names
+            const { data: chemData } = await supabase
+                .from('kit_chemicals')
+                .select('cas_no, name_ko')
+                .in('cas_no', casList);
+
+            const map = new Map();
+            if (chemData) chemData.forEach(c => map.set(c.cas_no, c.name_ko));
+
+            casList.forEach(cas => {
+                if (isCasNo(cas)) {
+                    const btn = document.createElement('div');
+                    btn.className = 'chem-chip';
+                    btn.style.cursor = 'pointer';
+                    btn.style.padding = '4px 10px';
+                    btn.style.background = '#e3f2fd';
+                    btn.style.color = '#0277bd';
+                    btn.style.borderRadius = '15px';
+                    btn.style.fontSize = '13px';
+                    btn.textContent = map.has(cas) ? `${map.get(cas)}` : cas;
+                    btn.title = cas;
+
+                    btn.addEventListener('click', () => renderInlineChemInfo(cas));
+                    chemListDiv.appendChild(btn);
+                } else {
+                    const span = document.createElement('div');
+                    span.className = 'chem-chip static';
+                    span.textContent = cas;
+                    chemListDiv.appendChild(span);
+                }
+            });
+        }
+    }
+
+    async function loadUsageLogs(kit) {
+        const tbody = document.getElementById('kit-usage-logs-body');
+        if (!tbody) return;
+
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">기록 로딩 중...</td></tr>';
+
+        try {
+            const { data: usageLogs, error } = await supabase
+                .from('kit_usage_log')
+                .select('*')
+                .eq('user_kit_id', kit.id)
+                .order('log_date', { ascending: true });
+
+            if (error) throw error;
+
+            const initialLog = {
+                log_date: kit.purchase_date,
+                log_type: '구입 (초기)',
+                change_amount: null
+            };
+
+            let allLogs = [];
+            if (kit.purchase_date) allLogs.push(initialLog);
+            if (usageLogs) allLogs = [...allLogs, ...usageLogs];
+
+            allLogs.sort((a, b) => new Date(b.log_date) - new Date(a.log_date)); // Newest first
+
+            if (allLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: #999;">기록이 없습니다.</td></tr>';
+            } else {
+                tbody.innerHTML = '';
+                allLogs.forEach(log => {
+                    const tr = document.createElement('tr');
+                    let typeText = log.log_type === 'usage' ? '사용' : (log.log_type === 'purchase' ? '구입' : log.log_type);
+                    let amountText = log.change_amount ? `${log.change_amount > 0 ? '+' : ''}${log.change_amount}` : '-';
+                    if (log.log_type === '구입 (초기)') {
+                        typeText = '최초 등록';
+                        amountText = kit.quantity;
+                    }
+
+                    tr.innerHTML = `
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; color: #666;">${log.log_date}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: 500;">${typeText}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${amountText}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        } catch (e) {
+            console.error("Log fetch error:", e);
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: red;">기록을 불러오지 못했습니다.</td></tr>';
+        }
+    }
+
+    async function renderInlineChemInfo(cas) {
+        const container = document.getElementById('kit-chem-detail-container');
+        const title = document.getElementById('kit-chem-detail-title');
+        const content = document.getElementById('kit-chem-detail-content');
+
+        if (!container || !title || !content) return;
+
+        container.style.display = 'block';
+        title.textContent = `${cas} 상세 정보 로딩 중...`;
+        content.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">데이터를 불러오는 중입니다...</div>';
+
+        try {
+            const { data: substance, error } = await supabase
+                .from('Substance')
+                .select(`
+                    id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor,
+                    Properties ( name, property ),
+                    MSDS ( section_number, content )
+                `)
+                .eq('cas_rn', cas)
+                .single();
+
+            if (error || !substance) {
+                throw new Error('물질 정보를 찾을 수 없습니다.');
+            }
+
+            const korName = substance.chem_name_kor || substance.substance_name || cas;
+            title.textContent = `${korName} (${cas})`;
+
+            const propsList = substance.Properties || [];
+            const getPropVal = (nameKey) => {
+                const found = propsList.find((p) => p.name && p.name.toLowerCase().includes(nameKey.toLowerCase()));
+                return found ? found.property : '-';
+            };
+
+            let html = `
+                <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                    <h5 style="margin: 0 0 10px 0; font-size: 15px; color: #333;">기본 특성</h5>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 14px;">
+                        <div><strong>화학식:</strong> ${substance.molecular_formula || '-'}</div>
+                        <div><strong>분자량:</strong> ${substance.molecular_mass || '-'}</div>
+                        <div><strong>끓는점:</strong> ${getPropVal('Boiling Point')}</div>
+                        <div><strong>녹는점:</strong> ${getPropVal('Melting Point')}</div>
+                        <div><strong>밀도:</strong> ${getPropVal('Density')}</div>
+                    </div>
+                </div>
+            `;
+
+            html += `<h5 style="margin: 0 0 10px 0; font-size: 15px; color: #333;">MSDS 정보</h5>`;
+            html += `<div class="msds-accordion" id="inline-msds-accordion">`;
+
+            const msdsData = substance.MSDS || [];
+
+            html += msdsTitles.map((title, index) => {
+                const sectionNum = index + 1;
+                const sectionData = msdsData.find(d => d.section_number === sectionNum);
+                let contentHtml = '<p class="text-gray-500 italic p-4">내용 없음</p>';
+
+                if (sectionData && sectionData.content) {
+                    if (sectionNum === 2 && sectionData.content.includes("|||그림문자|||")) {
+                        contentHtml = '<div style="padding: 10px;">GHS 그림문자 정보가 있습니다 (상세 보기 권장)</div>';
+                    } else {
+                        contentHtml = `<div class="msds-simple-content" style="padding: 10px; white-space: pre-wrap;">${sectionData.content.replace(/;;;/g, '\n').replace(/\|\|\|/g, ': ')}</div>`;
+                    }
+                }
+
+                return `
+                    <div class="accordion-item" style="border: 1px solid #eee; border-bottom: none;">
+                        <button class="accordion-header" onclick="this.parentElement.classList.toggle('active')" style="width: 100%; text-align: left; padding: 10px; background: #fff; border: none; cursor: pointer; font-weight: 500; display: flex; justify-content: space-between;">
+                            ${title} <span style="font-size: 12px;">▼</span>
+                        </button>
+                        <div class="accordion-content" style="display: none; border-top: 1px solid #eee; padding: 10px; background: #fafafa;">
+                            ${contentHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            html += `</div>`;
+            html += `
+                <style>
+                    .accordion-item.active .accordion-content { display: block !important; }
+                    .accordion-item:last-child { border-bottom: 1px solid #eee; }
+                </style>
+            `;
+
+            content.innerHTML = html;
+        } catch (e) {
+            console.error(e);
+            content.innerHTML = '<div style="color: red; padding: 20px;">정보를 불러오는 중 오류가 발생했습니다.</div>';
+        }
+    }
+
     // ---- Register/Edit Modal ----
     function setupRegisterModal() {
+        if (!document.getElementById('modal-register-kit')) {
+            const modalHtml = `
+<div id="modal-register-kit" class="modal-overlay" style="display: none; z-index: 1200;">
+    <div class="modal-content">
+        <h3 class="modal-title">키트 등록</h3>
+        <form id="form-register-kit">
+            <div class="form-group">
+                <label for="kit-class-select">분류</label>
+                <select id="kit-class-select" class="form-input" required>
+                    <option value="" disabled selected>분류를 선택하세요</option>
+                    <option value="all">전체</option>
+                    <option value="물리학">물리학</option>
+                    <option value="화학">화학</option>
+                    <option value="생명과학">생명과학</option>
+                    <option value="지구과학">지구과학</option>
+                    <option value="융합과학">융합과학</option>
+                    <option value="기타">기타</option>
+                </select>
+                <div id="kit-class-checkboxes" style="display: none; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+                    <label><input type="checkbox" value="물리학"> 물리학</label>
+                    <label><input type="checkbox" value="화학"> 화학</label>
+                    <label><input type="checkbox" value="생명과학"> 생명과학</label>
+                    <label><input type="checkbox" value="지구과학"> 지구과학</label>
+                    <label><input type="checkbox" value="융합과학"> 융합과학</label>
+                    <label><input type="checkbox" value="기타"> 기타</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="kit-name-select">키트명</label>
+                <select id="kit-name-select" class="form-input" disabled required>
+                    <option value="" disabled selected>분류를 먼저 선택하세요</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="kit-quantity">수량</label>
+                <input type="number" id="kit-quantity" class="form-input" value="1" min="1" required>
+            </div>
+            <div class="form-group">
+                <label for="kit-date">등록일(구입일)</label>
+                <input type="date" id="kit-date" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label for="kit-photo">키트 사진</label>
+                <input type="file" id="kit-photo" class="form-input" accept="image/*">
+                <div id="kit-photo-preview" style="margin-top: 10px; text-align: center; display: none;">
+                    <img id="preview-img" src="" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="btn-cancel-kit" class="btn-cancel">취소</button>
+                <button type="submit" id="btn-save-kit" class="btn-primary">등록</button>
+            </div>
+        </form>
+    </div>
+</div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
         const modal = document.getElementById('modal-register-kit');
         const form = document.getElementById('form-register-kit');
         const btnCancel = document.getElementById('btn-cancel-kit');
@@ -249,7 +552,7 @@
         const previewDiv = document.getElementById('kit-photo-preview');
         const previewImg = document.getElementById('preview-img');
 
-        // File Preview
+
         if (fileInput) {
             fileInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
@@ -266,43 +569,44 @@
             });
         }
 
-        // Close Modal
-        btnCancel.addEventListener('click', () => {
-            modal.style.display = 'none';
-            form.reset();
-            if (previewDiv) previewDiv.style.display = 'none';
-            form.removeAttribute('data-mode');
-            form.removeAttribute('data-id');
-            document.querySelector('.modal-title').textContent = '키트 등록';
-            document.getElementById('btn-save-kit').textContent = '등록';
-        });
+        if (btnCancel) {
+            btnCancel.addEventListener('click', () => {
+                modal.style.display = 'none';
+                form.reset();
+                if (previewDiv) previewDiv.style.display = 'none';
+                form.removeAttribute('data-mode');
+                form.removeAttribute('data-id');
+                document.querySelector('.modal-title').textContent = '키트 등록';
+                document.getElementById('btn-save-kit').textContent = '등록';
+            });
+        }
 
-        // Class Change -> Filter Names
-        classSelect.addEventListener('change', (e) => {
-            const selectedClass = classSelect.value;
-            updateNameSelect(selectedClass);
-        });
+        if (classSelect) {
+            classSelect.addEventListener('change', (e) => {
+                const selectedClass = classSelect.value;
+                updateNameSelect(selectedClass);
+            });
+        }
 
         function updateNameSelect(selectedClass, selectedKitId = null) {
+            if (!nameSelect) return;
             nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
             nameSelect.disabled = false;
 
             let filtered = [];
             if (selectedClass === 'all') {
-                filtered = catalog; // Show all
+                filtered = catalog;
             } else {
-                // Filter catalog: kit_class contains selectedClass
                 filtered = catalog.filter(k => k.kit_class && k.kit_class.includes(selectedClass));
             }
 
-            // Sort alphabetically for better UX when showing all
             filtered.sort((a, b) => a.kit_name.localeCompare(b.kit_name));
 
             filtered.forEach(k => {
                 const opt = document.createElement('option');
-                opt.value = k.id; // Use ID as value
+                opt.value = k.id;
                 opt.textContent = k.kit_name;
-                opt.dataset.cas = k.kit_cas || ''; // Store CAS for later
+                opt.dataset.cas = k.kit_cas || '';
                 opt.dataset.name = k.kit_name;
                 opt.dataset.class = k.kit_class;
                 if (selectedKitId && k.id == selectedKitId) {
@@ -312,120 +616,119 @@
             });
         }
 
-        // Submit
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
 
-            let kitClass = '';
-            const mode = form.getAttribute('data-mode'); // 'edit' or null
-            const editId = form.getAttribute('data-id');
+                let kitClass = '';
+                const mode = form.getAttribute('data-mode');
+                const editId = form.getAttribute('data-id');
 
-            if (mode === 'edit') {
-                // Gather from checkboxes
-                const checked = Array.from(classCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
-                    .map(cb => cb.value);
-                kitClass = checked.join(', ');
-            } else {
-                // Gather from select
-                if (classSelect.value === 'all') {
-                    // If 'all' selected, use the class from the selected kit in catalog
-                    const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-                    kitClass = selectedOption.dataset.class || '기타';
+                if (mode === 'edit') {
+                    const checked = Array.from(classCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
+                        .map(cb => cb.value);
+                    kitClass = checked.join(', ');
                 } else {
-                    kitClass = classSelect.value;
-                }
-            }
-
-            let finalKitName = '';
-            if (mode === 'edit') {
-                finalKitName = nameSelect.value; // Existing logic
-            } else {
-                const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-                finalKitName = selectedOption.dataset.name;
-            }
-
-            const quantity = parseInt(document.getElementById('kit-quantity').value, 10);
-            const purchaseDate = document.getElementById('kit-date').value;
-            const file = fileInput ? fileInput.files[0] : null;
-
-            // Upload Image if exists
-            let imageUrl = null;
-            if (file) {
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${Date.now()}.${fileExt} `;
-                const filePath = `${fileName} `;
-
-                const { data: uploadData, error: uploadError } = await supabase.storage
-                    .from('kit-photos')
-                    .upload(filePath, file);
-
-                if (uploadError) {
-                    console.error('Upload failed:', uploadError);
-                    alert('사진 업로드 실패: ' + uploadError.message);
-                    return;
-                }
-
-                const { data: publicUrlData } = supabase.storage
-                    .from('kit-photos')
-                    .getPublicUrl(filePath);
-
-                imageUrl = publicUrlData.publicUrl;
-            }
-
-            if (mode === 'edit' && editId) {
-                // Update
-                const updatePayload = {
-                    kit_class: kitClass,
-                    kit_name: finalKitName,
-                    quantity: quantity,
-                    purchase_date: purchaseDate
-                };
-                if (imageUrl) {
-                    updatePayload.image_url = imageUrl;
-                }
-
-                const { error } = await supabase
-                    .from('user_kits')
-                    .update(updatePayload)
-                    .eq('id', editId);
-
-                if (error) {
-                    alert('수정 실패: ' + error.message);
-                } else {
-                    alert('수정되었습니다.');
-                    modal.style.display = 'none';
-                    loadUserKits();
-                    // Check cleanup
-                    if (quantity === 0) {
-                        await checkAndCleanupChemicals(finalKitName);
+                    if (classSelect.value === 'all') {
+                        const selectedOption = nameSelect.options[nameSelect.selectedIndex];
+                        kitClass = selectedOption.dataset.class || '기타';
+                    } else {
+                        kitClass = classSelect.value;
                     }
                 }
-            } else {
-                // Insert
-                const { error } = await supabase
-                    .from('user_kits')
-                    .insert({
+
+                let finalKitName = '';
+                if (mode === 'edit') {
+                    finalKitName = nameSelect.value;
+                } else {
+                    const selectedOption = nameSelect.options[nameSelect.selectedIndex];
+                    finalKitName = selectedOption.dataset.name;
+                }
+
+                const quantity = parseInt(document.getElementById('kit-quantity').value, 10);
+                const purchaseDate = document.getElementById('kit-date').value;
+                const file = fileInput ? fileInput.files[0] : null;
+
+                let imageUrl = null;
+                if (file) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Date.now()}.${fileExt}`;
+                    const filePath = `${fileName}`;
+
+                    const { data: uploadData, error: uploadError } = await supabase.storage
+                        .from('kit-photos')
+                        .upload(filePath, file);
+
+                    if (uploadError) {
+                        console.error('Upload failed:', uploadError);
+                        alert('사진 업로드 실패: ' + uploadError.message);
+                        return;
+                    }
+
+                    const { data: publicUrlData } = supabase.storage
+                        .from('kit-photos')
+                        .getPublicUrl(filePath);
+
+                    imageUrl = publicUrlData.publicUrl;
+                }
+
+                if (mode === 'edit' && editId) {
+                    const updatePayload = {
                         kit_class: kitClass,
                         kit_name: finalKitName,
                         quantity: quantity,
-                        purchase_date: purchaseDate,
-                        image_url: imageUrl
-                    });
+                        purchase_date: purchaseDate
+                    };
+                    if (imageUrl) {
+                        updatePayload.image_url = imageUrl;
+                    }
 
-                if (error) {
-                    alert('등록 실패: ' + error.message);
+                    const { error } = await supabase
+                        .from('user_kits')
+                        .update(updatePayload)
+                        .eq('id', editId);
+
+                    if (error) {
+                        alert('수정 실패: ' + error.message);
+                    } else {
+                        alert('수정되었습니다.');
+                        modal.style.display = 'none';
+                        // If on detail page, reload detail. If on list, reload list.
+                        if (document.getElementById('kit-detail-page-container')) {
+                            Kits.loadDetail(editId);
+                        } else {
+                            Kits.loadUserKits();
+                        }
+
+                        if (quantity === 0) {
+                            await checkAndCleanupChemicals(finalKitName);
+                        }
+                    }
                 } else {
-                    alert('등록되었습니다.');
-                    modal.style.display = 'none';
-                    loadUserKits();
-                    // Process Chemicals
-                    await processKitChemicals(finalKitName);
-                }
-            }
-        });
+                    const { error } = await supabase
+                        .from('user_kits')
+                        .insert({
+                            kit_class: kitClass,
+                            kit_name: finalKitName,
+                            quantity: quantity,
+                            purchase_date: purchaseDate,
+                            image_url: imageUrl
+                        });
 
-        // Expose open function
+                    if (error) {
+                        alert('등록 실패: ' + error.message);
+                    } else {
+                        alert('등록되었습니다.');
+                        modal.style.display = 'none';
+                        Kits.loadUserKits();
+                        await processKitChemicals(finalKitName);
+                    }
+                }
+            });
+        }
+
         window.openRegisterModal = () => {
+            if (!form) return;
             form.reset();
             if (previewDiv) previewDiv.style.display = 'none';
             form.removeAttribute('data-mode');
@@ -433,7 +736,6 @@
             document.querySelector('.modal-title').textContent = '키트 등록';
             document.getElementById('btn-save-kit').textContent = '등록';
 
-            // Show Select, Hide Checkboxes
             classSelect.style.display = 'block';
             classCheckboxesDiv.style.display = 'none';
             classSelect.required = true;
@@ -441,13 +743,13 @@
             nameSelect.disabled = true;
             nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
 
-            // Set default date to today
             document.getElementById('kit-date').valueAsDate = new Date();
 
             modal.style.display = 'flex';
         };
 
         window.openEditKitModal = (kit) => {
+            if (!form) return;
             form.reset();
             if (previewDiv) previewDiv.style.display = 'none';
             form.setAttribute('data-mode', 'edit');
@@ -455,29 +757,25 @@
             document.querySelector('.modal-title').textContent = '키트 정보 수정';
             document.getElementById('btn-save-kit').textContent = '수정 완료';
 
-            // Hide Select, Show Checkboxes
             classSelect.style.display = 'none';
             classCheckboxesDiv.style.display = 'flex';
             classSelect.required = false;
 
-            // Populate Checkboxes
             const currentClasses = (kit.kit_class || '').split(',').map(s => s.trim());
             classCheckboxesDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => {
                 cb.checked = currentClasses.includes(cb.value);
             });
 
-            // Fill Data
             const catalogItem = catalog.find(c => c.kit_name === kit.kit_name);
             if (catalogItem) {
                 updateNameSelect('all', catalogItem.id);
             } else {
-                nameSelect.innerHTML = `< option value = "${kit.kit_name}" selected > ${kit.kit_name}</option > `;
+                nameSelect.innerHTML = `<option value="${kit.kit_name}" selected>${kit.kit_name}</option>`;
             }
 
             document.getElementById('kit-quantity').value = kit.quantity;
             document.getElementById('kit-date').value = kit.purchase_date;
 
-            // Show existing image
             if (kit.image_url) {
                 previewImg.src = kit.image_url;
                 previewDiv.style.display = 'block';
@@ -487,255 +785,12 @@
         };
     }
 
-    // ---- Detail Modal ----
-    function setupDetailModals() {
-        // Kit Detail
-        const modalDetail = document.getElementById('modal-kit-detail');
-        const btnCloseDetail = document.getElementById('btn-close-detail');
-
-        if (btnCloseDetail) {
-            btnCloseDetail.addEventListener('click', () => {
-                modalDetail.style.display = 'none';
-            });
-        }
-
-        // Constants for MSDS
-        const msdsTitles = [
-            "1. 화학제품과 회사에 관한 정보", "2. 유해성·위험성", "3. 구성성분의 명칭 및 함유량", "4. 응급조치 요령",
-            "5. 화재 시 조치방법", "6. 누출 시 조치방법", "7. 취급 및 저장방법", "8. 노출방지 및 개인보호구",
-            "9. 물리화학적 특성", "10. 안정성 및 반응성", "11. 독성에 관한 정보", "12. 환경에 미치는 영향",
-            "13. 폐기 시 주의사항", "14. 운송에 필요한 정보", "15. 법적 규제현황", "16. 그 밖의 참고사항"
-        ];
-
-        // Render Inline Chemical Info
-        async function renderInlineChemInfo(cas) {
-            const container = document.getElementById('kit-chem-detail-container');
-            const title = document.getElementById('kit-chem-detail-title');
-            const content = document.getElementById('kit-chem-detail-content');
-
-            container.style.display = 'block';
-            title.textContent = `${cas} 상세 정보 로딩 중...`;
-            content.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">데이터를 불러오는 중입니다...</div>';
-
-            try {
-                // Fetch Substance with MSDS and Properties
-                const { data: substance, error } = await supabase
-                    .from('Substance')
-                    .select(`
-                        id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor,
-                        Properties ( name, property ),
-                        MSDS ( section_number, content )
-                    `)
-                    .eq('cas_rn', cas)
-                    .single();
-
-                if (error || !substance) {
-                    throw new Error('물질 정보를 찾을 수 없습니다.');
-                }
-
-                const korName = substance.chem_name_kor || substance.substance_name || cas;
-                title.textContent = `${korName} (${cas})`;
-
-                // Render Properties
-                const propsList = substance.Properties || [];
-                const getPropVal = (nameKey) => {
-                    const found = propsList.find((p) => p.name && p.name.toLowerCase().includes(nameKey.toLowerCase()));
-                    return found ? found.property : '-';
-                };
-
-                let html = `
-                    <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
-                        <h5 style="margin: 0 0 10px 0; font-size: 15px; color: #333;">기본 특성</h5>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 14px;">
-                            <div><strong>화학식:</strong> ${substance.molecular_formula || '-'}</div>
-                            <div><strong>분자량:</strong> ${substance.molecular_mass || '-'}</div>
-                            <div><strong>끓는점:</strong> ${getPropVal('Boiling Point')}</div>
-                            <div><strong>녹는점:</strong> ${getPropVal('Melting Point')}</div>
-                            <div><strong>밀도:</strong> ${getPropVal('Density')}</div>
-                        </div>
-                    </div>
-                `;
-
-                // Render MSDS Accordion
-                html += `<h5 style="margin: 0 0 10px 0; font-size: 15px; color: #333;">MSDS 정보</h5>`;
-                html += `<div class="msds-accordion" id="inline-msds-accordion">`;
-
-                const msdsData = substance.MSDS || [];
-
-                html += msdsTitles.map((title, index) => {
-                    const sectionNum = index + 1;
-                    const sectionData = msdsData.find(d => d.section_number === sectionNum);
-                    let contentHtml = '<p class="text-gray-500 italic p-4">내용 없음</p>';
-
-                    if (sectionData && sectionData.content) {
-                        if (sectionNum === 2 && sectionData.content.includes("|||그림문자|||")) {
-                            contentHtml = '<div style="padding: 10px;">GHS 그림문자 정보가 있습니다 (상세 보기 권장)</div>';
-                        } else {
-                            contentHtml = `<div class="msds-simple-content" style="padding: 10px; white-space: pre-wrap;">${sectionData.content.replace(/;;;/g, '\n').replace(/\|\|\|/g, ': ')}</div>`;
-                        }
-                    }
-
-                    return `
-                        <div class="accordion-item" style="border: 1px solid #eee; border-bottom: none;">
-                            <button class="accordion-header" onclick="this.parentElement.classList.toggle('active')" style="width: 100%; text-align: left; padding: 10px; background: #fff; border: none; cursor: pointer; font-weight: 500; display: flex; justify-content: space-between;">
-                                ${title} <span style="font-size: 12px;">▼</span>
-                            </button>
-                            <div class="accordion-content" style="display: none; border-top: 1px solid #eee; padding: 10px; background: #fafafa;">
-                                ${contentHtml}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                html += `</div>`;
-
-                html += `
-                    <style>
-                        .accordion-item.active .accordion-content { display: block !important; }
-                        .accordion-item:last-child { border-bottom: 1px solid #eee; }
-                    </style>
-                `;
-
-                content.innerHTML = html;
-
-            } catch (e) {
-                console.error(e);
-                content.innerHTML = '<div style="color: red; padding: 20px;">정보를 불러오는 중 오류가 발생했습니다.</div>';
-            }
-        }
-
-        window.openKitDetail = async (kit) => {
-            // Populate Fields
-            document.getElementById('detail-kit-name').textContent = kit.kit_name;
-            document.getElementById('detail-kit-class').textContent = kit.kit_class || '-';
-            document.getElementById('detail-kit-quantity').textContent = kit.quantity;
-            document.getElementById('detail-kit-location').textContent = '(지정되지 않음)';
-
-            // Photo
-            const photoBox = document.getElementById('detail-kit-photo');
-            if (kit.image_url) {
-                photoBox.innerHTML = `<img src="${kit.image_url}" alt="키트 사진" style="width: 100%; height: 100%; object-fit: cover;">`;
-            } else {
-                photoBox.innerHTML = '<span style="color: #999;">사진 없음</span>';
-            }
-
-            // Reset Chemical Container
-            document.getElementById('kit-chem-detail-container').style.display = 'none';
-            document.getElementById('kit-chem-detail-content').innerHTML = '';
-
-            // 1. Fetch Chemicals
-            const chemListDiv = document.getElementById('kit-chemical-list');
-            chemListDiv.innerHTML = '<p>로딩 중...</p>';
-
-            const catalogItem = catalog.find(c => c.kit_name === kit.kit_name);
-            if (!catalogItem || !catalogItem.kit_cas) {
-                chemListDiv.innerHTML = '<p style="color: #999; font-size: 13px;">등록된 약품 정보가 없습니다.</p>';
-            } else {
-                const casList = catalogItem.kit_cas.split(',').map(s => s.trim());
-                chemListDiv.innerHTML = '';
-
-                // Fetch Korean names
-                const { data: chemData } = await supabase
-                    .from('kit_chemicals')
-                    .select('cas_no, name_ko')
-                    .in('cas_no', casList);
-
-                const map = new Map();
-                if (chemData) chemData.forEach(c => map.set(c.cas_no, c.name_ko));
-
-                casList.forEach(cas => {
-                    if (isCasNo(cas)) {
-                        const btn = document.createElement('div');
-                        btn.className = 'chem-chip';
-                        btn.style.cursor = 'pointer';
-                        btn.style.padding = '4px 10px';
-                        btn.style.background = '#e3f2fd';
-                        btn.style.color = '#0277bd';
-                        btn.style.borderRadius = '15px';
-                        btn.style.fontSize = '13px';
-                        btn.textContent = map.has(cas) ? `${map.get(cas)}` : cas;
-                        btn.title = cas;
-
-                        btn.addEventListener('click', () => renderInlineChemInfo(cas));
-                        chemListDiv.appendChild(btn);
-                    } else {
-                        const span = document.createElement('div');
-                        span.className = 'chem-chip static';
-                        span.textContent = cas;
-                        chemListDiv.appendChild(span);
-                    }
-                });
-            }
-
-            // 2. Fetch Usage Logs (Oldest First)
-            const tbody = document.getElementById('kit-usage-logs-body');
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">기록 로딩 중...</td></tr>';
-
-            modalDetail.style.display = 'flex';
-
-            try {
-                const { data: usageLogs, error } = await supabase
-                    .from('kit_usage_log')
-                    .select('*')
-                    .eq('user_kit_id', kit.id)
-                    .order('log_date', { ascending: true }); // Oldest first
-
-                if (error) throw error;
-
-                // Initial Log
-                const initialLog = {
-                    log_date: kit.purchase_date,
-                    log_type: '구입 (초기)',
-                    change_amount: null
-                };
-
-                let allLogs = [];
-                if (kit.purchase_date) allLogs.push(initialLog);
-                if (usageLogs) allLogs = [...allLogs, ...usageLogs];
-
-                // Sort again just in case (Oldest first)
-                allLogs.sort((a, b) => new Date(a.log_date) - new Date(b.log_date));
-
-                if (allLogs.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: #999;">기록이 없습니다.</td></tr>';
-                } else {
-                    tbody.innerHTML = '';
-                    allLogs.forEach(log => {
-                        const tr = document.createElement('tr');
-
-                        let typeText = log.log_type === 'usage' ? '사용' : (log.log_type === 'purchase' ? '구입' : log.log_type);
-                        let amountText = log.change_amount ? `${log.change_amount > 0 ? '+' : ''}${log.change_amount}` : '-';
-                        if (log.log_type === '구입 (초기)') {
-                            typeText = '최초 등록';
-                            amountText = kit.quantity;
-                        }
-
-                        tr.innerHTML = `
-                            <td style="padding: 10px; border-bottom: 1px solid #eee; color: #666;">${log.log_date}</td>
-                            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: 500;">${typeText}</td>
-                            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${amountText}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                }
-            } catch (e) {
-                console.error("Log fetch error:", e);
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: red;">기록을 불러오지 못했습니다.</td></tr>';
-            }
-        };
-    }
-
-
-
-
-
     // ---- Stock Modal ----
     function setupStockModal() {
-        // Check if modal exists, if not create it
         if (document.getElementById('modal-kit-stock')) return;
 
         const modalHtml = `
-            < div id = "modal-kit-stock" class="modal-overlay" style = "display: none; z-index: 1200;" >
+            <div id="modal-kit-stock" class="modal-overlay" style="display: none; z-index: 1200;">
                 <div class="modal-content" style="max-width: 400px; width: 90%;">
                     <h3 class="modal-title">재고 관리</h3>
                     <p id="stock-kit-name" class="modal-subtitle" style="margin-bottom: 15px;"></p>
@@ -765,7 +820,7 @@
                         </div>
                     </form>
                 </div>
-            </div > `;
+            </div>`;
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
@@ -800,7 +855,6 @@
     }
 
     async function handleStockChange(kit, type, amount, date) {
-        // 1. Calculate new quantity
         let change = 0;
         if (type === 'usage') {
             change = -amount;
@@ -815,7 +869,6 @@
             return;
         }
 
-        // 2. Update user_kits
         const { error: updateError } = await supabase
             .from('user_kits')
             .update({ quantity: newQuantity })
@@ -826,7 +879,6 @@
             return;
         }
 
-        // 3. Log to kit_usage_log
         const { error: logError } = await supabase
             .from('kit_usage_log')
             .insert({
@@ -841,30 +893,32 @@
         }
 
         alert('저장되었습니다.');
-        loadUserKits();
 
-        // 4. Check Cleanup if quantity became 0
+        // Refresh
+        if (document.getElementById('kit-detail-page-container')) {
+            // Update local kit object and reload
+            kit.quantity = newQuantity;
+            Kits.loadDetail(kit.id);
+        } else {
+            Kits.loadUserKits();
+        }
+
         if (newQuantity === 0) {
             await checkAndCleanupChemicals(kit.kit_name);
         }
     }
 
-    // ---- Helper Functions ----
     function isCasNo(str) {
         return /^\d{2,7}-\d{2}-\d$/.test(str);
     }
 
     async function processKitChemicals(kitName) {
-        // 1. Get CAS list from catalog
         const item = catalog.find(c => c.kit_name === kitName);
         if (!item || !item.kit_cas) return;
 
         const casList = item.kit_cas.split(',').map(s => s.trim());
 
-        // 2. For each CAS, check if it exists in kit_chemicals
-        // If not, fetch from Edge Function
         for (const cas of casList) {
-            // Check existence
             const { data } = await supabase
                 .from('kit_chemicals')
                 .select('cas_no')
@@ -873,7 +927,6 @@
 
             if (!data) {
                 if (isCasNo(cas)) {
-                    // Fetch and Insert via Edge Function
                     console.log(`Fetching info for ${cas}...`);
                     try {
                         await supabase.functions.invoke('kit-casimport', {
@@ -883,11 +936,10 @@
                         console.error(`Failed to import ${cas}: `, e);
                     }
                 } else {
-                    // Not a CAS number (Korean Name), insert directly
                     console.log(`Inserting manual entry for ${cas}...`);
                     try {
                         await supabase.from('kit_chemicals').insert({
-                            cas_no: cas, // Use name as ID
+                            cas_no: cas,
                             name_ko: cas,
                             name_en: null,
                             msds_data: null
@@ -901,12 +953,10 @@
     }
 
     async function checkAndCleanupChemicals(kitName) {
-        // 1. Get CAS list for this kit
         const item = catalog.find(c => c.kit_name === kitName);
         if (!item || !item.kit_cas) return;
         const targetCasList = item.kit_cas.split(',').map(s => s.trim());
 
-        // 2. Find ALL other active kits (quantity > 0)
         const { data: activeKits } = await supabase
             .from('user_kits')
             .select('kit_name')
@@ -914,7 +964,6 @@
 
         if (!activeKits) return;
 
-        // 3. Collect all CAS numbers used by other active kits
         const activeCasSet = new Set();
         activeKits.forEach(k => {
             const catItem = catalog.find(c => c.kit_name === k.kit_name);
@@ -923,7 +972,6 @@
             }
         });
 
-        // 4. Identify CAS numbers to remove (in target list but NOT in active set)
         const toRemove = targetCasList.filter(cas => !activeCasSet.has(cas));
 
         if (toRemove.length > 0) {
@@ -937,10 +985,6 @@
 
     // ---- Export to App ----
     globalThis.App = globalThis.App || {};
-    globalThis.App.Kits = {
-        init,
-        loadUserKits,
-        deleteKit
-    };
+    globalThis.App.Kits = Kits;
 
 })();

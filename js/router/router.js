@@ -13,7 +13,8 @@
     dataSync: "pages/data-sync.html",
     wasteList: "pages/waste-list.html",
     wasteForm: "pages/waste-form.html",
-    kits: "pages/kits.html", // ✅ 키트 페이지 추가
+    kits: "pages/kits.html",
+    kitDetail: "pages/kit-detail.html", // ✅ 키트 상세 페이지 추가
   };
 
   // ✅ 현재 상태 추적 (중복 pushState 방지)
@@ -100,6 +101,18 @@
           const mode = params.mode || "create";
           const detail = params.detail || null;
           await App.Forms.initInventoryForm(mode, detail);
+        }
+        break;
+
+      case "kits":
+        if (App?.Kits?.init) {
+          await App.Kits.init();
+        }
+        break;
+
+      case "kitDetail":
+        if (App?.Kits?.loadDetail && params.id) {
+          await App.Kits.loadDetail(params.id);
         }
         break;
 

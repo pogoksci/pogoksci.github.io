@@ -1,0 +1,76 @@
+<!-- /pages/kit-detail.html -->
+<div id="kit-detail-page-container" class="inventory-detail-page">
+    <!-- Header -->
+    <div class="detail-name-group">
+        <h2 id="detail-kit-name">키트 이름 로딩 중...</h2>
+        <span id="detail-kit-class" class="kit-tag"
+            style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:14px; margin-left: 10px;">-</span>
+    </div>
+
+    <!-- 2-Column Grid -->
+    <div class="detail-grid">
+        <!-- Left: Photo -->
+        <div class="detail-left">
+            <div class="detail-photo" id="detail-kit-photo">
+                <!-- Photo will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Right: Info -->
+        <div class="detail-right">
+            <div class="detail-info-list">
+                <div class="info-item">
+                    <span class="label">수량</span>
+                    <span class="value" id="detail-kit-quantity">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">보관 위치</span>
+                    <span class="value" id="detail-kit-location">(지정되지 않음)</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="detail-actions" style="margin-top: 20px;">
+                <button id="btn-kit-stock" class="btn-primary" style="background-color: #4caf50;">재고 관리</button>
+                <button id="btn-kit-edit" class="btn-secondary">수정</button>
+                <button id="btn-kit-delete" class="btn-danger">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Components (Chemicals) -->
+    <div class="kit-chemicals-section" style="margin-top: 30px;">
+        <h3>구성 약품</h3>
+        <div id="kit-chemical-list" class="kit-chemical-list">
+            <!-- Chemical chips will be inserted here -->
+        </div>
+    </div>
+
+    <!-- Usage Logs -->
+    <div class="kit-logs-section" style="margin-top: 30px;">
+        <h3>사용 기록</h3>
+        <div class="kit-log-table-container">
+            <table class="kit-log-table">
+                <thead>
+                    <tr>
+                        <th>날짜</th>
+                        <th>유형</th>
+                        <th style="text-align: right;">변동/수량</th>
+                    </tr>
+                </thead>
+                <tbody id="kit-usage-logs-body">
+                    <!-- Logs will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Inline Chemical Detail Container -->
+    <div id="kit-chem-detail-container"
+        style="display: none; margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
+        <h3 id="kit-chem-detail-title" style="margin-bottom: 15px;">약품 상세 정보</h3>
+        <div id="kit-chem-detail-content">
+            <!-- Inline chemical details will be rendered here -->
+        </div>
+    </div>
+</div>
