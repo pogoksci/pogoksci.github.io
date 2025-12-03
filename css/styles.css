@@ -4771,3 +4771,22 @@ input[type="date"] {
 /* FAB Button Style Removed to use global .fab class */
 
 /* Search Container Styling - Removed duplicate */
+/* =================================================================
+   Kit Detail Modal Redesign
+================================================================= */
+.kit-log-table th,
+.kit-log-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.kit-log-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+  color: #555;
+}
+
+#kit-chem-detail-container {
+  background: #fff;
+  border-radius: 8px;
+}
