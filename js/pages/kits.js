@@ -75,7 +75,7 @@
         const listContainer = document.getElementById('kit-list');
         if (!listContainer) return;
 
-        listContainer.innerHTML = '<p>로딩 중...</p>';
+
 
         let query = supabase
             .from('user_kits')
