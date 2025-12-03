@@ -139,19 +139,19 @@
             if (kit.image_url) {
                 imageBlock = `
                     <div class="inventory-card__image">
-                        <img src="${kit.image_url}" alt="${kit.kit_name}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <img src="${kit.image_url}" alt="${kit.kit_name}">
                     </div>`;
             } else {
                 imageBlock = `
-                    <div class="inventory-card__image" style="background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999; font-size: 12px;">
-                        사진 없음
+                    <div class="inventory-card__image inventory-card__image--empty">
+                        <span class="inventory-card__placeholder">사진 없음</span>
                     </div>`;
             }
 
             card.innerHTML = `
                 ${imageBlock}
-                <div class="inventory-card__body" style="padding: 10px;">
-                    <div class="inventory-card__content" style="flex: 1; height: 100px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div class="inventory-card__body">
+                    <div class="inventory-card__left">
                         <!-- Line 1: Classification -->
                         <div class="inventory-card__line1">
                             <span class="kit-tag" style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:12px;">${kit.kit_class || '미분류'}</span>
@@ -159,12 +159,12 @@
                         
                         <!-- Line 2: Name & Quantity -->
                         <div class="inventory-card__line2" style="display: flex; justify-content: space-between; align-items: center;">
-                            <div class="name-kor" style="font-weight: bold; font-size: 16px;">${kit.kit_name}</div>
-                            <div class="kit-quantity" style="font-size: 14px; color: #555;">수량: ${kit.quantity}개</div>
+                            <div class="name-kor">${kit.kit_name}</div>
+                            <div class="kit-quantity" style="font-size: 14px; color: #555; font-weight: normal;">수량: ${kit.quantity}개</div>
                         </div>
 
-                        <!-- Line 3: Location (Future) & Buttons -->
-                        <div class="inventory-card__line3" style="display: flex; justify-content: space-between; align-items: center;">
+                        <!-- Line 3: Location & Buttons -->
+                        <div class="inventory-card__line3" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
                             <div class="kit-location" style="font-size: 13px; color: #777;">
                                 <!-- Location placeholder -->
                             </div>
