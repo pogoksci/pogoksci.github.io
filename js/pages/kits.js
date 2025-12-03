@@ -782,11 +782,12 @@
         }
     }
 
-    // Initialize
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    // ---- Export to App ----
+    globalThis.App = globalThis.App || {};
+    globalThis.App.Kits = {
+        init,
+        loadUserKits,
+        deleteKit
+    };
 
 })();
