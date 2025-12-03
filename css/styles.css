@@ -2212,17 +2212,12 @@ body.home-active #splash-screen {
 
 
 /* Refresh 踰꾪듉 */
-
-#refresh-btn {
-
+#refresh-btn,
+#kit-refresh-btn {
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
   width: 28px;
-
   height: 28px;
 
   border: 1px solid #c4c4c4;
@@ -4564,7 +4559,8 @@ input[type="date"] {
   background: transparent;
 }
 
-#inventory-search-input {
+#inventory-search-input,
+#kit-search-input {
   border: none;
   outline: none;
   padding: 0 8px;
@@ -4580,7 +4576,9 @@ input[type="date"] {
 
 /* 드롭다운 및 버튼 높이 조절 */
 #sort-toggle,
-#refresh-btn {
+#refresh-btn,
+#kit-sort-toggle,
+#kit-refresh-btn {
   height: 30px !important;
   font-size: 13px;
   /* 폰트 크기 약간 축소 */
@@ -4589,7 +4587,9 @@ input[type="date"] {
 }
 
 #sort-toggle .material-symbols-outlined,
-#refresh-btn .material-symbols-outlined {
+#refresh-btn .material-symbols-outlined,
+#kit-sort-toggle .material-symbols-outlined,
+#kit-refresh-btn .material-symbols-outlined {
   font-size: 18px;
   /* 아이콘 크기 조정 */
 }
