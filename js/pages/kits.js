@@ -863,8 +863,10 @@
 
             console.log('Catalog size:', catalog.length);
 
-            nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
+            // Enable and reset immediately
             nameSelect.disabled = false;
+            nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
+            console.log('nameSelect enabled and reset');
 
             let filtered = [];
             if (selectedClass === 'all') {
@@ -873,7 +875,9 @@
                 filtered = catalog.filter(k => k.kit_class && k.kit_class.includes(selectedClass));
             }
 
-            console.log('Filtered kits count:', filtered.length);
+            // Filter out invalid entries
+            filtered = filtered.filter(k => k && k.kit_name);
+            console.log('Filtered valid kits count:', filtered.length);
 
             if (filtered.length === 0) {
                 const opt = document.createElement('option');
@@ -884,20 +888,26 @@
                 return;
             }
 
-            filtered.sort((a, b) => a.kit_name.localeCompare(b.kit_name));
+            try {
+                filtered.sort((a, b) => a.kit_name.localeCompare(b.kit_name));
 
-            filtered.forEach(k => {
-                const opt = document.createElement('option');
-                opt.value = k.id;
-                opt.textContent = k.kit_name;
-                opt.dataset.cas = k.kit_cas || '';
-                opt.dataset.name = k.kit_name;
-                opt.dataset.class = k.kit_class;
-                if (selectedKitId && k.id == selectedKitId) {
-                    opt.selected = true;
-                }
-                nameSelect.appendChild(opt);
-            });
+                filtered.forEach(k => {
+                    const opt = document.createElement('option');
+                    opt.value = k.id;
+                    opt.textContent = k.kit_name;
+                    opt.dataset.cas = k.kit_cas || '';
+                    opt.dataset.name = k.kit_name;
+                    opt.dataset.class = k.kit_class;
+                    if (selectedKitId && k.id == selectedKitId) {
+                        opt.selected = true;
+                    }
+                    nameSelect.appendChild(opt);
+                });
+                console.log('nameSelect options populated successfully');
+            } catch (err) {
+                console.error('Error populating nameSelect:', err);
+                alert('키트 목록을 불러오는 중 오류가 발생했습니다.');
+            }
         }
 
         Kits.openRegisterModal = () => {
