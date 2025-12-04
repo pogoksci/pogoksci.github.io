@@ -168,6 +168,20 @@
           alert(`초기화 중 오류가 발생했습니다:\n${err.message}`);
         }
 
+      });
+    }
+
+    const menuExportKits = document.getElementById("menu-export-kits");
+    if (menuExportKits) {
+      menuExportKits.addEventListener("click", async (e) => {
+        e.preventDefault();
+        if (confirm("키트 목록을 CSV로 내보내시겠습니까?")) {
+          if (App.Utils && App.Utils.exportExperimentKits) {
+            await App.Utils.exportExperimentKits();
+          } else {
+            alert("내보내기 기능을 불러올 수 없습니다.");
+          }
+        }
         closeStartMenu();
       });
     }

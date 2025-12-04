@@ -221,7 +221,7 @@
             // 2. Populate Header & Info
             document.getElementById('detail-kit-name').textContent = kit.kit_name;
             document.getElementById('detail-kit-class').textContent = kit.kit_class || '-';
-            
+
             // Photo
             const photoBox = document.getElementById('detail-kit-photo');
             if (kit.image_url) {
@@ -299,7 +299,7 @@
         }
 
         const casList = catalogItem.kit_cas.split(',').map(s => s.trim()).filter(s => s);
-        
+
         // Fetch Korean names
         const { data: chemData } = await supabase
             .from('kit_chemicals')
@@ -330,9 +330,9 @@
 
         const totalItems = buttons.length;
         const totalRows = 5;
-        
+
         if (totalItems === 0) {
-             rows[0].textContent = '-';
+            rows[0].textContent = '-';
         } else if (totalItems <= totalRows) {
             // If items <= rows, put one per row (or fill from top)
             // User request: "If 1 item, row 3. If 2 items, row 3 and 4."
@@ -342,12 +342,12 @@
         } else {
             // Distribute evenly or fill max 3 per row
             // User example: 13 -> 3, 3, 3, 2, 2
-            
+
             // Simple distribution logic:
             // Calculate items per row
             const baseCount = Math.floor(totalItems / totalRows);
             const remainder = totalItems % totalRows;
-            
+
             let currentIndex = 0;
             for (let i = 0; i < totalRows; i++) {
                 // Distribute remainder to first few rows
@@ -429,7 +429,7 @@
                     }
 
                     const changeText = change > 0 ? `+${change}` : `${change}`;
-                    
+
                     tr.innerHTML = `
                         <td>${log.log_date}</td>
                         <td>${typeText}</td>
@@ -572,6 +572,29 @@
                 <select id="kit-name-select" class="form-input" disabled required>
                     <option value="" disabled selected>분류를 먼저 선택하세요</option>
                 </select>
+                
+                <!-- Custom Kit Checkbox -->
+                <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
+                    <input type="checkbox" id="check-custom-kit">
+                    <label for="check-custom-kit">키트 선택 목록에 없는 키트를 등록할 경우 체크하세요.</label>
+                </div>
+
+                <!-- Custom Kit Inputs -->
+                <div id="custom-kit-inputs" style="display: none; margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px solid #eee;">
+                    <div class="form-group">
+                        <label for="custom-kit-name">등록하려는 키트 이름</label>
+                        <input type="text" id="custom-kit-name" class="form-input" placeholder="키트 이름을 입력하세요">
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>CAS 번호 (선택)</label>
+                        <div id="cas-input-container">
+                            <input type="text" class="form-input cas-input" placeholder="CAS1 (예: 7732-18-5)" style="margin-bottom: 5px;">
+                        </div>
+                        <button type="button" id="btn-add-cas" style="margin-top: 5px; font-size: 12px; padding: 4px 8px; background: #eee; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">+ CAS 추가</button>
+                        <p style="font-size: 11px; color: #888; margin-top: 5px;">* CAS 입력란이 부족할 경우 추가버튼을 누르세요.</p>
+                    </div>
+                </div>
             </div>
             <div class="form-group">
                 <label for="kit-quantity">수량</label>
@@ -596,6 +619,36 @@
     </div>
 </div>`;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            // Event Listeners for Custom Kit UI
+            const checkCustom = document.getElementById('check-custom-kit');
+            const customInputs = document.getElementById('custom-kit-inputs');
+            const selectName = document.getElementById('kit-name-select');
+            const btnAddCas = document.getElementById('btn-add-cas');
+            const casContainer = document.getElementById('cas-input-container');
+
+            if (checkCustom) {
+                checkCustom.addEventListener('change', (e) => {
+                    const isCustom = e.target.checked;
+                    customInputs.style.display = isCustom ? 'block' : 'none';
+                    selectName.disabled = isCustom; // Disable select if custom
+                    if (isCustom) {
+                        selectName.value = ""; // Reset select
+                    }
+                });
+            }
+
+            if (btnAddCas) {
+                btnAddCas.addEventListener('click', () => {
+                    const count = casContainer.querySelectorAll('.cas-input').length + 1;
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'form-input cas-input';
+                    input.placeholder = `CAS${count}`;
+                    input.style.marginBottom = '5px';
+                    casContainer.appendChild(input);
+                });
+            }
         }
 
         const modal = document.getElementById('modal-register-kit');
@@ -694,11 +747,69 @@
                 }
 
                 let finalKitName = '';
+                let customCas = null;
+                const isCustom = document.getElementById('check-custom-kit')?.checked;
+
                 if (mode === 'edit') {
                     finalKitName = nameSelect.value;
                 } else {
-                    const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-                    finalKitName = selectedOption.dataset.name;
+                    if (isCustom) {
+                        // Custom Kit Registration Logic
+                        if (classSelect.value === 'all') {
+                            alert("새로운 키트를 등록할 경우에는 분류를 '전체'로 선택할 수 없습니다.");
+                            return;
+                        }
+
+                        const customNameInput = document.getElementById('custom-kit-name');
+                        finalKitName = customNameInput.value.trim();
+                        if (!finalKitName) {
+                            alert("등록하려는 키트 이름을 입력하세요.");
+                            customNameInput.focus();
+                            return;
+                        }
+
+                        // Check duplicate name in catalog (optional but good)
+                        const exists = catalog.find(k => k.kit_name === finalKitName);
+                        if (exists) {
+                            alert("이미 존재하는 키트 이름입니다. 목록에서 선택해주세요.");
+                            return;
+                        }
+
+                        // Collect CAS
+                        const casInputs = document.querySelectorAll('.cas-input');
+                        const casList = Array.from(casInputs).map(input => input.value.trim()).filter(val => val);
+                        if (casList.length > 0) {
+                            customCas = casList.join(', ');
+                        }
+
+                        // 1. Insert into experiment_kit
+                        const { data: newCatalogKit, error: catalogError } = await supabase
+                            .from('experiment_kit')
+                            .insert([{
+                                kit_name: finalKitName,
+                                kit_class: kitClass,
+                                kit_cas: customCas
+                            }])
+                            .select()
+                            .single();
+
+                        if (catalogError) {
+                            console.error('Catalog insert failed:', catalogError);
+                            alert('키트 카탈로그 등록 실패: ' + catalogError.message);
+                            return;
+                        }
+
+                        // Update local catalog cache
+                        catalog.push(newCatalogKit);
+
+                    } else {
+                        const selectedOption = nameSelect.options[nameSelect.selectedIndex];
+                        if (!selectedOption || selectedOption.disabled) {
+                            alert("키트를 선택하세요.");
+                            return;
+                        }
+                        finalKitName = selectedOption.dataset.name;
+                    }
                 }
 
                 const quantity = parseInt(document.getElementById('kit-quantity').value, 10);
