@@ -688,8 +688,11 @@
         }
 
         if (btnCancel) {
+            console.log('setupRegisterModal: Attaching Cancel listener');
             btnCancel.addEventListener('click', (e) => {
+                console.log('Cancel button clicked');
                 e.preventDefault();
+                e.stopPropagation();
                 modal.style.display = 'none';
                 form.reset();
                 form.removeAttribute('data-mode');
@@ -698,6 +701,8 @@
                 document.querySelector('.modal-title').textContent = '키트 등록';
                 document.getElementById('btn-save-kit').textContent = '등록';
             });
+        } else {
+            console.error('setupRegisterModal: Cancel button NOT found');
         }
 
         if (classSelect) {
@@ -735,8 +740,11 @@
         }
 
         if (form) {
+            console.log('setupRegisterModal: Attaching Submit listener');
             form.addEventListener('submit', async (e) => {
+                console.log('Form submit triggered');
                 e.preventDefault();
+                e.stopPropagation();
 
                 let kitClass = '';
                 const mode = form.getAttribute('data-mode');
