@@ -550,129 +550,127 @@
         document.querySelectorAll('#modal-register-kit-v2').forEach(el => el.remove());
 
         const modalHtml = `
-<div id="modal-register-kit-v2" class="modal-overlay" style="display: none; z-index: 1200;">
-    <div class="modal-content">
-        <h3 class="modal-title">키트 등록</h3>
-        <form id="form-register-kit" novalidate>
-            <div class="modal-scroll-content">
-                <div class="form-group">
-                    <label for="kit-class-select">분류</label>
-                    <select id="kit-class-select" class="form-input" required>
-                        <option value="" disabled selected>분류를 선택하세요</option>
-                        <option value="all">전체</option>
-                        <option value="물리학">물리학</option>
-                        <option value="화학">화학</option>
-                        <option value="생명과학">생명과학</option>
-                        <option value="지구과학">지구과학</option>
-                        <option value="융합과학">융합과학</option>
-                        <option value="기타">기타</option>
-                    </select>
-                    <div id="kit-class-checkboxes" class="kit-class-checkboxes">
-                        <label><input type="checkbox" value="물리학"> 물리학</label>
-                        <label><input type="checkbox" value="화학"> 화학</label>
-                        <label><input type="checkbox" value="생명과학"> 생명과학</label>
-                        <label><input type="checkbox" value="지구과학"> 지구과학</label>
-                        <label><input type="checkbox" value="융합과학"> 융합과학</label>
-                        <label><input type="checkbox" value="기타"> 기타</label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="kit-name-select">키트명</label>
-                    <select id="kit-name-select" class="form-input" disabled required>
-                        <option value="" disabled selected>분류를 먼저 선택하세요</option>
-                    </select>
-                    
-                    <!-- Custom Kit Checkbox -->
-                    <div id="custom-kit-checkbox-wrapper" class="custom-kit-checkbox-wrapper">
-                        <input type="checkbox" id="check-custom-kit">
-                        <label for="check-custom-kit">키트 선택 목록에 없는 새로운 종류의 키트를 등록할 경우 체크하세요.</label>
-                    </div>
-
-                    <!-- Custom Kit Inputs -->
-                    <div id="custom-kit-inputs" class="custom-kit-inputs">
-                        <div class="form-group">
-                            <label for="custom-kit-name">등록하려는 키트 이름</label>
-                            <input type="text" id="custom-kit-name" class="form-input" placeholder="키트 이름을 입력하세요">
-                        </div>
-                        
-                        <div class="form-group" style="margin-top: 10px;">
-                            <label>구성 약품 (CAS No.)</label>
-                            <div id="cas-input-container">
-                                <input type="text" class="form-input cas-input" placeholder="CAS1 (예: 7732-18-5)" style="margin-bottom: 5px;">
+            <div id="modal-register-kit-v2" class="modal-overlay" style="display: none; z-index: 1200;">
+                <div class="modal-content">
+                    <h3 class="modal-title">키트 등록</h3>
+                    <form id="form-register-kit" novalidate>
+                        <div class="modal-scroll-content">
+                            <div class="form-group">
+                                <label for="kit-class-select">분류</label>
+                                <select id="kit-class-select" class="form-input" required>
+                                    <option value="" disabled selected>분류를 선택하세요</option>
+                                    <option value="all">전체</option>
+                                    <option value="물리학">물리학</option>
+                                    <option value="화학">화학</option>
+                                    <option value="생명과학">생명과학</option>
+                                    <option value="지구과학">지구과학</option>
+                                    <option value="융합과학">융합과학</option>
+                                    <option value="기타">기타</option>
+                                </select>
+                                <div id="kit-class-checkboxes" class="kit-class-checkboxes">
+                                    <label><input type="checkbox" value="물리학"> 물리학</label>
+                                    <label><input type="checkbox" value="화학"> 화학</label>
+                                    <label><input type="checkbox" value="생명과학"> 생명과학</label>
+                                    <label><input type="checkbox" value="지구과학"> 지구과학</label>
+                                    <label><input type="checkbox" value="융합과학"> 융합과학</label>
+                                    <label><input type="checkbox" value="기타"> 기타</label>
+                                </div>
                             </div>
-                            <button type="button" id="btn-add-cas" class="btn-add-cas">+ CAS 추가</button>
-                            <p style="font-size: 11px; color: #888; margin-top: 5px;">* CAS 입력란이 부족할 경우 추가버튼을 누르세요.</p>
+                            <div class="form-group">
+                                <label for="kit-name-select">키트명</label>
+                                <select id="kit-name-select" class="form-input" disabled required>
+                                    <option value="" disabled selected>분류를 먼저 선택하세요</option>
+                                </select>
+                                
+                                <!-- Custom Kit Checkbox -->
+                                <div id="custom-kit-checkbox-wrapper" class="custom-kit-checkbox-wrapper">
+                                    <input type="checkbox" id="check-custom-kit">
+                                    <label for="check-custom-kit">키트 선택 목록에 없는 새로운 종류의 키트를 등록할 경우 체크하세요.</label>
+                                </div>
+
+                                <!-- Custom Kit Inputs -->
+                                <div id="custom-kit-inputs" class="custom-kit-inputs">
+                                    <div class="form-group">
+                                        <label for="custom-kit-name">등록하려는 키트 이름</label>
+                                        <input type="text" id="custom-kit-name" class="form-input" placeholder="키트 이름을 입력하세요">
+                                    </div>
+                                    
+                                    <div class="form-group" style="margin-top: 10px;">
+                                        <label>구성 약품 (CAS No.)</label>
+                                        <div id="cas-input-container">
+                                            <input type="text" class="form-input cas-input" placeholder="CAS1 (예: 7732-18-5)" style="margin-bottom: 5px;">
+                                        </div>
+                                        <button type="button" id="btn-add-cas" class="btn-add-cas">+ CAS 추가</button>
+                                        <p style="font-size: 11px; color: #888; margin-top: 5px;">* CAS 입력란이 부족할 경우 추가버튼을 누르세요.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="kit-quantity">수량</label>
+                                <input type="number" id="kit-quantity" class="form-input" value="1" min="1" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="kit-date">구입일</label>
+                                <input type="date" id="kit-date" class="form-input" required>
+                            </div>
+
+                            <!-- Photo Input -->
+                            <div class="form-group">
+                                <label>사진</label>
+                                <div class="kit-photo-container">
+                                    <div class="kit-photo-preview-box">
+                                        <img id="kit-preview-img" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;">
+                                        <div class="placeholder-text" style="color: #aaa; font-size: 14px;">사진 없음</div>
+                                    </div>
+                                    <div class="kit-photo-actions">
+                                        <button type="button" id="btn-kit-camera" class="btn-camera"><span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영</button>
+                                        <button type="button" id="btn-kit-file" class="btn-file"><span class="material-symbols-outlined">image</span> 파일 선택</button>
+                                        <input type="file" id="kit-file-input" accept="image/*" style="display: none;">
+                                        <input type="file" id="kit-camera-input" accept="image/*" capture="environment" style="display: none;">
+                                    </div>
+                                    <!-- Inline Camera Preview -->
+                                    <div id="kit-camera-preview-container" style="display:none; margin-top:10px; position:relative;">
+                                        <video id="kit-camera-stream" autoplay playsinline style="width:100%; max-height:300px; background:#000;"></video>
+                                        <canvas id="kit-camera-canvas" style="display:none;"></canvas>
+                                        <button type="button" id="btn-cancel-camera" class="btn-cancel-camera" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                                            <span class="material-symbols-outlined" style="font-size:20px;">close</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="kit-quantity">수량</label>
-                    <input type="number" id="kit-quantity" class="form-input" value="1" min="1" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="kit-date">구입일</label>
-                    <input type="date" id="kit-date" class="form-input" required>
-                </div>
-
-                <!-- Photo Input -->
-                <div class="form-group">
-                    <label>사진</label>
-                    <div class="kit-photo-container">
-                        <div class="kit-photo-preview-box">
-                            <img id="kit-preview-img" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;">
-                            <video id="kit-camera-stream" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
-                            <canvas id="kit-camera-canvas" style="display: none;"></canvas>
-                            <span class="placeholder-text" style="color: #999; font-size: 14px;">사진 없음</span>
+                        <div class="modal-actions">
+                            <button type="button" id="btn-cancel-kit" class="btn-cancel">취소</button>
+                            <button type="submit" id="btn-save-kit" class="btn-primary">등록</button>
                         </div>
-                        <div class="kit-photo-actions">
-                            <button type="button" id="btn-select-photo" class="btn-secondary btn-secondary-action">
-                                <span class="material-symbols-outlined">image</span> 파일에서 선택
-                            </button>
-                            <button type="button" id="btn-take-photo" class="btn-secondary btn-secondary-action">
-                                <span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영
-                            </button>
-                        </div>
-                        <input type="file" id="kit-photo-input" accept="image/*" style="display: none;">
-                        <!-- Mobile fallback / File input -->
-                        <input type="file" id="kit-camera-input" accept="image/*" capture="environment" style="display: none;">
-                    </div>
+                    </form>
                 </div>
-            </div>
-
-            <div class="modal-actions">
-                <button type="button" id="btn-cancel-kit" class="btn-cancel">취소</button>
-                <button type="submit" id="btn-save-kit" class="btn-primary">등록</button>
-            </div>
-        </form>
-    </div>
-</div>`;
+            </div>`;
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
+        // Elements
         const modal = document.getElementById('modal-register-kit-v2');
         const form = document.getElementById('form-register-kit');
         const btnCancel = document.getElementById('btn-cancel-kit');
         const classSelect = document.getElementById('kit-class-select');
         const nameSelect = document.getElementById('kit-name-select');
         const classCheckboxesDiv = document.getElementById('kit-class-checkboxes');
-
-        // Custom Kit Elements
-        const checkCustom = document.getElementById('check-custom-kit');
         const customInputs = document.getElementById('custom-kit-inputs');
-        const btnAddCas = document.getElementById('btn-add-cas');
-        const casInputContainer = document.getElementById('cas-input-container');
-
-        // Photo Elements
-        const btnSelectPhoto = document.getElementById('btn-select-photo');
-        const btnTakePhoto = document.getElementById('btn-take-photo');
-        const fileInput = document.getElementById('kit-photo-input');
-        const cameraInput = document.getElementById('kit-camera-input');
         const previewImg = document.getElementById('kit-preview-img');
+        const previewDiv = document.querySelector('.kit-photo-preview-box');
+        const fileInput = document.getElementById('kit-file-input');
+        const cameraInput = document.getElementById('kit-camera-input');
+        const checkCustom = document.getElementById('check-custom-kit');
+        const btnTakePhoto = document.getElementById('btn-kit-camera');
+        const btnSelectPhoto = document.getElementById('btn-kit-file');
         const videoStream = document.getElementById('kit-camera-stream');
         const canvas = document.getElementById('kit-camera-canvas');
-        const previewDiv = document.querySelector('.kit-photo-preview-box');
+        const btnAddCas = document.getElementById('btn-add-cas');
+        const casInputContainer = document.getElementById('cas-input-container');
+        const btnCancelCamera = document.getElementById('btn-cancel-camera');
         let stream = null;
         let isCameraActive = false;
         let isModalOpen = false;
@@ -718,8 +716,11 @@
                 const placeholder = previewDiv.querySelector('.placeholder-text');
                 if (placeholder) placeholder.style.display = 'none';
 
+
+
                 isCameraActive = true;
                 btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
+                if (btnCancelCamera) btnCancelCamera.style.display = 'inline-flex';
             } catch (err) {
                 console.error("Camera access denied or error:", err);
                 // Fallback to file input (mobile behavior)
@@ -742,6 +743,7 @@
             videoStream.style.display = 'none';
             isCameraActive = false;
             btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
+            if (btnCancelCamera) btnCancelCamera.style.display = 'none';
         };
 
         const takePhoto = () => {
@@ -802,6 +804,13 @@
                 const div = document.createElement('div');
                 div.innerHTML = `<input type="text" class="form-input cas-input" placeholder="CAS (예: 7732-18-5)" style="margin-bottom: 5px;">`;
                 casInputContainer.appendChild(div.firstChild);
+            });
+        }
+
+
+        if (btnCancelCamera) {
+            btnCancelCamera.addEventListener('click', () => {
+                stopCamera();
             });
         }
 
@@ -1118,37 +1127,37 @@
         if (document.getElementById('modal-kit-stock')) return;
 
         const modalHtml = `
-        <div id="modal-kit-stock" class="modal-overlay" style="display: none; z-index: 1200;">
-            <div class="modal-content stock-modal-content">
-                <h3 class="modal-title">재고 관리</h3>
-                <p id="stock-kit-name" class="modal-subtitle" style="margin-bottom: 15px;"></p>
+            <div id="modal-kit-stock" class="modal-overlay" style="display: none; z-index: 1200;">
+                <div class="modal-content stock-modal-content">
+                    <h3 class="modal-title">재고 관리</h3>
+                    <p id="stock-kit-name" class="modal-subtitle" style="margin-bottom: 15px;"></p>
 
-                <form id="form-kit-stock">
-                    <div class="form-group">
-                        <label>등록 유형</label>
-                        <div class="stock-type-group">
-                            <label class="stock-type-label"><input type="radio" name="stock-type" value="usage" checked> 사용 (차감)</label>
-                            <label class="stock-type-label"><input type="radio" name="stock-type" value="purchase"> 구입 (추가)</label>
+                    <form id="form-kit-stock">
+                        <div class="form-group">
+                            <label>등록 유형</label>
+                            <div class="stock-type-group">
+                                <label class="stock-type-label"><input type="radio" name="stock-type" value="usage" checked> 사용 (차감)</label>
+                                <label class="stock-type-label"><input type="radio" name="stock-type" value="purchase"> 구입 (추가)</label>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label for="stock-amount">수량</label>
-                        <input type="number" id="stock-amount" class="form-input" min="1" value="1" required>
-                    </div>
+                        <div class="form-group">
+                            <label for="stock-amount">수량</label>
+                            <input type="number" id="stock-amount" class="form-input" min="1" value="1" required>
+                        </div>
 
-                    <div class="form-group">
-                        <label for="stock-date">날짜</label>
-                        <input type="date" id="stock-date" class="form-input" required>
-                    </div>
+                        <div class="form-group">
+                            <label for="stock-date">날짜</label>
+                            <input type="date" id="stock-date" class="form-input" required>
+                        </div>
 
-                    <div class="modal-actions">
-                        <button type="button" id="btn-cancel-stock" class="btn-cancel">취소</button>
-                        <button type="submit" id="btn-save-stock" class="btn-primary">저장</button>
-                    </div>
-                </form>
-            </div>
-        </div>`;
+                        <div class="modal-actions">
+                            <button type="button" id="btn-cancel-stock" class="btn-cancel">취소</button>
+                            <button type="submit" id="btn-save-stock" class="btn-primary">저장</button>
+                        </div>
+                    </form>
+                </div>
+            </div>`;
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
@@ -1302,7 +1311,7 @@
         const toRemove = targetCasList.filter(cas => !activeCasSet.has(cas));
 
         if (toRemove.length > 0) {
-            console.log(`Cleaning up unused chemicals: ${toRemove.join(', ')}`);
+            console.log(`Cleaning up unused chemicals: ${toRemove.join(', ')} `);
             await supabase
                 .from('kit_chemicals')
                 .delete()

@@ -196,6 +196,7 @@
     const previewBox = document.getElementById("cabinet-photo-preview");
     const cameraBtn = document.getElementById("cabinet-camera-btn");
     const photoBtn = document.getElementById("cabinet-photo-btn");
+    const cameraCancelBtn = document.getElementById("cabinet-camera-cancel-btn");
     const videoStream = document.getElementById("cabinet-camera-stream");
     const canvas = document.getElementById("cabinet-camera-canvas");
     let isCameraActive = false;
@@ -219,6 +220,7 @@
       if (videoStream) videoStream.style.display = 'none';
       isCameraActive = false;
       if (cameraBtn) cameraBtn.innerHTML = '카메라로 촬영';
+      if (cameraCancelBtn) cameraCancelBtn.style.display = 'none';
     };
 
     const startCabinetCamera = async () => {
@@ -238,6 +240,7 @@
 
         isCameraActive = true;
         cameraBtn.innerHTML = '촬영하기';
+        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-block';
       } catch (err) {
         console.error("Camera access denied or error:", err);
         // Fallback to file input (mobile behavior)
