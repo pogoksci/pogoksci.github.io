@@ -865,8 +865,15 @@
 
             // Enable and reset immediately
             nameSelect.disabled = false;
+            nameSelect.style.border = '2px solid red'; // Visual Debugging
             nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
-            console.log('nameSelect enabled and reset');
+            console.log('nameSelect enabled and reset. Border set to red.');
+
+            const allSelects = document.querySelectorAll('#kit-name-select');
+            console.log('Total #kit-name-select elements in DOM:', allSelects.length);
+            allSelects.forEach((el, idx) => {
+                console.log(`Select #${idx}: visible=${el.offsetParent !== null}, disabled=${el.disabled}`);
+            });
 
             let filtered = [];
             if (selectedClass === 'all') {
