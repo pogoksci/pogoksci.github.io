@@ -10,6 +10,7 @@
   const supabase = App.supabase;
 
   let inventoryStream = null; // Track inventory camera stream globally within module
+  let cabinetStream = null; // Track cabinet camera stream globally within module
 
   // -------------------------------------------------
   // 💾 시약장 저장
@@ -103,6 +104,7 @@
         saveBtn.style.display = "inline-block";
         saveBtn.onclick = (e) => {
           e.preventDefault();
+          if (typeof stopCabinetCamera === 'function') stopCabinetCamera();
           console.log("📌 State before payload:", App.State.dump());
           handleSave();
         };
@@ -112,6 +114,7 @@
         submitBtn.style.display = "inline-block";
         submitBtn.onclick = (e) => {
           e.preventDefault();
+          if (typeof stopCabinetCamera === 'function') stopCabinetCamera();
           console.log("📌 State before payload:", App.State.dump());
           handleSave();
         };
@@ -185,29 +188,145 @@
     // ------------------------------------------------------------
     // 3️⃣ 사진 업로드 처리
     // ------------------------------------------------------------
+    // ------------------------------------------------------------
+    // 3️⃣ 사진 업로드 처리
+    // ------------------------------------------------------------
     const photoInput = document.getElementById("cabinet-photo-input");
     const cameraInput = document.getElementById("cabinet-camera-input");
     const previewBox = document.getElementById("cabinet-photo-preview");
     const cameraBtn = document.getElementById("cabinet-camera-btn");
     const photoBtn = document.getElementById("cabinet-photo-btn");
+    const videoStream = document.getElementById("cabinet-camera-stream");
+    const canvas = document.getElementById("cabinet-camera-canvas");
+    let isCameraActive = false;
+
+    // Ensure previous stream is stopped when initializing form
+    if (cabinetStream) {
+      cabinetStream.getTracks().forEach(track => track.stop());
+      cabinetStream = null;
+    }
+
+    const stopCabinetCamera = () => {
+      if (cabinetStream) {
+        cabinetStream.getTracks().forEach(track => track.stop());
+        cabinetStream = null;
+      }
+      if (videoStream && videoStream.srcObject) {
+        const tracks = videoStream.srcObject.getTracks();
+        if (tracks) tracks.forEach(track => track.stop());
+        videoStream.srcObject = null;
+      }
+      if (videoStream) videoStream.style.display = 'none';
+      isCameraActive = false;
+      if (cameraBtn) cameraBtn.innerHTML = '카메라로 촬영';
+    };
+
+    const startCabinetCamera = async () => {
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+
+        cabinetStream = newStream;
+        videoStream.srcObject = cabinetStream;
+        videoStream.style.display = 'block';
+
+        // Hide existing image if any
+        const existingImg = previewBox.querySelector('img');
+        if (existingImg) existingImg.style.display = 'none';
+
+        const placeholder = previewBox.querySelector('.placeholder-text');
+        if (placeholder) placeholder.style.display = 'none';
+
+        isCameraActive = true;
+        cameraBtn.innerHTML = '촬영하기';
+      } catch (err) {
+        console.error("Camera access denied or error:", err);
+        // Fallback to file input (mobile behavior)
+        cameraInput.click();
+      }
+    };
+
+    const takeCabinetPhoto = () => {
+      if (!videoStream || !canvas) return;
+      canvas.width = videoStream.videoWidth;
+      canvas.height = videoStream.videoHeight;
+      canvas.getContext('2d').drawImage(videoStream, 0, 0);
+
+      const base64 = canvas.toDataURL("image/jpeg");
+
+      // Update State (resize logic handled in processImage if needed, but here we just store base64 for now or use processImage helper)
+      // The original code used processImage for file input, let's reuse it or just store directly if that's what inventory does.
+      // Inventory stores directly. Cabinet used processImage to resize. Let's stick to resizing if possible or just store raw for now to match inventory logic which seems simpler.
+      // Wait, cabinet form uses photo_320_base64 and photo_160_base64. I should probably use processImage to maintain consistency.
+
+      processImage(base64, (resized) => {
+        set("photo_320_base64", resized.base64_320);
+        set("photo_160_base64", resized.base64_160);
+
+        // Show preview
+        const placeholder = previewBox.querySelector('.placeholder-text');
+        if (placeholder) placeholder.style.display = 'none';
+
+        const existingImg = previewBox.querySelector('img');
+        if (existingImg) existingImg.remove();
+
+        const img = document.createElement('img');
+        img.src = resized.base64_320;
+        img.alt = "시약장 사진";
+        img.style.maxWidth = "100%";
+        img.style.maxHeight = "100%";
+        img.style.objectFit = "contain";
+        previewBox.appendChild(img);
+      });
+
+      stopCabinetCamera();
+      cameraBtn.innerHTML = '다시 촬영';
+    };
 
     const handleFile = (file) => {
       if (!file) return;
+      if (isCameraActive) stopCabinetCamera();
+
       const reader = new FileReader();
       reader.onload = (e) => {
         processImage(e.target.result, (resized) => {
           set("photo_320_base64", resized.base64_320);
           set("photo_160_base64", resized.base64_160);
-          previewBox.innerHTML = `<img src="${resized.base64_320}" alt="시약장 사진">`;
+
+          const placeholder = previewBox.querySelector('.placeholder-text');
+          if (placeholder) placeholder.style.display = 'none';
+
+          const existingImg = previewBox.querySelector('img');
+          if (existingImg) existingImg.remove();
+
+          const img = document.createElement('img');
+          img.src = resized.base64_320;
+          img.alt = "시약장 사진";
+          img.style.maxWidth = "100%";
+          img.style.maxHeight = "100%";
+          img.style.objectFit = "contain";
+          previewBox.appendChild(img);
         });
       };
       reader.readAsDataURL(file);
     };
 
-    if (photoBtn && photoInput) photoBtn.onclick = () => photoInput.click();
-    if (cameraBtn && typeof startCamera === "function")
-      cameraBtn.onclick = () => startCamera();
-    setupModalListeners?.();
+    if (photoBtn && photoInput) {
+      photoBtn.onclick = () => {
+        if (isCameraActive) stopCabinetCamera();
+        photoInput.click();
+      };
+    }
+
+    if (cameraBtn) {
+      cameraBtn.onclick = () => {
+        if (isCameraActive) {
+          takeCabinetPhoto();
+        } else {
+          startCabinetCamera();
+        }
+      };
+    }
+
     if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
     if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
 
