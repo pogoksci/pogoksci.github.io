@@ -4790,3 +4790,115 @@ input[type="date"] {
   background: #fff;
   border-radius: 8px;
 }
+
+/* =================================================================
+   Kit Detail Page Styles
+================================================================= */
+
+/* Header Spacing */
+#kit-detail-page-container .detail-name-group {
+  margin-bottom: 12px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+/* Image Placeholder (3:4 Ratio) */
+#kit-detail-page-container .detail-photo {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#kit-detail-page-container .detail-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Right Side Layout (7 Rows) */
+.kit-info {
+  display: grid;
+  grid-template-rows: repeat(7, 40px); /* Fixed 40px height for 7 rows */
+  border-top: 1px solid #eee;
+}
+
+.kit-info-row {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border-bottom: 1px solid #eee;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.kit-info-row .label {
+  width: 90px;
+  font-weight: 700;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.kit-info-row .value {
+  flex-grow: 1;
+  color: #333;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap; /* Allow buttons to wrap if needed, though design says simple size */
+  gap: 5px;
+  overflow: hidden; /* Prevent overflow */
+}
+
+/* Component Buttons */
+.kit-component-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border: 1px solid #bbdefb;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  height: 24px; /* Fixed height for consistency */
+}
+
+.kit-component-btn:hover {
+  background-color: #bbdefb;
+}
+
+/* Usage History Table */
+.kit-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* Fixed layout for better control */
+}
+
+.kit-log-table th,
+.kit-log-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+  font-size: 14px;
+}
+
+.kit-log-table th {
+  background-color: #f9f9f9;
+  font-weight: 600;
+  color: #555;
+}
+
+/* Column Widths */
+.kit-log-table th:nth-child(1) { width: 30%; } /* Date */
+.kit-log-table th:nth-child(2) { width: 20%; } /* Type */
+.kit-log-table th:nth-child(3) { width: 25%; } /* Change */
+.kit-log-table th:nth-child(4) { width: 25%; } /* Quantity */
+

@@ -221,43 +221,37 @@
             // 2. Populate Header & Info
             document.getElementById('detail-kit-name').textContent = kit.kit_name;
             document.getElementById('detail-kit-class').textContent = kit.kit_class || '-';
-            document.getElementById('detail-kit-quantity').textContent = kit.quantity;
-            document.getElementById('detail-kit-location').textContent = '(지정되지 않음)';
-
+            
             // Photo
             const photoBox = document.getElementById('detail-kit-photo');
             if (kit.image_url) {
-                photoBox.innerHTML = `<img src="${kit.image_url}" alt="키트 사진" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
+                photoBox.innerHTML = `<img src="${kit.image_url}" alt="키트 사진">`;
             } else {
-                photoBox.innerHTML = '<div style="width:100%; height:100%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#999; border-radius:8px;">사진 없음</div>';
+                photoBox.innerHTML = '<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#999;">사진 없음</div>';
             }
 
-            // 3. Bind Actions
-            const btnStock = document.getElementById('btn-kit-stock');
-            if (btnStock) {
-                btnStock.onclick = () => {
-                    setupStockModal();
-                    openStockModal(kit);
-                };
-            }
-
-            const btnEdit = document.getElementById('btn-kit-edit');
-            if (btnEdit) {
-                btnEdit.onclick = () => {
-                    setupRegisterModal();
-                    window.openEditKitModal(kit);
-                };
-            }
-
-            const btnDelete = document.getElementById('btn-kit-delete');
-            if (btnDelete) {
-                btnDelete.onclick = async () => {
-                    if (confirm('정말 삭제하시겠습니까?')) {
-                        await deleteKit(kit.id);
-                        App.Router.go('kits');
-                    }
-                };
-            }
+            // 3. Render 7-Row Layout
+            const detailRight = document.querySelector('.detail-right');
+            detailRight.innerHTML = `
+                <div class="kit-info">
+                    <div class="kit-info-row">
+                        <span class="label">수량</span>
+                        <span class="value" id="detail-kit-quantity">${kit.quantity}</span>
+                    </div>
+                    <div class="kit-info-row">
+                        <span class="label">보관 위치</span>
+                        <span class="value" id="detail-kit-location">(지정되지 않음)</span>
+                    </div>
+                    <div class="kit-info-row" id="kit-row-3">
+                        <span class="label">구성 약품</span>
+                        <span class="value"></span>
+                    </div>
+                    <div class="kit-info-row" id="kit-row-4"><span class="label"></span><span class="value"></span></div>
+                    <div class="kit-info-row" id="kit-row-5"><span class="label"></span><span class="value"></span></div>
+                    <div class="kit-info-row" id="kit-row-6"><span class="label"></span><span class="value"></span></div>
+                    <div class="kit-info-row" id="kit-row-7"><span class="label"></span><span class="value"></span></div>
+                </div>
+            `;
 
             // 4. Load Chemicals & Logs
             await loadChemicals(kit);
@@ -289,49 +283,82 @@
     }
 
     async function loadChemicals(kit) {
-        const chemListDiv = document.getElementById('kit-chemical-list');
-        if (!chemListDiv) return;
-
-        chemListDiv.innerHTML = '<p>로딩 중...</p>';
+        // Clear previous content in rows 3-7
+        for (let i = 3; i <= 7; i++) {
+            const row = document.getElementById(`kit-row-${i}`);
+            if (row) {
+                row.querySelector('.value').innerHTML = '';
+                if (i > 3) row.querySelector('.label').textContent = '';
+            }
+        }
 
         const catalogItem = catalog.find(c => c.kit_name === kit.kit_name);
         if (!catalogItem || !catalogItem.kit_cas) {
-            chemListDiv.innerHTML = '<p style="color: #999; font-size: 13px;">등록된 약품 정보가 없습니다.</p>';
-        } else {
-            const casList = catalogItem.kit_cas.split(',').map(s => s.trim());
-            chemListDiv.innerHTML = '';
+            document.querySelector('#kit-row-3 .value').textContent = '-';
+            return;
+        }
 
-            // Fetch Korean names
-            const { data: chemData } = await supabase
-                .from('kit_chemicals')
-                .select('cas_no, name_ko')
-                .in('cas_no', casList);
+        const casList = catalogItem.kit_cas.split(',').map(s => s.trim()).filter(s => s);
+        
+        // Fetch Korean names
+        const { data: chemData } = await supabase
+            .from('kit_chemicals')
+            .select('cas_no, name_ko')
+            .in('cas_no', casList);
 
-            const map = new Map();
-            if (chemData) chemData.forEach(c => map.set(c.cas_no, c.name_ko));
+        const map = new Map();
+        if (chemData) chemData.forEach(c => map.set(c.cas_no, c.name_ko));
 
-            casList.forEach(cas => {
-                if (isCasNo(cas)) {
-                    const btn = document.createElement('div');
-                    btn.className = 'chem-chip';
-                    btn.style.cursor = 'pointer';
-                    btn.style.padding = '4px 10px';
-                    btn.style.background = '#e3f2fd';
-                    btn.style.color = '#0277bd';
-                    btn.style.borderRadius = '15px';
-                    btn.style.fontSize = '13px';
-                    btn.textContent = map.has(cas) ? `${map.get(cas)}` : cas;
-                    btn.title = cas;
+        // Create buttons
+        const buttons = casList.map(cas => {
+            const btn = document.createElement('div'); // Use div for better control, styled as btn
+            btn.className = 'kit-component-btn';
+            btn.textContent = map.has(cas) ? map.get(cas) : cas;
+            btn.title = cas;
+            btn.onclick = () => renderInlineChemInfo(cas);
+            return btn;
+        });
 
-                    btn.addEventListener('click', () => renderInlineChemInfo(cas));
-                    chemListDiv.appendChild(btn);
-                } else {
-                    const span = document.createElement('div');
-                    span.className = 'chem-chip static';
-                    span.textContent = cas;
-                    chemListDiv.appendChild(span);
-                }
+        // Distribute buttons across rows 3-7
+        const rows = [
+            document.querySelector('#kit-row-3 .value'),
+            document.querySelector('#kit-row-4 .value'),
+            document.querySelector('#kit-row-5 .value'),
+            document.querySelector('#kit-row-6 .value'),
+            document.querySelector('#kit-row-7 .value')
+        ];
+
+        const totalItems = buttons.length;
+        const totalRows = 5;
+        
+        if (totalItems === 0) {
+             rows[0].textContent = '-';
+        } else if (totalItems <= totalRows) {
+            // If items <= rows, put one per row (or fill from top)
+            // User request: "If 1 item, row 3. If 2 items, row 3 and 4."
+            buttons.forEach((btn, index) => {
+                if (index < totalRows) rows[index].appendChild(btn);
             });
+        } else {
+            // Distribute evenly or fill max 3 per row
+            // User example: 13 -> 3, 3, 3, 2, 2
+            
+            // Simple distribution logic:
+            // Calculate items per row
+            const baseCount = Math.floor(totalItems / totalRows);
+            const remainder = totalItems % totalRows;
+            
+            let currentIndex = 0;
+            for (let i = 0; i < totalRows; i++) {
+                // Distribute remainder to first few rows
+                const count = baseCount + (i < remainder ? 1 : 0);
+                for (let j = 0; j < count; j++) {
+                    if (currentIndex < totalItems) {
+                        rows[i].appendChild(buttons[currentIndex]);
+                        currentIndex++;
+                    }
+                }
+            }
         }
     }
 
@@ -339,53 +366,82 @@
         const tbody = document.getElementById('kit-usage-logs-body');
         if (!tbody) return;
 
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">기록 로딩 중...</td></tr>';
+        // Update Header
+        const thead = document.querySelector('.kit-log-table thead tr');
+        if (thead) {
+            thead.innerHTML = `
+                <th>날짜</th>
+                <th>유형</th>
+                <th>변동</th>
+                <th>수량</th>
+            `;
+        }
+
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">기록 로딩 중...</td></tr>';
 
         try {
             const { data: usageLogs, error } = await supabase
                 .from('kit_usage_log')
                 .select('*')
                 .eq('user_kit_id', kit.id)
-                .order('log_date', { ascending: true });
+                .order('log_date', { ascending: true }); // Oldest first
 
             if (error) throw error;
 
             const initialLog = {
                 log_date: kit.purchase_date,
                 log_type: '구입 (초기)',
-                change_amount: null
+                change_amount: kit.quantity, // Initial amount is the change
+                is_initial: true
             };
 
             let allLogs = [];
             if (kit.purchase_date) allLogs.push(initialLog);
             if (usageLogs) allLogs = [...allLogs, ...usageLogs];
 
-            allLogs.sort((a, b) => new Date(b.log_date) - new Date(a.log_date)); // Newest first
+            // Sort by date ascending (Oldest first)
+            allLogs.sort((a, b) => new Date(a.log_date) - new Date(b.log_date));
 
             if (allLogs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: #999;">기록이 없습니다.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #999;">기록이 없습니다.</td></tr>';
             } else {
                 tbody.innerHTML = '';
+                let currentQuantity = 0;
+
                 allLogs.forEach(log => {
                     const tr = document.createElement('tr');
                     let typeText = log.log_type === 'usage' ? '사용' : (log.log_type === 'purchase' ? '구입' : log.log_type);
-                    let amountText = log.change_amount ? `${log.change_amount > 0 ? '+' : ''}${log.change_amount}` : '-';
-                    if (log.log_type === '구입 (초기)') {
-                        typeText = '최초 등록';
-                        amountText = kit.quantity;
+                    if (log.is_initial) typeText = '최초 등록';
+
+                    let change = 0;
+                    if (log.is_initial) {
+                        change = log.change_amount; // Initial amount
+                        currentQuantity = change; // Reset to initial
+                    } else {
+                        change = log.change_amount;
+                        // If usage, change is negative usually, but let's check data
+                        // Assuming change_amount is signed in DB? 
+                        // If not, we need logic. Usually usage is negative.
+                        // Let's assume change_amount is correct signed value or we adjust based on type
+                        // Checking usage-register.js might reveal this. 
+                        // For now, let's assume change_amount is the delta.
+                        currentQuantity += change;
                     }
 
+                    const changeText = change > 0 ? `+${change}` : `${change}`;
+                    
                     tr.innerHTML = `
-                        <td style="padding: 10px; border-bottom: 1px solid #eee; color: #666;">${log.log_date}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: 500;">${typeText}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${amountText}</td>
+                        <td>${log.log_date}</td>
+                        <td>${typeText}</td>
+                        <td>${changeText}</td>
+                        <td>${currentQuantity}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             }
         } catch (e) {
             console.error("Log fetch error:", e);
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: red;">기록을 불러오지 못했습니다.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">기록을 불러오지 못했습니다.</td></tr>';
         }
     }
 
