@@ -623,20 +623,15 @@
                                     <div class="kit-photo-preview-box">
                                         <img id="kit-preview-img" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;">
                                         <div class="placeholder-text" style="color: #aaa; font-size: 14px;">사진 없음</div>
+                                        <video id="kit-camera-stream" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                                        <canvas id="kit-camera-canvas" style="display:none;"></canvas>
                                     </div>
                                     <div class="kit-photo-actions">
-                                        <button type="button" id="btn-kit-camera" class="btn-camera"><span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영</button>
-                                        <button type="button" id="btn-kit-file" class="btn-file"><span class="material-symbols-outlined">image</span> 파일 선택</button>
+                                        <button type="button" id="btn-kit-camera" class="btn-secondary-action"><span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영</button>
+                                        <button type="button" id="btn-kit-file" class="btn-secondary-action"><span class="material-symbols-outlined">image</span> 파일 선택</button>
+                                        <button type="button" id="btn-cancel-camera" class="btn-secondary-action" style="display: none;"><span class="material-symbols-outlined">close</span> 촬영 취소</button>
                                         <input type="file" id="kit-file-input" accept="image/*" style="display: none;">
                                         <input type="file" id="kit-camera-input" accept="image/*" capture="environment" style="display: none;">
-                                    </div>
-                                    <!-- Inline Camera Preview -->
-                                    <div id="kit-camera-preview-container" style="display:none; margin-top:10px; position:relative;">
-                                        <video id="kit-camera-stream" autoplay playsinline style="width:100%; max-height:300px; background:#000;"></video>
-                                        <canvas id="kit-camera-canvas" style="display:none;"></canvas>
-                                        <button type="button" id="btn-cancel-camera" class="btn-cancel-camera" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-                                            <span class="material-symbols-outlined" style="font-size:20px;">close</span>
-                                        </button>
                                     </div>
                                 </div>
                             </div>
