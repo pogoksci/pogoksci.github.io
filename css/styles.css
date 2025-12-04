@@ -4997,15 +4997,19 @@ input[type="date"] {
   flex-direction: row;
   gap: 15px;
   margin-top: 5px;
-  align-items: stretch;
+  align-items: flex-start;
+  /* Changed from stretch to prevent forcing height */
 }
 
 .kit-photo-preview-box {
-  width: 120px;
-  height: auto;
+  height: 240px;
+  /* Match reference height */
+  width: auto;
   aspect-ratio: 3 / 4;
-  background: #f5f5f5;
-  border: 1px dashed #ddd;
+  background: #f9f9f9;
+  /* Match reference background */
+  border: 1px solid #ddd;
+  /* Match reference border */
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -5019,13 +5023,14 @@ input[type="date"] {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: 1;
   justify-content: center;
+  height: 240px;
+  /* Match preview height to center buttons */
 }
 
 .btn-secondary-action {
-  flex: 1;
-  padding: 10px;
+  padding: 10px 15px;
+  /* Match reference padding */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5034,6 +5039,10 @@ input[type="date"] {
   border: 1px solid #ccc;
   border-radius: 5px;
   cursor: pointer;
+  /* Removed flex: 1 to prevent stretching */
+  width: 100%;
+  /* Ensure consistent width */
+  box-sizing: border-box;
 }
 
 .stock-modal-content {
