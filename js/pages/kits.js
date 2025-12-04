@@ -545,6 +545,9 @@
 
     // ---- Register/Edit Modal ----
     function setupRegisterModal() {
+        const existingModal = document.getElementById('modal-register-kit');
+        if (existingModal) existingModal.remove();
+
         if (!document.getElementById('modal-register-kit')) {
             const modalHtml = `
 <div id="modal-register-kit" class="modal-overlay" style="display: none; z-index: 1200;">
@@ -579,7 +582,7 @@
                 </select>
                 
                 <!-- Custom Kit Checkbox -->
-                <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
+                <div id="custom-kit-checkbox-wrapper" style="margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
                     <input type="checkbox" id="check-custom-kit">
                     <label for="check-custom-kit">키트 선택 목록에 없는 키트를 등록할 경우 체크하세요.</label>
                 </div>
@@ -917,6 +920,12 @@
 
             document.getElementById('kit-date').valueAsDate = new Date();
 
+            // Reset Custom Kit UI
+            const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
+            const customInputs = document.getElementById('custom-kit-inputs');
+            if (customWrapper) customWrapper.style.display = 'flex';
+            if (customInputs) customInputs.style.display = 'none';
+
             modal.style.display = 'flex';
         };
 
@@ -952,6 +961,12 @@
                 previewImg.src = kit.image_url;
                 previewDiv.style.display = 'block';
             }
+
+            // Hide Custom Kit UI in Edit Mode
+            const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
+            const customInputs = document.getElementById('custom-kit-inputs');
+            if (customWrapper) customWrapper.style.display = 'none';
+            if (customInputs) customInputs.style.display = 'none';
 
             modal.style.display = 'flex';
         };
