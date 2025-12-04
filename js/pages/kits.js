@@ -545,12 +545,15 @@
 
     // ---- Register/Edit Modal ----
     function setupRegisterModal() {
-        const existingModal = document.getElementById('modal-register-kit');
+        const existingModal = document.getElementById('modal-register-kit-v2');
         if (existingModal) existingModal.remove();
+        // Also remove old version if present
+        const oldModal = document.getElementById('modal-register-kit');
+        if (oldModal) oldModal.remove();
 
-        if (!document.getElementById('modal-register-kit')) {
+        if (!document.getElementById('modal-register-kit-v2')) {
             const modalHtml = `
-<div id="modal-register-kit" class="modal-overlay" style="display: none; z-index: 1200;">
+<div id="modal-register-kit-v2" class="modal-overlay" style="display: none; z-index: 1200;">
     <div class="modal-content">
         <h3 class="modal-title">키트 등록</h3>
         <form id="form-register-kit">
@@ -659,324 +662,326 @@
             }
         }
 
-        const modal = document.getElementById('modal-register-kit');
-        const form = document.getElementById('form-register-kit');
-        const btnCancel = document.getElementById('btn-cancel-kit');
-        const classSelect = document.getElementById('kit-class-select');
-        const classCheckboxesDiv = document.getElementById('kit-class-checkboxes');
-        const nameSelect = document.getElementById('kit-name-select');
-        const fileInput = document.getElementById('kit-photo');
-        const previewDiv = document.getElementById('kit-photo-preview');
-        const previewImg = document.getElementById('preview-img');
+    }
+
+    const modal = document.getElementById('modal-register-kit-v2');
+    const form = document.getElementById('form-register-kit');
+    const btnCancel = document.getElementById('btn-cancel-kit');
+    const classSelect = document.getElementById('kit-class-select');
+    const classCheckboxesDiv = document.getElementById('kit-class-checkboxes');
+    const nameSelect = document.getElementById('kit-name-select');
+    const fileInput = document.getElementById('kit-photo');
+    const previewDiv = document.getElementById('kit-photo-preview');
+    const previewImg = document.getElementById('preview-img');
 
 
-        if (fileInput) {
-            fileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        previewImg.src = e.target.result;
-                        previewDiv.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    previewDiv.style.display = 'none';
-                }
-            });
-        }
-
-        if (btnCancel) {
-            btnCancel.addEventListener('click', () => {
-                modal.style.display = 'none';
-                form.reset();
-                if (previewDiv) previewDiv.style.display = 'none';
-                form.removeAttribute('data-mode');
-                form.removeAttribute('data-id');
-                document.querySelector('.modal-title').textContent = '키트 등록';
-                document.getElementById('btn-save-kit').textContent = '등록';
-            });
-        }
-
-        if (classSelect) {
-            classSelect.addEventListener('change', (e) => {
-                const selectedClass = classSelect.value;
-                updateNameSelect(selectedClass);
-            });
-        }
-
-        function updateNameSelect(selectedClass, selectedKitId = null) {
-            if (!nameSelect) return;
-            nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
-            nameSelect.disabled = false;
-
-            let filtered = [];
-            if (selectedClass === 'all') {
-                filtered = catalog;
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                    previewDiv.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
             } else {
-                filtered = catalog.filter(k => k.kit_class && k.kit_class.includes(selectedClass));
+                previewDiv.style.display = 'none';
             }
+        });
+    }
 
-            filtered.sort((a, b) => a.kit_name.localeCompare(b.kit_name));
-
-            filtered.forEach(k => {
-                const opt = document.createElement('option');
-                opt.value = k.id;
-                opt.textContent = k.kit_name;
-                opt.dataset.cas = k.kit_cas || '';
-                opt.dataset.name = k.kit_name;
-                opt.dataset.class = k.kit_class;
-                if (selectedKitId && k.id == selectedKitId) {
-                    opt.selected = true;
-                }
-                nameSelect.appendChild(opt);
-            });
-        }
-
-        if (form) {
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                let kitClass = '';
-                const mode = form.getAttribute('data-mode');
-                const editId = form.getAttribute('data-id');
-
-                if (mode === 'edit') {
-                    const checked = Array.from(classCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
-                        .map(cb => cb.value);
-                    kitClass = checked.join(', ');
-                } else {
-                    if (classSelect.value === 'all') {
-                        const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-                        kitClass = selectedOption.dataset.class || '기타';
-                    } else {
-                        kitClass = classSelect.value;
-                    }
-                }
-
-                let finalKitName = '';
-                let customCas = null;
-                const isCustom = document.getElementById('check-custom-kit')?.checked;
-
-                if (mode === 'edit') {
-                    finalKitName = nameSelect.value;
-                } else {
-                    if (isCustom) {
-                        // Custom Kit Registration Logic
-                        if (classSelect.value === 'all') {
-                            alert("새로운 키트를 등록할 경우에는 분류를 '전체'로 선택할 수 없습니다.");
-                            return;
-                        }
-
-                        const customNameInput = document.getElementById('custom-kit-name');
-                        finalKitName = customNameInput.value.trim();
-                        if (!finalKitName) {
-                            alert("등록하려는 키트 이름을 입력하세요.");
-                            customNameInput.focus();
-                            return;
-                        }
-
-                        // Check duplicate name in catalog (optional but good)
-                        const exists = catalog.find(k => k.kit_name === finalKitName);
-                        if (exists) {
-                            alert("이미 존재하는 키트 이름입니다. 목록에서 선택해주세요.");
-                            return;
-                        }
-
-                        // Collect CAS
-                        const casInputs = document.querySelectorAll('.cas-input');
-                        const casList = Array.from(casInputs).map(input => input.value.trim()).filter(val => val);
-                        if (casList.length > 0) {
-                            customCas = casList.join(', ');
-                        }
-
-                        // 1. Insert into experiment_kit
-                        const { data: newCatalogKit, error: catalogError } = await supabase
-                            .from('experiment_kit')
-                            .insert([{
-                                kit_name: finalKitName,
-                                kit_class: kitClass,
-                                kit_cas: customCas
-                            }])
-                            .select()
-                            .single();
-
-                        if (catalogError) {
-                            console.error('Catalog insert failed:', catalogError);
-                            alert('키트 카탈로그 등록 실패: ' + catalogError.message);
-                            return;
-                        }
-
-                        // Update local catalog cache
-                        catalog.push(newCatalogKit);
-
-                    } else {
-                        const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-                        if (!selectedOption || selectedOption.disabled) {
-                            alert("키트를 선택하세요.");
-                            return;
-                        }
-                        finalKitName = selectedOption.dataset.name;
-                    }
-                }
-
-                const quantity = parseInt(document.getElementById('kit-quantity').value, 10);
-                const purchaseDate = document.getElementById('kit-date').value;
-                const file = fileInput ? fileInput.files[0] : null;
-
-                let imageUrl = null;
-                if (file) {
-                    const fileExt = file.name.split('.').pop();
-                    const fileName = `${Date.now()}.${fileExt}`;
-                    const filePath = `${fileName}`;
-
-                    const { data: uploadData, error: uploadError } = await supabase.storage
-                        .from('kit-photos')
-                        .upload(filePath, file);
-
-                    if (uploadError) {
-                        console.error('Upload failed:', uploadError);
-                        alert('사진 업로드 실패: ' + uploadError.message);
-                        return;
-                    }
-
-                    const { data: publicUrlData } = supabase.storage
-                        .from('kit-photos')
-                        .getPublicUrl(filePath);
-
-                    imageUrl = publicUrlData.publicUrl;
-                }
-
-                if (mode === 'edit' && editId) {
-                    const updatePayload = {
-                        kit_class: kitClass,
-                        kit_name: finalKitName,
-                        quantity: quantity,
-                        purchase_date: purchaseDate
-                    };
-                    if (imageUrl) {
-                        updatePayload.image_url = imageUrl;
-                    }
-
-                    const { error } = await supabase
-                        .from('user_kits')
-                        .update(updatePayload)
-                        .eq('id', editId);
-
-                    if (error) {
-                        alert('수정 실패: ' + error.message);
-                    } else {
-                        alert('수정되었습니다.');
-                        modal.style.display = 'none';
-                        // If on detail page, reload detail. If on list, reload list.
-                        if (document.getElementById('kit-detail-page-container')) {
-                            Kits.loadDetail(editId);
-                        } else {
-                            Kits.loadUserKits();
-                        }
-
-                        if (quantity === 0) {
-                            await checkAndCleanupChemicals(finalKitName);
-                        }
-                    }
-                } else {
-                    const { error } = await supabase
-                        .from('user_kits')
-                        .insert({
-                            kit_class: kitClass,
-                            kit_name: finalKitName,
-                            quantity: quantity,
-                            purchase_date: purchaseDate,
-                            image_url: imageUrl
-                        });
-
-                    if (error) {
-                        alert('등록 실패: ' + error.message);
-                    } else {
-                        alert('등록되었습니다.');
-                        modal.style.display = 'none';
-                        Kits.loadUserKits();
-                        await processKitChemicals(finalKitName);
-                    }
-                }
-            });
-        }
-
-        Kits.openRegisterModal = () => {
-            if (!form) return;
+    if (btnCancel) {
+        btnCancel.addEventListener('click', () => {
+            modal.style.display = 'none';
             form.reset();
             if (previewDiv) previewDiv.style.display = 'none';
             form.removeAttribute('data-mode');
             form.removeAttribute('data-id');
             document.querySelector('.modal-title').textContent = '키트 등록';
             document.getElementById('btn-save-kit').textContent = '등록';
-
-            classSelect.style.display = 'block';
-            classCheckboxesDiv.style.display = 'none';
-            classSelect.required = true;
-
-            nameSelect.disabled = true;
-            nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
-
-            document.getElementById('kit-date').valueAsDate = new Date();
-
-            // Reset Custom Kit UI
-            const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
-            const customInputs = document.getElementById('custom-kit-inputs');
-            if (customWrapper) customWrapper.style.display = 'flex';
-            if (customInputs) customInputs.style.display = 'none';
-
-            modal.style.display = 'flex';
-        };
-
-        window.openEditKitModal = (kit) => {
-            if (!form) return;
-            form.reset();
-            if (previewDiv) previewDiv.style.display = 'none';
-            form.setAttribute('data-mode', 'edit');
-            form.setAttribute('data-id', kit.id);
-            document.querySelector('.modal-title').textContent = '키트 정보 수정';
-            document.getElementById('btn-save-kit').textContent = '수정 완료';
-
-            classSelect.style.display = 'none';
-            classCheckboxesDiv.style.display = 'flex';
-            classSelect.required = false;
-
-            const currentClasses = (kit.kit_class || '').split(',').map(s => s.trim());
-            classCheckboxesDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                cb.checked = currentClasses.includes(cb.value);
-            });
-
-            const catalogItem = catalog.find(c => c.kit_name === kit.kit_name);
-            if (catalogItem) {
-                updateNameSelect('all', catalogItem.id);
-            } else {
-                nameSelect.innerHTML = `<option value="${kit.kit_name}" selected>${kit.kit_name}</option>`;
-            }
-
-            document.getElementById('kit-quantity').value = kit.quantity;
-            document.getElementById('kit-date').value = kit.purchase_date;
-
-            if (kit.image_url) {
-                previewImg.src = kit.image_url;
-                previewDiv.style.display = 'block';
-            }
-
-            // Hide Custom Kit UI in Edit Mode
-            const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
-            const customInputs = document.getElementById('custom-kit-inputs');
-            if (customWrapper) customWrapper.style.display = 'none';
-            if (customInputs) customInputs.style.display = 'none';
-
-            modal.style.display = 'flex';
-        };
+        });
     }
+
+    if (classSelect) {
+        classSelect.addEventListener('change', (e) => {
+            const selectedClass = classSelect.value;
+            updateNameSelect(selectedClass);
+        });
+    }
+
+    function updateNameSelect(selectedClass, selectedKitId = null) {
+        if (!nameSelect) return;
+        nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
+        nameSelect.disabled = false;
+
+        let filtered = [];
+        if (selectedClass === 'all') {
+            filtered = catalog;
+        } else {
+            filtered = catalog.filter(k => k.kit_class && k.kit_class.includes(selectedClass));
+        }
+
+        filtered.sort((a, b) => a.kit_name.localeCompare(b.kit_name));
+
+        filtered.forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k.id;
+            opt.textContent = k.kit_name;
+            opt.dataset.cas = k.kit_cas || '';
+            opt.dataset.name = k.kit_name;
+            opt.dataset.class = k.kit_class;
+            if (selectedKitId && k.id == selectedKitId) {
+                opt.selected = true;
+            }
+            nameSelect.appendChild(opt);
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            let kitClass = '';
+            const mode = form.getAttribute('data-mode');
+            const editId = form.getAttribute('data-id');
+
+            if (mode === 'edit') {
+                const checked = Array.from(classCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
+                    .map(cb => cb.value);
+                kitClass = checked.join(', ');
+            } else {
+                if (classSelect.value === 'all') {
+                    const selectedOption = nameSelect.options[nameSelect.selectedIndex];
+                    kitClass = selectedOption.dataset.class || '기타';
+                } else {
+                    kitClass = classSelect.value;
+                }
+            }
+
+            let finalKitName = '';
+            let customCas = null;
+            const isCustom = document.getElementById('check-custom-kit')?.checked;
+
+            if (mode === 'edit') {
+                finalKitName = nameSelect.value;
+            } else {
+                if (isCustom) {
+                    // Custom Kit Registration Logic
+                    if (classSelect.value === 'all') {
+                        alert("새로운 키트를 등록할 경우에는 분류를 '전체'로 선택할 수 없습니다.");
+                        return;
+                    }
+
+                    const customNameInput = document.getElementById('custom-kit-name');
+                    finalKitName = customNameInput.value.trim();
+                    if (!finalKitName) {
+                        alert("등록하려는 키트 이름을 입력하세요.");
+                        customNameInput.focus();
+                        return;
+                    }
+
+                    // Check duplicate name in catalog (optional but good)
+                    const exists = catalog.find(k => k.kit_name === finalKitName);
+                    if (exists) {
+                        alert("이미 존재하는 키트 이름입니다. 목록에서 선택해주세요.");
+                        return;
+                    }
+
+                    // Collect CAS
+                    const casInputs = document.querySelectorAll('.cas-input');
+                    const casList = Array.from(casInputs).map(input => input.value.trim()).filter(val => val);
+                    if (casList.length > 0) {
+                        customCas = casList.join(', ');
+                    }
+
+                    // 1. Insert into experiment_kit
+                    const { data: newCatalogKit, error: catalogError } = await supabase
+                        .from('experiment_kit')
+                        .insert([{
+                            kit_name: finalKitName,
+                            kit_class: kitClass,
+                            kit_cas: customCas
+                        }])
+                        .select()
+                        .single();
+
+                    if (catalogError) {
+                        console.error('Catalog insert failed:', catalogError);
+                        alert('키트 카탈로그 등록 실패: ' + catalogError.message);
+                        return;
+                    }
+
+                    // Update local catalog cache
+                    catalog.push(newCatalogKit);
+
+                } else {
+                    const selectedOption = nameSelect.options[nameSelect.selectedIndex];
+                    if (!selectedOption || selectedOption.disabled) {
+                        alert("키트를 선택하세요.");
+                        return;
+                    }
+                    finalKitName = selectedOption.dataset.name;
+                }
+            }
+
+            const quantity = parseInt(document.getElementById('kit-quantity').value, 10);
+            const purchaseDate = document.getElementById('kit-date').value;
+            const file = fileInput ? fileInput.files[0] : null;
+
+            let imageUrl = null;
+            if (file) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}.${fileExt}`;
+                const filePath = `${fileName}`;
+
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('kit-photos')
+                    .upload(filePath, file);
+
+                if (uploadError) {
+                    console.error('Upload failed:', uploadError);
+                    alert('사진 업로드 실패: ' + uploadError.message);
+                    return;
+                }
+
+                const { data: publicUrlData } = supabase.storage
+                    .from('kit-photos')
+                    .getPublicUrl(filePath);
+
+                imageUrl = publicUrlData.publicUrl;
+            }
+
+            if (mode === 'edit' && editId) {
+                const updatePayload = {
+                    kit_class: kitClass,
+                    kit_name: finalKitName,
+                    quantity: quantity,
+                    purchase_date: purchaseDate
+                };
+                if (imageUrl) {
+                    updatePayload.image_url = imageUrl;
+                }
+
+                const { error } = await supabase
+                    .from('user_kits')
+                    .update(updatePayload)
+                    .eq('id', editId);
+
+                if (error) {
+                    alert('수정 실패: ' + error.message);
+                } else {
+                    alert('수정되었습니다.');
+                    modal.style.display = 'none';
+                    // If on detail page, reload detail. If on list, reload list.
+                    if (document.getElementById('kit-detail-page-container')) {
+                        Kits.loadDetail(editId);
+                    } else {
+                        Kits.loadUserKits();
+                    }
+
+                    if (quantity === 0) {
+                        await checkAndCleanupChemicals(finalKitName);
+                    }
+                }
+            } else {
+                const { error } = await supabase
+                    .from('user_kits')
+                    .insert({
+                        kit_class: kitClass,
+                        kit_name: finalKitName,
+                        quantity: quantity,
+                        purchase_date: purchaseDate,
+                        image_url: imageUrl
+                    });
+
+                if (error) {
+                    alert('등록 실패: ' + error.message);
+                } else {
+                    alert('등록되었습니다.');
+                    modal.style.display = 'none';
+                    Kits.loadUserKits();
+                    await processKitChemicals(finalKitName);
+                }
+            }
+        });
+    }
+
+    Kits.openRegisterModal = () => {
+        if (!form) return;
+        form.reset();
+        if (previewDiv) previewDiv.style.display = 'none';
+        form.removeAttribute('data-mode');
+        form.removeAttribute('data-id');
+        document.querySelector('.modal-title').textContent = '키트 등록';
+        document.getElementById('btn-save-kit').textContent = '등록';
+
+        classSelect.style.display = 'block';
+        classCheckboxesDiv.style.display = 'none';
+        classSelect.required = true;
+
+        nameSelect.disabled = true;
+        nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
+
+        document.getElementById('kit-date').valueAsDate = new Date();
+
+        // Reset Custom Kit UI
+        const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
+        const customInputs = document.getElementById('custom-kit-inputs');
+        if (customWrapper) customWrapper.style.display = 'flex';
+        if (customInputs) customInputs.style.display = 'none';
+
+        modal.style.display = 'flex';
+    };
+
+    window.openEditKitModal = (kit) => {
+        if (!form) return;
+        form.reset();
+        if (previewDiv) previewDiv.style.display = 'none';
+        form.setAttribute('data-mode', 'edit');
+        form.setAttribute('data-id', kit.id);
+        document.querySelector('.modal-title').textContent = '키트 정보 수정';
+        document.getElementById('btn-save-kit').textContent = '수정 완료';
+
+        classSelect.style.display = 'none';
+        classCheckboxesDiv.style.display = 'flex';
+        classSelect.required = false;
+
+        const currentClasses = (kit.kit_class || '').split(',').map(s => s.trim());
+        classCheckboxesDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = currentClasses.includes(cb.value);
+        });
+
+        const catalogItem = catalog.find(c => c.kit_name === kit.kit_name);
+        if (catalogItem) {
+            updateNameSelect('all', catalogItem.id);
+        } else {
+            nameSelect.innerHTML = `<option value="${kit.kit_name}" selected>${kit.kit_name}</option>`;
+        }
+
+        document.getElementById('kit-quantity').value = kit.quantity;
+        document.getElementById('kit-date').value = kit.purchase_date;
+
+        if (kit.image_url) {
+            previewImg.src = kit.image_url;
+            previewDiv.style.display = 'block';
+        }
+
+        // Hide Custom Kit UI in Edit Mode
+        const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
+        const customInputs = document.getElementById('custom-kit-inputs');
+        if (customWrapper) customWrapper.style.display = 'none';
+        if (customInputs) customInputs.style.display = 'none';
+
+        modal.style.display = 'flex';
+    };
+}
 
     // ---- Stock Modal ----
     function setupStockModal() {
-        if (document.getElementById('modal-kit-stock')) return;
+    if (document.getElementById('modal-kit-stock')) return;
 
-        const modalHtml = `
+    const modalHtml = `
             <div id="modal-kit-stock" class="modal-overlay" style="display: none; z-index: 1200;">
                 <div class="modal-content" style="max-width: 400px; width: 90%;">
                     <h3 class="modal-title">재고 관리</h3>
@@ -1009,169 +1014,169 @@
                 </div>
             </div>`;
 
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-        const modal = document.getElementById('modal-kit-stock');
-        const form = document.getElementById('form-kit-stock');
-        const btnCancel = document.getElementById('btn-cancel-stock');
-        let currentKit = null;
+    const modal = document.getElementById('modal-kit-stock');
+    const form = document.getElementById('form-kit-stock');
+    const btnCancel = document.getElementById('btn-cancel-stock');
+    let currentKit = null;
 
-        btnCancel.addEventListener('click', () => {
-            modal.style.display = 'none';
+    btnCancel.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentKit) return;
+
+        const type = form.querySelector('input[name="stock-type"]:checked').value;
+        const amount = parseInt(document.getElementById('stock-amount').value, 10);
+        const date = document.getElementById('stock-date').value;
+
+        await handleStockChange(currentKit, type, amount, date);
+        modal.style.display = 'none';
+    });
+
+    window.openStockModal = (kit) => {
+        currentKit = kit;
+        document.getElementById('stock-kit-name').textContent = kit.kit_name;
+        document.getElementById('stock-amount').value = 1;
+        document.getElementById('stock-date').valueAsDate = new Date();
+        modal.style.display = 'flex';
+    };
+}
+
+async function handleStockChange(kit, type, amount, date) {
+    let change = 0;
+    if (type === 'usage') {
+        change = -amount;
+    } else {
+        change = amount;
+    }
+
+    const newQuantity = kit.quantity + change;
+
+    if (newQuantity < 0) {
+        alert('재고가 부족합니다.');
+        return;
+    }
+
+    const { error: updateError } = await supabase
+        .from('user_kits')
+        .update({ quantity: newQuantity })
+        .eq('id', kit.id);
+
+    if (updateError) {
+        alert('재고 업데이트 실패: ' + updateError.message);
+        return;
+    }
+
+    const { error: logError } = await supabase
+        .from('kit_usage_log')
+        .insert({
+            kit_id: kit.id,
+            change_amount: change,
+            log_date: date,
+            log_type: type === 'usage' ? '사용' : '구입'
         });
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!currentKit) return;
-
-            const type = form.querySelector('input[name="stock-type"]:checked').value;
-            const amount = parseInt(document.getElementById('stock-amount').value, 10);
-            const date = document.getElementById('stock-date').value;
-
-            await handleStockChange(currentKit, type, amount, date);
-            modal.style.display = 'none';
-        });
-
-        window.openStockModal = (kit) => {
-            currentKit = kit;
-            document.getElementById('stock-kit-name').textContent = kit.kit_name;
-            document.getElementById('stock-amount').value = 1;
-            document.getElementById('stock-date').valueAsDate = new Date();
-            modal.style.display = 'flex';
-        };
+    if (logError) {
+        console.error('Failed to log usage:', logError);
     }
 
-    async function handleStockChange(kit, type, amount, date) {
-        let change = 0;
-        if (type === 'usage') {
-            change = -amount;
-        } else {
-            change = amount;
-        }
+    alert('저장되었습니다.');
 
-        const newQuantity = kit.quantity + change;
-
-        if (newQuantity < 0) {
-            alert('재고가 부족합니다.');
-            return;
-        }
-
-        const { error: updateError } = await supabase
-            .from('user_kits')
-            .update({ quantity: newQuantity })
-            .eq('id', kit.id);
-
-        if (updateError) {
-            alert('재고 업데이트 실패: ' + updateError.message);
-            return;
-        }
-
-        const { error: logError } = await supabase
-            .from('kit_usage_log')
-            .insert({
-                kit_id: kit.id,
-                change_amount: change,
-                log_date: date,
-                log_type: type === 'usage' ? '사용' : '구입'
-            });
-
-        if (logError) {
-            console.error('Failed to log usage:', logError);
-        }
-
-        alert('저장되었습니다.');
-
-        // Refresh
-        if (document.getElementById('kit-detail-page-container')) {
-            // Update local kit object and reload
-            kit.quantity = newQuantity;
-            Kits.loadDetail(kit.id);
-        } else {
-            Kits.loadUserKits();
-        }
-
-        if (newQuantity === 0) {
-            await checkAndCleanupChemicals(kit.kit_name);
-        }
+    // Refresh
+    if (document.getElementById('kit-detail-page-container')) {
+        // Update local kit object and reload
+        kit.quantity = newQuantity;
+        Kits.loadDetail(kit.id);
+    } else {
+        Kits.loadUserKits();
     }
 
-    function isCasNo(str) {
-        return /^\d{2,7}-\d{2}-\d$/.test(str);
+    if (newQuantity === 0) {
+        await checkAndCleanupChemicals(kit.kit_name);
     }
+}
 
-    async function processKitChemicals(kitName) {
-        const item = catalog.find(c => c.kit_name === kitName);
-        if (!item || !item.kit_cas) return;
+function isCasNo(str) {
+    return /^\d{2,7}-\d{2}-\d$/.test(str);
+}
 
-        const casList = item.kit_cas.split(',').map(s => s.trim());
+async function processKitChemicals(kitName) {
+    const item = catalog.find(c => c.kit_name === kitName);
+    if (!item || !item.kit_cas) return;
 
-        for (const cas of casList) {
-            const { data } = await supabase
-                .from('kit_chemicals')
-                .select('cas_no')
-                .eq('cas_no', cas)
-                .single();
+    const casList = item.kit_cas.split(',').map(s => s.trim());
 
-            if (!data) {
-                if (isCasNo(cas)) {
-                    console.log(`Fetching info for ${cas}...`);
-                    try {
-                        await supabase.functions.invoke('kit-casimport', {
-                            body: { cas_rn: cas }
-                        });
-                    } catch (e) {
-                        console.error(`Failed to import ${cas}: `, e);
-                    }
-                } else {
-                    console.log(`Inserting manual entry for ${cas}...`);
-                    try {
-                        await supabase.from('kit_chemicals').insert({
-                            cas_no: cas,
-                            name_ko: cas,
-                            name_en: null,
-                            msds_data: null
-                        });
-                    } catch (e) {
-                        console.error(`Failed to insert manual entry ${cas}: `, e);
-                    }
+    for (const cas of casList) {
+        const { data } = await supabase
+            .from('kit_chemicals')
+            .select('cas_no')
+            .eq('cas_no', cas)
+            .single();
+
+        if (!data) {
+            if (isCasNo(cas)) {
+                console.log(`Fetching info for ${cas}...`);
+                try {
+                    await supabase.functions.invoke('kit-casimport', {
+                        body: { cas_rn: cas }
+                    });
+                } catch (e) {
+                    console.error(`Failed to import ${cas}: `, e);
+                }
+            } else {
+                console.log(`Inserting manual entry for ${cas}...`);
+                try {
+                    await supabase.from('kit_chemicals').insert({
+                        cas_no: cas,
+                        name_ko: cas,
+                        name_en: null,
+                        msds_data: null
+                    });
+                } catch (e) {
+                    console.error(`Failed to insert manual entry ${cas}: `, e);
                 }
             }
         }
     }
+}
 
-    async function checkAndCleanupChemicals(kitName) {
-        const item = catalog.find(c => c.kit_name === kitName);
-        if (!item || !item.kit_cas) return;
-        const targetCasList = item.kit_cas.split(',').map(s => s.trim());
+async function checkAndCleanupChemicals(kitName) {
+    const item = catalog.find(c => c.kit_name === kitName);
+    if (!item || !item.kit_cas) return;
+    const targetCasList = item.kit_cas.split(',').map(s => s.trim());
 
-        const { data: activeKits } = await supabase
-            .from('user_kits')
-            .select('kit_name')
-            .gt('quantity', 0);
+    const { data: activeKits } = await supabase
+        .from('user_kits')
+        .select('kit_name')
+        .gt('quantity', 0);
 
-        if (!activeKits) return;
+    if (!activeKits) return;
 
-        const activeCasSet = new Set();
-        activeKits.forEach(k => {
-            const catItem = catalog.find(c => c.kit_name === k.kit_name);
-            if (catItem && catItem.kit_cas) {
-                catItem.kit_cas.split(',').forEach(cas => activeCasSet.add(cas.trim()));
-            }
-        });
-
-        const toRemove = targetCasList.filter(cas => !activeCasSet.has(cas));
-
-        if (toRemove.length > 0) {
-            console.log(`Cleaning up unused chemicals: ${toRemove.join(', ')} `);
-            await supabase
-                .from('kit_chemicals')
-                .delete()
-                .in('cas_no', toRemove);
+    const activeCasSet = new Set();
+    activeKits.forEach(k => {
+        const catItem = catalog.find(c => c.kit_name === k.kit_name);
+        if (catItem && catItem.kit_cas) {
+            catItem.kit_cas.split(',').forEach(cas => activeCasSet.add(cas.trim()));
         }
+    });
+
+    const toRemove = targetCasList.filter(cas => !activeCasSet.has(cas));
+
+    if (toRemove.length > 0) {
+        console.log(`Cleaning up unused chemicals: ${toRemove.join(', ')} `);
+        await supabase
+            .from('kit_chemicals')
+            .delete()
+            .in('cas_no', toRemove);
     }
+}
 
-    // ---- Export to App ----
-    globalThis.App = globalThis.App || {};
-    globalThis.App.Kits = Kits;
+// ---- Export to App ----
+globalThis.App = globalThis.App || {};
+globalThis.App.Kits = Kits;
 
-})();
+}) ();
