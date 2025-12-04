@@ -588,7 +588,7 @@
                     <!-- Custom Kit Checkbox -->
                     <div id="custom-kit-checkbox-wrapper" style="margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
                         <input type="checkbox" id="check-custom-kit">
-                        <label for="check-custom-kit">키트 선택 목록에 없는 키트를 등록할 경우 체크하세요.</label>
+                        <label for="check-custom-kit">키트 선택 목록에 없는 새로운 종류의 키트를 등록할 경우 체크하세요.</label>
                     </div>
 
                     <!-- Custom Kit Inputs -->
@@ -694,15 +694,28 @@
         }
 
         if (btnCancel) {
-            btnCancel.addEventListener('click', () => {
-                modal.style.display = 'none';
-                form.reset();
+            console.log("Cancel button found, attaching listener");
+            btnCancel.addEventListener('click', (e) => {
+                console.log("Cancel button clicked");
+                e.preventDefault(); // Prevent form submission just in case
+                const currentModal = document.getElementById('modal-register-kit-v2');
+                if (currentModal) currentModal.style.display = 'none';
+
+                if (form) {
+                    form.reset();
+                    form.removeAttribute('data-mode');
+                    form.removeAttribute('data-id');
+                }
                 if (previewDiv) previewDiv.style.display = 'none';
-                form.removeAttribute('data-mode');
-                form.removeAttribute('data-id');
-                document.querySelector('.modal-title').textContent = '키트 등록';
-                document.getElementById('btn-save-kit').textContent = '등록';
+
+                const title = document.querySelector('.modal-title');
+                if (title) title.textContent = '키트 등록';
+
+                const saveBtn = document.getElementById('btn-save-kit');
+                if (saveBtn) saveBtn.textContent = '등록';
             });
+        } else {
+            console.error("Cancel button NOT found");
         }
 
         if (classSelect) {
