@@ -545,11 +545,11 @@
 
     // ---- Register/Edit Modal ----
     function setupRegisterModal() {
-        const existingModal = document.getElementById('modal-register-kit-v2');
-        if (existingModal) existingModal.remove();
-        // Also remove old version if present
+        // Remove old versions if present to prevent duplicates
         const oldModal = document.getElementById('modal-register-kit');
         if (oldModal) oldModal.remove();
+        const existingModal = document.getElementById('modal-register-kit-v2');
+        if (existingModal) existingModal.remove();
 
         const modalHtml = `
 <div id="modal-register-kit-v2" class="modal-overlay" style="display: none; z-index: 1200;">
@@ -687,6 +687,7 @@
 
             // Custom Kit Checkbox
             if (e.target.id === 'check-custom-kit') {
+                console.log('Custom Kit Checkbox Changed:', e.target.checked);
                 const isCustom = e.target.checked;
                 customInputs.style.display = isCustom ? 'block' : 'none';
                 nameSelect.disabled = isCustom;
@@ -870,6 +871,17 @@
                 filtered = catalog;
             } else {
                 filtered = catalog.filter(k => k.kit_class && k.kit_class.includes(selectedClass));
+            }
+
+            console.log('Filtered kits count:', filtered.length);
+
+            if (filtered.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = "";
+                opt.textContent = "해당 분류의 키트가 없습니다";
+                opt.disabled = true;
+                nameSelect.appendChild(opt);
+                return;
             }
 
             filtered.sort((a, b) => a.kit_name.localeCompare(b.kit_name));
