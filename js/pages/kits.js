@@ -557,69 +557,71 @@
     <div class="modal-content">
         <h3 class="modal-title">키트 등록</h3>
         <form id="form-register-kit">
-            <div class="form-group">
-                <label for="kit-class-select">분류</label>
-                <select id="kit-class-select" class="form-input" required>
-                    <option value="" disabled selected>분류를 선택하세요</option>
-                    <option value="all">전체</option>
-                    <option value="물리학">물리학</option>
-                    <option value="화학">화학</option>
-                    <option value="생명과학">생명과학</option>
-                    <option value="지구과학">지구과학</option>
-                    <option value="융합과학">융합과학</option>
-                    <option value="기타">기타</option>
-                </select>
-                <div id="kit-class-checkboxes" style="display: none; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
-                    <label><input type="checkbox" value="물리학"> 물리학</label>
-                    <label><input type="checkbox" value="화학"> 화학</label>
-                    <label><input type="checkbox" value="생명과학"> 생명과학</label>
-                    <label><input type="checkbox" value="지구과학"> 지구과학</label>
-                    <label><input type="checkbox" value="융합과학"> 융합과학</label>
-                    <label><input type="checkbox" value="기타"> 기타</label>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="kit-name-select">키트명</label>
-                <select id="kit-name-select" class="form-input" disabled required>
-                    <option value="" disabled selected>분류를 먼저 선택하세요</option>
-                </select>
-                
-                <!-- Custom Kit Checkbox -->
-                <div id="custom-kit-checkbox-wrapper" style="margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
-                    <input type="checkbox" id="check-custom-kit">
-                    <label for="check-custom-kit">키트 선택 목록에 없는 키트를 등록할 경우 체크하세요.</label>
-                </div>
-
-                <!-- Custom Kit Inputs -->
-                <div id="custom-kit-inputs" style="display: none; margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px solid #eee;">
-                    <div class="form-group">
-                        <label for="custom-kit-name">등록하려는 키트 이름</label>
-                        <input type="text" id="custom-kit-name" class="form-input" placeholder="키트 이름을 입력하세요">
+            <div class="modal-scroll-content">
+                <div class="form-group">
+                    <label for="kit-class-select">분류</label>
+                    <select id="kit-class-select" class="form-input" required>
+                        <option value="" disabled selected>분류를 선택하세요</option>
+                        <option value="all">전체</option>
+                        <option value="물리학">물리학</option>
+                        <option value="화학">화학</option>
+                        <option value="생명과학">생명과학</option>
+                        <option value="지구과학">지구과학</option>
+                        <option value="융합과학">융합과학</option>
+                        <option value="기타">기타</option>
+                    </select>
+                    <div id="kit-class-checkboxes" style="display: none; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+                        <label><input type="checkbox" value="물리학"> 물리학</label>
+                        <label><input type="checkbox" value="화학"> 화학</label>
+                        <label><input type="checkbox" value="생명과학"> 생명과학</label>
+                        <label><input type="checkbox" value="지구과학"> 지구과학</label>
+                        <label><input type="checkbox" value="융합과학"> 융합과학</label>
+                        <label><input type="checkbox" value="기타"> 기타</label>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label for="kit-name-select">키트명</label>
+                    <select id="kit-name-select" class="form-input" disabled required>
+                        <option value="" disabled selected>분류를 먼저 선택하세요</option>
+                    </select>
                     
-                    <div class="form-group" style="margin-top: 10px;">
-                        <label>CAS 번호 (선택)</label>
-                        <div id="cas-input-container">
-                            <input type="text" class="form-input cas-input" placeholder="CAS1 (예: 7732-18-5)" style="margin-bottom: 5px;">
+                    <!-- Custom Kit Checkbox -->
+                    <div id="custom-kit-checkbox-wrapper" style="margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
+                        <input type="checkbox" id="check-custom-kit">
+                        <label for="check-custom-kit">키트 선택 목록에 없는 키트를 등록할 경우 체크하세요.</label>
+                    </div>
+
+                    <!-- Custom Kit Inputs -->
+                    <div id="custom-kit-inputs" style="display: none; margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px solid #eee;">
+                        <div class="form-group">
+                            <label for="custom-kit-name">등록하려는 키트 이름</label>
+                            <input type="text" id="custom-kit-name" class="form-input" placeholder="키트 이름을 입력하세요">
                         </div>
-                        <button type="button" id="btn-add-cas" style="margin-top: 5px; font-size: 12px; padding: 4px 8px; background: #eee; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">+ CAS 추가</button>
-                        <p style="font-size: 11px; color: #888; margin-top: 5px;">* CAS 입력란이 부족할 경우 추가버튼을 누르세요.</p>
+                        
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label>CAS 번호 (선택)</label>
+                            <div id="cas-input-container">
+                                <input type="text" class="form-input cas-input" placeholder="CAS1 (예: 7732-18-5)" style="margin-bottom: 5px;">
+                            </div>
+                            <button type="button" id="btn-add-cas" style="margin-top: 5px; font-size: 12px; padding: 4px 8px; background: #eee; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">+ CAS 추가</button>
+                            <p style="font-size: 11px; color: #888; margin-top: 5px;">* CAS 입력란이 부족할 경우 추가버튼을 누르세요.</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="form-group">
-                <label for="kit-quantity">수량</label>
-                <input type="number" id="kit-quantity" class="form-input" value="1" min="1" required>
-            </div>
-            <div class="form-group">
-                <label for="kit-date">등록일(구입일)</label>
-                <input type="date" id="kit-date" class="form-input" required>
-            </div>
-            <div class="form-group">
-                <label for="kit-photo">키트 사진</label>
-                <input type="file" id="kit-photo" class="form-input" accept="image/*">
-                <div id="kit-photo-preview" style="margin-top: 10px; text-align: center; display: none;">
-                    <img id="preview-img" src="" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;">
+                <div class="form-group">
+                    <label for="kit-quantity">수량</label>
+                    <input type="number" id="kit-quantity" class="form-input" value="1" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="kit-date">등록일(구입일)</label>
+                    <input type="date" id="kit-date" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="kit-photo">키트 사진</label>
+                    <input type="file" id="kit-photo" class="form-input" accept="image/*">
+                    <div id="kit-photo-preview" style="margin-top: 10px; text-align: center; display: none;">
+                        <img id="preview-img" src="" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;">
+                    </div>
                 </div>
             </div>
             <div class="modal-actions">
