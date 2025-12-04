@@ -567,7 +567,7 @@
                         <option value="융합과학">융합과학</option>
                         <option value="기타">기타</option>
                     </select>
-                    <div id="kit-class-checkboxes" style="display: none; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+                    <div id="kit-class-checkboxes" class="kit-class-checkboxes">
                         <label><input type="checkbox" value="물리학"> 물리학</label>
                         <label><input type="checkbox" value="화학"> 화학</label>
                         <label><input type="checkbox" value="생명과학"> 생명과학</label>
@@ -583,13 +583,13 @@
                     </select>
                     
                     <!-- Custom Kit Checkbox -->
-                    <div id="custom-kit-checkbox-wrapper" style="margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
+                    <div id="custom-kit-checkbox-wrapper" class="custom-kit-checkbox-wrapper">
                         <input type="checkbox" id="check-custom-kit">
                         <label for="check-custom-kit">키트 선택 목록에 없는 새로운 종류의 키트를 등록할 경우 체크하세요.</label>
                     </div>
 
                     <!-- Custom Kit Inputs -->
-                    <div id="custom-kit-inputs" style="display: none; margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px solid #eee;">
+                    <div id="custom-kit-inputs" class="custom-kit-inputs">
                         <div class="form-group">
                             <label for="custom-kit-name">등록하려는 키트 이름</label>
                             <input type="text" id="custom-kit-name" class="form-input" placeholder="키트 이름을 입력하세요">
@@ -600,7 +600,7 @@
                             <div id="cas-input-container">
                                 <input type="text" class="form-input cas-input" placeholder="CAS1 (예: 7732-18-5)" style="margin-bottom: 5px;">
                             </div>
-                            <button type="button" id="btn-add-cas" style="margin-top: 5px; font-size: 12px; padding: 4px 8px; background: #eee; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">+ CAS 추가</button>
+                            <button type="button" id="btn-add-cas" class="btn-add-cas">+ CAS 추가</button>
                             <p style="font-size: 11px; color: #888; margin-top: 5px;">* CAS 입력란이 부족할 경우 추가버튼을 누르세요.</p>
                         </div>
                     </div>
@@ -619,16 +619,16 @@
                 <!-- Photo Input -->
                 <div class="form-group">
                     <label>사진</label>
-                    <div class="photo-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
-                        <div class="photo-preview-box" style="width: 100%; height: 200px; background: #f5f5f5; border: 1px dashed #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+                    <div class="kit-photo-container">
+                        <div class="kit-photo-preview-box">
                             <img id="kit-preview-img" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;">
                             <span class="placeholder-text" style="color: #999; font-size: 14px;">사진 없음</span>
                         </div>
-                        <div class="photo-actions" style="display: flex; gap: 10px;">
-                            <button type="button" id="btn-select-photo" class="btn-secondary" style="flex: 1; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <div class="kit-photo-actions">
+                            <button type="button" id="btn-select-photo" class="btn-secondary btn-secondary-action">
                                 <span class="material-symbols-outlined">image</span> 파일에서 선택
                             </button>
-                            <button type="button" id="btn-take-photo" class="btn-secondary" style="flex: 1; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                            <button type="button" id="btn-take-photo" class="btn-secondary btn-secondary-action">
                                 <span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영
                             </button>
                         </div>
@@ -1003,16 +1003,16 @@
 
         const modalHtml = `
         <div id="modal-kit-stock" class="modal-overlay" style="display: none; z-index: 1200;">
-            <div class="modal-content" style="max-width: 400px; width: 90%;">
+            <div class="modal-content stock-modal-content">
                 <h3 class="modal-title">재고 관리</h3>
                 <p id="stock-kit-name" class="modal-subtitle" style="margin-bottom: 15px;"></p>
 
                 <form id="form-kit-stock">
                     <div class="form-group">
                         <label>등록 유형</label>
-                        <div style="display: flex; gap: 20px; margin-top: 5px; width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; background-color: #fff; justify-content: center;">
-                            <label style="cursor: pointer;"><input type="radio" name="stock-type" value="usage" checked> 사용 (차감)</label>
-                            <label style="cursor: pointer;"><input type="radio" name="stock-type" value="purchase"> 구입 (추가)</label>
+                        <div class="stock-type-group">
+                            <label class="stock-type-label"><input type="radio" name="stock-type" value="usage" checked> 사용 (차감)</label>
+                            <label class="stock-type-label"><input type="radio" name="stock-type" value="purchase"> 구입 (추가)</label>
                         </div>
                     </div>
 
