@@ -9,6 +9,8 @@
   const { start: startCamera, setupModalListeners, processImage } = App.Camera;
   const supabase = App.supabase;
 
+  let inventoryStream = null; // Track inventory camera stream globally within module
+
   // -------------------------------------------------
   // 💾 시약장 저장
   // -------------------------------------------------
@@ -502,24 +504,133 @@
     const preview = document.getElementById("photo-preview");
     const photoBtn = document.getElementById("photo-btn");
     const cameraBtn = document.getElementById("camera-btn");
+    const videoStream = document.getElementById("camera-stream");
+    const canvas = document.getElementById("camera-canvas");
+    let isCameraActive = false;
+
+    // Ensure previous stream is stopped when initializing form
+    if (inventoryStream) {
+      inventoryStream.getTracks().forEach(track => track.stop());
+      inventoryStream = null;
+    }
+
+    const stopInventoryCamera = () => {
+      if (inventoryStream) {
+        inventoryStream.getTracks().forEach(track => track.stop());
+        inventoryStream = null;
+      }
+      if (videoStream && videoStream.srcObject) {
+        const tracks = videoStream.srcObject.getTracks();
+        if (tracks) tracks.forEach(track => track.stop());
+        videoStream.srcObject = null;
+      }
+      if (videoStream) videoStream.style.display = 'none';
+      isCameraActive = false;
+      if (cameraBtn) cameraBtn.innerHTML = '카메라로 촬영';
+    };
+
+    const startInventoryCamera = async () => {
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+
+        // Check if form is still valid/active? (In this architecture, if init is called again, we stopped previous stream)
+        inventoryStream = newStream;
+        videoStream.srcObject = inventoryStream;
+        videoStream.style.display = 'block';
+
+        // Hide existing image if any
+        const existingImg = preview.querySelector('img');
+        if (existingImg) existingImg.style.display = 'none';
+
+        const placeholder = preview.querySelector('.placeholder-text');
+        if (placeholder) placeholder.style.display = 'none';
+
+        isCameraActive = true;
+        cameraBtn.innerHTML = '촬영하기';
+      } catch (err) {
+        console.error("Camera access denied or error:", err);
+        // Fallback to file input (mobile behavior)
+        cameraInput.click();
+      }
+    };
+
+    const takeInventoryPhoto = () => {
+      if (!videoStream || !canvas) return;
+      canvas.width = videoStream.videoWidth;
+      canvas.height = videoStream.videoHeight;
+      canvas.getContext('2d').drawImage(videoStream, 0, 0);
+
+      const base64 = canvas.toDataURL("image/jpeg");
+
+      // Update State
+      set("photo_base64", base64);
+      set("photo_updated", true);
+
+      // Show preview (create img element)
+      const placeholder = preview.querySelector('.placeholder-text');
+      if (placeholder) placeholder.style.display = 'none';
+
+      // Remove existing img if any, append new one
+      const existingImg = preview.querySelector('img');
+      if (existingImg) existingImg.remove();
+
+      const img = document.createElement('img');
+      img.src = base64;
+      img.alt = "Preview";
+      img.style.maxWidth = "100%";
+      img.style.maxHeight = "100%";
+      img.style.objectFit = "contain";
+      preview.appendChild(img);
+
+      stopInventoryCamera();
+      cameraBtn.innerHTML = '다시 촬영';
+    };
+
     const handleFile = (file) => {
       if (!file) return;
+      if (isCameraActive) stopInventoryCamera();
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const src = e.target.result;
-        preview.innerHTML = `<img src="${src}" alt="Preview">`;
+        // Clear preview content except placeholder (which we hide)
+        const placeholder = preview.querySelector('.placeholder-text');
+        if (placeholder) placeholder.style.display = 'none';
+
+        const existingImg = preview.querySelector('img');
+        if (existingImg) existingImg.remove();
+
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = "Preview";
+        img.style.maxWidth = "100%";
+        img.style.maxHeight = "100%";
+        img.style.objectFit = "contain";
+        preview.appendChild(img);
+
         set("photo_base64", src);
         set("photo_updated", true);
       };
       reader.readAsDataURL(file);
     };
-    if (photoBtn && photoInput) photoBtn.onclick = () => photoInput.click();
-    if (cameraBtn && typeof startCamera === "function") {
-      cameraBtn.onclick = () => startCamera();
-      setupModalListeners?.();
-    } else if (cameraBtn && cameraInput) {
-      cameraBtn.onclick = () => cameraInput.click();
+
+    if (photoBtn && photoInput) {
+      photoBtn.onclick = () => {
+        if (isCameraActive) stopInventoryCamera();
+        photoInput.click();
+      };
     }
+
+    if (cameraBtn) {
+      cameraBtn.onclick = () => {
+        if (isCameraActive) {
+          takeInventoryPhoto();
+        } else {
+          startInventoryCamera();
+        }
+      };
+    }
+
     if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
     if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
 
@@ -628,6 +739,7 @@
     if (submitBtn) {
       submitBtn.onclick = async (e) => {
         e.preventDefault();
+        if (typeof stopInventoryCamera === 'function') stopInventoryCamera();
         statusMsg.textContent = "💾 저장 중...";
 
         try {
