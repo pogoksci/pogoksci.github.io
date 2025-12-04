@@ -32,84 +32,96 @@
       <button type="button" data-value="식품보관장">식품보관장</button>
       <button type="button" data-value="냉장고">냉장고</button>
       <button type="button" data-value="인화성물질1">인화성물질1</button>
-      <div class="form-group">
-        <label>4. 외부 도어의 상하분리 형태 *</label>
-        <div id="door_vertical_split_buttons" class="button-group">
-          <button type="button" data-value="상중하도어">상중하도어</button>
-          <button type="button" data-value="상하도어">상하도어</button>
-          <button type="button" data-value="단일도어">단일도어(상하분리없음)</button>
-        </div>
+      <button type="button" data-value="기타">기타</button>
+    </div>
+  </div>
+
+  <!-- 📍 기타 입력란 (시약장 이름 입력용) -->
+  <div class="form-group other-input-group" id="cabinet_other-group" style="display: none;">
+    <input type="text" id="cabinet_other_input" placeholder="시약장 이름을 직접 입력하세요">
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 4️⃣ 외부 도어의 상하분리 형태 -->
+  <!-- ========================================================= -->
+  <div class="form-group">
+    <label>4. 외부 도어의 상하분리 형태 *</label>
+    <div id="door_vertical_split_buttons" class="button-group">
+      <button type="button" data-value="상중하도어">상중하도어</button>
+      <button type="button" data-value="상하도어">상하도어</button>
+      <button type="button" data-value="단일도어">단일도어(상하분리없음)</button>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 5️⃣ 외부 도어의 좌우분리 형태 -->
+  <!-- ========================================================= -->
+  <div class="form-group">
+    <label>5. 외부 도어의 좌우분리 형태 *</label>
+    <div id="door_horizontal_split_buttons" class="button-group">
+      <button type="button" data-value="좌우분리도어">좌우분리도어</button>
+      <button type="button" data-value="단일도어">단일도어</button>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 6️⃣ 외부 도어 1개를 열었을 때 보이는 내부 수납 단 형태 -->
+  <!-- ========================================================= -->
+  <div class="form-group">
+    <label>6. 외부 도어 1개를 열었을 때 보이는 내부 수납 단 형태 *</label>
+    <div id="shelf_height_buttons" class="button-group">
+      <button type="button" data-value="1">1단</button>
+      <button type="button" data-value="2">2단</button>
+      <button type="button" data-value="3">3단</button>
+      <button type="button" data-value="4">4단</button>
+      <button type="button" data-value="5">5단</button>
+      <button type="button" data-value="6">6단</button>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 7️⃣ 외부 도어 1개를 열었을 때 보이는 내부 수납 열 형태 -->
+  <!-- ========================================================= -->
+  <div class="form-group">
+    <label>7. 외부 도어 1개를 열었을 때 보이는 내부 수납 열 형태 *</label>
+    <div id="storage_columns_buttons" class="button-group">
+      <button type="button" data-value="1">1열</button>
+      <button type="button" data-value="2">2열</button>
+      <button type="button" data-value="3">3열</button>
+      <button type="button" data-value="4">4열</button>
+      <button type="button" data-value="5">5열</button>
+      <button type="button" data-value="6">6열</button>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 8️⃣ 버튼 영역 -->
+  <!-- ========================================================= -->
+  <div class="form-bottom-buttons">
+    <button type="button" id="cancel-form-btn">
+      취소
+    </button>
+
+    <button type="submit" id="cabinet-submit-button">
+      시약장 등록
+    </button>
+
+    <button type="button" id="cabinet-save-btn" style="display: none;">
+      시약장 정보 수정
+    </button>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 9️⃣ 카메라 모달 -->
+  <!-- ========================================================= -->
+  <div id="camera-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <video id="camera-view" autoplay playsinline></video>
+      <canvas id="photo-canvas" style="display: none;"></canvas>
+      <div class="modal-controls">
+        <button type="button" id="capture-btn">사진 찍기</button>
+        <button type="button" id="cancel-camera-btn">취소</button>
       </div>
-
-      <!-- ========================================================= -->
-      <!-- 5️⃣ 외부 도어의 좌우분리 형태 -->
-      <!-- ========================================================= -->
-      <div class="form-group">
-        <label>5. 외부 도어의 좌우분리 형태 *</label>
-        <div id="door_horizontal_split_buttons" class="button-group">
-          <button type="button" data-value="좌우분리도어">좌우분리도어</button>
-          <button type="button" data-value="단일도어">단일도어</button>
-        </div>
-      </div>
-
-      <!-- ========================================================= -->
-      <!-- 6️⃣ 외부 도어 1개를 열었을 때 보이는 내부 수납 단 형태 -->
-      <!-- ========================================================= -->
-      <div class="form-group">
-        <label>6. 외부 도어 1개를 열었을 때 보이는 내부 수납 단 형태 *</label>
-        <div id="shelf_height_buttons" class="button-group">
-          <button type="button" data-value="1">1단</button>
-          <button type="button" data-value="2">2단</button>
-          <button type="button" data-value="3">3단</button>
-          <button type="button" data-value="4">4단</button>
-          <button type="button" data-value="5">5단</button>
-          <button type="button" data-value="6">6단</button>
-        </div>
-      </div>
-
-      <!-- ========================================================= -->
-      <!-- 7️⃣ 외부 도어 1개를 열었을 때 보이는 내부 수납 열 형태 -->
-      <!-- ========================================================= -->
-      <div class="form-group">
-        <label>7. 외부 도어 1개를 열었을 때 보이는 내부 수납 열 형태 *</label>
-        <div id="storage_columns_buttons" class="button-group">
-          <button type="button" data-value="1">1열</button>
-          <button type="button" data-value="2">2열</button>
-          <button type="button" data-value="3">3열</button>
-          <button type="button" data-value="4">4열</button>
-          <button type="button" data-value="5">5열</button>
-          <button type="button" data-value="6">6열</button>
-        </div>
-      </div>
-
-      <!-- ========================================================= -->
-      <!-- 8️⃣ 버튼 영역 -->
-      <!-- ========================================================= -->
-      <div class="form-bottom-buttons">
-        <button type="button" id="cancel-form-btn">
-          취소
-        </button>
-
-        <button type="submit" id="cabinet-submit-button">
-          시약장 등록
-        </button>
-
-        <button type="button" id="cabinet-save-btn" style="display: none;">
-          시약장 정보 수정
-        </button>
-      </div>
-
-      <!-- ========================================================= -->
-      <!-- 9️⃣ 카메라 모달 -->
-      <!-- ========================================================= -->
-      <div id="camera-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-          <video id="camera-view" autoplay playsinline></video>
-          <canvas id="photo-canvas" style="display: none;"></canvas>
-          <div class="modal-controls">
-            <button type="button" id="capture-btn">사진 찍기</button>
-            <button type="button" id="cancel-camera-btn">취소</button>
-          </div>
-        </div>
-      </div>
+    </div>
+  </div>
 </form>
