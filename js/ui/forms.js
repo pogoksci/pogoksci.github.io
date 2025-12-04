@@ -207,6 +207,8 @@
       cabinetStream = null;
     }
 
+    const cameraPreviewContainer = document.getElementById("cabinet-camera-preview-container");
+
     const stopCabinetCamera = () => {
       if (cabinetStream) {
         cabinetStream.getTracks().forEach(track => track.stop());
@@ -217,9 +219,12 @@
         if (tracks) tracks.forEach(track => track.stop());
         videoStream.srcObject = null;
       }
-      if (videoStream) videoStream.style.display = 'none';
+      // Hide the container instead of just the video
+      if (cameraPreviewContainer) cameraPreviewContainer.style.display = 'none';
+
       isCameraActive = false;
-      if (cameraBtn) cameraBtn.innerHTML = '카메라로 촬영';
+      if (cameraBtn) cameraBtn.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
+      // Cancel button is inside the container, so it hides with it, but good to be explicit if needed
       if (cameraCancelBtn) cameraCancelBtn.style.display = 'none';
     };
 
@@ -229,6 +234,9 @@
 
         cabinetStream = newStream;
         videoStream.srcObject = cabinetStream;
+
+        // Show the container
+        if (cameraPreviewContainer) cameraPreviewContainer.style.display = 'block';
         videoStream.style.display = 'block';
 
         // Hide existing image if any
@@ -240,7 +248,7 @@
 
         isCameraActive = true;
         cameraBtn.innerHTML = '촬영하기';
-        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-block';
+        if (cameraCancelBtn) cameraCancelBtn.style.display = 'flex'; // Use flex to center icon
       } catch (err) {
         console.error("Camera access denied or error:", err);
         // Fallback to file input (mobile behavior)
@@ -327,6 +335,12 @@
         } else {
           startCabinetCamera();
         }
+      };
+    }
+
+    if (cameraCancelBtn) {
+      cameraCancelBtn.onclick = () => {
+        stopCabinetCamera();
       };
     }
 
