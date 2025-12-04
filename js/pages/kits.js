@@ -551,12 +551,11 @@
         const oldModal = document.getElementById('modal-register-kit');
         if (oldModal) oldModal.remove();
 
-        if (!document.getElementById('modal-register-kit-v2')) {
-            const modalHtml = `
+        const modalHtml = `
 <div id="modal-register-kit-v2" class="modal-overlay" style="display: none; z-index: 1200;">
     <div class="modal-content">
         <h3 class="modal-title">키트 등록</h3>
-        <form id="form-register-kit">
+        <form id="form-register-kit" novalidate>
             <div class="modal-scroll-content">
                 <div class="form-group">
                     <label for="kit-class-select">분류</label>
@@ -631,41 +630,9 @@
         </form>
     </div>
 </div>`;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-            // Event Listeners for Custom Kit UI
-            const checkCustom = document.getElementById('check-custom-kit');
-            const customInputs = document.getElementById('custom-kit-inputs');
-            const selectName = document.getElementById('kit-name-select');
-            const btnAddCas = document.getElementById('btn-add-cas');
-            const casContainer = document.getElementById('cas-input-container');
-
-            if (checkCustom) {
-                checkCustom.addEventListener('change', (e) => {
-                    const isCustom = e.target.checked;
-                    customInputs.style.display = isCustom ? 'block' : 'none';
-                    selectName.disabled = isCustom; // Disable select if custom
-                    if (isCustom) {
-                        selectName.value = ""; // Reset select
-                    }
-                });
-            }
-
-            if (btnAddCas) {
-                btnAddCas.addEventListener('click', () => {
-                    const count = casContainer.querySelectorAll('.cas-input').length + 1;
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.className = 'form-input cas-input';
-                    input.placeholder = `CAS${count}`;
-                    input.style.marginBottom = '5px';
-                    casContainer.appendChild(input);
-                });
-            }
-        }
-
-
-
+        // Select elements AFTER injection
         const modal = document.getElementById('modal-register-kit-v2');
         const form = document.getElementById('form-register-kit');
         const btnCancel = document.getElementById('btn-cancel-kit');
@@ -676,6 +643,33 @@
         const previewDiv = document.getElementById('kit-photo-preview');
         const previewImg = document.getElementById('preview-img');
 
+        // Custom Kit UI Elements
+        const checkCustom = document.getElementById('check-custom-kit');
+        const customInputs = document.getElementById('custom-kit-inputs');
+        const btnAddCas = document.getElementById('btn-add-cas');
+        const casContainer = document.getElementById('cas-input-container');
+
+        // Event Listeners
+        if (checkCustom) {
+            checkCustom.addEventListener('change', (e) => {
+                const isCustom = e.target.checked;
+                customInputs.style.display = isCustom ? 'block' : 'none';
+                nameSelect.disabled = isCustom;
+                if (isCustom) nameSelect.value = "";
+            });
+        }
+
+        if (btnAddCas) {
+            btnAddCas.addEventListener('click', () => {
+                const count = casContainer.querySelectorAll('.cas-input').length + 1;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'form-input cas-input';
+                input.placeholder = `CAS${count}`;
+                input.style.marginBottom = '5px';
+                casContainer.appendChild(input);
+            });
+        }
 
         if (fileInput) {
             fileInput.addEventListener('change', (e) => {
@@ -694,34 +688,21 @@
         }
 
         if (btnCancel) {
-            console.log("Cancel button found, attaching listener");
             btnCancel.addEventListener('click', (e) => {
-                console.log("Cancel button clicked");
-                e.preventDefault(); // Prevent form submission just in case
-                const currentModal = document.getElementById('modal-register-kit-v2');
-                if (currentModal) currentModal.style.display = 'none';
-
-                if (form) {
-                    form.reset();
-                    form.removeAttribute('data-mode');
-                    form.removeAttribute('data-id');
-                }
+                e.preventDefault();
+                modal.style.display = 'none';
+                form.reset();
+                form.removeAttribute('data-mode');
+                form.removeAttribute('data-id');
                 if (previewDiv) previewDiv.style.display = 'none';
-
-                const title = document.querySelector('.modal-title');
-                if (title) title.textContent = '키트 등록';
-
-                const saveBtn = document.getElementById('btn-save-kit');
-                if (saveBtn) saveBtn.textContent = '등록';
+                document.querySelector('.modal-title').textContent = '키트 등록';
+                document.getElementById('btn-save-kit').textContent = '등록';
             });
-        } else {
-            console.error("Cancel button NOT found");
         }
 
         if (classSelect) {
             classSelect.addEventListener('change', (e) => {
-                const selectedClass = classSelect.value;
-                updateNameSelect(selectedClass);
+                updateNameSelect(classSelect.value);
             });
         }
 
@@ -766,6 +747,10 @@
                         .map(cb => cb.value);
                     kitClass = checked.join(', ');
                 } else {
+                    if (!classSelect.value) {
+                        alert('분류를 선택하세요.');
+                        return;
+                    }
                     if (classSelect.value === 'all') {
                         const selectedOption = nameSelect.options[nameSelect.selectedIndex];
                         kitClass = selectedOption.dataset.class || '기타';
@@ -782,12 +767,10 @@
                     finalKitName = nameSelect.value;
                 } else {
                     if (isCustom) {
-                        // Custom Kit Registration Logic
                         if (classSelect.value === 'all') {
-                            alert("새로운 키트를 등록할 경우에는 분류를 '전체'로 선택할 수 없습니다.");
+                            alert("새로운 종류의 키트 등록 시 '전체'를 선택할 수 없습니다.");
                             return;
                         }
-
                         const customNameInput = document.getElementById('custom-kit-name');
                         finalKitName = customNameInput.value.trim();
                         if (!finalKitName) {
@@ -795,22 +778,15 @@
                             customNameInput.focus();
                             return;
                         }
-
-                        // Check duplicate name in catalog (optional but good)
                         const exists = catalog.find(k => k.kit_name === finalKitName);
                         if (exists) {
                             alert("이미 존재하는 키트 이름입니다. 목록에서 선택해주세요.");
                             return;
                         }
-
-                        // Collect CAS
                         const casInputs = document.querySelectorAll('.cas-input');
                         const casList = Array.from(casInputs).map(input => input.value.trim()).filter(val => val);
-                        if (casList.length > 0) {
-                            customCas = casList.join(', ');
-                        }
+                        if (casList.length > 0) customCas = casList.join(', ');
 
-                        // 1. Insert into experiment_kit
                         const { data: newCatalogKit, error: catalogError } = await supabase
                             .from('experiment_kit')
                             .insert([{
@@ -822,14 +798,10 @@
                             .single();
 
                         if (catalogError) {
-                            console.error('Catalog insert failed:', catalogError);
                             alert('키트 카탈로그 등록 실패: ' + catalogError.message);
                             return;
                         }
-
-                        // Update local catalog cache
                         catalog.push(newCatalogKit);
-
                     } else {
                         const selectedOption = nameSelect.options[nameSelect.selectedIndex];
                         if (!selectedOption || selectedOption.disabled) {
@@ -849,21 +821,12 @@
                     const fileExt = file.name.split('.').pop();
                     const fileName = `${Date.now()}.${fileExt}`;
                     const filePath = `${fileName}`;
-
-                    const { data: uploadData, error: uploadError } = await supabase.storage
-                        .from('kit-photos')
-                        .upload(filePath, file);
-
+                    const { error: uploadError } = await supabase.storage.from('kit-photos').upload(filePath, file);
                     if (uploadError) {
-                        console.error('Upload failed:', uploadError);
                         alert('사진 업로드 실패: ' + uploadError.message);
                         return;
                     }
-
-                    const { data: publicUrlData } = supabase.storage
-                        .from('kit-photos')
-                        .getPublicUrl(filePath);
-
+                    const { data: publicUrlData } = supabase.storage.from('kit-photos').getPublicUrl(filePath);
                     imageUrl = publicUrlData.publicUrl;
                 }
 
@@ -874,45 +837,27 @@
                         quantity: quantity,
                         purchase_date: purchaseDate
                     };
-                    if (imageUrl) {
-                        updatePayload.image_url = imageUrl;
-                    }
+                    if (imageUrl) updatePayload.image_url = imageUrl;
 
-                    const { error } = await supabase
-                        .from('user_kits')
-                        .update(updatePayload)
-                        .eq('id', editId);
-
-                    if (error) {
-                        alert('수정 실패: ' + error.message);
-                    } else {
+                    const { error } = await supabase.from('user_kits').update(updatePayload).eq('id', editId);
+                    if (error) alert('수정 실패: ' + error.message);
+                    else {
                         alert('수정되었습니다.');
                         modal.style.display = 'none';
-                        // If on detail page, reload detail. If on list, reload list.
-                        if (document.getElementById('kit-detail-page-container')) {
-                            Kits.loadDetail(editId);
-                        } else {
-                            Kits.loadUserKits();
-                        }
-
-                        if (quantity === 0) {
-                            await checkAndCleanupChemicals(finalKitName);
-                        }
+                        if (document.getElementById('kit-detail-page-container')) Kits.loadDetail(editId);
+                        else Kits.loadUserKits();
+                        if (quantity === 0) await checkAndCleanupChemicals(finalKitName);
                     }
                 } else {
-                    const { error } = await supabase
-                        .from('user_kits')
-                        .insert({
-                            kit_class: kitClass,
-                            kit_name: finalKitName,
-                            quantity: quantity,
-                            purchase_date: purchaseDate,
-                            image_url: imageUrl
-                        });
-
-                    if (error) {
-                        alert('등록 실패: ' + error.message);
-                    } else {
+                    const { error } = await supabase.from('user_kits').insert({
+                        kit_class: kitClass,
+                        kit_name: finalKitName,
+                        quantity: quantity,
+                        purchase_date: purchaseDate,
+                        image_url: imageUrl
+                    });
+                    if (error) alert('등록 실패: ' + error.message);
+                    else {
                         alert('등록되었습니다.');
                         modal.style.display = 'none';
                         Kits.loadUserKits();
@@ -937,10 +882,8 @@
 
             nameSelect.disabled = true;
             nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
-
             document.getElementById('kit-date').valueAsDate = new Date();
 
-            // Reset Custom Kit UI
             const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
             const customInputs = document.getElementById('custom-kit-inputs');
             if (customWrapper) customWrapper.style.display = 'flex';
@@ -982,7 +925,6 @@
                 previewDiv.style.display = 'block';
             }
 
-            // Hide Custom Kit UI in Edit Mode
             const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
             const customInputs = document.getElementById('custom-kit-inputs');
             if (customWrapper) customWrapper.style.display = 'none';
@@ -1109,7 +1051,6 @@
         } else {
             Kits.loadUserKits();
         }
-
         if (newQuantity === 0) {
             await checkAndCleanupChemicals(kit.kit_name);
         }
