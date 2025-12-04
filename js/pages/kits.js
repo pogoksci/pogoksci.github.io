@@ -695,6 +695,7 @@
 
             // Class Select
             if (e.target.id === 'kit-class-select') {
+                console.log('Class Select Changed:', e.target.value);
                 updateNameSelect(e.target.value);
             }
 
@@ -852,8 +853,15 @@
         });
 
         function updateNameSelect(selectedClass, selectedKitId = null) {
+            console.log('updateNameSelect called with:', selectedClass);
             const { nameSelect } = getElements();
-            if (!nameSelect) return;
+            if (!nameSelect) {
+                console.error('nameSelect element not found');
+                return;
+            }
+
+            console.log('Catalog size:', catalog.length);
+
             nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
             nameSelect.disabled = false;
 
