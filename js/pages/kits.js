@@ -675,6 +675,7 @@
         const previewDiv = document.querySelector('.kit-photo-preview-box');
         let stream = null;
         let isCameraActive = false;
+        let isModalOpen = false;
 
         function getElements() {
             return { form, btnCancel, classSelect, nameSelect, classCheckboxesDiv, customInputs, previewImg, previewDiv, fileInput, checkCustom };
@@ -701,11 +702,22 @@
 
         const startCamera = async () => {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+
+                if (!isModalOpen) {
+                    // Modal was closed while we were waiting for camera
+                    newStream.getTracks().forEach(track => track.stop());
+                    return;
+                }
+
+                stream = newStream;
                 videoStream.srcObject = stream;
                 videoStream.style.display = 'block';
                 previewImg.style.display = 'none';
-                previewDiv.querySelector('.placeholder-text').style.display = 'none';
+
+                const placeholder = previewDiv.querySelector('.placeholder-text');
+                if (placeholder) placeholder.style.display = 'none';
+
                 isCameraActive = true;
                 btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
             } catch (err) {
@@ -720,6 +732,13 @@
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
             }
+            // Fallback: check video srcObject
+            if (videoStream.srcObject) {
+                const tracks = videoStream.srcObject.getTracks();
+                if (tracks) tracks.forEach(track => track.stop());
+                videoStream.srcObject = null;
+            }
+
             videoStream.style.display = 'none';
             isCameraActive = false;
             btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
@@ -787,6 +806,8 @@
         }
 
         btnCancel.addEventListener('click', () => {
+            isModalOpen = false;
+            if (isCameraActive) stopCamera();
             modal.style.display = 'none';
         });
 
@@ -1001,7 +1022,22 @@
 
             if (!form) return;
             form.reset();
-            if (previewDiv) previewDiv.style.display = 'none';
+
+            // Reset Photo UI
+            if (isCameraActive) stopCamera();
+            if (previewImg) {
+                previewImg.src = '';
+                previewImg.style.display = 'none';
+            }
+            if (videoStream) videoStream.style.display = 'none';
+            if (canvas) canvas.style.display = 'none';
+            if (previewDiv) {
+                previewDiv.style.display = 'flex'; // Ensure box is visible
+                const placeholder = previewDiv.querySelector('.placeholder-text');
+                if (placeholder) placeholder.style.display = 'block';
+            }
+            if (btnTakePhoto) btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
+
             form.removeAttribute('data-mode');
             form.removeAttribute('data-id');
             document.querySelector('.modal-title').textContent = '키트 등록';
@@ -1018,6 +1054,7 @@
             if (customWrapper) customWrapper.style.display = 'flex';
             if (customInputs) customInputs.style.display = 'none';
 
+            isModalOpen = true;
             modal.style.display = 'flex';
         };
 
@@ -1027,7 +1064,18 @@
 
             if (!form) return;
             form.reset();
-            if (previewDiv) previewDiv.style.display = 'none';
+
+            // Reset Photo UI
+            if (isCameraActive) stopCamera();
+            if (previewImg) previewImg.style.display = 'none'; // Will be shown if image exists
+            if (videoStream) videoStream.style.display = 'none';
+            if (canvas) canvas.style.display = 'none';
+            if (previewDiv) {
+                previewDiv.style.display = 'flex';
+                const placeholder = previewDiv.querySelector('.placeholder-text');
+                if (placeholder) placeholder.style.display = 'block'; // Will be hidden if image exists
+            }
+            if (btnTakePhoto) btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
             form.setAttribute('data-mode', 'edit');
             form.setAttribute('data-id', kit.id);
             document.querySelector('.modal-title').textContent = '키트 정보 수정';
@@ -1060,6 +1108,7 @@
             if (customWrapper) customWrapper.style.display = 'none';
             if (customInputs) customInputs.style.display = 'none';
 
+            isModalOpen = true;
             modal.style.display = 'flex';
         };
     }
