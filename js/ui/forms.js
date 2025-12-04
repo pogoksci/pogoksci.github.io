@@ -623,6 +623,7 @@
     const preview = document.getElementById("photo-preview");
     const photoBtn = document.getElementById("photo-btn");
     const cameraBtn = document.getElementById("camera-btn");
+    const cameraCancelBtn = document.getElementById("camera-cancel-btn");
     const videoStream = document.getElementById("camera-stream");
     const canvas = document.getElementById("camera-canvas");
     let isCameraActive = false;
@@ -646,6 +647,7 @@
       if (videoStream) videoStream.style.display = 'none';
       isCameraActive = false;
       if (cameraBtn) cameraBtn.innerHTML = '카메라로 촬영';
+      if (cameraCancelBtn) cameraCancelBtn.style.display = 'none';
     };
 
     const startInventoryCamera = async () => {
@@ -666,6 +668,7 @@
 
         isCameraActive = true;
         cameraBtn.innerHTML = '촬영하기';
+        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-block';
       } catch (err) {
         console.error("Camera access denied or error:", err);
         // Fallback to file input (mobile behavior)
@@ -732,6 +735,12 @@
       };
       reader.readAsDataURL(file);
     };
+
+    if (cameraCancelBtn) {
+      cameraCancelBtn.onclick = () => {
+        stopInventoryCamera();
+      };
+    }
 
     if (photoBtn && photoInput) {
       photoBtn.onclick = () => {
