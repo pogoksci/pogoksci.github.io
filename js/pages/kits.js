@@ -632,35 +632,46 @@
 </div>`;
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-        // Select elements AFTER injection
+        // Select Modal Container for Delegation
         const modal = document.getElementById('modal-register-kit-v2');
-        const form = document.getElementById('form-register-kit');
-        const btnCancel = document.getElementById('btn-cancel-kit');
-        const classSelect = document.getElementById('kit-class-select');
-        const classCheckboxesDiv = document.getElementById('kit-class-checkboxes');
-        const nameSelect = document.getElementById('kit-name-select');
-        const fileInput = document.getElementById('kit-photo');
-        const previewDiv = document.getElementById('kit-photo-preview');
-        const previewImg = document.getElementById('preview-img');
 
-        // Custom Kit UI Elements
-        const checkCustom = document.getElementById('check-custom-kit');
-        const customInputs = document.getElementById('custom-kit-inputs');
-        const btnAddCas = document.getElementById('btn-add-cas');
-        const casContainer = document.getElementById('cas-input-container');
+        // Helper to get elements dynamically
+        const getElements = () => ({
+            form: document.getElementById('form-register-kit'),
+            classSelect: document.getElementById('kit-class-select'),
+            classCheckboxesDiv: document.getElementById('kit-class-checkboxes'),
+            nameSelect: document.getElementById('kit-name-select'),
+            fileInput: document.getElementById('kit-photo'),
+            previewDiv: document.getElementById('kit-photo-preview'),
+            previewImg: document.getElementById('preview-img'),
+            checkCustom: document.getElementById('check-custom-kit'),
+            customInputs: document.getElementById('custom-kit-inputs'),
+            btnAddCas: document.getElementById('btn-add-cas'),
+            casContainer: document.getElementById('cas-input-container')
+        });
 
-        // Event Listeners
-        if (checkCustom) {
-            checkCustom.addEventListener('change', (e) => {
-                const isCustom = e.target.checked;
-                customInputs.style.display = isCustom ? 'block' : 'none';
-                nameSelect.disabled = isCustom;
-                if (isCustom) nameSelect.value = "";
-            });
-        }
+        // Event Delegation on Modal
+        modal.addEventListener('click', (e) => {
+            // Cancel Button
+            if (e.target.id === 'btn-cancel-kit' || e.target.closest('#btn-cancel-kit')) {
+                console.log('Delegated Cancel Click');
+                e.preventDefault();
+                e.stopPropagation();
+                modal.style.display = 'none';
+                const { form, previewDiv } = getElements();
+                if (form) {
+                    form.reset();
+                    form.removeAttribute('data-mode');
+                    form.removeAttribute('data-id');
+                }
+                if (previewDiv) previewDiv.style.display = 'none';
+                document.querySelector('.modal-title').textContent = '키트 등록';
+                document.getElementById('btn-save-kit').textContent = '등록';
+            }
 
-        if (btnAddCas) {
-            btnAddCas.addEventListener('click', () => {
+            // Add CAS Button
+            if (e.target.id === 'btn-add-cas' || e.target.closest('#btn-add-cas')) {
+                const { casContainer } = getElements();
                 const count = casContainer.querySelectorAll('.cas-input').length + 1;
                 const input = document.createElement('input');
                 input.type = 'text';
@@ -668,83 +679,48 @@
                 input.placeholder = `CAS${count}`;
                 input.style.marginBottom = '5px';
                 casContainer.appendChild(input);
-            });
-        }
+            }
+        });
 
-        if (fileInput) {
-            fileInput.addEventListener('change', (e) => {
+        modal.addEventListener('change', (e) => {
+            const { checkCustom, customInputs, nameSelect, classSelect, fileInput, previewImg, previewDiv } = getElements();
+
+            // Custom Kit Checkbox
+            if (e.target.id === 'check-custom-kit') {
+                const isCustom = e.target.checked;
+                customInputs.style.display = isCustom ? 'block' : 'none';
+                nameSelect.disabled = isCustom;
+                if (isCustom) nameSelect.value = "";
+            }
+
+            // Class Select
+            if (e.target.id === 'kit-class-select') {
+                updateNameSelect(e.target.value);
+            }
+
+            // File Input
+            if (e.target.id === 'kit-photo') {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
-                    reader.onload = (e) => {
-                        previewImg.src = e.target.result;
+                    reader.onload = (ev) => {
+                        previewImg.src = ev.target.result;
                         previewDiv.style.display = 'block';
                     };
                     reader.readAsDataURL(file);
                 } else {
                     previewDiv.style.display = 'none';
                 }
-            });
-        }
-
-        if (btnCancel) {
-            console.log('setupRegisterModal: Attaching Cancel listener');
-            btnCancel.addEventListener('click', (e) => {
-                console.log('Cancel button clicked');
-                e.preventDefault();
-                e.stopPropagation();
-                modal.style.display = 'none';
-                form.reset();
-                form.removeAttribute('data-mode');
-                form.removeAttribute('data-id');
-                if (previewDiv) previewDiv.style.display = 'none';
-                document.querySelector('.modal-title').textContent = '키트 등록';
-                document.getElementById('btn-save-kit').textContent = '등록';
-            });
-        } else {
-            console.error('setupRegisterModal: Cancel button NOT found');
-        }
-
-        if (classSelect) {
-            classSelect.addEventListener('change', (e) => {
-                updateNameSelect(classSelect.value);
-            });
-        }
-
-        function updateNameSelect(selectedClass, selectedKitId = null) {
-            if (!nameSelect) return;
-            nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
-            nameSelect.disabled = false;
-
-            let filtered = [];
-            if (selectedClass === 'all') {
-                filtered = catalog;
-            } else {
-                filtered = catalog.filter(k => k.kit_class && k.kit_class.includes(selectedClass));
             }
+        });
 
-            filtered.sort((a, b) => a.kit_name.localeCompare(b.kit_name));
-
-            filtered.forEach(k => {
-                const opt = document.createElement('option');
-                opt.value = k.id;
-                opt.textContent = k.kit_name;
-                opt.dataset.cas = k.kit_cas || '';
-                opt.dataset.name = k.kit_name;
-                opt.dataset.class = k.kit_class;
-                if (selectedKitId && k.id == selectedKitId) {
-                    opt.selected = true;
-                }
-                nameSelect.appendChild(opt);
-            });
-        }
-
-        if (form) {
-            console.log('setupRegisterModal: Attaching Submit listener');
-            form.addEventListener('submit', async (e) => {
-                console.log('Form submit triggered');
+        modal.addEventListener('submit', async (e) => {
+            if (e.target.id === 'form-register-kit') {
+                console.log('Delegated Form Submit');
                 e.preventDefault();
                 e.stopPropagation();
+
+                const { form, classCheckboxesDiv, classSelect, nameSelect, fileInput, checkCustom } = getElements();
 
                 let kitClass = '';
                 const mode = form.getAttribute('data-mode');
@@ -769,7 +745,7 @@
 
                 let finalKitName = '';
                 let customCas = null;
-                const isCustom = document.getElementById('check-custom-kit')?.checked;
+                const isCustom = checkCustom?.checked;
 
                 if (mode === 'edit') {
                     finalKitName = nameSelect.value;
@@ -872,10 +848,42 @@
                         await processKitChemicals(finalKitName);
                     }
                 }
+            }
+        });
+
+        function updateNameSelect(selectedClass, selectedKitId = null) {
+            const { nameSelect } = getElements();
+            if (!nameSelect) return;
+            nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
+            nameSelect.disabled = false;
+
+            let filtered = [];
+            if (selectedClass === 'all') {
+                filtered = catalog;
+            } else {
+                filtered = catalog.filter(k => k.kit_class && k.kit_class.includes(selectedClass));
+            }
+
+            filtered.sort((a, b) => a.kit_name.localeCompare(b.kit_name));
+
+            filtered.forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k.id;
+                opt.textContent = k.kit_name;
+                opt.dataset.cas = k.kit_cas || '';
+                opt.dataset.name = k.kit_name;
+                opt.dataset.class = k.kit_class;
+                if (selectedKitId && k.id == selectedKitId) {
+                    opt.selected = true;
+                }
+                nameSelect.appendChild(opt);
             });
         }
 
         Kits.openRegisterModal = () => {
+            const { form, previewDiv, classSelect, classCheckboxesDiv, nameSelect, customInputs } = getElements();
+            const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
+
             if (!form) return;
             form.reset();
             if (previewDiv) previewDiv.style.display = 'none';
@@ -892,8 +900,6 @@
             nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
             document.getElementById('kit-date').valueAsDate = new Date();
 
-            const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
-            const customInputs = document.getElementById('custom-kit-inputs');
             if (customWrapper) customWrapper.style.display = 'flex';
             if (customInputs) customInputs.style.display = 'none';
 
@@ -901,6 +907,9 @@
         };
 
         window.openEditKitModal = (kit) => {
+            const { form, previewDiv, classSelect, classCheckboxesDiv, nameSelect, customInputs, previewImg } = getElements();
+            const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
+
             if (!form) return;
             form.reset();
             if (previewDiv) previewDiv.style.display = 'none';
@@ -933,8 +942,6 @@
                 previewDiv.style.display = 'block';
             }
 
-            const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
-            const customInputs = document.getElementById('custom-kit-inputs');
             if (customWrapper) customWrapper.style.display = 'none';
             if (customInputs) customInputs.style.display = 'none';
 
