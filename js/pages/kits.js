@@ -622,6 +622,8 @@
                     <div class="kit-photo-container">
                         <div class="kit-photo-preview-box">
                             <img id="kit-preview-img" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;">
+                            <video id="kit-camera-stream" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                            <canvas id="kit-camera-canvas" style="display: none;"></canvas>
                             <span class="placeholder-text" style="color: #999; font-size: 14px;">사진 없음</span>
                         </div>
                         <div class="kit-photo-actions">
@@ -633,6 +635,7 @@
                             </button>
                         </div>
                         <input type="file" id="kit-photo-input" accept="image/*" style="display: none;">
+                        <!-- Mobile fallback / File input -->
                         <input type="file" id="kit-camera-input" accept="image/*" capture="environment" style="display: none;">
                     </div>
                 </div>
@@ -667,7 +670,11 @@
         const fileInput = document.getElementById('kit-photo-input');
         const cameraInput = document.getElementById('kit-camera-input');
         const previewImg = document.getElementById('kit-preview-img');
-        const previewDiv = document.querySelector('.photo-preview-box');
+        const videoStream = document.getElementById('kit-camera-stream');
+        const canvas = document.getElementById('kit-camera-canvas');
+        const previewDiv = document.querySelector('.kit-photo-preview-box');
+        let stream = null;
+        let isCameraActive = false;
 
         function getElements() {
             return { form, btnCancel, classSelect, nameSelect, classCheckboxesDiv, customInputs, previewImg, previewDiv, fileInput, checkCustom };
@@ -687,8 +694,68 @@
             }
         };
 
-        if (btnSelectPhoto) btnSelectPhoto.addEventListener('click', () => fileInput.click());
-        if (btnTakePhoto) btnTakePhoto.addEventListener('click', () => cameraInput.click());
+        if (btnSelectPhoto) btnSelectPhoto.addEventListener('click', () => {
+            if (isCameraActive) stopCamera();
+            fileInput.click();
+        });
+
+        const startCamera = async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                videoStream.srcObject = stream;
+                videoStream.style.display = 'block';
+                previewImg.style.display = 'none';
+                previewDiv.querySelector('.placeholder-text').style.display = 'none';
+                isCameraActive = true;
+                btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
+            } catch (err) {
+                console.error("Camera access denied or error:", err);
+                // Fallback to file input (mobile behavior)
+                cameraInput.click();
+            }
+        };
+
+        const stopCamera = () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            videoStream.style.display = 'none';
+            isCameraActive = false;
+            btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
+        };
+
+        const takePhoto = () => {
+            canvas.width = videoStream.videoWidth;
+            canvas.height = videoStream.videoHeight;
+            canvas.getContext('2d').drawImage(videoStream, 0, 0);
+
+            canvas.toBlob((blob) => {
+                const file = new File([blob], `capture-${Date.now()}.jpg`, { type: "image/jpeg" });
+
+                // Update file input manually (using DataTransfer to simulate file selection)
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+
+                // Show preview
+                previewImg.src = URL.createObjectURL(blob);
+                previewImg.style.display = 'block';
+
+                stopCamera();
+                btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">replay</span> 다시 촬영';
+            }, 'image/jpeg');
+        };
+
+        if (btnTakePhoto) {
+            btnTakePhoto.addEventListener('click', () => {
+                if (isCameraActive) {
+                    takePhoto();
+                } else {
+                    startCamera();
+                }
+            });
+        }
         if (fileInput) fileInput.addEventListener('change', handleFileSelect);
         if (cameraInput) cameraInput.addEventListener('change', handleFileSelect);
 

@@ -5029,7 +5029,7 @@ input[type="date"] {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  justify-content: center;
+  justify-content: flex-start;
   height: 240px;
   /* Match preview height to center buttons */
 }
