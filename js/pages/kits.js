@@ -21,7 +21,12 @@
             // 1. Setup FAB
             if (App.Fab) {
                 App.Fab.setVisibility(true, '<span class="material-symbols-outlined">add</span> 새 키트 등록', () => {
-                    openRegisterModal();
+                    if (this.openRegisterModal) {
+                        this.openRegisterModal();
+                    } else {
+                        console.error("openRegisterModal is not defined");
+                        alert("기능 초기화 중입니다. 잠시 후 다시 시도해주세요.");
+                    }
                 });
             }
 
@@ -894,7 +899,7 @@
             });
         }
 
-        window.openRegisterModal = () => {
+        Kits.openRegisterModal = () => {
             if (!form) return;
             form.reset();
             if (previewDiv) previewDiv.style.display = 'none';
