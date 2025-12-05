@@ -503,18 +503,26 @@
             };
 
             let html = `
-                <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
-                    <h5 style="margin: 0 0 10px 0; font-size: 15px; color: #333;">기본 특성</h5>
-                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
-                        <div style="display: flex; gap: 20px;">
-                            <div style="flex: 1;"><strong>화학식:</strong> ${substance.molecular_formula || '-'}</div>
-                            <div style="flex: 1;"><strong>화학식량:</strong> ${substance.molecular_mass || '-'}</div>
-                        </div>
-                        <div style="display: flex; gap: 20px;">
-                            <div style="flex: 1;"><strong>끓는점:</strong> ${getPropVal('Boiling Point')}</div>
-                            <div style="flex: 1;"><strong>녹는점:</strong> ${getPropVal('Melting Point')}</div>
-                        </div>
-                        <div><strong>밀도:</strong> ${getPropVal('Density')}</div>
+                <div style="margin-bottom: 20px; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+                    <h5 style="margin: 0; padding: 10px; background: #f9f9f9; font-size: 15px; color: #333; border-bottom: 1px solid #eee;">기본 특성</h5>
+                    
+                    <div class="msds-row">
+                        <div class="msds-header">화학식</div>
+                        <div class="msds-content">${substance.molecular_formula || '-'}</div>
+                        <div class="msds-header">화학식량</div>
+                        <div class="msds-content">${substance.molecular_mass || '-'}</div>
+                    </div>
+                    
+                    <div class="msds-row">
+                        <div class="msds-header">끓는점</div>
+                        <div class="msds-content">${getPropVal('Boiling Point')}</div>
+                        <div class="msds-header">녹는점</div>
+                        <div class="msds-content">${getPropVal('Melting Point')}</div>
+                    </div>
+
+                    <div class="msds-row">
+                        <div class="msds-header">밀도</div>
+                        <div class="msds-content">${getPropVal('Density')}</div>
                     </div>
                 </div>
             `;
