@@ -320,7 +320,7 @@
         // Fetch Korean names
         const { data: chemData } = await supabase
             .from('kit_chemicals')
-            .select('cas_no, name_ko, name_en')
+            .select('cas_no, name_ko, name_en, msds_data, formula, molecular_weight')
             .in('cas_no', casList);
 
         const map = new Map();
@@ -338,7 +338,7 @@
             const displayName = chem ? (chem.name_ko || chem.name_en || cas) : cas;
             btn.textContent = displayName;
             btn.title = cas;
-            btn.onclick = () => renderInlineChemInfo(cas, chem?.name_ko, chem?.name_en);
+            btn.onclick = () => renderInlineChemInfo(cas, chem);
             return btn;
         });
 
@@ -468,7 +468,7 @@
         }
     }
 
-    async function renderInlineChemInfo(casInput, nameKo, nameEn) {
+    async function renderInlineChemInfo(casInput, kitChemData = null) {
         const cas = casInput ? casInput.trim() : '';
         const container = document.getElementById('kit-chem-detail-container');
         const title = document.getElementById('kit-chem-detail-title');
@@ -484,7 +484,7 @@
             let substanceData = null;
             let error = null;
 
-            // 1. Try searching by CAS
+            // 1. Try searching by CAS in Substance table
             if (cas) {
                 const result = await supabase
                     .from('Substance')
@@ -495,12 +495,32 @@
                     `)
                     .eq('cas_rn', cas)
                     .limit(1);
-                substanceData = result.data;
-                error = result.error;
+
+                if (result.data && result.data.length > 0) {
+                    substanceData = result.data[0];
+                }
+                // Don't throw error yet, try fallbacks
             }
 
-            // 2. Fallback: Try searching by Name if CAS failed or returned no data
-            if (!error && (!substanceData || substanceData.length === 0)) {
+            // 2. Fallback: Use kit_chemicals data if Substance query failed or returned no data
+            if (!substanceData && kitChemData && kitChemData.msds_data && kitChemData.msds_data.length > 0) {
+                console.log(`Using kit_chemicals data for ${cas}`);
+                substanceData = {
+                    cas_rn: kitChemData.cas_no || cas,
+                    chem_name_kor: kitChemData.name_ko,
+                    substance_name: kitChemData.name_en,
+                    molecular_formula: kitChemData.formula,
+                    molecular_mass: kitChemData.molecular_weight,
+                    MSDS: kitChemData.msds_data,
+                    Properties: [] // Properties not available in kit_chemicals
+                };
+            }
+
+            // 3. Fallback: Try searching by Name in Substance table
+            if (!substanceData && kitChemData) {
+                const nameKo = kitChemData.name_ko;
+                const nameEn = kitChemData.name_en;
+
                 if (nameKo || nameEn) {
                     console.log(`CAS lookup failed for ${cas}. Trying name lookup: ${nameKo || nameEn}`);
                     const query = supabase
@@ -519,8 +539,9 @@
                     }
 
                     const result = await query;
-                    substanceData = result.data;
-                    error = result.error;
+                    if (result.data && result.data.length > 0) {
+                        substanceData = result.data[0];
+                    }
                 }
             }
 
@@ -528,7 +549,7 @@
                 throw error;
             }
 
-            const substance = (substanceData && substanceData.length > 0) ? substanceData[0] : null;
+            const substance = substanceData;
 
             if (!substance) {
                 content.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">해당 물질의 상세 정보(MSDS)가 데이터베이스에 없습니다.</div>';
