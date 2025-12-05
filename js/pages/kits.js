@@ -467,7 +467,8 @@
         }
     }
 
-    async function renderInlineChemInfo(cas) {
+    async function renderInlineChemInfo(casInput) {
+        const cas = casInput ? casInput.trim() : '';
         const container = document.getElementById('kit-chem-detail-container');
         const title = document.getElementById('kit-chem-detail-title');
         const content = document.getElementById('kit-chem-detail-content');
@@ -641,8 +642,8 @@
 
             content.innerHTML = html;
         } catch (e) {
-            console.error(e);
-            content.innerHTML = '<div style="color: red; padding: 20px;">정보를 불러오는 중 오류가 발생했습니다.</div>';
+            console.error(`Error loading chemical info for ${cas}:`, e);
+            content.innerHTML = `<div style="color: red; padding: 20px;">정보를 불러오는 중 오류가 발생했습니다.<br><small>${e.message}</small></div>`;
         }
     }
 
