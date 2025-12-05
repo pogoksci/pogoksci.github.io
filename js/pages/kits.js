@@ -489,8 +489,14 @@
                 .eq('cas_rn', cas)
                 .single();
 
-            if (error || !substance) {
-                throw new Error('물질 정보를 찾을 수 없습니다.');
+            if (error) {
+                throw error;
+            }
+
+            if (!substance) {
+                content.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">해당 물질의 상세 정보(MSDS)가 데이터베이스에 없습니다.</div>';
+                title.textContent = `${cas} (정보 없음)`;
+                return;
             }
 
             const korName = substance.chem_name_kor || substance.substance_name || cas;
