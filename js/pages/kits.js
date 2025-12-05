@@ -488,11 +488,15 @@
             let html = `
                 <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
                     <h5 style="margin: 0 0 10px 0; font-size: 15px; color: #333;">기본 특성</h5>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 14px;">
-                        <div><strong>화학식:</strong> ${substance.molecular_formula || '-'}</div>
-                        <div><strong>분자량:</strong> ${substance.molecular_mass || '-'}</div>
-                        <div><strong>끓는점:</strong> ${getPropVal('Boiling Point')}</div>
-                        <div><strong>녹는점:</strong> ${getPropVal('Melting Point')}</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
+                        <div style="display: flex; gap: 20px;">
+                            <div style="flex: 1;"><strong>화학식:</strong> ${substance.molecular_formula || '-'}</div>
+                            <div style="flex: 1;"><strong>화학식량:</strong> ${substance.molecular_mass || '-'}</div>
+                        </div>
+                        <div style="display: flex; gap: 20px;">
+                            <div style="flex: 1;"><strong>끓는점:</strong> ${getPropVal('Boiling Point')}</div>
+                            <div style="flex: 1;"><strong>녹는점:</strong> ${getPropVal('Melting Point')}</div>
+                        </div>
                         <div><strong>밀도:</strong> ${getPropVal('Density')}</div>
                     </div>
                 </div>
@@ -519,7 +523,7 @@
                 return `
                     <div class="accordion-item" style="border: 1px solid #eee; border-bottom: none;">
                         <button class="accordion-header" onclick="this.parentElement.classList.toggle('active')" style="width: 100%; text-align: left; padding: 10px; background: #fff; border: none; cursor: pointer; font-weight: 500; display: flex; justify-content: space-between;">
-                            ${title} <span style="font-size: 12px;">▼</span>
+                            ${title}
                         </button>
                         <div class="accordion-content" style="display: none; border-top: 1px solid #eee; padding: 10px; background: #fafafa;">
                             ${contentHtml}
