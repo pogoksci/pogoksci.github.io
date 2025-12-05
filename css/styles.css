@@ -5072,3 +5072,37 @@ input[type="date"] {
 .stock-type-label {
   cursor: pointer;
 }
+
+/* MSDS Table Styles */
+.msds-row {
+  display: flex;
+  border-bottom: 1px solid #eee;
+}
+
+.msds-row:last-child {
+  border-bottom: none;
+}
+
+.msds-header {
+  width: 120px;
+  background-color: #f9f9f9;
+  padding: 10px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.msds-content {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  color: #555;
+  background-color: #fff;
+}
+
+.msds-content.msds-no-padding {
+  padding: 0;
+}
