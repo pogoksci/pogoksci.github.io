@@ -480,7 +480,7 @@
         content.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">데이터를 불러오는 중입니다...</div>';
 
         try {
-            const { data: substance, error } = await supabase
+            const { data: substanceData, error } = await supabase
                 .from('Substance')
                 .select(`
                     id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor,
@@ -488,11 +488,13 @@
                     MSDS ( section_number, content )
                 `)
                 .eq('cas_rn', cas)
-                .single();
+                .limit(1);
 
             if (error) {
                 throw error;
             }
+
+            const substance = (substanceData && substanceData.length > 0) ? substanceData[0] : null;
 
             if (!substance) {
                 content.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">해당 물질의 상세 정보(MSDS)가 데이터베이스에 없습니다.</div>';
