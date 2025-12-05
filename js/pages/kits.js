@@ -326,8 +326,7 @@
         const map = new Map();
         if (chemData) {
             chemData.forEach(c => {
-                const name = c.name_ko || c.name_en || c.cas_no;
-                map.set(c.cas_no, name);
+                map.set(c.cas_no, c);
             });
         }
 
@@ -335,9 +334,11 @@
         const buttons = casList.map(cas => {
             const btn = document.createElement('div'); // Use div for better control, styled as btn
             btn.className = 'kit-component-btn';
-            btn.textContent = map.has(cas) ? map.get(cas) : cas;
+            const chem = map.get(cas);
+            const displayName = chem ? (chem.name_ko || chem.name_en || cas) : cas;
+            btn.textContent = displayName;
             btn.title = cas;
-            btn.onclick = () => renderInlineChemInfo(cas);
+            btn.onclick = () => renderInlineChemInfo(cas, chem?.name_ko, chem?.name_en);
             return btn;
         });
 
@@ -467,7 +468,7 @@
         }
     }
 
-    async function renderInlineChemInfo(casInput) {
+    async function renderInlineChemInfo(casInput, nameKo, nameEn) {
         const cas = casInput ? casInput.trim() : '';
         const container = document.getElementById('kit-chem-detail-container');
         const title = document.getElementById('kit-chem-detail-title');
@@ -480,15 +481,48 @@
         content.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">데이터를 불러오는 중입니다...</div>';
 
         try {
-            const { data: substanceData, error } = await supabase
-                .from('Substance')
-                .select(`
-                    id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor,
-                    Properties ( name, property ),
-                    MSDS ( section_number, content )
-                `)
-                .eq('cas_rn', cas)
-                .limit(1);
+            let substanceData = null;
+            let error = null;
+
+            // 1. Try searching by CAS
+            if (cas) {
+                const result = await supabase
+                    .from('Substance')
+                    .select(`
+                        id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor,
+                        Properties ( name, property ),
+                        MSDS ( section_number, content )
+                    `)
+                    .eq('cas_rn', cas)
+                    .limit(1);
+                substanceData = result.data;
+                error = result.error;
+            }
+
+            // 2. Fallback: Try searching by Name if CAS failed or returned no data
+            if (!error && (!substanceData || substanceData.length === 0)) {
+                if (nameKo || nameEn) {
+                    console.log(`CAS lookup failed for ${cas}. Trying name lookup: ${nameKo || nameEn}`);
+                    const query = supabase
+                        .from('Substance')
+                        .select(`
+                            id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor,
+                            Properties ( name, property ),
+                            MSDS ( section_number, content )
+                        `)
+                        .limit(1);
+
+                    if (nameKo) {
+                        query.ilike('chem_name_kor', `%${nameKo}%`);
+                    } else if (nameEn) {
+                        query.ilike('substance_name', `%${nameEn}%`);
+                    }
+
+                    const result = await query;
+                    substanceData = result.data;
+                    error = result.error;
+                }
+            }
 
             if (error) {
                 throw error;
