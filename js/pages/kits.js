@@ -592,7 +592,7 @@
             `;
 
             html += `<h5 style="margin: 0 0 10px 0; font-size: 15px; color: #333;">MSDS 정보</h5>`;
-            html += `<div class="msds-accordion" id="inline-msds-accordion">`;
+            html += `<div class="accordion" id="inline-msds-accordion">`;
 
             const msdsData = substance.MSDS || [];
 
@@ -678,11 +678,11 @@
                 }
 
                 return `
-                    <div class="accordion-item" style="border: 1px solid #eee; border-bottom: none;">
-                        <button class="accordion-header" onclick="this.parentElement.classList.toggle('active')" style="width: 100%; text-align: left; padding: 10px; background: #fff; border: none; cursor: pointer; font-weight: 500; display: flex; justify-content: space-between;">
+                    <div class="accordion-item">
+                        <button class="accordion-header" onclick="this.parentElement.classList.toggle('active')">
                             ${title}
                         </button>
-                        <div class="accordion-content" style="display: none; border-top: 1px solid #eee; padding: 10px; background: #fafafa;">
+                        <div class="accordion-content">
                             ${contentHtml}
                         </div>
                     </div>
@@ -690,12 +690,6 @@
             }).join('');
 
             html += `</div>`;
-            html += `
-                <style>
-                    .accordion-item.active .accordion-content { display: block !important; }
-                    .accordion-item:last-child { border-bottom: 1px solid #eee; }
-                </style>
-            `;
 
             content.innerHTML = html;
         } catch (e) {
