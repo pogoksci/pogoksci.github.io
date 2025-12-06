@@ -4531,12 +4531,13 @@ input[type="date"] {
 }
 
 .inventory-sticky-top {
-  /* Sticky 제거 -> 고정 레이아웃 */
-  position: relative;
+  /* Sticky 적용 -> 고정 레이아웃 */
+  position: sticky;
+  top: 0;
   margin: 0;
   padding: 0 0 18px 0;
   /* 검색창 하단 여백 18px로 축소 */
-  background-color: transparent;
+  background-color: #fff;
   z-index: 200;
   /* Ensure dropdowns appear above list content (headers are 100) */
 }

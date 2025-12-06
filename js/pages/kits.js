@@ -61,7 +61,8 @@
             const searchInput = document.getElementById('kit-search-input');
             if (searchInput) {
                 searchInput.addEventListener('input', (e) => {
-                    currentSearch = e.target.value.trim().toLowerCase();
+                    // Remove all spaces for flexible search
+                    currentSearch = e.target.value.replace(/\s+/g, '').toLowerCase();
                     this.loadUserKits();
                 });
             }
@@ -110,10 +111,11 @@
             // Apply Search
             let filteredData = data;
             if (currentSearch) {
-                filteredData = data.filter(kit =>
-                    kit.kit_name.toLowerCase().includes(currentSearch) ||
-                    (kit.kit_class && kit.kit_class.toLowerCase().includes(currentSearch))
-                );
+                filteredData = data.filter(kit => {
+                    const name = kit.kit_name.replace(/\s+/g, '').toLowerCase();
+                    const kClass = (kit.kit_class || '').replace(/\s+/g, '').toLowerCase();
+                    return name.includes(currentSearch) || kClass.includes(currentSearch);
+                });
             }
 
             if (!filteredData || filteredData.length === 0) {
