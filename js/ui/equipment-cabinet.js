@@ -44,14 +44,7 @@
             if (!data || data.length === 0) {
                 status.textContent = "등록된 교구·물품장이 없습니다.";
                 status.style.display = "block";
-                container.innerHTML = ""; // Clear any previous content but keep status/structure logic safe
-                // Ideally we shouldn't wipe container if status is inside it? 
-                // In HTML, status is IN container. 
-                // Let's adjust: status is likely p tag inside.
-                // If we wipe container, we lose status.
-                // Check HTML: <div id="equipment-cabinet-list-container"><p id="status...">...</p></div>
-                // So if we clear innerHTML, status is gone.
-                // Valid approach: append cards to container, or hide status.
+                container.innerHTML = "";
                 return;
             }
 
