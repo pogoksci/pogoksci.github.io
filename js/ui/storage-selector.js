@@ -262,6 +262,7 @@
       (val) => {
         state.door_vertical = Number(val);
         clearNextSteps(container, 3);
+        if (state.mode === "EQUIPMENT") return; // Stop here for Equipment
         loadDoorHorizontal(container);
       },
       state.door_vertical
