@@ -921,40 +921,39 @@
     if (doorText === "상중하도어") doorInt = 3;
 
     const finalPayload = {
-      const finalPayload = {
-        area_name: payload.area_name, // ✅ Edge Function expects area_name to lookup/create Area
+      area_name: payload.area_name, // ✅ Edge Function expects area_name to lookup/create Area
 
-        // I need to check `makePayload` in utils.js if I want to be sure, but assuming it works for standard fields.
-        // Wait, `makePayload` might rely on specific field names.
-        // Let's assume manual construction for safety or rely on what `cabinet.js` did.
-        // `cabinet.js` calls `makePayload(state)`.
+      // I need to check `makePayload` in utils.js if I want to be sure, but assuming it works for standard fields.
+      // Wait, `makePayload` might rely on specific field names.
+      // Let's assume manual construction for safety or rely on what `cabinet.js` did.
+      // `cabinet.js` calls `makePayload(state)`.
 
-        cabinet_name: payload.cabinet_name, // handled by makePayload "cabinet_name" logic? 
-        // `makePayload` usually combines button + custom.
+      cabinet_name: payload.cabinet_name, // handled by makePayload "cabinet_name" logic? 
+      // `makePayload` usually combines button + custom.
 
-        photo_url_320: payload.photo_url_320,
-        photo_url_160: payload.photo_url_160,
-        door_vertical_count: doorInt
-      };
+      photo_url_320: payload.photo_url_320,
+      photo_url_160: payload.photo_url_160,
+      door_vertical_count: doorInt
+    };
 
-      // Special case: Outside Cabinet
-      if(state.cabinet_name_buttons === "교구장밖") {
-        finalPayload.door_vertical_count = null;
+    // Special case: Outside Cabinet
+    if (state.cabinet_name_buttons === "교구장밖") {
+      finalPayload.door_vertical_count = null;
+    }
+
+    if (!finalPayload.cabinet_name) return alert("이름을 입력하세요.");
+
+    if (state.mode === "create") {
+      await App.EquipmentCabinet.createCabinet(finalPayload);
+      alert("✅ 등록되었습니다.");
+    } else {
+      await App.EquipmentCabinet.updateCabinet(state.cabinetId, finalPayload);
+    }
+
+    await App.includeHTML("pages/equipment-cabinet-list.html");
+    App.EquipmentCabinet.loadList();
   }
-
-  if (!finalPayload.cabinet_name) return alert("이름을 입력하세요.");
-
-  if (state.mode === "create") {
-    await App.EquipmentCabinet.createCabinet(finalPayload);
-    alert("✅ 등록되었습니다.");
-  } else {
-    await App.EquipmentCabinet.updateCabinet(state.cabinetId, finalPayload);
-  }
-
-  await App.includeHTML("pages/equipment-cabinet-list.html");
-  App.EquipmentCabinet.loadList();
 }
-  }
 const preview = document.getElementById("photo-preview");
 if (preview) {
   preview.innerHTML = `<img src="${existingPhoto}" alt="Preview">`;
