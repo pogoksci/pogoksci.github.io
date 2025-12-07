@@ -125,7 +125,7 @@
   }
 
   // -------------------------------------------------------------
-  // 🔹 1. Area 선택
+  // 🔹 1. Area 선택 (드롭다운)
   // -------------------------------------------------------------
   async function loadAreas(container) {
     const supabase = getSupabase();
@@ -143,38 +143,42 @@
 
     const step = createStep("1️⃣ 장소 선택");
 
-    const group = createButtonGroup(
-      data.map((a) => ({ label: a.area_name, value: a.id })),
-      async (areaId) => {
-        state.area_id = Number(areaId);
-        state.area_name = data.find(d => d.id == areaId)?.area_name || ""; // ✅ 이름 저장
+    // Dropdown 생성
+    const select = document.createElement("select");
+    select.className = "form-input"; // Use global input style
+    select.innerHTML = '<option value="" disabled selected>-- 장소를 선택하세요 --</option>';
 
-        // 초기화
-        state.cabinet_id = state.cabinet_name = null; // ✅ 이름 초기화
-        state.door_vertical =
-          state.door_horizontal =
-          state.internal_shelf_level =
-          state.storage_column =
-          null;
+    data.forEach(area => {
+      const opt = document.createElement("option");
+      opt.value = area.id;
+      opt.textContent = area.area_name;
+      if (state.area_id && Number(state.area_id) === area.id) opt.selected = true;
+      select.appendChild(opt);
+    });
 
-        state.door_vertical_total =
-          state.door_horizontal_total =
-          state.shelf_level_total =
-          state.storage_column_total =
-          null;
+    select.addEventListener("change", async (e) => {
+      const areaId = Number(e.target.value);
+      state.area_id = areaId;
+      state.area_name = data.find(d => d.id == areaId)?.area_name || "";
 
-        clearNextSteps(container, 1);
-        await loadCabinets(container, areaId);
-      },
-      state.area_id
-    );
+      // 초기화
+      state.cabinet_id = state.cabinet_name = null;
+      state.door_vertical = state.door_horizontal = state.internal_shelf_level = state.storage_column = null;
+      state.door_vertical_total = state.door_horizontal_total = state.shelf_level_total = state.storage_column_total = null;
 
-    step.appendChild(group);
+      clearNextSteps(container, 1);
+      await loadCabinets(container, areaId);
+    });
+
+    step.appendChild(select);
     container.appendChild(step);
   }
 
   // -------------------------------------------------------------
   // 🔹 2. Cabinet 선택
+  // -------------------------------------------------------------
+  // -------------------------------------------------------------
+  // 🔹 2. Cabinet 선택 (드롭다운)
   // -------------------------------------------------------------
   async function loadCabinets(container, areaId) {
     const supabase = getSupabase();
@@ -203,41 +207,46 @@
       return;
     }
 
-    const group = createButtonGroup(
-      data.map((c) => ({ label: c.cabinet_name, value: c.id })),
-      async (cabId) => {
-        state.cabinet_id = Number(cabId);
-        state.cabinet_name = data.find(c => c.id == cabId)?.cabinet_name || ""; // ✅ 이름 저장
+    // Dropdown 생성
+    const select = document.createElement("select");
+    select.className = "form-input";
+    select.innerHTML = '<option value="" disabled selected>-- 수납함을 선택하세요 --</option>';
 
-        // Cabinet 구조 읽기 (Mode에 따라 컬럼 매핑 자동 처리)
-        const structure = await loadCabinetStructure(state.cabinet_id);
-        if (structure) {
-          state.door_vertical_total = structure.door_vertical;
-          state.door_horizontal_total = structure.door_horizontal;
-          state.shelf_level_total = structure.internal_shelf_level;
-          state.storage_column_total = structure.storage_column;
-        } else {
-          // 구조 정보가 없거나 실패 시 기본값 1
-          state.door_vertical_total = 1;
-          state.door_horizontal_total = 1;
-          state.shelf_level_total = 1;
-          state.storage_column_total = 1;
-        }
+    data.forEach(cab => {
+      const opt = document.createElement("option");
+      opt.value = cab.id;
+      opt.textContent = cab.cabinet_name;
+      if (state.cabinet_id && Number(state.cabinet_id) === cab.id) opt.selected = true;
+      select.appendChild(opt);
+    });
 
-        // 초기화
-        state.door_vertical =
-          state.door_horizontal =
-          state.internal_shelf_level =
-          state.storage_column =
-          null;
+    select.addEventListener("change", async (e) => {
+      const cabId = Number(e.target.value);
+      state.cabinet_id = cabId;
+      state.cabinet_name = data.find(c => c.id == cabId)?.cabinet_name || "";
 
-        clearNextSteps(container, 2);
-        loadDoorVertical(container);
-      },
-      state.cabinet_id
-    );
+      // Cabinet 구조 읽기
+      const structure = await loadCabinetStructure(state.cabinet_id);
+      if (structure) {
+        state.door_vertical_total = structure.door_vertical;
+        state.door_horizontal_total = structure.door_horizontal;
+        state.shelf_level_total = structure.internal_shelf_level;
+        state.storage_column_total = structure.storage_column;
+      } else {
+        state.door_vertical_total = 1;
+        state.door_horizontal_total = 1;
+        state.shelf_level_total = 1;
+        state.storage_column_total = 1;
+      }
 
-    step.appendChild(group);
+      // 초기화
+      state.door_vertical = state.door_horizontal = state.internal_shelf_level = state.storage_column = null;
+
+      clearNextSteps(container, 2);
+      loadDoorVertical(container);
+    });
+
+    step.appendChild(select);
     container.appendChild(step);
   }
 

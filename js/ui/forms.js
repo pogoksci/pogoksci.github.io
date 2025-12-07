@@ -173,12 +173,24 @@
     }
 
     // ------------------------------------------------------------
-    // 🗺 보관 위치 로직 (Cascading Selects)
+    // 🗺 보관 위치 로직 (App.StorageSelector)
     // ------------------------------------------------------------
-    // This requires loading Areas/Cabinets.
-    // Simplifying for now: Just bind the select events if they exist.
-    // Full implementation requires fetching data.
-    // For now, let's ensure the function exists to fix the ReferenceError.
+    if (App.StorageSelector && typeof App.StorageSelector.init === 'function') {
+      const defaultLoc = {};
+      if (mode === "edit" && detail) {
+        Object.assign(defaultLoc, {
+          area_id: detail.Cabinet?.Area?.id,
+          area_name: detail.Cabinet?.Area?.area_name,
+          cabinet_id: detail.cabinet_id,
+          cabinet_name: detail.Cabinet?.cabinet_name,
+          door_vertical: detail.door_vertical,
+          door_horizontal: detail.door_horizontal,
+          internal_shelf_level: detail.internal_shelf_level,
+          storage_column: detail.storage_column
+        });
+      }
+      App.StorageSelector.init("inventory-storage-selector", defaultLoc, "INVENTORY");
+    }
 
     // ------------------------------------------------------------
     // 📝 폼 제출
@@ -193,13 +205,33 @@
         set("concentration_value", document.getElementById("concentration_value").value);
         set("purchase_date", document.getElementById("purchase_date").value);
 
-        // Handle Save
-        // Inventory save logic is likely different from handleSave (which is for Cabinets)
-        // But handleSave might be generic? No, handleSave calls App.Cabinet.
-        // We need App.Inventory.create / update.
+        // Get Location
+        if (App.StorageSelector) {
+          const loc = App.StorageSelector.getSelection();
+          if (!loc.cabinet_id) {
+            alert("수납함을 선택해주세요.");
+            return;
+          }
+          // Update State with Location
+          set("cabinet_id", loc.cabinet_id);
+          set("door_vertical", loc.door_vertical);
+          set("door_horizontal", loc.door_horizontal);
+          set("internal_shelf_level", loc.internal_shelf_level);
+          set("storage_column", loc.storage_column);
+        }
 
         try {
           const payload = await makePayload(dump()); // Validate & Transform
+
+          // Override makePayload's cabinet logic for Inventory
+          Object.assign(payload, {
+            cabinet_id: get("cabinet_id"),
+            door_vertical: get("door_vertical"),
+            door_horizontal: get("door_horizontal"),
+            internal_shelf_level: get("internal_shelf_level"),
+            storage_column: get("storage_column")
+          });
+
           if (mode === "create") {
             await App.Inventory.create(payload);
             alert("✅ 등록 완료");

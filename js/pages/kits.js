@@ -1255,6 +1255,13 @@
             nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
             document.getElementById('kit-date').valueAsDate = new Date();
 
+            // Init Storage Selector for Registration (Empty default)
+            if (App.StorageSelector && typeof App.StorageSelector.init === 'function') {
+                if (document.getElementById("kit-storage-selector")) {
+                    App.StorageSelector.init("kit-storage-selector", {}, "EQUIPMENT");
+                }
+            }
+
             if (customWrapper) customWrapper.style.display = 'flex';
             if (customInputs) customInputs.style.display = 'none';
 
