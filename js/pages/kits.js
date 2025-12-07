@@ -1298,7 +1298,7 @@
             if (catalogItem) {
                 updateNameSelect('all', catalogItem.id);
             } else {
-                nameSelect.innerHTML = `< option value = "${kit.kit_name}" selected > ${kit.kit_name}</option > `;
+                nameSelect.innerHTML = `<option value="${kit.kit_name}" selected>${kit.kit_name}</option>`;
             }
 
             document.getElementById('kit-quantity').value = kit.quantity;
@@ -1307,14 +1307,19 @@
             // ✅ 위치 정보 복원
             let defaultLoc = {};
             try {
-                if (kit.location && kit.location.trim().startsWith('{')) {
+                if (kit.location && typeof kit.location === 'string' && kit.location.trim().startsWith('{')) {
                     defaultLoc = JSON.parse(kit.location);
                 }
             } catch (e) {
                 console.warn('위치 정보 파싱 실패:', e);
             }
-            if (App.StorageSelector && App.StorageSelector.init) {
-                App.StorageSelector.init("kit-storage-selector", defaultLoc, "EQUIPMENT");
+
+            // Storage Selector 초기화
+            if (App.StorageSelector && typeof App.StorageSelector.init === 'function') {
+                // Ensure the container exists before init (it should, but safety first)
+                if (document.getElementById("kit-storage-selector")) {
+                    App.StorageSelector.init("kit-storage-selector", defaultLoc, "EQUIPMENT");
+                }
             }
 
             if (kit.image_url) {
