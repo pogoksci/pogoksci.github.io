@@ -1546,6 +1546,7 @@ FAB
   transition: all 0.2s ease;
   width: auto;
   max-width: 600px;
+  white-space: nowrap;
 }
 
 .fab:hover {
