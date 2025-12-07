@@ -8,7 +8,7 @@
   // ✅ supabase 접근용 헬퍼
   const getSupabase = () => getApp().supabase || {};
   const getAPI = () => getApp().API || {};
-  
+
   // ------------------------------------------------------------
   // 📦 1️⃣ 시약장 목록 로드 (자동 재시도 포함)
   // ------------------------------------------------------------
@@ -27,6 +27,13 @@
       }
       console.error("❌ loadList(): DOM 탐색 실패 — 포기");
       return;
+    }
+
+    // ✅ FAB 버튼 활성화 (아이콘 추가)
+    if (App.Fab && App.Fab.setVisibility) {
+      App.Fab.setVisibility(true, '<span class="material-symbols-outlined">add</span> 새 시약장 등록', () => {
+        createForm();
+      });
     }
 
     console.log("✅ loadList(): DOM 탐색 성공 — 시약장 목록 불러오기 시작");
@@ -60,13 +67,13 @@
   // 🎨 2️⃣ 목록 렌더링
   // ------------------------------------------------------------
   function renderCabinetCards(cabinets) {
-      const container = document.getElementById("cabinet-list-container");
-      if (!container) return;
+    const container = document.getElementById("cabinet-list-container");
+    if (!container) return;
 
-      container.innerHTML = cabinets.map((cab) => {
-          const photo = cab.photo_url_320 || cab.photo_url_160 || null;
-          const areaName = cab.area_id?.area_name || "위치 없음";
-          return `
+    container.innerHTML = cabinets.map((cab) => {
+      const photo = cab.photo_url_320 || cab.photo_url_160 || null;
+      const areaName = cab.area_id?.area_name || "위치 없음";
+      return `
           <div class="cabinet-card">
             <div class="card-info">
               <h3>${cab.cabinet_name} <small class="area-name">${areaName}</small></h3>
@@ -79,24 +86,24 @@
               <button class="delete-btn" data-id="${cab.id}">삭제</button>
             </div>
           </div>`;
-      }).join("");
+    }).join("");
 
     container
-        .querySelectorAll(".edit-btn")
-        .forEach((btn) =>
-          btn.addEventListener("click", () => {
-            const id = btn.getAttribute("data-id");
-            editCabinet(id); // editCabinet 함수 호출
-          })
+      .querySelectorAll(".edit-btn")
+      .forEach((btn) =>
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-id");
+          editCabinet(id); // editCabinet 함수 호출
+        })
       );
 
     container
-        .querySelectorAll(".delete-btn")
-        .forEach((btn) =>
-          btn.addEventListener("click", () => {
-            const id = btn.getAttribute("data-id");
-            deleteCabinet(id); // deleteCabinet 함수 호출
-          })
+      .querySelectorAll(".delete-btn")
+      .forEach((btn) =>
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-id");
+          deleteCabinet(id); // deleteCabinet 함수 호출
+        })
       );
   }
 
@@ -104,9 +111,9 @@
   // ✏️ 2️⃣ 시약장 수정: 수정 버튼 클릭 시 수정할 시약장의 정보를 불러와서 폼에 표시
   // ------------------------------------------------------------
   async function editCabinet(id) {
-      const supabase = getSupabase();
-      try {
-        const { data: detail, error } = await supabase
+    const supabase = getSupabase();
+    try {
+      const { data: detail, error } = await supabase
         .from("Cabinet")
         .select(
           "id,cabinet_name,area_id(id,area_name),photo_url_320,photo_url_160,door_vertical_count,door_horizontal_count,shelf_height,storage_columns"
@@ -130,25 +137,25 @@
   // ➕ 4️⃣ 시약장 등록 / 수정 / 삭제 (Edge Function 호출로 수정됨)
   // ------------------------------------------------------------
   async function createCabinet(payload) {
-      const API = getAPI();
-      // ⬇️ [수정됨] DB 직접 insert 대신 Edge Function 호출
-      await API.callEdge(API.EDGE.CABINET, {
-          method: 'POST',
-          body: payload
-      });
+    const API = getAPI();
+    // ⬇️ [수정됨] DB 직접 insert 대신 Edge Function 호출
+    await API.callEdge(API.EDGE.CABINET, {
+      method: 'POST',
+      body: payload
+    });
   }
   // 사용자가 폼을 수정하고 저장 클릭 시, DB에 수정사항 반영 (editCabinet과 역할이 다름)
   async function updateCabinet(id, payload) {
-      const API = getAPI();
-      // ⬇️ [수정됨] DB 직접 update 대신 Edge Function 호출
-      const patchPayload = {
-          ...payload,
-          cabinet_id: id 
-      };
-      await API.callEdge(API.EDGE.CABINET, {
-          method: 'PATCH',
-          body: patchPayload
-      });
+    const API = getAPI();
+    // ⬇️ [수정됨] DB 직접 update 대신 Edge Function 호출
+    const patchPayload = {
+      ...payload,
+      cabinet_id: id
+    };
+    await API.callEdge(API.EDGE.CABINET, {
+      method: 'PATCH',
+      body: patchPayload
+    });
   }
 
   async function deleteCabinet(id) {
@@ -182,7 +189,7 @@
   function createForm() {
     // ⬇️ [수정됨] edit 함수와 동일하게 initCabinetForm만 호출합니다.
     if (App.Forms && typeof App.Forms.initCabinetForm === "function") {
-     App.Forms.initCabinetForm("create", null);
+      App.Forms.initCabinetForm("create", null);
     }
   }
 

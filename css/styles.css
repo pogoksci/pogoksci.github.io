@@ -342,21 +342,15 @@ button:disabled {
 
 
 /* 痍⑥냼 踰꾪듉 ?ㅽ???*/
-
-#cancel-form-btn {
-
+#cancel-form-btn,
+#equipment-cancel-btn {
   background-color: #e0e0e0;
-
   color: #333;
-
 }
 
-
-
-#cancel-form-btn:hover {
-
+#cancel-form-btn:hover,
+#equipment-cancel-btn:hover {
   background-color: #d0d0d0;
-
 }
 
 
@@ -382,21 +376,15 @@ button:disabled {
 
 
 /* ?섏젙 踰꾪듉 (?깅줉 踰꾪듉怨??숈씪 ?ㅽ??? */
-
-#cabinet-save-btn {
-
+#cabinet-save-btn,
+#equipment-save-btn {
   background-color: #00a0b2;
-
   color: #fff;
-
 }
 
-
-
-#cabinet-save-btn:hover {
-
+#cabinet-save-btn:hover,
+#equipment-save-btn:hover {
   background-color: #00BFD4;
-
 }
 
 
@@ -1534,7 +1522,7 @@ FAB
   padding: 12px 24px;
   font-size: 16px;
   font-weight: 600;
-  line-height: 1;
+  line-height: normal;
   box-shadow: 0 4px 12px rgba(0, 160, 178, 0.3);
   display: flex;
   align-items: center;
