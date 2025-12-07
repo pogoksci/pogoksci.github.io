@@ -921,1030 +921,987 @@
     if (doorText === "상중하도어") doorInt = 3;
 
     const finalPayload = {
-      area_id: payload.area_id, // makePayload handles area creation if needed? Utils.makePayload usually does logic.
-      // I need to check `makePayload` in utils.js if I want to be sure, but assuming it works for standard fields.
-      // Wait, `makePayload` might rely on specific field names.
-      // Let's assume manual construction for safety or rely on what `cabinet.js` did.
-      // `cabinet.js` calls `makePayload(state)`.
+      const finalPayload = {
+        area_name: payload.area_name, // ✅ Edge Function expects area_name to lookup/create Area
 
-      cabinet_name: payload.cabinet_name, // handled by makePayload "cabinet_name" logic? 
-      // `makePayload` usually combines button + custom.
+        // I need to check `makePayload` in utils.js if I want to be sure, but assuming it works for standard fields.
+        // Wait, `makePayload` might rely on specific field names.
+        // Let's assume manual construction for safety or rely on what `cabinet.js` did.
+        // `cabinet.js` calls `makePayload(state)`.
 
-      photo_url_320: payload.photo_url_320,
-      photo_url_160: payload.photo_url_160,
-      door_vertical_count: doorInt
-    };
+        cabinet_name: payload.cabinet_name, // handled by makePayload "cabinet_name" logic? 
+        // `makePayload` usually combines button + custom.
 
-    // Special case: Outside Cabinet
-    if (state.cabinet_name_buttons === "교구장밖") {
-      finalPayload.door_vertical_count = null;
-    }
-
-    if (!finalPayload.cabinet_name) return alert("이름을 입력하세요.");
-
-    if (state.mode === "create") {
-      await App.EquipmentCabinet.createCabinet(finalPayload);
-      alert("✅ 등록되었습니다.");
-    } else {
-      await App.EquipmentCabinet.updateCabinet(state.cabinetId, finalPayload);
-    }
-
-    const title = document.querySelector("#inventory-form h1");
-    const submitBtn = document.getElementById("inventory-submit-button");
-    const statusMsg = document.getElementById("statusMessage");
-    if (title) {
-      if (mode === "edit" && detail) {
-        const chemName = detail.Substance?.chem_name_kor_mod || detail.Substance?.chem_name_kor || detail.Substance?.substance_name_mod || detail.Substance?.substance_name || detail.Substance?.cas_rn || "알 수 없음";
-        title.innerHTML = `약품 정보 수정: ${chemName} <span style="font-size: 13px; color: #666;">(No.${detail.id})</span>`;
-      } else {
-        title.textContent = "약품 입고 정보 입력";
-      }
-    }
-
-    const BUTTON_GROUP_IDS = [
-      "classification_buttons",
-      "state_buttons",
-      "unit_buttons",
-      "concentration_unit_buttons",
-      "unit_buttons",
-      "bottle_type_buttons",
-      "concentration_unit_buttons",
-      "manufacturer_buttons",
-    ];
-
-    // ✅ Substance 정보 저장 (계산용)
-    if (detail?.Substance) {
-      set("substance_info", detail.Substance);
-    } else {
-      set("substance_info", null);
-    }
-
-    // ✅ 수정 모드 기본 데이터 반영
-    if (mode === "edit" && detail) {
-      const fieldMap = {
-        cas_rn: detail.Substance?.cas_rn ?? "",
-        purchase_volume: detail.initial_amount ?? "",
-        concentration_value: detail.concentration_value ?? "",
-        purchase_date: detail.purchase_date ?? "",
+        photo_url_320: payload.photo_url_320,
+        photo_url_160: payload.photo_url_160,
+        door_vertical_count: doorInt
       };
 
-      Object.entries(fieldMap).forEach(([id, value]) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const normalized = typeof value === "string" ? value.split("T")[0] : value ?? "";
-        el.value = normalized;
-        set(id, normalized);
-      });
+      // Special case: Outside Cabinet
+      if(state.cabinet_name_buttons === "교구장밖") {
+        finalPayload.door_vertical_count = null;
+  }
 
-      const existingPhoto = detail.photo_url_320 || detail.photo_url_160 || null;
-      if (existingPhoto) {
-        const preview = document.getElementById("photo-preview");
-        if (preview) {
-          preview.innerHTML = `<img src="${existingPhoto}" alt="Preview">`;
-        }
-        set("photo_base64", existingPhoto);
+  if (!finalPayload.cabinet_name) return alert("이름을 입력하세요.");
+
+  if (state.mode === "create") {
+    await App.EquipmentCabinet.createCabinet(finalPayload);
+    alert("✅ 등록되었습니다.");
+  } else {
+    await App.EquipmentCabinet.updateCabinet(state.cabinetId, finalPayload);
+  }
+
+  await App.includeHTML("pages/equipment-cabinet-list.html");
+  App.EquipmentCabinet.loadList();
+}
+  }
+const preview = document.getElementById("photo-preview");
+if (preview) {
+  preview.innerHTML = `<img src="${existingPhoto}" alt="Preview">`;
+}
+set("photo_base64", existingPhoto);
       }
-      set("photo_updated", false);
+set("photo_updated", false);
     } else {
-      const clearInputs = ["cas_rn", "purchase_volume", "concentration_value", "purchase_date", "manufacturer_other"];
-      clearInputs.forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.value = "";
-          el.setAttribute("value", ""); // DOM 속성도 강제 초기화
-        }
-      });
-      BUTTON_GROUP_IDS.forEach((groupId) => {
-        const group = document.getElementById(groupId);
-        if (group) group.querySelectorAll(".active").forEach((btn) => btn.classList.remove("active"));
-      });
-      ["classification", "state", "unit", "bottle_type", "concentration_unit", "manufacturer"].forEach((key) => set(key, null));
-      const otherGroup = document.getElementById("other_manufacturer_group");
-      if (otherGroup) otherGroup.style.display = "none";
-      const otherInput = document.getElementById("manufacturer_other");
-      if (otherInput) otherInput.value = "";
-      set("msds_pdf_file", null);
-      set("photo_base64", null);
-      set("photo_updated", false);
+  const clearInputs = ["cas_rn", "purchase_volume", "concentration_value", "purchase_date", "manufacturer_other"];
+  clearInputs.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.value = "";
+      el.setAttribute("value", ""); // DOM 속성도 강제 초기화
     }
+  });
+  BUTTON_GROUP_IDS.forEach((groupId) => {
+    const group = document.getElementById(groupId);
+    if (group) group.querySelectorAll(".active").forEach((btn) => btn.classList.remove("active"));
+  });
+  ["classification", "state", "unit", "bottle_type", "concentration_unit", "manufacturer"].forEach((key) => set(key, null));
+  const otherGroup = document.getElementById("other_manufacturer_group");
+  if (otherGroup) otherGroup.style.display = "none";
+  const otherInput = document.getElementById("manufacturer_other");
+  if (otherInput) otherInput.value = "";
+  set("msds_pdf_file", null);
+  set("photo_base64", null);
+  set("photo_updated", false);
+}
 
-    // ✅ 버튼 그룹 초기화 및 복원
-    const buttonFieldMap = {
-      classification_buttons: (d) => d?.classification ?? null,
-      state_buttons: (d) => d?.state ?? null,
-      unit_buttons: (d) => d?.unit ?? null,
-      bottle_type_buttons: (d) => d?.bottle_type ?? null,
-      concentration_unit_buttons: (d) => d?.concentration_unit ?? null,
-      manufacturer_buttons: (d) => d?.manufacturer ?? null,
-    };
+// ✅ 버튼 그룹 초기화 및 복원
+const buttonFieldMap = {
+  classification_buttons: (d) => d?.classification ?? null,
+  state_buttons: (d) => d?.state ?? null,
+  unit_buttons: (d) => d?.unit ?? null,
+  bottle_type_buttons: (d) => d?.bottle_type ?? null,
+  concentration_unit_buttons: (d) => d?.concentration_unit ?? null,
+  manufacturer_buttons: (d) => d?.manufacturer ?? null,
+};
 
-    Object.entries(buttonFieldMap).forEach(([groupId, getter]) => {
-      const stateKey = groupId.replace("_buttons", "");
-      setupButtonGroup(groupId, (btn) => {
-        set(stateKey, btn.dataset.value);
-        if (groupId === "manufacturer_buttons") {
-          const group = document.getElementById("other_manufacturer_group");
-          if (group) group.style.display = btn.dataset.value === "기타" ? "block" : "none";
-        }
-      });
+Object.entries(buttonFieldMap).forEach(([groupId, getter]) => {
+  const stateKey = groupId.replace("_buttons", "");
+  setupButtonGroup(groupId, (btn) => {
+    set(stateKey, btn.dataset.value);
+    if (groupId === "manufacturer_buttons") {
+      const group = document.getElementById("other_manufacturer_group");
+      if (group) group.style.display = btn.dataset.value === "기타" ? "block" : "none";
+    }
+  });
 
-      if (mode === "edit" && detail) {
-        const raw = getter(detail);
-        const normalizedValue = raw == null ? "" : String(raw).trim();
-        if (!normalizedValue) return;
-        const buttons = Array.from(document.querySelectorAll(`#${groupId} button`));
-        const sanitize = (v) => v.replace(/\s+/g, "").toLowerCase();
-        let targetBtn = buttons.find((btn) => {
-          const candidate = (btn.dataset.value || btn.textContent || "").trim();
-          return candidate === normalizedValue;
-        });
-        if (!targetBtn) {
-          targetBtn = buttons.find((btn) => {
-            const candidate = (btn.dataset.value || btn.textContent || "").trim();
-            return sanitize(candidate) === sanitize(normalizedValue);
-          });
-        }
-        if (targetBtn) {
-          buttons.forEach((btn) => btn.classList.remove("active"));
-          targetBtn.classList.add("active");
-          const appliedValue = targetBtn.dataset.value || targetBtn.textContent.trim();
-          set(stateKey, appliedValue);
-          if (groupId === "manufacturer_buttons") {
-            const group = document.getElementById("other_manufacturer_group");
-            if (group) group.style.display = appliedValue === "기타" ? "block" : "none";
-            if (appliedValue === "기타") {
-              const otherInput = document.getElementById("manufacturer_other");
-              if (otherInput && normalizedValue !== "기타") otherInput.value = normalizedValue;
-            }
-          }
-        } else if (groupId === "manufacturer_buttons") {
-          const otherBtn = document.querySelector(`#${groupId} button[data-value="기타"]`);
-          if (otherBtn) {
-            buttons.forEach((btn) => btn.classList.remove("active"));
-            otherBtn.classList.add("active");
-            set("manufacturer", "기타");
-            const otherInput = document.getElementById("manufacturer_other");
-            if (otherInput) otherInput.value = normalizedValue;
-            const group = document.getElementById("other_manufacturer_group");
-            if (group) group.style.display = "block";
-          }
-        }
-      }
+  if (mode === "edit" && detail) {
+    const raw = getter(detail);
+    const normalizedValue = raw == null ? "" : String(raw).trim();
+    if (!normalizedValue) return;
+    const buttons = Array.from(document.querySelectorAll(`#${groupId} button`));
+    const sanitize = (v) => v.replace(/\s+/g, "").toLowerCase();
+    let targetBtn = buttons.find((btn) => {
+      const candidate = (btn.dataset.value || btn.textContent || "").trim();
+      return candidate === normalizedValue;
     });
-
-    // ✅ Bottle Type Restoration (from bottle_mass)
-    if (mode === "edit" && detail && detail.bottle_mass && detail.initial_amount) {
-      const mass = Number(detail.bottle_mass);
-      const vol = Number(detail.initial_amount);
-      let restoredType = null;
-
-      // Reverse logic of calculateBottleMass
-      if ((vol === 25 && mass === 65) ||
-        (vol === 100 && mass === 120) ||
-        (vol === 500 && mass === 400) ||
-        (vol === 1000 && mass === 510)) {
-        restoredType = "갈색유리";
-      }
-      else if (vol === 500) {
-        if (mass === 40) restoredType = "반투명플라스틱";
-        else if (mass === 80) restoredType = "갈색플라스틱";
-        else if (mass === 75) restoredType = "흰색플라스틱";
-      }
-
-      if (restoredType) {
-        const btn = document.querySelector(`#bottle_type_buttons button[data-value="${restoredType}"]`);
-        if (btn) {
-          document.querySelectorAll(`#bottle_type_buttons button`).forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          set("bottle_type", restoredType);
+    if (!targetBtn) {
+      targetBtn = buttons.find((btn) => {
+        const candidate = (btn.dataset.value || btn.textContent || "").trim();
+        return sanitize(candidate) === sanitize(normalizedValue);
+      });
+    }
+    if (targetBtn) {
+      buttons.forEach((btn) => btn.classList.remove("active"));
+      targetBtn.classList.add("active");
+      const appliedValue = targetBtn.dataset.value || targetBtn.textContent.trim();
+      set(stateKey, appliedValue);
+      if (groupId === "manufacturer_buttons") {
+        const group = document.getElementById("other_manufacturer_group");
+        if (group) group.style.display = appliedValue === "기타" ? "block" : "none";
+        if (appliedValue === "기타") {
+          const otherInput = document.getElementById("manufacturer_other");
+          if (otherInput && normalizedValue !== "기타") otherInput.value = normalizedValue;
         }
       }
-    }
-
-    // ✅ 사진 처리
-    const photoInput = document.getElementById("photo-input");
-    const cameraInput = document.getElementById("camera-input");
-    const preview = document.getElementById("photo-preview");
-    const photoBtn = document.getElementById("photo-btn");
-    const cameraBtn = document.getElementById("camera-btn");
-    const cameraCancelBtn = document.getElementById("camera-cancel-btn");
-    const videoStream = document.getElementById("camera-stream");
-    const canvas = document.getElementById("camera-canvas");
-    let isCameraActive = false;
-
-    // Ensure previous stream is stopped when initializing form
-    if (inventoryStream) {
-      inventoryStream.getTracks().forEach(track => track.stop());
-      inventoryStream = null;
-    }
-
-    const stopInventoryCamera = () => {
-      if (inventoryStream) {
-        inventoryStream.getTracks().forEach(track => track.stop());
-        inventoryStream = null;
+    } else if (groupId === "manufacturer_buttons") {
+      const otherBtn = document.querySelector(`#${groupId} button[data-value="기타"]`);
+      if (otherBtn) {
+        buttons.forEach((btn) => btn.classList.remove("active"));
+        otherBtn.classList.add("active");
+        set("manufacturer", "기타");
+        const otherInput = document.getElementById("manufacturer_other");
+        if (otherInput) otherInput.value = normalizedValue;
+        const group = document.getElementById("other_manufacturer_group");
+        if (group) group.style.display = "block";
       }
-      if (videoStream && videoStream.srcObject) {
-        const tracks = videoStream.srcObject.getTracks();
-        if (tracks) tracks.forEach(track => track.stop());
-        videoStream.srcObject = null;
+    }
+  }
+});
+
+// ✅ Bottle Type Restoration (from bottle_mass)
+if (mode === "edit" && detail && detail.bottle_mass && detail.initial_amount) {
+  const mass = Number(detail.bottle_mass);
+  const vol = Number(detail.initial_amount);
+  let restoredType = null;
+
+  // Reverse logic of calculateBottleMass
+  if ((vol === 25 && mass === 65) ||
+    (vol === 100 && mass === 120) ||
+    (vol === 500 && mass === 400) ||
+    (vol === 1000 && mass === 510)) {
+    restoredType = "갈색유리";
+  }
+  else if (vol === 500) {
+    if (mass === 40) restoredType = "반투명플라스틱";
+    else if (mass === 80) restoredType = "갈색플라스틱";
+    else if (mass === 75) restoredType = "흰색플라스틱";
+  }
+
+  if (restoredType) {
+    const btn = document.querySelector(`#bottle_type_buttons button[data-value="${restoredType}"]`);
+    if (btn) {
+      document.querySelectorAll(`#bottle_type_buttons button`).forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      set("bottle_type", restoredType);
+    }
+  }
+}
+
+// ✅ 사진 처리
+const photoInput = document.getElementById("photo-input");
+const cameraInput = document.getElementById("camera-input");
+const preview = document.getElementById("photo-preview");
+const photoBtn = document.getElementById("photo-btn");
+const cameraBtn = document.getElementById("camera-btn");
+const cameraCancelBtn = document.getElementById("camera-cancel-btn");
+const videoStream = document.getElementById("camera-stream");
+const canvas = document.getElementById("camera-canvas");
+let isCameraActive = false;
+
+// Ensure previous stream is stopped when initializing form
+if (inventoryStream) {
+  inventoryStream.getTracks().forEach(track => track.stop());
+  inventoryStream = null;
+}
+
+const stopInventoryCamera = () => {
+  if (inventoryStream) {
+    inventoryStream.getTracks().forEach(track => track.stop());
+    inventoryStream = null;
+  }
+  if (videoStream && videoStream.srcObject) {
+    const tracks = videoStream.srcObject.getTracks();
+    if (tracks) tracks.forEach(track => track.stop());
+    videoStream.srcObject = null;
+  }
+  if (videoStream) videoStream.style.display = 'none';
+  isCameraActive = false;
+  if (cameraBtn) cameraBtn.innerHTML = '카메라로 촬영';
+  if (cameraCancelBtn) cameraCancelBtn.style.display = 'none';
+};
+
+const startInventoryCamera = async () => {
+  try {
+    const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+
+    // Check if form is still valid/active? (In this architecture, if init is called again, we stopped previous stream)
+    inventoryStream = newStream;
+    videoStream.srcObject = inventoryStream;
+    videoStream.style.display = 'block';
+
+    // Hide existing image if any
+    const existingImg = preview.querySelector('img');
+    if (existingImg) existingImg.style.display = 'none';
+
+    const placeholder = preview.querySelector('.placeholder-text');
+    if (placeholder) placeholder.style.display = 'none';
+
+    isCameraActive = true;
+    cameraBtn.innerHTML = '촬영하기';
+    if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-block';
+  } catch (err) {
+    console.error("Camera access denied or error:", err);
+    // Fallback to file input (mobile behavior)
+    cameraInput.click();
+  }
+};
+
+const takeInventoryPhoto = () => {
+  if (!videoStream || !canvas) return;
+  canvas.width = videoStream.videoWidth;
+  canvas.height = videoStream.videoHeight;
+  canvas.getContext('2d').drawImage(videoStream, 0, 0);
+
+  const base64 = canvas.toDataURL("image/jpeg");
+
+  // Update State
+  set("photo_base64", base64);
+  set("photo_updated", true);
+
+  // Show preview (create img element)
+  const placeholder = preview.querySelector('.placeholder-text');
+  if (placeholder) placeholder.style.display = 'none';
+
+  // Remove existing img if any, append new one
+  const existingImg = preview.querySelector('img');
+  if (existingImg) existingImg.remove();
+
+  const img = document.createElement('img');
+  img.src = base64;
+  img.alt = "Preview";
+  img.style.maxWidth = "100%";
+  img.style.maxHeight = "100%";
+  img.style.objectFit = "contain";
+  preview.appendChild(img);
+
+  stopInventoryCamera();
+  cameraBtn.innerHTML = '다시 촬영';
+};
+
+const handleFile = (file) => {
+  if (!file) return;
+  if (isCameraActive) stopInventoryCamera();
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const src = e.target.result;
+    // Clear preview content except placeholder (which we hide)
+    const placeholder = preview.querySelector('.placeholder-text');
+    if (placeholder) placeholder.style.display = 'none';
+
+    const existingImg = preview.querySelector('img');
+    if (existingImg) existingImg.remove();
+
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = "Preview";
+    img.style.maxWidth = "100%";
+    img.style.maxHeight = "100%";
+    img.style.objectFit = "contain";
+    preview.appendChild(img);
+
+    set("photo_base64", src);
+    set("photo_updated", true);
+  };
+  reader.readAsDataURL(file);
+};
+
+if (cameraCancelBtn) {
+  cameraCancelBtn.onclick = () => {
+    stopInventoryCamera();
+  };
+}
+
+if (photoBtn && photoInput) {
+  photoBtn.onclick = () => {
+    if (isCameraActive) stopInventoryCamera();
+    photoInput.click();
+  };
+}
+
+if (cameraBtn) {
+  cameraBtn.onclick = () => {
+    if (isCameraActive) {
+      takeInventoryPhoto();
+    } else {
+      startInventoryCamera();
+    }
+  };
+}
+
+if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
+if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
+
+// ✅ MSDS PDF 처리
+const msdsInput = document.getElementById("msds-pdf-input");
+if (msdsInput) {
+  msdsInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert("파일 크기는 10MB 이하여야 합니다.");
+        msdsInput.value = "";
+        set("msds_pdf_file", null);
+        return;
       }
-      if (videoStream) videoStream.style.display = 'none';
-      isCameraActive = false;
-      if (cameraBtn) cameraBtn.innerHTML = '카메라로 촬영';
-      if (cameraCancelBtn) cameraCancelBtn.style.display = 'none';
-    };
+      set("msds_pdf_file", file);
+    }
+  };
+}
 
-    const startInventoryCamera = async () => {
-      try {
-        const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+// ✅ 위치 (Area → Cabinet → 도어/단/열)
+const areaSelect = document.getElementById("location_area_select");
+const cabSelect = document.getElementById("location_cabinet_select");
 
-        // Check if form is still valid/active? (In this architecture, if init is called again, we stopped previous stream)
-        inventoryStream = newStream;
-        videoStream.srcObject = inventoryStream;
-        videoStream.style.display = 'block';
+if (areaSelect && cabSelect && supabase) {
+  const defaultAreaOptions =
+    (areaSelect.__defaultOptions ?? areaSelect.innerHTML) ||
+    `<option value="">-- 선택 안 함 --</option>`;
+  areaSelect.__defaultOptions = defaultAreaOptions;
 
-        // Hide existing image if any
-        const existingImg = preview.querySelector('img');
-        if (existingImg) existingImg.style.display = 'none';
+  const { data: areas } = await supabase.from("Area").select("id, area_name").order("area_name");
+  areaSelect.innerHTML =
+    defaultAreaOptions +
+    (areas?.map?.((a) => `<option value="${a.id}">${a.area_name}</option>`).join("") || "");
 
-        const placeholder = preview.querySelector('.placeholder-text');
-        if (placeholder) placeholder.style.display = 'none';
+  if (mode === "edit" && detail) {
+    const areaId = detail.area_id || detail.Cabinet?.area_id || detail.Cabinet?.Area?.id || null;
+    if (areaId) {
+      areaSelect.value = areaId;
+      set("area_id", areaId);
 
-        isCameraActive = true;
-        cameraBtn.innerHTML = '촬영하기';
-        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-block';
-      } catch (err) {
-        console.error("Camera access denied or error:", err);
-        // Fallback to file input (mobile behavior)
-        cameraInput.click();
+      const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", areaId);
+      cabSelect.innerHTML =
+        `<option value="">-- 선택 안 함 --</option>` +
+        (cabs || []).map(({ id, cabinet_name }) => `<option value="${id}">${cabinet_name}</option>`).join("");
+      cabSelect.disabled = false;
+
+      const cabinetId = detail.cabinet_id || detail.Cabinet?.id || null;
+      if (cabinetId) {
+        cabSelect.value = cabinetId;
+        set("cabinet_id", cabinetId);
       }
-    };
 
-    const takeInventoryPhoto = () => {
-      if (!videoStream || !canvas) return;
-      canvas.width = videoStream.videoWidth;
-      canvas.height = videoStream.videoHeight;
-      canvas.getContext('2d').drawImage(videoStream, 0, 0);
-
-      const base64 = canvas.toDataURL("image/jpeg");
-
-      // Update State
-      set("photo_base64", base64);
-      set("photo_updated", true);
-
-      // Show preview (create img element)
-      const placeholder = preview.querySelector('.placeholder-text');
-      if (placeholder) placeholder.style.display = 'none';
-
-      // Remove existing img if any, append new one
-      const existingImg = preview.querySelector('img');
-      if (existingImg) existingImg.remove();
-
-      const img = document.createElement('img');
-      img.src = base64;
-      img.alt = "Preview";
-      img.style.maxWidth = "100%";
-      img.style.maxHeight = "100%";
-      img.style.objectFit = "contain";
-      preview.appendChild(img);
-
-      stopInventoryCamera();
-      cameraBtn.innerHTML = '다시 촬영';
-    };
-
-    const handleFile = (file) => {
-      if (!file) return;
-      if (isCameraActive) stopInventoryCamera();
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const src = e.target.result;
-        // Clear preview content except placeholder (which we hide)
-        const placeholder = preview.querySelector('.placeholder-text');
-        if (placeholder) placeholder.style.display = 'none';
-
-        const existingImg = preview.querySelector('img');
-        if (existingImg) existingImg.remove();
-
-        const img = document.createElement('img');
-        img.src = src;
-        img.alt = "Preview";
-        img.style.maxWidth = "100%";
-        img.style.maxHeight = "100%";
-        img.style.objectFit = "contain";
-        preview.appendChild(img);
-
-        set("photo_base64", src);
-        set("photo_updated", true);
+      ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => {
+        let value = detail[key] ?? null;
+        if (key === "door_vertical") value = normalizeChoice(value, "vertical");
+        if (key === "door_horizontal") value = normalizeChoice(value, "horizontal");
+        set(key, value);
+      });
+      const normalizedDetail = {
+        ...detail,
+        door_vertical: get("door_vertical"),
+        door_horizontal: get("door_horizontal"),
+        internal_shelf_level: get("internal_shelf_level"),
+        storage_column: get("storage_column"),
       };
-      reader.readAsDataURL(file);
-    };
-
-    if (cameraCancelBtn) {
-      cameraCancelBtn.onclick = () => {
-        stopInventoryCamera();
-      };
+      await renderCabinetButtons(cabinetId, normalizedDetail);
     }
+  }
 
-    if (photoBtn && photoInput) {
-      photoBtn.onclick = () => {
-        if (isCameraActive) stopInventoryCamera();
-        photoInput.click();
-      };
+  areaSelect.onchange = async (e) => {
+    const areaId = e.target.value || null;
+    set("area_id", areaId);
+    cabSelect.disabled = !areaId;
+    if (!areaId) {
+      cabSelect.innerHTML = `<option value="">-- 선택 안 함 --</option>`;
+      set("cabinet_id", null);
+      ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
+      await renderCabinetButtons(null, null);
+      return;
     }
+    const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", areaId);
+    cabSelect.innerHTML =
+      `<option value="">-- 선택 안 함 --</option>` +
+      (cabs || []).map((c) => `<option value="${c.id}">${c.cabinet_name}</option>`).join("");
+    cabSelect.value = "";
+    set("cabinet_id", null);
+    ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
+    await renderCabinetButtons(null, null);
+  };
+}
 
-    if (cameraBtn) {
-      cameraBtn.onclick = () => {
-        if (isCameraActive) {
-          takeInventoryPhoto();
-        } else {
-          startInventoryCamera();
-        }
+if (cabSelect) {
+  cabSelect.onchange = async (e) => {
+    const cabId = e.target.value;
+    set("cabinet_id", cabId || null);
+    ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
+    await renderCabinetButtons(cabId || null, null);
+  };
+}
+
+// ✅ 스크롤 상단 강제 이동
+window.scrollTo(0, 0);
+
+// ✅ 저장 로직
+if (submitBtn) {
+  submitBtn.onclick = async (e) => {
+    e.preventDefault();
+    if (typeof stopInventoryCamera === 'function') stopInventoryCamera();
+    statusMsg.textContent = "💾 저장 중...";
+
+    try {
+      const state = dump();
+      const cas = document.getElementById("cas_rn").value.trim();
+      const volumeValue = document.getElementById("purchase_volume").value;
+      const volume = Number.parseFloat(volumeValue);
+      const unit = state.unit;
+      const concentrationValue = document.getElementById("concentration_value").value;
+      const concentrationUnit = state.concentration_unit;
+
+      if (!cas) {
+        alert("CAS 번호는 필수 입력 항목입니다.");
+        statusMsg.textContent = "";
+        return;
+      }
+
+      if (!Number.isFinite(volume) || volume <= 0) {
+        alert("구입용량을 바르게 입력해 주세요.");
+        statusMsg.textContent = "";
+        return;
+      }
+
+      if (!unit) {
+        alert("구입용량 단위를 선택해 주세요.");
+        statusMsg.textContent = "";
+        return;
+      }
+
+      const manufacturerValue =
+        state.manufacturer === "기타"
+          ? document.getElementById("manufacturer_other").value.trim() || null
+          : state.manufacturer || null;
+      const purchaseDate = document.getElementById("purchase_date").value || null;
+      const inventoryDetails = {
+        purchase_volume: volume,
+        unit,
+        state: state.state || null,
+        classification: state.classification || null,
+        manufacturer: manufacturerValue,
+        purchase_date: purchaseDate,
+        cabinet_id: state.cabinet_id || null,
+        door_vertical: state.door_vertical || null,
+        door_horizontal: state.door_horizontal || null,
+        internal_shelf_level: state.internal_shelf_level || null,
+        storage_column: state.storage_column || null,
+        concentration_value: concentrationValue ? Number(concentrationValue) : null,
+        concentration_unit: concentrationUnit || null,
+        bottle_mass: calculateBottleMass(volume, state.bottle_type),
       };
-    }
 
-    if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
-    if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
+      // 📤 MSDS PDF 업로드
+      if (state.msds_pdf_file) {
+        statusMsg.textContent = "📄 MSDS PDF 처리 중...";
+        try {
+          const file = state.msds_pdf_file;
+          const arrayBuffer = await file.arrayBuffer();
+          const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    // ✅ MSDS PDF 처리
-    const msdsInput = document.getElementById("msds-pdf-input");
-    if (msdsInput) {
-      msdsInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          if (file.size > 10 * 1024 * 1024) {
-            alert("파일 크기는 10MB 이하여야 합니다.");
-            msdsInput.value = "";
-            set("msds_pdf_file", null);
-            return;
+          console.log("File Hash:", hashHex);
+
+          const { data: existingFile } = await supabase
+            .from('Inventory')
+            .select('msds_pdf_url')
+            .eq('msds_pdf_hash', hashHex)
+            .limit(1)
+            .maybeSingle();
+
+          if (existingFile?.msds_pdf_url) {
+            console.log("♻️ Duplicate file found. Reusing URL:", existingFile.msds_pdf_url);
+            inventoryDetails.msds_pdf_url = existingFile.msds_pdf_url;
+            inventoryDetails.msds_pdf_hash = hashHex;
+          } else {
+            console.log("📤 New file. Uploading...");
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+            const { data: _uploadData, error: uploadError } = await supabase.storage
+              .from('msds-pdf')
+              .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: publicUrlData } = supabase.storage
+              .from('msds-pdf')
+              .getPublicUrl(fileName);
+
+            inventoryDetails.msds_pdf_url = publicUrlData.publicUrl;
+            inventoryDetails.msds_pdf_hash = hashHex;
+            console.log("✅ MSDS PDF Uploaded:", inventoryDetails.msds_pdf_url);
           }
-          set("msds_pdf_file", file);
-        }
-      };
-    }
-
-    // ✅ 위치 (Area → Cabinet → 도어/단/열)
-    const areaSelect = document.getElementById("location_area_select");
-    const cabSelect = document.getElementById("location_cabinet_select");
-
-    if (areaSelect && cabSelect && supabase) {
-      const defaultAreaOptions =
-        (areaSelect.__defaultOptions ?? areaSelect.innerHTML) ||
-        `<option value="">-- 선택 안 함 --</option>`;
-      areaSelect.__defaultOptions = defaultAreaOptions;
-
-      const { data: areas } = await supabase.from("Area").select("id, area_name").order("area_name");
-      areaSelect.innerHTML =
-        defaultAreaOptions +
-        (areas?.map?.((a) => `<option value="${a.id}">${a.area_name}</option>`).join("") || "");
-
-      if (mode === "edit" && detail) {
-        const areaId = detail.area_id || detail.Cabinet?.area_id || detail.Cabinet?.Area?.id || null;
-        if (areaId) {
-          areaSelect.value = areaId;
-          set("area_id", areaId);
-
-          const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", areaId);
-          cabSelect.innerHTML =
-            `<option value="">-- 선택 안 함 --</option>` +
-            (cabs || []).map(({ id, cabinet_name }) => `<option value="${id}">${cabinet_name}</option>`).join("");
-          cabSelect.disabled = false;
-
-          const cabinetId = detail.cabinet_id || detail.Cabinet?.id || null;
-          if (cabinetId) {
-            cabSelect.value = cabinetId;
-            set("cabinet_id", cabinetId);
-          }
-
-          ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => {
-            let value = detail[key] ?? null;
-            if (key === "door_vertical") value = normalizeChoice(value, "vertical");
-            if (key === "door_horizontal") value = normalizeChoice(value, "horizontal");
-            set(key, value);
-          });
-          const normalizedDetail = {
-            ...detail,
-            door_vertical: get("door_vertical"),
-            door_horizontal: get("door_horizontal"),
-            internal_shelf_level: get("internal_shelf_level"),
-            storage_column: get("storage_column"),
-          };
-          await renderCabinetButtons(cabinetId, normalizedDetail);
-        }
-      }
-
-      areaSelect.onchange = async (e) => {
-        const areaId = e.target.value || null;
-        set("area_id", areaId);
-        cabSelect.disabled = !areaId;
-        if (!areaId) {
-          cabSelect.innerHTML = `<option value="">-- 선택 안 함 --</option>`;
-          set("cabinet_id", null);
-          ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
-          await renderCabinetButtons(null, null);
+        } catch (err) {
+          console.error("PDF Processing Error:", err);
+          alert("MSDS PDF 처리 중 오류가 발생했습니다: " + err.message);
+          statusMsg.textContent = "";
           return;
         }
-        const { data: cabs } = await supabase.from("Cabinet").select("*").eq("area_id", areaId);
-        cabSelect.innerHTML =
-          `<option value="">-- 선택 안 함 --</option>` +
-          (cabs || []).map((c) => `<option value="${c.id}">${c.cabinet_name}</option>`).join("");
-        cabSelect.value = "";
-        set("cabinet_id", null);
-        ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
-        await renderCabinetButtons(null, null);
-      };
-    }
+      } else if (mode === "edit" && detail?.msds_pdf_url) {
+        inventoryDetails.msds_pdf_url = detail.msds_pdf_url;
+        inventoryDetails.msds_pdf_hash = detail.msds_pdf_hash;
+      }
 
-    if (cabSelect) {
-      cabSelect.onchange = async (e) => {
-        const cabId = e.target.value;
-        set("cabinet_id", cabId || null);
-        ["door_vertical", "door_horizontal", "internal_shelf_level", "storage_column"].forEach((key) => set(key, null));
-        await renderCabinetButtons(cabId || null, null);
-      };
-    }
+      if (state.photo_base64) {
+        inventoryDetails.photo_320_base64 = state.photo_base64;
+        inventoryDetails.photo_160_base64 = state.photo_base64;
+      }
 
-    // ✅ 스크롤 상단 강제 이동
-    window.scrollTo(0, 0);
+      if (mode === "edit" && detail?.id) {
+        let totalUsage = 0;
+        const { data: usageLogs, error: usageError } = await supabase
+          .from("UsageLog")
+          .select("amount")
+          .eq("inventory_id", detail.id);
 
-    // ✅ 저장 로직
-    if (submitBtn) {
-      submitBtn.onclick = async (e) => {
-        e.preventDefault();
-        if (typeof stopInventoryCamera === 'function') stopInventoryCamera();
-        statusMsg.textContent = "💾 저장 중...";
+        if (!usageError && usageLogs) {
+          totalUsage = usageLogs.reduce((sum, log) => sum + (Number(log.amount) || 0), 0);
+        }
+        const newCurrentAmount = volume - totalUsage;
 
-        try {
-          const state = dump();
-          const cas = document.getElementById("cas_rn").value.trim();
-          const volumeValue = document.getElementById("purchase_volume").value;
-          const volume = Number.parseFloat(volumeValue);
-          const unit = state.unit;
-          const concentrationValue = document.getElementById("concentration_value").value;
-          const concentrationUnit = state.concentration_unit;
+        const updatePayload = {
+          initial_amount: volume,
+          current_amount: newCurrentAmount,
+          unit,
+          state: state.state || null,
+          classification: state.classification || null,
+          manufacturer: manufacturerValue,
+          purchase_date: purchaseDate,
+          cabinet_id: state.cabinet_id || null,
+          door_vertical: state.door_vertical || null,
+          door_horizontal: state.door_horizontal || null,
+          internal_shelf_level: state.internal_shelf_level || null,
+          storage_column: state.storage_column || null,
+          concentration_value: concentrationValue ? Number(concentrationValue) : null,
+          concentration_unit: concentrationUnit || null,
+          bottle_mass: calculateBottleMass(volume, state.bottle_type),
+          msds_pdf_url: inventoryDetails.msds_pdf_url || null,
+          msds_pdf_hash: inventoryDetails.msds_pdf_hash || null,
+        };
 
-          if (!cas) {
-            alert("CAS 번호는 필수 입력 항목입니다.");
-            statusMsg.textContent = "";
-            return;
-          }
+        const substanceInfo = state.substance_info;
+        if (substanceInfo && concentrationValue && concentrationUnit) {
+          const propsList = substanceInfo.Properties || [];
+          const getPropVal = (nameKey) => {
+            const found = propsList.find((p) => p.name && p.name.toLowerCase().includes(nameKey.toLowerCase()));
+            return found ? found.property : null;
+          };
+          const densityVal = getPropVal("Density");
 
-          if (!Number.isFinite(volume) || volume <= 0) {
-            alert("구입용량을 바르게 입력해 주세요.");
-            statusMsg.textContent = "";
-            return;
-          }
+          const conversions = computeConversions({
+            value: concentrationValue,
+            unit: concentrationUnit,
+            molarMass: substanceInfo.molecular_mass,
+            density: densityVal
+          });
 
-          if (!unit) {
-            alert("구입용량 단위를 선택해 주세요.");
-            statusMsg.textContent = "";
-            return;
-          }
-
-          const manufacturerValue =
-            state.manufacturer === "기타"
-              ? document.getElementById("manufacturer_other").value.trim() || null
-              : state.manufacturer || null;
-          const purchaseDate = document.getElementById("purchase_date").value || null;
-          const inventoryDetails = {
-            purchase_volume: volume,
-            unit,
-            state: state.state || null,
-            classification: state.classification || null,
-            manufacturer: manufacturerValue,
-            purchase_date: purchaseDate,
-            cabinet_id: state.cabinet_id || null,
-            door_vertical: state.door_vertical || null,
-            door_horizontal: state.door_horizontal || null,
-            internal_shelf_level: state.internal_shelf_level || null,
-            storage_column: state.storage_column || null,
-            concentration_value: concentrationValue ? Number(concentrationValue) : null,
-            concentration_unit: concentrationUnit || null,
-            bottle_mass: calculateBottleMass(volume, state.bottle_type),
+          const annotateUnit = (unit) => {
+            const stateVal = String(state.state || "").trim().toLowerCase();
+            const solids = ["파우더", "조각", "비드", "펠렛", "리본", "막대", "벌크", "고체"];
+            const isSolid = solids.some((k) => stateVal.includes(k));
+            const isGas = stateVal.includes("기체") || stateVal.includes("gas");
+            const isLiquid = stateVal === "액체" || stateVal.includes("liquid");
+            if (unit === "M" && (isSolid || isGas)) return `${unit} (의미 없음)`;
+            if (unit === "m" && (isLiquid || isGas)) return `${unit} (정의 불가)`;
+            return unit;
           };
 
-          // 📤 MSDS PDF 업로드
-          if (state.msds_pdf_file) {
-            statusMsg.textContent = "📄 MSDS PDF 처리 중...";
-            try {
-              const file = state.msds_pdf_file;
-              const arrayBuffer = await file.arrayBuffer();
-              const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-              const hashArray = Array.from(new Uint8Array(hashBuffer));
-              const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-              console.log("File Hash:", hashHex);
-
-              const { data: existingFile } = await supabase
-                .from('Inventory')
-                .select('msds_pdf_url')
-                .eq('msds_pdf_hash', hashHex)
-                .limit(1)
-                .maybeSingle();
-
-              if (existingFile?.msds_pdf_url) {
-                console.log("♻️ Duplicate file found. Reusing URL:", existingFile.msds_pdf_url);
-                inventoryDetails.msds_pdf_url = existingFile.msds_pdf_url;
-                inventoryDetails.msds_pdf_hash = hashHex;
-              } else {
-                console.log("📤 New file. Uploading...");
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-
-                const { data: _uploadData, error: uploadError } = await supabase.storage
-                  .from('msds-pdf')
-                  .upload(fileName, file);
-
-                if (uploadError) throw uploadError;
-
-                const { data: publicUrlData } = supabase.storage
-                  .from('msds-pdf')
-                  .getPublicUrl(fileName);
-
-                inventoryDetails.msds_pdf_url = publicUrlData.publicUrl;
-                inventoryDetails.msds_pdf_hash = hashHex;
-                console.log("✅ MSDS PDF Uploaded:", inventoryDetails.msds_pdf_url);
-              }
-            } catch (err) {
-              console.error("PDF Processing Error:", err);
-              alert("MSDS PDF 처리 중 오류가 발생했습니다: " + err.message);
-              statusMsg.textContent = "";
-              return;
+          if (conversions) {
+            if (concentrationUnit === "%") {
+              updatePayload.converted_concentration_value_1 = conversions.molarity;
+              updatePayload.converted_concentration_unit_1 = annotateUnit("M");
+              updatePayload.converted_concentration_value_2 = conversions.molality;
+              updatePayload.converted_concentration_unit_2 = annotateUnit("m");
+            } else if (concentrationUnit === "M" || concentrationUnit === "N") {
+              updatePayload.converted_concentration_value_1 = conversions.percent;
+              updatePayload.converted_concentration_unit_1 = "%";
+              updatePayload.converted_concentration_value_2 = conversions.molality;
+              updatePayload.converted_concentration_unit_2 = annotateUnit("m");
             }
-          } else if (mode === "edit" && detail?.msds_pdf_url) {
-            inventoryDetails.msds_pdf_url = detail.msds_pdf_url;
-            inventoryDetails.msds_pdf_hash = detail.msds_pdf_hash;
           }
-
-          if (state.photo_base64) {
-            inventoryDetails.photo_320_base64 = state.photo_base64;
-            inventoryDetails.photo_160_base64 = state.photo_base64;
-          }
-
-          if (mode === "edit" && detail?.id) {
-            let totalUsage = 0;
-            const { data: usageLogs, error: usageError } = await supabase
-              .from("UsageLog")
-              .select("amount")
-              .eq("inventory_id", detail.id);
-
-            if (!usageError && usageLogs) {
-              totalUsage = usageLogs.reduce((sum, log) => sum + (Number(log.amount) || 0), 0);
-            }
-            const newCurrentAmount = volume - totalUsage;
-
-            const updatePayload = {
-              initial_amount: volume,
-              current_amount: newCurrentAmount,
-              unit,
-              state: state.state || null,
-              classification: state.classification || null,
-              manufacturer: manufacturerValue,
-              purchase_date: purchaseDate,
-              cabinet_id: state.cabinet_id || null,
-              door_vertical: state.door_vertical || null,
-              door_horizontal: state.door_horizontal || null,
-              internal_shelf_level: state.internal_shelf_level || null,
-              storage_column: state.storage_column || null,
-              concentration_value: concentrationValue ? Number(concentrationValue) : null,
-              concentration_unit: concentrationUnit || null,
-              bottle_mass: calculateBottleMass(volume, state.bottle_type),
-              msds_pdf_url: inventoryDetails.msds_pdf_url || null,
-              msds_pdf_hash: inventoryDetails.msds_pdf_hash || null,
-            };
-
-            const substanceInfo = state.substance_info;
-            if (substanceInfo && concentrationValue && concentrationUnit) {
-              const propsList = substanceInfo.Properties || [];
-              const getPropVal = (nameKey) => {
-                const found = propsList.find((p) => p.name && p.name.toLowerCase().includes(nameKey.toLowerCase()));
-                return found ? found.property : null;
-              };
-              const densityVal = getPropVal("Density");
-
-              const conversions = computeConversions({
-                value: concentrationValue,
-                unit: concentrationUnit,
-                molarMass: substanceInfo.molecular_mass,
-                density: densityVal
-              });
-
-              const annotateUnit = (unit) => {
-                const stateVal = String(state.state || "").trim().toLowerCase();
-                const solids = ["파우더", "조각", "비드", "펠렛", "리본", "막대", "벌크", "고체"];
-                const isSolid = solids.some((k) => stateVal.includes(k));
-                const isGas = stateVal.includes("기체") || stateVal.includes("gas");
-                const isLiquid = stateVal === "액체" || stateVal.includes("liquid");
-                if (unit === "M" && (isSolid || isGas)) return `${unit} (의미 없음)`;
-                if (unit === "m" && (isLiquid || isGas)) return `${unit} (정의 불가)`;
-                return unit;
-              };
-
-              if (conversions) {
-                if (concentrationUnit === "%") {
-                  updatePayload.converted_concentration_value_1 = conversions.molarity;
-                  updatePayload.converted_concentration_unit_1 = annotateUnit("M");
-                  updatePayload.converted_concentration_value_2 = conversions.molality;
-                  updatePayload.converted_concentration_unit_2 = annotateUnit("m");
-                } else if (concentrationUnit === "M" || concentrationUnit === "N") {
-                  updatePayload.converted_concentration_value_1 = conversions.percent;
-                  updatePayload.converted_concentration_unit_1 = "%";
-                  updatePayload.converted_concentration_value_2 = conversions.molality;
-                  updatePayload.converted_concentration_unit_2 = annotateUnit("m");
-                }
-              }
-            }
-            if (state.photo_updated) {
-              updatePayload.photo_url_320 = state.photo_base64 || null;
-              updatePayload.photo_url_160 = state.photo_base64 || null;
-            }
-
-            if (substanceInfo) {
-              const compareAndSet = (standardStr) => {
-                if (!standardStr) return "-";
-                let percentValue = null;
-                if (concentrationUnit === "%") {
-                  percentValue = Number(concentrationValue);
-                } else if (updatePayload.converted_concentration_unit_1 === "%") {
-                  percentValue = updatePayload.converted_concentration_value_1;
-                } else if (updatePayload.converted_concentration_unit_2 === "%") {
-                  percentValue = updatePayload.converted_concentration_value_2;
-                }
-                if (percentValue === null || isNaN(percentValue)) return "-";
-                const match = standardStr.match(/(\d+(\.\d+)?)/);
-                if (!match) return "-";
-                const standardVal = parseFloat(match[0]);
-                if (percentValue >= standardVal) return "◯";
-                return "-";
-              };
-
-              updatePayload.school_hazardous_chemical = compareAndSet(substanceInfo.school_hazardous_chemical_standard);
-              updatePayload.school_accident_precaution_chemical = compareAndSet(substanceInfo.school_accident_precaution_chemical_standard);
-              updatePayload.special_health_checkup_hazardous_factor = compareAndSet(substanceInfo.special_health_checkup_hazardous_factor_standard);
-              updatePayload.toxic_substance = compareAndSet(substanceInfo.toxic_substance_standard);
-              updatePayload.permitted_substance = compareAndSet(substanceInfo.permitted_substance_standard);
-              updatePayload.restricted_substance = compareAndSet(substanceInfo.restricted_substance_standard);
-              updatePayload.prohibited_substance = compareAndSet(substanceInfo.prohibited_substance_standard);
-            }
-
-            const { error } = await supabase.from("Inventory").update(updatePayload).eq("id", detail.id);
-            if (error) throw error;
-            alert("✅ 약품 정보가 수정되었어요.");
-          } else {
-            const { data, error } = await supabase.functions.invoke("casimport", {
-              method: "POST",
-              body: {
-                casRns: [cas],
-                inventoryDetails,
-              },
-            });
-
-            if (error) throw error;
-            console.log("📦 등록 결과:", data);
-
-            try {
-              let createdId = data?.inventoryId || data?.id || data?.[0]?.id;
-              if (!createdId) {
-                const { data: latest, error: latestError } = await supabase
-                  .from("Inventory")
-                  .select("id")
-                  .order("created_at", { ascending: false })
-                  .limit(1)
-                  .maybeSingle();
-                if (!latestError && latest) {
-                  createdId = latest.id;
-                }
-              }
-
-              if (createdId) {
-                const { area_id: _area_id, purchase_volume: _purchase_volume, photo_320_base64: _photo_320_base64, photo_160_base64: _photo_160_base64, ...updatePayload } = inventoryDetails;
-                const { error: updateError } = await supabase
-                  .from("Inventory")
-                  .update(updatePayload)
-                  .eq("id", createdId);
-
-                if (updateError) {
-                  console.warn("⚠️ 추가 정보(농도/위치) 업데이트 실패:", updateError);
-                } else {
-                  console.log("✅ 추가 정보(농도/위치) 업데이트 완료");
-                }
-              } else {
-                console.warn("⚠️ 생성된 Inventory ID를 찾을 수 없어 추가 업데이트를 건너뜁니다.");
-              }
-            } catch (err) {
-              console.warn("⚠️ 추가 업데이트 중 예외 발생:", err);
-            }
-
-            alert("✅ 약품이 성공적으로 등록되었어요.");
-          }
-
-          await App.Inventory?.showListPage?.();
-        } catch (err) {
-          console.error("❌ 저장 오류:", err);
-          statusMsg.textContent = "❌ 저장 실패. 콘솔을 확인해 주세요.";
         }
-      };
+        if (state.photo_updated) {
+          updatePayload.photo_url_320 = state.photo_base64 || null;
+          updatePayload.photo_url_160 = state.photo_base64 || null;
+        }
+
+        if (substanceInfo) {
+          const compareAndSet = (standardStr) => {
+            if (!standardStr) return "-";
+            let percentValue = null;
+            if (concentrationUnit === "%") {
+              percentValue = Number(concentrationValue);
+            } else if (updatePayload.converted_concentration_unit_1 === "%") {
+              percentValue = updatePayload.converted_concentration_value_1;
+            } else if (updatePayload.converted_concentration_unit_2 === "%") {
+              percentValue = updatePayload.converted_concentration_value_2;
+            }
+            if (percentValue === null || isNaN(percentValue)) return "-";
+            const match = standardStr.match(/(\d+(\.\d+)?)/);
+            if (!match) return "-";
+            const standardVal = parseFloat(match[0]);
+            if (percentValue >= standardVal) return "◯";
+            return "-";
+          };
+
+          updatePayload.school_hazardous_chemical = compareAndSet(substanceInfo.school_hazardous_chemical_standard);
+          updatePayload.school_accident_precaution_chemical = compareAndSet(substanceInfo.school_accident_precaution_chemical_standard);
+          updatePayload.special_health_checkup_hazardous_factor = compareAndSet(substanceInfo.special_health_checkup_hazardous_factor_standard);
+          updatePayload.toxic_substance = compareAndSet(substanceInfo.toxic_substance_standard);
+          updatePayload.permitted_substance = compareAndSet(substanceInfo.permitted_substance_standard);
+          updatePayload.restricted_substance = compareAndSet(substanceInfo.restricted_substance_standard);
+          updatePayload.prohibited_substance = compareAndSet(substanceInfo.prohibited_substance_standard);
+        }
+
+        const { error } = await supabase.from("Inventory").update(updatePayload).eq("id", detail.id);
+        if (error) throw error;
+        alert("✅ 약품 정보가 수정되었어요.");
+      } else {
+        const { data, error } = await supabase.functions.invoke("casimport", {
+          method: "POST",
+          body: {
+            casRns: [cas],
+            inventoryDetails,
+          },
+        });
+
+        if (error) throw error;
+        console.log("📦 등록 결과:", data);
+
+        try {
+          let createdId = data?.inventoryId || data?.id || data?.[0]?.id;
+          if (!createdId) {
+            const { data: latest, error: latestError } = await supabase
+              .from("Inventory")
+              .select("id")
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (!latestError && latest) {
+              createdId = latest.id;
+            }
+          }
+
+          if (createdId) {
+            const { area_id: _area_id, purchase_volume: _purchase_volume, photo_320_base64: _photo_320_base64, photo_160_base64: _photo_160_base64, ...updatePayload } = inventoryDetails;
+            const { error: updateError } = await supabase
+              .from("Inventory")
+              .update(updatePayload)
+              .eq("id", createdId);
+
+            if (updateError) {
+              console.warn("⚠️ 추가 정보(농도/위치) 업데이트 실패:", updateError);
+            } else {
+              console.log("✅ 추가 정보(농도/위치) 업데이트 완료");
+            }
+          } else {
+            console.warn("⚠️ 생성된 Inventory ID를 찾을 수 없어 추가 업데이트를 건너뜁니다.");
+          }
+        } catch (err) {
+          console.warn("⚠️ 추가 업데이트 중 예외 발생:", err);
+        }
+
+        alert("✅ 약품이 성공적으로 등록되었어요.");
+      }
+
+      await App.Inventory?.showListPage?.();
+    } catch (err) {
+      console.error("❌ 저장 오류:", err);
+      statusMsg.textContent = "❌ 저장 실패. 콘솔을 확인해 주세요.";
     }
-    console.log(`✅ 약품 폼 초기화 완료 (${mode})`);
+  };
+}
+console.log(`✅ 약품 폼 초기화 완료 (${mode})`);
   }
 
-  // -------------------------------------------------
-  // 🧩 도어·단·열 버튼 렌더링
-  // -------------------------------------------------
-  function normalizeChoice(value, type) {
-    if (value == null) return null;
-    if (typeof value === "number") return String(value);
-    const str = String(value).trim();
-    if (!str) return null;
-    if (/^\d+$/.test(str)) return str;
-    const digit = str.match(/\d+/);
-    if (digit) return digit[0];
-    const maps = {
-      horizontal: { 왼쪽: "1", 오른쪽: "2", 좌: "1", 우: "2" },
-      vertical: { 상: "1", 중: "2", 하: "3" },
-    };
-    return maps[type]?.[str] || null;
+// -------------------------------------------------
+// 🧩 도어·단·열 버튼 렌더링
+// -------------------------------------------------
+function normalizeChoice(value, type) {
+  if (value == null) return null;
+  if (typeof value === "number") return String(value);
+  const str = String(value).trim();
+  if (!str) return null;
+  if (/^\d+$/.test(str)) return str;
+  const digit = str.match(/\d+/);
+  if (digit) return digit[0];
+  const maps = {
+    horizontal: { 왼쪽: "1", 오른쪽: "2", 좌: "1", 우: "2" },
+    vertical: { 상: "1", 중: "2", 하: "3" },
+  };
+  return maps[type]?.[str] || null;
+}
+
+async function renderCabinetButtons(cabinetId, detail = null) {
+  const vBox = document.getElementById("location_door_vertical_group");
+  const hBox = document.getElementById("location_door_horizontal_group");
+  const sBox = document.getElementById("location_internal_shelf_group");
+  const cBox = document.getElementById("location_storage_column_group");
+
+  const showMessage = (box, msg) => {
+    if (box) box.innerHTML = `<span style="color:#888;">${msg}</span>`;
+  };
+
+  const resetSteps = () => {
+    showMessage(vBox, "수납함 선택 후 표시됩니다.");
+    showMessage(hBox, "3번 항목 선택 후 표시됩니다.");
+    showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+    showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+  };
+
+  if (!cabinetId) {
+    resetSteps();
+    return;
   }
 
-  async function renderCabinetButtons(cabinetId, detail = null) {
-    const vBox = document.getElementById("location_door_vertical_group");
-    const hBox = document.getElementById("location_door_horizontal_group");
-    const sBox = document.getElementById("location_internal_shelf_group");
-    const cBox = document.getElementById("location_storage_column_group");
+  const { data, error } = await supabase.from("Cabinet").select("*").eq("id", cabinetId).maybeSingle();
+  if (error || !data) {
+    resetSteps();
+    return console.warn("⚠️ 캐비닛 정보 없음");
+  }
 
-    const showMessage = (box, msg) => {
-      if (box) box.innerHTML = `<span style="color:#888;">${msg}</span>`;
-    };
+  const verticalCount = Number(data.door_vertical_count || data.door_vertical) || 0;
+  const horizontalCount = Number(data.door_horizontal_count || data.door_horizontal) || 0;
+  const shelfCount = Number(data.shelf_height || data.internal_shelf_level) || 0;
+  const columnCount = Number(data.storage_columns || data.storage_column) || 0;
 
-    const resetSteps = () => {
-      showMessage(vBox, "수납함 선택 후 표시됩니다.");
+  const defaults = {
+    door_vertical: normalizeChoice(detail?.door_vertical, "vertical"),
+    door_horizontal: normalizeChoice(detail?.door_horizontal, "horizontal"),
+    internal_shelf_level: detail?.internal_shelf_level || null,
+    storage_column: detail?.storage_column || null,
+  };
+
+  const renderColumns = () => {
+    if (!cBox) return;
+    const state = dump();
+    if (!state.internal_shelf_level) {
+      showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+      return;
+    }
+    if (!columnCount) {
+      showMessage(cBox, "열 정보가 없습니다.");
+      return;
+    }
+
+    cBox.innerHTML = Array.from({ length: columnCount }, (_, i) => {
+      const value = i + 1;
+      return `<button type="button" data-value="${value}">${value}열</button>`;
+    }).join("");
+
+    // Dynamic Grid Columns
+    if (columnCount > 0 && columnCount <= 12) {
+      cBox.style.display = "grid";
+      cBox.style.gridTemplateColumns = `repeat(${columnCount}, 1fr)`;
+      cBox.style.gap = "10px 0";
+    }
+
+    setupButtonGroup("location_storage_column_group", (btn) => {
+      set("storage_column", btn.dataset.value);
+    });
+
+    const selected = defaults.storage_column || state.storage_column;
+    if (selected) {
+      cBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
+      defaults.storage_column = null;
+    }
+  };
+
+  const renderShelves = () => {
+    if (!sBox) return;
+    const state = dump();
+    if (!state.door_horizontal) {
+      showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+      showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+      return;
+    }
+    if (!shelfCount) {
+      showMessage(sBox, "선반 정보가 없습니다.");
+      showMessage(cBox, "선반 정보가 없습니다.");
+      return;
+    }
+
+    sBox.innerHTML = Array.from({ length: shelfCount }, (_, idx) => {
+      const labelNum = shelfCount - idx;
+      const value = labelNum;
+      const label = `${labelNum}단`;
+      return `<button type="button" data-value="${value}">${label}</button>`;
+    }).join("");
+
+    // Dynamic Grid Columns
+    if (shelfCount > 0 && shelfCount <= 12) {
+      sBox.style.display = "grid";
+      sBox.style.gridTemplateColumns = `repeat(${shelfCount}, 1fr)`;
+      sBox.style.gap = "10px 0";
+    }
+
+    setupButtonGroup("location_internal_shelf_group", (btn) => {
+      set("internal_shelf_level", btn.dataset.value);
+      set("storage_column", null);
+      renderColumns();
+    });
+
+    const selected = defaults.internal_shelf_level || state.internal_shelf_level;
+    if (selected) {
+      sBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
+      set("internal_shelf_level", selected);
+      defaults.internal_shelf_level = null;
+      renderColumns();
+    } else {
+      showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+    }
+  };
+
+  const renderHorizontal = () => {
+    if (!hBox) return;
+    const state = dump();
+    if (!state.door_vertical) {
       showMessage(hBox, "3번 항목 선택 후 표시됩니다.");
       showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
       showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
-    };
+      return;
+    }
+    if (!horizontalCount) {
+      showMessage(hBox, "좌우 정보가 없습니다.");
+      showMessage(sBox, "좌우 정보가 없습니다.");
+      showMessage(cBox, "좌우 정보가 없습니다.");
+      return;
+    }
 
-    if (!cabinetId) {
+    const horizontalLabels =
+      horizontalCount === 1 ? ["문"] : ["왼쪽", "오른쪽"];
+    hBox.innerHTML = Array.from({ length: horizontalCount }, (_, idx) => {
+      const value = idx + 1;
+      const label = horizontalLabels[idx] || `${value}구역`;
+      return `<button type="button" data-value="${value}">${label}</button>`;
+    }).join("");
+
+    // Dynamic Grid Columns
+    if (horizontalCount > 0 && horizontalCount <= 12) {
+      hBox.style.display = "grid";
+      hBox.style.gridTemplateColumns = `repeat(${horizontalCount}, 1fr)`;
+      hBox.style.gap = "10px 0";
+    }
+
+    setupButtonGroup("location_door_horizontal_group", (btn) => {
+      set("door_horizontal", btn.dataset.value);
+      set("internal_shelf_level", null);
+      set("storage_column", null);
+      renderShelves();
+    });
+
+    const selected = defaults.door_horizontal || state.door_horizontal;
+    if (selected) {
+      hBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
+      set("door_horizontal", selected);
+      defaults.door_horizontal = null;
+      renderShelves();
+    } else {
+      showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+      showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+    }
+  };
+
+  const renderVertical = () => {
+    if (!vBox) return;
+    if (!verticalCount) {
+      showMessage(vBox, "문 정보가 없습니다.");
       resetSteps();
       return;
     }
 
-    const { data, error } = await supabase.from("Cabinet").select("*").eq("id", cabinetId).maybeSingle();
-    if (error || !data) {
-      resetSteps();
-      return console.warn("⚠️ 캐비닛 정보 없음");
+    vBox.innerHTML = Array.from({ length: verticalCount }, (_, idx) => {
+      const value = idx + 1;
+      const label = `${verticalCount - idx}층`;
+      return `<button type="button" data-value="${value}">${label}</button>`;
+    }).join("");
+
+    // Dynamic Grid Columns
+    if (verticalCount > 0 && verticalCount <= 12) {
+      vBox.style.display = "grid";
+      vBox.style.gridTemplateColumns = `repeat(${verticalCount}, 1fr)`;
+      vBox.style.gap = "10px 0";
     }
 
-    const verticalCount = Number(data.door_vertical_count || data.door_vertical) || 0;
-    const horizontalCount = Number(data.door_horizontal_count || data.door_horizontal) || 0;
-    const shelfCount = Number(data.shelf_height || data.internal_shelf_level) || 0;
-    const columnCount = Number(data.storage_columns || data.storage_column) || 0;
+    setupButtonGroup("location_door_vertical_group", (btn) => {
+      set("door_vertical", btn.dataset.value);
+      set("door_horizontal", null);
+      set("internal_shelf_level", null);
+      set("storage_column", null);
+      renderHorizontal();
+    });
 
-    const defaults = {
-      door_vertical: normalizeChoice(detail?.door_vertical, "vertical"),
-      door_horizontal: normalizeChoice(detail?.door_horizontal, "horizontal"),
-      internal_shelf_level: detail?.internal_shelf_level || null,
-      storage_column: detail?.storage_column || null,
-    };
-
-    const renderColumns = () => {
-      if (!cBox) return;
-      const state = dump();
-      if (!state.internal_shelf_level) {
-        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
-        return;
-      }
-      if (!columnCount) {
-        showMessage(cBox, "열 정보가 없습니다.");
-        return;
-      }
-
-      cBox.innerHTML = Array.from({ length: columnCount }, (_, i) => {
-        const value = i + 1;
-        return `<button type="button" data-value="${value}">${value}열</button>`;
-      }).join("");
-
-      // Dynamic Grid Columns
-      if (columnCount > 0 && columnCount <= 12) {
-        cBox.style.display = "grid";
-        cBox.style.gridTemplateColumns = `repeat(${columnCount}, 1fr)`;
-        cBox.style.gap = "10px 0";
-      }
-
-      setupButtonGroup("location_storage_column_group", (btn) => {
-        set("storage_column", btn.dataset.value);
-      });
-
-      const selected = defaults.storage_column || state.storage_column;
-      if (selected) {
-        cBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
-        defaults.storage_column = null;
-      }
-    };
-
-    const renderShelves = () => {
-      if (!sBox) return;
-      const state = dump();
-      if (!state.door_horizontal) {
-        showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
-        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
-        return;
-      }
-      if (!shelfCount) {
-        showMessage(sBox, "선반 정보가 없습니다.");
-        showMessage(cBox, "선반 정보가 없습니다.");
-        return;
-      }
-
-      sBox.innerHTML = Array.from({ length: shelfCount }, (_, idx) => {
-        const labelNum = shelfCount - idx;
-        const value = labelNum;
-        const label = `${labelNum}단`;
-        return `<button type="button" data-value="${value}">${label}</button>`;
-      }).join("");
-
-      // Dynamic Grid Columns
-      if (shelfCount > 0 && shelfCount <= 12) {
-        sBox.style.display = "grid";
-        sBox.style.gridTemplateColumns = `repeat(${shelfCount}, 1fr)`;
-        sBox.style.gap = "10px 0";
-      }
-
-      setupButtonGroup("location_internal_shelf_group", (btn) => {
-        set("internal_shelf_level", btn.dataset.value);
-        set("storage_column", null);
-        renderColumns();
-      });
-
-      const selected = defaults.internal_shelf_level || state.internal_shelf_level;
-      if (selected) {
-        sBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
-        set("internal_shelf_level", selected);
-        defaults.internal_shelf_level = null;
-        renderColumns();
-      } else {
-        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
-      }
-    };
-
-    const renderHorizontal = () => {
-      if (!hBox) return;
-      const state = dump();
-      if (!state.door_vertical) {
-        showMessage(hBox, "3번 항목 선택 후 표시됩니다.");
-        showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
-        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
-        return;
-      }
-      if (!horizontalCount) {
-        showMessage(hBox, "좌우 정보가 없습니다.");
-        showMessage(sBox, "좌우 정보가 없습니다.");
-        showMessage(cBox, "좌우 정보가 없습니다.");
-        return;
-      }
-
-      const horizontalLabels =
-        horizontalCount === 1 ? ["문"] : ["왼쪽", "오른쪽"];
-      hBox.innerHTML = Array.from({ length: horizontalCount }, (_, idx) => {
-        const value = idx + 1;
-        const label = horizontalLabels[idx] || `${value}구역`;
-        return `<button type="button" data-value="${value}">${label}</button>`;
-      }).join("");
-
-      // Dynamic Grid Columns
-      if (horizontalCount > 0 && horizontalCount <= 12) {
-        hBox.style.display = "grid";
-        hBox.style.gridTemplateColumns = `repeat(${horizontalCount}, 1fr)`;
-        hBox.style.gap = "10px 0";
-      }
-
-      setupButtonGroup("location_door_horizontal_group", (btn) => {
-        set("door_horizontal", btn.dataset.value);
-        set("internal_shelf_level", null);
-        set("storage_column", null);
-        renderShelves();
-      });
-
-      const selected = defaults.door_horizontal || state.door_horizontal;
-      if (selected) {
-        hBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
-        set("door_horizontal", selected);
-        defaults.door_horizontal = null;
-        renderShelves();
-      } else {
-        showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
-        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
-      }
-    };
-
-    const renderVertical = () => {
-      if (!vBox) return;
-      if (!verticalCount) {
-        showMessage(vBox, "문 정보가 없습니다.");
-        resetSteps();
-        return;
-      }
-
-      vBox.innerHTML = Array.from({ length: verticalCount }, (_, idx) => {
-        const value = idx + 1;
-        const label = `${verticalCount - idx}층`;
-        return `<button type="button" data-value="${value}">${label}</button>`;
-      }).join("");
-
-      // Dynamic Grid Columns
-      if (verticalCount > 0 && verticalCount <= 12) {
-        vBox.style.display = "grid";
-        vBox.style.gridTemplateColumns = `repeat(${verticalCount}, 1fr)`;
-        vBox.style.gap = "10px 0";
-      }
-
-      setupButtonGroup("location_door_vertical_group", (btn) => {
-        set("door_vertical", btn.dataset.value);
-        set("door_horizontal", null);
-        set("internal_shelf_level", null);
-        set("storage_column", null);
-        renderHorizontal();
-      });
-
-      const selected = defaults.door_vertical;
-      if (selected) {
-        vBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
-        set("door_vertical", selected);
-        defaults.door_vertical = null;
-        renderHorizontal();
-      } else {
-        showMessage(hBox, "3번 항목 선택 후 표시됩니다.");
-        showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
-        showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
-      }
-    };
-
-    renderVertical();
-  }
-
-  // -------------------------------------------------
-  // 전역 등록
-  // -------------------------------------------------
-  globalThis.App = globalThis.App || {};
-  globalThis.App.Forms = {
-    initCabinetForm,
-    initInventoryForm,
-    initEquipmentCabinetForm, // ✅ 교구·물품장 폼 초기화 추가
-    handleSave,
+    const selected = defaults.door_vertical;
+    if (selected) {
+      vBox.querySelector(`button[data-value="${selected}"]`)?.classList.add("active");
+      set("door_vertical", selected);
+      defaults.door_vertical = null;
+      renderHorizontal();
+    } else {
+      showMessage(hBox, "3번 항목 선택 후 표시됩니다.");
+      showMessage(sBox, "4번 항목 선택 후 표시됩니다.");
+      showMessage(cBox, "5번 항목 선택 후 표시됩니다.");
+    }
   };
 
-  console.log("✅ App.Forms 모듈 초기화 완료 (도어 자동 표시 버전)");
+  renderVertical();
+}
 
-  // -------------------------------------------------
-  // 🧮 농도 변환 유틸리티
-  // -------------------------------------------------
-  function computeConversions({ value, unit, molarMass, density }) {
-    const parseDensity = (d) => {
-      if (d === null || d === undefined) return null;
-      const match = String(d).match(/-?\d+(?:\.\d+)?/);
-      return match ? Number(match[0]) : null;
-    };
+// -------------------------------------------------
+// 전역 등록
+// -------------------------------------------------
+globalThis.App = globalThis.App || {};
+globalThis.App.Forms = {
+  initCabinetForm,
+  initInventoryForm,
+  initEquipmentCabinetForm, // ✅ 교구·물품장 폼 초기화 추가
+  handleSave,
+};
 
-    const v = Number(value);
-    const mw = Number(molarMass);
-    const rho = parseDensity(density) ?? 1; // g/mL (solute density)
-    const waterRho = 1; // g/mL, assumption
-    const result = { percent: null, molarity: null, molality: null };
+console.log("✅ App.Forms 모듈 초기화 완료 (도어 자동 표시 버전)");
 
-    if (!Number.isFinite(v) || !Number.isFinite(mw) || mw <= 0) return null;
+// -------------------------------------------------
+// 🧮 농도 변환 유틸리티
+// -------------------------------------------------
+function computeConversions({ value, unit, molarMass, density }) {
+  const parseDensity = (d) => {
+    if (d === null || d === undefined) return null;
+    const match = String(d).match(/-?\d+(?:\.\d+)?/);
+    return match ? Number(match[0]) : null;
+  };
 
-    if (unit === "%") {
-      // % w/w -> Molarity, Molality
-      // Use separate volumes: solute volume from its density, solvent volume from water density.
-      const massSolute = v; // g (in 100 g solution)
-      const totalMass = 100; // g
-      const solventMass = totalMass - massSolute;
+  const v = Number(value);
+  const mw = Number(molarMass);
+  const rho = parseDensity(density) ?? 1; // g/mL (solute density)
+  const waterRho = 1; // g/mL, assumption
+  const result = { percent: null, molarity: null, molality: null };
 
-      const soluteVolumeL = massSolute / rho / 1000; // L
-      const solventVolumeL = solventMass / waterRho / 1000; // L
-      const solutionVolumeL = soluteVolumeL + solventVolumeL;
+  if (!Number.isFinite(v) || !Number.isFinite(mw) || mw <= 0) return null;
 
-      const moles = massSolute / mw;
-      result.molarity = solutionVolumeL > 0 ? moles / solutionVolumeL : null;
+  if (unit === "%") {
+    // % w/w -> Molarity, Molality
+    // Use separate volumes: solute volume from its density, solvent volume from water density.
+    const massSolute = v; // g (in 100 g solution)
+    const totalMass = 100; // g
+    const solventMass = totalMass - massSolute;
 
-      const solventMassKg = solventMass / 1000;
-      result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
-      result.percent = v;
-    } else if (unit === "M" || unit === "N") {
-      // Molarity -> % w/w, Molality
-      // Assume M = N for simplicity if not specified, or treat input as M
-      const effectiveM = v;
-      // Basis: 1 L solution
-      const solutionVolumeL = 1;
-      const moles = effectiveM * solutionVolumeL;
-      const soluteMassG = moles * mw;
-      const solutionMassG = solutionVolumeL * 1000 * rho;
+    const soluteVolumeL = massSolute / rho / 1000; // L
+    const solventVolumeL = solventMass / waterRho / 1000; // L
+    const solutionVolumeL = soluteVolumeL + solventVolumeL;
 
-      result.percent = solutionMassG > 0 ? (soluteMassG / solutionMassG) * 100 : null;
+    const moles = massSolute / mw;
+    result.molarity = solutionVolumeL > 0 ? moles / solutionVolumeL : null;
 
-      const solventMassKg = (solutionMassG - soluteMassG) / 1000;
-      result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
-      result.molarity = effectiveM;
-    }
-    return result;
+    const solventMassKg = solventMass / 1000;
+    result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
+    result.percent = v;
+  } else if (unit === "M" || unit === "N") {
+    // Molarity -> % w/w, Molality
+    // Assume M = N for simplicity if not specified, or treat input as M
+    const effectiveM = v;
+    // Basis: 1 L solution
+    const solutionVolumeL = 1;
+    const moles = effectiveM * solutionVolumeL;
+    const soluteMassG = moles * mw;
+    const solutionMassG = solutionVolumeL * 1000 * rho;
+
+    result.percent = solutionMassG > 0 ? (soluteMassG / solutionMassG) * 100 : null;
+
+    const solventMassKg = (solutionMassG - soluteMassG) / 1000;
+    result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
+    result.molarity = effectiveM;
   }
-})();
+  return result;
+}
+}) ();
