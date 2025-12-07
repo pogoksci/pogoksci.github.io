@@ -1883,6 +1883,7 @@
   globalThis.App.Forms = {
     initCabinetForm,
     initInventoryForm,
+    initEquipmentCabinetForm, // ✅ 교구·물품장 폼 초기화 추가
     handleSave,
   };
 
