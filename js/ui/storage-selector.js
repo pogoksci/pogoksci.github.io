@@ -93,7 +93,7 @@
     };
 
     if (state.mode === "EQUIPMENT") {
-      tableName = "equipment_cabinet";
+      tableName = "EquipmentCabinet";
       colMap = {
         vert: "door_vertical_count",
         horiz: "door_horizontal_count",
@@ -180,7 +180,7 @@
     const supabase = getSupabase();
     let tableName = "Cabinet";
     if (state.mode === "EQUIPMENT") {
-      tableName = "equipment_cabinet";
+      tableName = "EquipmentCabinet";
     }
 
     const { data, error } = await supabase
