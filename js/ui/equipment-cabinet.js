@@ -15,13 +15,22 @@
         const status = document.getElementById("status-message-equipment-list");
 
         if (!container || !status) {
-            if (retryCount < 3) {
-                setTimeout(() => loadList(retryCount + 1), 100);
+            if (retryCount < 5) { // Increased retries
+                setTimeout(() => loadList(retryCount + 1), 200); // Increased delay
                 return;
             }
+            console.error("DOM Elements for Equipment Cabinet List not found.");
             return;
         }
 
+        // ✅ FAB 버튼 활성화
+        if (App.Fab && App.Fab.setVisibility) {
+            App.Fab.setVisibility(true, '<span class="material-symbols-outlined">add</span> 새 교구·물품장 등록', () => {
+                createForm();
+            });
+        }
+
+        status.style.display = "block";
         status.textContent = "등록된 교구·물품장을 불러오는 중...";
 
         try {
@@ -31,8 +40,18 @@
                 .order("id", { ascending: true });
 
             if (error) throw error;
-            if (!data?.length) {
+
+            if (!data || data.length === 0) {
                 status.textContent = "등록된 교구·물품장이 없습니다.";
+                status.style.display = "block";
+                container.innerHTML = ""; // Clear any previous content but keep status/structure logic safe
+                // Ideally we shouldn't wipe container if status is inside it? 
+                // In HTML, status is IN container. 
+                // Let's adjust: status is likely p tag inside.
+                // If we wipe container, we lose status.
+                // Check HTML: <div id="equipment-cabinet-list-container"><p id="status...">...</p></div>
+                // So if we clear innerHTML, status is gone.
+                // Valid approach: append cards to container, or hide status.
                 return;
             }
 
@@ -41,6 +60,7 @@
 
         } catch (err) {
             status.textContent = "목록을 불러올 수 없습니다.";
+            status.style.display = "block";
             console.error(err);
         }
     }
