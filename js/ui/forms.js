@@ -907,233 +907,71 @@
       }
     }
   }
-
-  async function handleEquipmentSave() {
-    const state = App.State.dump();
-    const payload = await App.Utils.makePayload(state);
-
-    // Map text buttons to integers for DB
-    // door_vertical_count
-    const doorText = state.door_vertical_count; // "상중하도어"
-    let doorInt = null;
-    if (doorText === "단일도어") doorInt = 1;
-    if (doorText === "상하도어") doorInt = 2;
-    if (doorText === "상중하도어") doorInt = 3;
-
-    const finalPayload = {
-      area_name: payload.area_name, // ✅ Edge Function expects area_name to lookup/create Area
-
-      // I need to check `makePayload` in utils.js if I want to be sure, but assuming it works for standard fields.
-      // Wait, `makePayload` might rely on specific field names.
-      // Let's assume manual construction for safety or rely on what `cabinet.js` did.
-      // `cabinet.js` calls `makePayload(state)`.
-
-      cabinet_name: payload.cabinet_name, // handled by makePayload "cabinet_name" logic? 
-      // `makePayload` usually combines button + custom.
-
-      photo_url_320: payload.photo_url_320,
-      photo_url_160: payload.photo_url_160,
-      door_vertical_count: doorInt
-    };
-
-    // Special case: Outside Cabinet
-    if (state.cabinet_name_buttons === "교구장밖") {
-      finalPayload.door_vertical_count = null;
-    }
-
-    if (!finalPayload.cabinet_name) return alert("이름을 입력하세요.");
-
-    if (state.mode === "create") {
-      await App.EquipmentCabinet.createCabinet(finalPayload);
-      alert("✅ 등록되었습니다.");
-    } else {
-      await App.EquipmentCabinet.updateCabinet(state.cabinetId, finalPayload);
-    }
-
-    await App.includeHTML("pages/equipment-cabinet-list.html");
-    App.EquipmentCabinet.loadList();
+}
   }
-}
-const preview = document.getElementById("photo-preview");
-if (preview) {
-  preview.innerHTML = `<img src="${existingPhoto}" alt="Preview">`;
-}
-set("photo_base64", existingPhoto);
-      }
-set("photo_updated", false);
-    } else {
-  const clearInputs = ["cas_rn", "purchase_volume", "concentration_value", "purchase_date", "manufacturer_other"];
-  clearInputs.forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.value = "";
-      el.setAttribute("value", ""); // DOM 속성도 강제 초기화
-    }
-  });
-  BUTTON_GROUP_IDS.forEach((groupId) => {
-    const group = document.getElementById(groupId);
-    if (group) group.querySelectorAll(".active").forEach((btn) => btn.classList.remove("active"));
-  });
-  ["classification", "state", "unit", "bottle_type", "concentration_unit", "manufacturer"].forEach((key) => set(key, null));
-  const otherGroup = document.getElementById("other_manufacturer_group");
-  if (otherGroup) otherGroup.style.display = "none";
-  const otherInput = document.getElementById("manufacturer_other");
-  if (otherInput) otherInput.value = "";
-  set("msds_pdf_file", null);
-  set("photo_base64", null);
-  set("photo_updated", false);
+
+
+async function handleEquipmentSave() {
+  const state = App.State.dump();
+  const payload = await App.Utils.makePayload(state);
+
+  // Map text buttons to integers for DB
+  // door_vertical_count
+  const doorText = state.door_vertical_count; // "상중하도어"
+  let doorInt = null;
+  if (doorText === "단일도어") doorInt = 1;
+  if (doorText === "상하도어") doorInt = 2;
+  if (doorText === "상중하도어") doorInt = 3;
+
+  const finalPayload = {
+    area_name: payload.area_name, // ✅ Edge Function expects area_name to lookup/create Area
+
+    // I need to check `makePayload` in utils.js if I want to be sure, but assuming it works for standard fields.
+    // Wait, `makePayload` might rely on specific field names.
+    // Let's assume manual construction for safety or rely on what `cabinet.js` did.
+    // `cabinet.js` calls `makePayload(state)`.
+
+    cabinet_name: payload.cabinet_name, // handled by makePayload "cabinet_name" logic? 
+    // `makePayload` usually combines button + custom.
+
+    photo_url_320: payload.photo_url_320,
+    photo_url_160: payload.photo_url_160,
+    door_vertical_count: doorInt
+  };
+
+  // Special case: Outside Cabinet
+  if (state.cabinet_name_buttons === "교구장밖") {
+    finalPayload.door_vertical_count = null;
+  }
+
+  if (!finalPayload.cabinet_name) return alert("이름을 입력하세요.");
+
+  if (state.mode === "create") {
+    await App.EquipmentCabinet.createCabinet(finalPayload);
+    alert("✅ 등록되었습니다.");
+  } else {
+    await App.EquipmentCabinet.updateCabinet(state.cabinetId, finalPayload);
+  }
+
+  await App.includeHTML("pages/equipment-cabinet-list.html");
+  App.EquipmentCabinet.loadList();
 }
 
-// ✅ 버튼 그룹 초기화 및 복원
-const buttonFieldMap = {
-  classification_buttons: (d) => d?.classification ?? null,
-  state_buttons: (d) => d?.state ?? null,
-  unit_buttons: (d) => d?.unit ?? null,
-  bottle_type_buttons: (d) => d?.bottle_type ?? null,
-  concentration_unit_buttons: (d) => d?.concentration_unit ?? null,
-  manufacturer_buttons: (d) => d?.manufacturer ?? null,
-};
+// Hide existing image if any
+const existingImg = preview.querySelector('img');
+if (existingImg) existingImg.style.display = 'none';
 
-Object.entries(buttonFieldMap).forEach(([groupId, getter]) => {
-  const stateKey = groupId.replace("_buttons", "");
-  setupButtonGroup(groupId, (btn) => {
-    set(stateKey, btn.dataset.value);
-    if (groupId === "manufacturer_buttons") {
-      const group = document.getElementById("other_manufacturer_group");
-      if (group) group.style.display = btn.dataset.value === "기타" ? "block" : "none";
-    }
-  });
+const placeholder = preview.querySelector('.placeholder-text');
+if (placeholder) placeholder.style.display = 'none';
 
-  if (mode === "edit" && detail) {
-    const raw = getter(detail);
-    const normalizedValue = raw == null ? "" : String(raw).trim();
-    if (!normalizedValue) return;
-    const buttons = Array.from(document.querySelectorAll(`#${groupId} button`));
-    const sanitize = (v) => v.replace(/\s+/g, "").toLowerCase();
-    let targetBtn = buttons.find((btn) => {
-      const candidate = (btn.dataset.value || btn.textContent || "").trim();
-      return candidate === normalizedValue;
-    });
-    if (!targetBtn) {
-      targetBtn = buttons.find((btn) => {
-        const candidate = (btn.dataset.value || btn.textContent || "").trim();
-        return sanitize(candidate) === sanitize(normalizedValue);
-      });
-    }
-    if (targetBtn) {
-      buttons.forEach((btn) => btn.classList.remove("active"));
-      targetBtn.classList.add("active");
-      const appliedValue = targetBtn.dataset.value || targetBtn.textContent.trim();
-      set(stateKey, appliedValue);
-      if (groupId === "manufacturer_buttons") {
-        const group = document.getElementById("other_manufacturer_group");
-        if (group) group.style.display = appliedValue === "기타" ? "block" : "none";
-        if (appliedValue === "기타") {
-          const otherInput = document.getElementById("manufacturer_other");
-          if (otherInput && normalizedValue !== "기타") otherInput.value = normalizedValue;
-        }
-      }
-    } else if (groupId === "manufacturer_buttons") {
-      const otherBtn = document.querySelector(`#${groupId} button[data-value="기타"]`);
-      if (otherBtn) {
-        buttons.forEach((btn) => btn.classList.remove("active"));
-        otherBtn.classList.add("active");
-        set("manufacturer", "기타");
-        const otherInput = document.getElementById("manufacturer_other");
-        if (otherInput) otherInput.value = normalizedValue;
-        const group = document.getElementById("other_manufacturer_group");
-        if (group) group.style.display = "block";
-      }
-    }
-  }
-});
-
-// ✅ Bottle Type Restoration (from bottle_mass)
-if (mode === "edit" && detail && detail.bottle_mass && detail.initial_amount) {
-  const mass = Number(detail.bottle_mass);
-  const vol = Number(detail.initial_amount);
-  let restoredType = null;
-
-  // Reverse logic of calculateBottleMass
-  if ((vol === 25 && mass === 65) ||
-    (vol === 100 && mass === 120) ||
-    (vol === 500 && mass === 400) ||
-    (vol === 1000 && mass === 510)) {
-    restoredType = "갈색유리";
-  }
-  else if (vol === 500) {
-    if (mass === 40) restoredType = "반투명플라스틱";
-    else if (mass === 80) restoredType = "갈색플라스틱";
-    else if (mass === 75) restoredType = "흰색플라스틱";
-  }
-
-  if (restoredType) {
-    const btn = document.querySelector(`#bottle_type_buttons button[data-value="${restoredType}"]`);
-    if (btn) {
-      document.querySelectorAll(`#bottle_type_buttons button`).forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      set("bottle_type", restoredType);
-    }
-  }
-}
-
-// ✅ 사진 처리
-const photoInput = document.getElementById("photo-input");
-const cameraInput = document.getElementById("camera-input");
-const preview = document.getElementById("photo-preview");
-const photoBtn = document.getElementById("photo-btn");
-const cameraBtn = document.getElementById("camera-btn");
-const cameraCancelBtn = document.getElementById("camera-cancel-btn");
-const videoStream = document.getElementById("camera-stream");
-const canvas = document.getElementById("camera-canvas");
-let isCameraActive = false;
-
-// Ensure previous stream is stopped when initializing form
-if (inventoryStream) {
-  inventoryStream.getTracks().forEach(track => track.stop());
-  inventoryStream = null;
-}
-
-const stopInventoryCamera = () => {
-  if (inventoryStream) {
-    inventoryStream.getTracks().forEach(track => track.stop());
-    inventoryStream = null;
-  }
-  if (videoStream && videoStream.srcObject) {
-    const tracks = videoStream.srcObject.getTracks();
-    if (tracks) tracks.forEach(track => track.stop());
-    videoStream.srcObject = null;
-  }
-  if (videoStream) videoStream.style.display = 'none';
-  isCameraActive = false;
-  if (cameraBtn) cameraBtn.innerHTML = '카메라로 촬영';
-  if (cameraCancelBtn) cameraCancelBtn.style.display = 'none';
-};
-
-const startInventoryCamera = async () => {
-  try {
-    const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-
-    // Check if form is still valid/active? (In this architecture, if init is called again, we stopped previous stream)
-    inventoryStream = newStream;
-    videoStream.srcObject = inventoryStream;
-    videoStream.style.display = 'block';
-
-    // Hide existing image if any
-    const existingImg = preview.querySelector('img');
-    if (existingImg) existingImg.style.display = 'none';
-
-    const placeholder = preview.querySelector('.placeholder-text');
-    if (placeholder) placeholder.style.display = 'none';
-
-    isCameraActive = true;
-    cameraBtn.innerHTML = '촬영하기';
-    if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-block';
+isCameraActive = true;
+cameraBtn.innerHTML = '촬영하기';
+if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-block';
   } catch (err) {
-    console.error("Camera access denied or error:", err);
-    // Fallback to file input (mobile behavior)
-    cameraInput.click();
-  }
+  console.error("Camera access denied or error:", err);
+  // Fallback to file input (mobile behavior)
+  cameraInput.click();
+}
 };
 
 const takeInventoryPhoto = () => {
