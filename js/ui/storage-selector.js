@@ -134,6 +134,8 @@
       .select("id, area_name")
       .order("area_name");
 
+    console.log("StorageSelector: loadAreas called. Data:", data, "Error:", error);
+
     if (error) {
       console.error("❌ Area 불러오기 실패:", error);
       return;
