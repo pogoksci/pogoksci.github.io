@@ -1335,7 +1335,7 @@
         if (document.getElementById('modal-kit-stock')) return;
 
         const modalHtml = `
-            < div id = "modal-kit-stock" class="modal-overlay" style = "display: none; z-index: 1200;" >
+            <div id="modal-kit-stock" class="modal-overlay" style="display: none; z-index: 1200;">
                 <div class="modal-content stock-modal-content">
                     <h3 class="modal-title">재고 관리</h3>
                     <p id="stock-kit-name" class="modal-subtitle" style="margin-bottom: 15px;"></p>
@@ -1365,7 +1365,7 @@
                         </div>
                     </form>
                 </div>
-            </div > `;
+            </div>`;
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
