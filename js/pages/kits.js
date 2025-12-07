@@ -985,12 +985,12 @@
 
         modal.addEventListener('submit', async (e) => {
             if (e.target.id === 'form-register-kit') {
-                console.log('Delegated Form Submit');
                 e.preventDefault();
                 e.stopPropagation();
 
                 const { form, classCheckboxesDiv, classSelect, nameSelect, fileInput, checkCustom } = getElements();
 
+                // 1. Class & Name Logic
                 let kitClass = '';
                 const mode = form.getAttribute('data-mode');
                 const editId = form.getAttribute('data-id');
@@ -1000,10 +1000,7 @@
                         .map(cb => cb.value);
                     kitClass = checked.join(', ');
                 } else {
-                    if (!classSelect.value) {
-                        alert('분류를 선택하세요.');
-                        return;
-                    }
+                    if (!classSelect.value) return alert('분류를 선택하세요.');
                     if (classSelect.value === 'all') {
                         const selectedOption = nameSelect.options[nameSelect.selectedIndex];
                         kitClass = selectedOption.dataset.class || '기타';
@@ -1017,50 +1014,23 @@
                 const isCustom = checkCustom?.checked;
 
                 if (mode === 'edit') {
-                    finalKitName = nameSelect.value;
+                    finalKitName = nameSelect.value; // Name is read-only or pre-selected in edit
                 } else {
                     if (isCustom) {
-                        if (classSelect.value === 'all') {
-                            alert("새로운 종류의 키트 등록 시 '전체'를 선택할 수 없습니다.");
-                            return;
-                        }
+                        if (classSelect.value === 'all') return alert("새로운 종류의 키트 등록 시 '전체'를 선택할 수 없습니다.");
                         const customNameInput = document.getElementById('custom-kit-name');
                         finalKitName = customNameInput.value.trim();
                         if (!finalKitName) {
-                            alert("등록하려는 키트 이름을 입력하세요.");
+                            alert("키트 이름을 입력하세요.");
                             customNameInput.focus();
-                            return;
-                        }
-                        const exists = catalog.find(k => k.kit_name === finalKitName);
-                        if (exists) {
-                            alert("이미 존재하는 키트 이름입니다. 목록에서 선택해주세요.");
                             return;
                         }
                         const casInputs = document.querySelectorAll('.cas-input');
                         const casList = Array.from(casInputs).map(input => input.value.trim()).filter(val => val);
                         if (casList.length > 0) customCas = casList.join(', ');
-
-                        const { data: newCatalogKit, error: catalogError } = await supabase
-                            .from('experiment_kit')
-                            .insert([{
-                                kit_name: finalKitName,
-                                kit_class: kitClass,
-                                kit_cas: customCas
-                            }])
-                            .select()
-                            .single();
-
-                        if (catalogError) {
-                            alert('키트 카탈로그 등록 실패: ' + catalogError.message);
-                            return;
-                        }
-                        catalog.push(newCatalogKit);
                     } else {
                         const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-                        if (!selectedOption || selectedOption.disabled) {
-                            alert("키트를 선택하세요.");
-                            return;
-                        }
+                        if (!selectedOption || selectedOption.disabled) return alert("키트를 선택하세요.");
                         finalKitName = selectedOption.dataset.name;
                     }
                 }
@@ -1069,53 +1039,85 @@
                 const purchaseDate = document.getElementById('kit-date').value;
                 const file = fileInput ? fileInput.files[0] : null;
 
-                let imageUrl = null;
+                // 2. Prepare Payload for Edge Function
+                // Helper to convert File to Base64
+                const toBase64 = (file) => new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                });
+
+                let photoBase64 = null;
                 if (file) {
-                    const fileExt = file.name.split('.').pop();
-                    const fileName = `${Date.now()}.${fileExt}`;
-                    const filePath = `${fileName}`;
-                    const { error: uploadError } = await supabase.storage.from('kit-photos').upload(filePath, file);
-                    if (uploadError) {
-                        alert('사진 업로드 실패: ' + uploadError.message);
-                        return;
+                    try {
+                        photoBase64 = await toBase64(file);
+                    } catch (err) {
+                        return alert("사진 처리 중 오류가 발생했습니다.");
                     }
-                    const { data: publicUrlData } = supabase.storage.from('kit-photos').getPublicUrl(filePath);
-                    imageUrl = publicUrlData.publicUrl;
                 }
 
-                if (mode === 'edit' && editId) {
-                    const updatePayload = {
-                        kit_class: kitClass,
-                        kit_name: finalKitName,
-                        quantity: quantity,
-                        purchase_date: purchaseDate
-                    };
-                    if (imageUrl) updatePayload.image_url = imageUrl;
+                const payload = {
+                    mode: mode || 'create',
+                    id: editId ? parseInt(editId) : null,
+                    kit_name: finalKitName,
+                    kit_class: kitClass,
+                    kit_cas: customCas,
+                    quantity: quantity,
+                    purchase_date: purchaseDate,
+                    photo_base64: photoBase64
+                };
 
-                    const { error } = await supabase.from('user_kits').update(updatePayload).eq('id', editId);
-                    if (error) alert('수정 실패: ' + error.message);
-                    else {
-                        alert('수정되었습니다.');
-                        modal.style.display = 'none';
-                        if (document.getElementById('kit-detail-page-container')) Kits.loadDetail(editId);
-                        else Kits.loadUserKits();
-                        if (quantity === 0) await checkAndCleanupChemicals(finalKitName);
-                    }
-                } else {
-                    const { error } = await supabase.from('user_kits').insert({
-                        kit_class: kitClass,
-                        kit_name: finalKitName,
-                        quantity: quantity,
-                        purchase_date: purchaseDate,
-                        image_url: imageUrl
+                // 3. Call Edge Function
+                const btnSave = document.getElementById('btn-save-kit');
+                const originText = btnSave.textContent;
+                btnSave.textContent = '처리 중...';
+                btnSave.disabled = true;
+
+                try {
+                    const { data, error } = await supabase.functions.invoke('kit-register', {
+                        body: payload
                     });
-                    if (error) alert('등록 실패: ' + error.message);
-                    else {
-                        alert('등록되었습니다.');
-                        modal.style.display = 'none';
+
+                    if (error) throw error;
+                    if (data?.error) throw new Error(data.error);
+
+                    alert(mode === 'edit' ? '✅ 수정되었습니다.' : '✅ 등록되었습니다.');
+                    modal.style.display = 'none';
+
+                    if (document.getElementById('kit-detail-page-container') && editId) {
+                        Kits.loadDetail(editId);
+                    } else {
                         Kits.loadUserKits();
+                    }
+
+                    // For new registrations, process chemicals (optional, since EF might not handle chem details fully yet?)
+                    // Logic was: await processKitChemicals(finalKitName);
+                    // EF handles catalog creation, but maybe 'processKitChemicals' does something else like fetching CAS info?
+                    // Yes, it fetches MSDS/Chem properties. We should still run this client-side for now or EF needs to do it.
+                    // Let's keep it client-side for post-processing to fetch MSDS data if needed.
+                    if (mode !== 'edit' || (quantity > 0)) { // Ensure we process if quantity added
+                        // Wait a bit for DB propagation? Not strictly necessary if using same DB instance
                         await processKitChemicals(finalKitName);
                     }
+                    if (mode === 'edit' && quantity === 0) {
+                        await checkAndCleanupChemicals(finalKitName);
+                    }
+
+                    // Update Catalog locally if custom
+                    if (isCustom && data.data && !catalog.find(c => c.kit_name === finalKitName)) {
+                        // Ideally reload catalog, but pushing placeholder helps
+                        // EF returns 'data' which is the user_kit record, not catalog.
+                        // So let's reload catalog to be safe.
+                        loadCatalog();
+                    }
+
+                } catch (err) {
+                    console.error('Edge Function Error:', err);
+                    alert('작업 실패: ' + err.message);
+                } finally {
+                    btnSave.textContent = originText;
+                    btnSave.disabled = false;
                 }
             }
         });

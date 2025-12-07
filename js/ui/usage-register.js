@@ -404,41 +404,34 @@
     async function deleteLog(logId, amount) {
         if (!confirm("정말 이 사용 기록을 삭제하시겠습니까?\n삭제된 사용량은 재고에 다시 합산됩니다.")) return;
 
-        const supabase = App.supabase;
         try {
-            // 1. 로그 삭제
-            const { error: delError } = await supabase
-                .from("UsageLog")
-                .delete()
-                .eq("id", logId);
-
-            if (delError) throw delError;
-
-            // 2. 재고 복구 (현재 재고 + 삭제된 사용량)
-            if (selectedItem) {
-                const newAmount = selectedItem.current_amount + amount;
-                const { error: invError } = await supabase
-                    .from("Inventory")
-                    .update({ current_amount: newAmount })
-                    .eq("id", selectedItem.id);
-
-                if (invError) throw invError;
-
-                // 데이터 갱신
-                selectedItem.current_amount = newAmount;
-                if (newAmount > 0 && selectedItem.status === "전량소진") {
-                    selectedItem.status = "사용가능"; // 상태 복구 (필요 시 로직 정교화)
-                    // 전량소진 상태였다면 상태 업데이트도 필요
-                    await supabase.from("Inventory").update({ status: "사용가능" }).eq("id", selectedItem.id);
+            const { data, error } = await supabase.functions.invoke('usage-manager', {
+                body: {
+                    action: 'delete_usage_log',
+                    log_id: logId
                 }
-            }
+            });
+
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
 
             alert("✅ 기록이 삭제되었습니다.");
+
+            // UI refresh
+            if (selectedItem) {
+                selectedItem.current_amount += amount;
+
+                // 백그라운드 목록 데이터도 갱신
+                const itemInList = allInventory.find(i => i.id === selectedItem.id);
+                if (itemInList) {
+                    itemInList.current_amount = selectedItem.current_amount;
+                }
+            }
             refreshUI();
 
         } catch (err) {
             console.error("삭제 실패:", err);
-            alert("삭제 중 오류가 발생했습니다.");
+            alert("삭제 중 오류가 발생했습니다: " + err.message);
         }
     }
 
@@ -510,51 +503,39 @@
             return;
         }
 
-        const supabase = App.supabase;
         try {
-            // 1. 로그 업데이트
-            const { error: updateError } = await supabase
-                .from("UsageLog")
-                .update({
-                    usage_date: newDate,
-                    subject: newSubject,
-                    period: newPeriod,
-                    amount: newAmount
-                })
-                .eq("id", logId);
-
-            if (updateError) throw updateError;
-
-            // 2. 재고 조정 (차이만큼 반영)
-            // 차이 = 새로운 사용량 - 기존 사용량
-            // 재고 = 현재 재고 - 차이
-            // 예: 기존 100, 신규 120 -> 차이 20 -> 재고 20 감소
-            // 예: 기존 100, 신규 80 -> 차이 -20 -> 재고 20 증가
-            const diff = newAmount - oldAmount;
-            if (selectedItem && diff !== 0) {
-                const newCurrentAmount = selectedItem.current_amount - diff;
-
-                // 음수 방지 로직 (선택 사항)
-                if (newCurrentAmount < 0) {
-                    alert("수정된 사용량이 현재 재고보다 많습니다. 재고가 0으로 처리됩니다.");
+            const { data, error } = await supabase.functions.invoke('usage-manager', {
+                body: {
+                    action: 'update_usage_log',
+                    log_id: logId,
+                    new_date: newDate,
+                    new_subject: newSubject,
+                    new_period: newPeriod,
+                    new_amount: newAmount
                 }
-                const finalAmount = Math.max(0, newCurrentAmount);
+            });
 
-                const { error: invError } = await supabase
-                    .from("Inventory")
-                    .update({ current_amount: finalAmount })
-                    .eq("id", selectedItem.id);
-
-                if (invError) throw invError;
-                selectedItem.current_amount = finalAmount;
-            }
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
 
             alert("✅ 수정되었습니다.");
+
+            // UI refresh: Reloading inventory to get sync state is safest, but we can approximate on client
+            const diff = newAmount - oldAmount;
+            if (selectedItem) {
+                const calculatedNew = selectedItem.current_amount - diff;
+                selectedItem.current_amount = Math.max(0, calculatedNew);
+                // 백그라운드 목록 데이터도 갱신
+                const itemInList = allInventory.find(i => i.id === selectedItem.id);
+                if (itemInList) {
+                    itemInList.current_amount = selectedItem.current_amount;
+                }
+            }
             refreshUI();
 
         } catch (err) {
             console.error("수정 실패:", err);
-            alert("수정 중 오류가 발생했습니다.");
+            alert("수정 중 오류가 발생했습니다: " + err.message);
         }
     }
 
@@ -578,7 +559,6 @@
         e.preventDefault();
         if (!selectedItem) return;
 
-        const supabase = App.supabase;
         const date = document.getElementById("usage-date").value;
         const subject = document.getElementById("usage-subject").value;
         const period = document.getElementById("usage-period").value;
@@ -589,133 +569,33 @@
         const usageVal = usageInput.value && !isNaN(parseFloat(usageInput.value)) ? parseFloat(usageInput.value) : null;
         const massVal = massInput.value && !isNaN(parseFloat(massInput.value)) ? parseFloat(massInput.value) : null;
 
-        // 1. 입력 유효성 검사 (XOR 조건 위배 시 경고)
-        // 둘 다 값이 있거나, 둘 다 값이 없는 경우
         if ((usageVal !== null && massVal !== null) || (usageVal === null && massVal === null)) {
             alert("사용량과 사용 후 시약병 질량 중 하나만 입력해주세요.");
             return;
         }
 
-        let calculatedUsage = 0;
+        // Just basic validation, calculation happens on server
+        if (usageVal !== null && usageVal <= 0) return alert("올바른 사용량을 입력하세요.");
+        if (massVal !== null && massVal < 0) return alert("질량은 음수일 수 없습니다.");
 
-        // 2. 사용량 계산 로직
-        if (usageVal !== null) {
-            // Case A: 사용량을 직접 입력한 경우
-            if (usageVal <= 0) {
-                alert("올바른 사용량을 입력하세요.");
-                return;
-            }
-            calculatedUsage = usageVal;
-
-        } else if (massVal !== null) {
-            // Case B: 사용 후 시약병 질량을 입력한 경우
-            if (massVal < 0) {
-                alert("올바른 질량을 입력하세요.");
-                return;
-            }
-
-            const bottleMass = selectedItem.bottle_mass;
-            if (bottleMass == null) { // null or undefined
-                alert("이 약품은 공병 질량 정보가 없어 계산할 수 없습니다.\n사용량을 직접 입력해주세요.");
-                return;
-            }
-
-            const currentAmount = selectedItem.current_amount;
-            const unit = selectedItem.unit;
-
-            // 시약병에 남은 내용물의 질량
-            const remainingContentMass = massVal - bottleMass;
-            if (remainingContentMass < 0) {
-                alert(`이 시약병의 공병 질량(약 ${bottleMass}g)보다 작은 숫자를 입력할 수 없습니다.`);
-                return;
-            }
-
-            if (unit === 'g' || unit === 'kg' || unit === 'mg') {
-                // 질량 단위인 경우: 단순 차이 계산
-                // Usage = (Current Amount + Bottle Mass) - Input Mass
-                // 또는 Usage = Current Amount - Remaining Content Mass
-                // (단위가 g라고 가정. kg 등은 변환 필요하지만, 일단 g로 통일 가정)
-                calculatedUsage = currentAmount - remainingContentMass;
-
-            } else if (unit === 'mL' || unit === 'L') {
-                // 부피 단위인 경우: 밀도 필요
-                const props = selectedItem.Substance?.Properties || [];
-                const densityProp = props.find(p => p.name === "Density");
-
-                if (!densityProp || !densityProp.property) {
-                    alert("이 약품은 밀도 정보가 없어 부피를 계산할 수 없습니다.\n사용량을 직접 입력해주세요.");
-                    return;
-                }
-
-                // 밀도 값 파싱 (예: "1.84 g/cm3 @ 20 °C" -> 1.84)
-                let density = parseFloat(densityProp.property);
-                if (isNaN(density)) {
-                    alert(`밀도 정보를 해석할 수 없습니다: ${densityProp.property}`);
-                    return;
-                }
-
-                // 농도 보정 (퍼센트 농도인 경우)
-                // 식: 밀도 = (원액밀도 * 농도%) + (물밀도1 * (1-농도%))
-                if (selectedItem.concentration_unit === '%') {
-                    const conc = parseFloat(selectedItem.concentration_value);
-                    if (!isNaN(conc)) {
-                        const ratio = conc / 100;
-                        density = (density * ratio) + (1.0 * (1 - ratio));
-                    }
-                }
-
-                // 남은 부피 계산 (Volume = Mass / Density)
-                const remainingVolume = remainingContentMass / density;
-
-                // 사용량 = 현재 잔량 - 남은 부피
-                calculatedUsage = currentAmount - remainingVolume;
-
-                // 소수점 처리 (예: 소수점 2자리)
-                calculatedUsage = Math.round(calculatedUsage * 100) / 100;
-            } else {
-                alert(`지원하지 않는 단위입니다: ${unit}`);
-                return;
-            }
-        }
-
-        if (calculatedUsage <= 0) {
-            // 계산된 사용량이 0 이하인 경우 (잔량이 더 늘어난 경우 등)
-            // 사용자가 실수했을 수 있으므로 경고하되, 마이너스 사용량(충전?)은 일단 막음
-            alert(`계산된 사용량이 유효하지 않습니다 (${calculatedUsage}${selectedItem.unit}).\n입력 값을 확인해주세요.`);
-            return;
-        }
-
-        if (!confirm(`${calculatedUsage}${selectedItem.unit} 사용을 등록하시겠습니까?`)) return;
+        if (!confirm(`사용량을 등록하시겠습니까?`)) return;
 
         try {
-            // 1. UsageLog 삽입
-            const { error: logError } = await supabase
-                .from("UsageLog")
-                .insert({
+            const { data, error } = await supabase.functions.invoke('usage-manager', {
+                body: {
+                    action: 'register_usage',
                     inventory_id: selectedItem.id,
                     usage_date: date,
-                    subject: subject,
-                    period: period,
-                    amount: calculatedUsage,
+                    subject,
+                    period,
+                    amount: usageVal,
+                    remaining_mass: massVal,
                     unit: selectedItem.unit
-                });
+                }
+            });
 
-            if (logError) throw logError;
-
-            // 2. Inventory 업데이트 (차감)
-            const newAmount = selectedItem.current_amount - calculatedUsage;
-            const newStatus = newAmount <= 0 ? "전량소진" : selectedItem.status;
-            const finalAmount = newAmount < 0 ? 0 : newAmount;
-
-            const { error: invError } = await supabase
-                .from("Inventory")
-                .update({
-                    current_amount: finalAmount,
-                    status: newStatus
-                })
-                .eq("id", selectedItem.id);
-
-            if (invError) throw invError;
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
 
             alert("✅ 사용량이 등록되었습니다.");
 
@@ -723,37 +603,32 @@
             document.getElementById("usage-amount").value = "";
             document.getElementById("usage-remaining-mass").value = "";
 
-            // 데이터 갱신
-            selectedItem.current_amount = finalAmount;
-            selectedItem.status = newStatus;
+            // UI 및 데이터 갱신
+            // 서버에서 반환된 Inventory 정보를 활용
+            const updatedInv = data.data;
+            if (updatedInv) {
+                selectedItem.current_amount = updatedInv.current_amount;
+                selectedItem.status = updatedInv.status;
 
-            // UI 갱신
-            if (newStatus === "전량소진") {
+                // 백그라운드 목록 데이터도 갱신
+                const itemInList = allInventory.find(i => i.id === selectedItem.id);
+                if (itemInList) {
+                    itemInList.current_amount = updatedInv.current_amount;
+                    itemInList.status = updatedInv.status;
+                }
+            }
+
+            if (selectedItem.status === "전량소진") {
                 alert("⚠️ 해당 약품이 전량 소진되었습니다.");
-                // 목록 다시 로드 (소진된 것 제거) 후 목록으로 복귀
                 await loadInventoryList();
                 goBackToList();
             } else {
-                // 상세 화면의 카드 정보 갱신 (잔량 업데이트)
-                const displayContainer = document.getElementById("selected-item-display");
-                displayContainer.innerHTML = renderItemCard(selectedItem, true);
-
-                // 기록 목록 갱신
-                await loadUsageHistory(selectedItem.id);
-
-                // 백그라운드 목록 데이터도 갱신 (다시 로드하지 않고 배열만 수정)
-                const itemInList = allInventory.find(i => i.id === selectedItem.id);
-                if (itemInList) {
-                    itemInList.current_amount = finalAmount;
-                    itemInList.status = newStatus;
-                }
-                // 목록 뷰도 갱신 (검색어 유지)
-                filterAndRenderList(document.getElementById("usage-search-input").value);
+                refreshUI();
             }
 
         } catch (err) {
             console.error("❌ 등록 실패:", err);
-            alert(`등록 중 오류가 발생했습니다:\n${err.message}`);
+            alert(`등록 중 오류가 발생했습니다: ${err.message}`);
         }
     }
 

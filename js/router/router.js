@@ -15,6 +15,7 @@
     wasteForm: "pages/waste-form.html",
     kits: "pages/kits.html",
     kitDetail: "pages/kit-detail.html", // ✅ 키트 상세 페이지 추가
+    export: "pages/export.html", // ✅ 내보내기 페이지 추가
   };
 
   // ✅ 현재 상태 추적 (중복 pushState 방지)
@@ -124,6 +125,7 @@
         if (App?.Waste?.bindListPage) App.Waste.bindListPage();
         break;
 
+      case "wasteForm": // ✅ Missing case fixed
         if (App?.Waste?.initForm) {
           const mode = params.mode || "create";
           const id = params.id || null;
@@ -131,11 +133,13 @@
         }
         break;
 
-      case "kits":
-        if (App?.Kits?.init) {
-          await App.Kits.init();
+      case "export": // ✅ Export page logic
+        if (App?.ExportPage?.init) {
+          App.ExportPage.init();
         }
         break;
+
+
 
       case "main":
         // 메인 화면 로직
@@ -152,6 +156,7 @@
       wasteList: "nav-waste",
       wasteForm: "nav-waste",
       kits: "nav-kit",
+      export: "menu-export", // 내보내기 메뉴 활성화
       main: "menu-home"
     };
 

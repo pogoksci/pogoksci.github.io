@@ -109,7 +109,12 @@
     if (menuEquipCabinet) {
       menuEquipCabinet.addEventListener("click", async (e) => {
         e.preventDefault();
-        alert("교구·물품장 설정은 준비 중입니다.");
+        // ✅ 교구·물품장 설정 페이지 연결
+        document.body.classList.remove("home-active");
+        await App.includeHTML("pages/equipment-cabinet-list.html", "form-container");
+        if (App.EquipmentCabinet && App.EquipmentCabinet.loadList) {
+          App.EquipmentCabinet.loadList();
+        }
         closeStartMenu();
       });
     }
@@ -140,28 +145,18 @@
           const supabase = globalThis.App?.supabase;
           if (!supabase) throw new Error("Supabase client not found");
 
-          console.log("🔥 DB Reset Started...");
+          console.log("🔥 DB Reset Started (Server-side)...");
 
-          // 1. Delete Storage Files (msds-pdf)
-          const { data: files, error: listError } = await supabase.storage.from("msds-pdf").list();
-          if (listError) throw listError;
+          const { data, error } = await supabase.functions.invoke('system-admin', {
+            body: { action: 'reset_database' }
+          });
 
-          if (files && files.length > 0) {
-            const filesToRemove = files.map((f) => f.name);
-            const { error: removeError } = await supabase.storage.from("msds-pdf").remove(filesToRemove);
-            if (removeError) throw removeError;
-            console.log(`🗑️ Deleted ${files.length} files from msds-pdf`);
-          }
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
 
-          // 2. Reset All Table Data (RPC)
-          // This function must be created in Supabase SQL Editor:
-          // TRUNCATE TABLE ... RESTART IDENTITY CASCADE;
-          const { error: rpcError } = await supabase.rpc('reset_all_data');
-          if (rpcError) throw rpcError;
-          console.log("🗑️ All table data reset via RPC (IDs reset to 1)");
-
+          console.log(`🗑️ Reset Complete. Deleted ${data.data.deletedFiles} files.`);
           alert("✅ DB 초기화가 완료되었습니다.");
-          location.reload(); // Refresh to clear UI
+          location.reload();
 
         } catch (err) {
           console.error("❌ DB Reset Failed:", err);
@@ -171,17 +166,12 @@
       });
     }
 
-    const menuExportKits = document.getElementById("menu-export-kits");
-    if (menuExportKits) {
-      menuExportKits.addEventListener("click", async (e) => {
+    const menuExport = document.getElementById("menu-export");
+    if (menuExport) {
+      menuExport.addEventListener("click", async (e) => {
         e.preventDefault();
-        if (confirm("키트 목록을 CSV로 내보내시겠습니까?")) {
-          if (App.Utils && App.Utils.exportExperimentKits) {
-            await App.Utils.exportExperimentKits();
-          } else {
-            alert("내보내기 기능을 불러올 수 없습니다.");
-          }
-        }
+        document.body.classList.remove("home-active");
+        await App.Router.go("export");
         closeStartMenu();
       });
     }

@@ -276,64 +276,60 @@
 
     // 폐수 처리 실행
     async function handleDisposal(classification, totalAmount) {
-        // 🚨 1단계 경고: 작업의 의미 설명
+        // 🚨 1단계 경고
         if (!confirm(`[주의] 폐수위탁처리를 진행하시겠습니까?\n\n이 작업을 수행하면 '${classification}' 분류의 현재 폐수 기록이 모두 '처리됨'으로 변경되어 별도 보관됩니다.\n\n이후 등록하는 폐수는 '새로운 폐수통'에 담기는 것으로 간주됩니다.`)) {
             return;
         }
 
         const company = prompt(`[${classification}] 폐수위탁처리 업체명을 입력해주세요.`);
-        if (company === null) return; // 취소
+        if (company === null) return;
 
         const dateStr = prompt("수거 날짜를 입력해주세요 (YYYY-MM-DD)", new Date().toISOString().split("T")[0]);
         if (!dateStr) return;
 
-        if (!confirm(`'${classification}' 폐수 ${Number(totalAmount).toLocaleString()}g을\n'${company}' 업체로 발송 처리하시겠습니까?\n\n처리 후에는 현재 목록에서 사라지며, [폐수위탁처리] 메뉴에서 확인할 수 있습니다.`)) {
+        if (!confirm(`'${classification}' 폐수 ${Number(totalAmount).toLocaleString()}g을\n'${company}' 업체로 발송 처리하시겠습니까?`)) {
             return;
         }
 
-        // 1. WasteDisposal 생성
-        const { data: disposalData, error: disposalError } = await supabase
-            .from("WasteDisposal")
-            .insert({
-                date: dateStr,
-                classification: classification,
-                total_amount: totalAmount,
-                company_name: company,
-                manager: "관리자" // TODO: 실제 로그인 유저명
-            })
-            .select()
-            .single();
+        try {
+            const { data, error } = await supabase.functions.invoke('waste-manager', {
+                body: {
+                    action: 'process_disposal',
+                    classification,
+                    company_name: company,
+                    date: dateStr,
+                    total_amount: totalAmount,
+                    manager: "관리자" // TODO: 실제 로그인 유저명 연동
+                }
+            });
 
-        if (disposalError) {
-            console.error(disposalError);
-            alert("처리 기록 생성 실패");
-            return;
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
+
+            alert("✅ 폐수 처리 완료되었습니다.");
+            loadList();
+        } catch (err) {
+            console.error("처리 실패:", err);
+            alert("처리 중 오류가 발생했습니다: " + err.message);
         }
-
-        // 2. WasteLog 업데이트 (disposal_id 연결)
-        // 현재 disposal_id가 없는 해당 분류의 모든 기록을 업데이트
-        const { error: updateError } = await supabase
-            .from("WasteLog")
-            .update({ disposal_id: disposalData.id })
-            .eq("classification", classification)
-            .is("disposal_id", null);
-
-        if (updateError) {
-            console.error(updateError);
-            alert("폐수 기록 업데이트 실패");
-            return;
-        }
-
-        alert("✅ 폐수 처리 완료되었습니다.");
-        loadList();
     }
 
     async function deleteWaste(id) {
-        const { error } = await supabase.from("WasteLog").delete().eq("id", id);
-        if (error) {
-            alert("삭제 실패: " + error.message);
-        } else {
+        try {
+            const { data, error } = await supabase.functions.invoke('waste-manager', {
+                body: {
+                    action: 'delete_log',
+                    id
+                }
+            });
+
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
+
             loadList();
+        } catch (err) {
+            console.error("삭제 실패:", err);
+            alert("삭제 실패: " + err.message);
         }
     }
 
@@ -428,78 +424,42 @@
         if (!classification) return alert("분류를 선택해주세요.");
         if (!directVal && !totalVal) return alert("폐수량(직접 입력) 또는 폐수통 전체 질량을 입력해주세요.");
 
-        let finalAmount = 0;
-        let totalMassLog = null;
+        const btnSave = document.getElementById("waste-submit-button");
+        const originText = btnSave.textContent;
+        btnSave.textContent = "저장 중...";
+        btnSave.disabled = true;
 
-        if (directVal) {
-            // 🚨 첫 등록 여부 확인 (직접 입력 시)
-            if (mode !== "edit") {
-                const { count } = await supabase
-                    .from("WasteLog")
-                    .select("*", { count: 'exact', head: true })
-                    .eq("classification", classification)
-                    .is("disposal_id", null); // ✅ 현재 보관 중인(미처리) 기록만 확인
+        try {
+            const payload = {
+                action: 'register_log',
+                mode,
+                id: mode === "edit" ? editId : null,
+                date,
+                classification,
+                unit: 'g',
+                manager,
+                remarks,
+                amount: directVal ? directVal : null,
+                total_mass_log: totalVal ? totalVal : null
+            };
 
-                if (count === 0) {
-                    alert(`'${classification}' 분류의 폐수 등록 기록이 없습니다.\n(또는 이전 폐수가 모두 처리되었습니다.)\n\n기준점 설정을 위해 첫 등록 시에는 반드시 [2. 폐수통 전체 질량]을 입력해주세요.`);
-                    return;
-                }
-            }
+            const { data, error } = await supabase.functions.invoke('waste-manager', {
+                body: payload
+            });
 
-            finalAmount = Number(directVal);
-        } else if (totalVal) {
-            const currentTotal = Number(totalVal);
-            totalMassLog = currentTotal;
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
 
-            // 이전 기록 조회하여 차이 계산
-            let query = supabase
-                .from("WasteLog")
-                .select("total_mass_log")
-                .eq("classification", classification)
-                .order("date", { ascending: false })
-                .order("created_at", { ascending: false })
-                .limit(1);
-
-            if (mode === "edit") {
-                query = query.neq("id", editId);
-            }
-
-            const { data: lastLog } = await query.maybeSingle();
-            const prevTotal = (lastLog && lastLog.total_mass_log) ? Number(lastLog.total_mass_log) : 0;
-            finalAmount = currentTotal - prevTotal;
-
-            if (finalAmount < 0) {
-                if (!confirm(`계산된 폐수량이 음수(${finalAmount}g)입니다.\n폐수통을 비우거나 교체하셨나요?\n\n[확인]을 누르면 그대로 저장합니다.`)) {
-                    return;
-                }
-            }
-        }
-
-        const payload = {
-            date,
-            classification,
-            amount: finalAmount,
-            total_mass_log: totalMassLog,
-            unit: 'g',
-            manager,
-            remarks
-        };
-
-        let error;
-        if (mode === "edit" && editId) {
-            const res = await supabase.from("WasteLog").update(payload).eq("id", editId);
-            error = res.error;
-        } else {
-            const res = await supabase.from("WasteLog").insert(payload);
-            error = res.error;
-        }
-
-        if (error) {
-            console.error("저장 실패:", error);
-            alert("저장 중 오류가 발생했습니다.");
-        } else {
             alert(mode === "edit" ? "✅ 수정되었습니다." : "✅ 저장되었습니다.");
             App.Router.go("wasteList");
+
+        } catch (err) {
+            console.error("저장 실패:", err);
+            // Handle specific EF warnings (like first total mass input) if we add them later
+            alert("저장 실패: " + err.message);
+        } finally {
+            btnSave.textContent = originText;
+            btnSave.disabled = false;
         }
     }
 

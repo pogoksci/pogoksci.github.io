@@ -66,214 +66,65 @@
         syncHazardList: async function (btn) {
             if (btn) btn.disabled = true;
             try {
-                this.log("🚀 유해화학물질 동기화 시작...");
-                await this.loadPapaParse();
+                this.log("🚀 유해화학물질 동기화 시작 (Server-side)...");
 
                 this.log("📂 data/HazardList.csv 파일 읽는 중...");
                 const response = await fetch("data/HazardList.csv");
                 if (!response.ok) throw new Error(`파일을 찾을 수 없습니다. (Status: ${response.status})`);
 
                 const csvText = await response.text();
-                this.log(`✅ 파일 읽기 성공 (${csvText.length} bytes)`);
+                this.log(`✅ 파일 읽기 성공 (${csvText.length} bytes). 서버로 전송합니다...`);
 
-                Papa.parse(csvText, {
-                    header: false,
-                    skipEmptyLines: true,
-                    complete: async (results) => {
-                        if (results.errors.length > 0) {
-                            this.log(`⚠️ 파싱 중 경고 발생: ${results.errors[0].message}`, "error");
-                        }
-                        const rows = results.data.slice(1); // Remove header
-                        await this.processHazardData(rows);
-                        if (btn) btn.disabled = false;
-                    },
-                    error: (err) => { throw err; }
+                const { data, error } = await App.supabase.functions.invoke('system-admin', {
+                    body: {
+                        action: 'sync_hazard_data',
+                        csv_content: csvText
+                    }
                 });
+
+                if (error) throw error;
+                if (data?.error) throw new Error(data.error);
+
+                this.log(`🎉 동기화 완료! (처리: ${data.data.processed}, 저장: ${data.data.upserted})`, "success");
+
             } catch (err) {
                 this.log(`❌ 오류 발생: ${err.message}`, "error");
+            } finally {
                 if (btn) btn.disabled = false;
             }
         },
 
-        processHazardData: async function (rows) {
-            this.log(`📊 총 ${rows.length}개 규제 데이터 처리 중...`);
-            const chemicalMap = new Map();
-
-            let processedCount = 0;
-            for (const row of rows) {
-                if (row.length < 10) continue;
-                const cas = this.clean(row[6]);
-                if (!cas) continue;
-
-                const regulationType = this.clean(row[2]);
-                const standardValue = this.clean(row[8]);
-                let name = this.clean(row[9]);
-
-                if (name) name = name.replace(/^(\d+\)|[가-하]\.)\s*/, "");
-                const normalizedCas = cas.replace(/\|\|\|/g, ", ");
-
-                if (!chemicalMap.has(normalizedCas)) {
-                    chemicalMap.set(normalizedCas, {
-                        cas_nos: normalizedCas,
-                        chem_name: name,
-                        hazard_class: null,
-                        school_hazardous_standard: null,
-                        school_accident_precaution_standard: null,
-                        special_health_standard: null,
-                        toxic_standard: null,
-                        permitted_standard: null,
-                        restricted_standard: null,
-                        prohibited_standard: null
-                    });
-                }
-
-                const chemData = chemicalMap.get(normalizedCas);
-                if (name && name.length > chemData.chem_name.length) chemData.chem_name = name;
-
-                if (regulationType) {
-                    if (chemData.hazard_class) {
-                        if (!chemData.hazard_class.includes(regulationType)) {
-                            chemData.hazard_class += `, ${regulationType}`;
-                        }
-                    } else {
-                        chemData.hazard_class = regulationType;
-                    }
-                }
-
-                let mappedCol = null;
-                if (regulationType && regulationType.length >= 2) {
-                    const prefix = regulationType.substring(0, 2);
-                    if (prefix === "특수") mappedCol = "special_health_standard";
-                    else if (prefix === "유독") mappedCol = "toxic_standard";
-                    else if (prefix === "제한") mappedCol = "restricted_standard";
-                    else if (prefix === "금지") mappedCol = "prohibited_standard";
-                    else if (prefix === "허가") mappedCol = "permitted_standard";
-                }
-
-                if (mappedCol) {
-                    if (chemData[mappedCol]) chemData[mappedCol] += `, ${standardValue}`;
-                    else chemData[mappedCol] = standardValue || "해당";
-                }
-                processedCount++;
-            }
-
-            const upsertData = Array.from(chemicalMap.values());
-
-            if (!confirm(`총 ${upsertData.length}개의 물질 데이터를 업데이트합니다.\n(기존 데이터는 유지/업데이트됩니다)`)) {
-                this.log("🚫 작업이 취소되었습니다.", "error");
-                return;
-            }
-
-            this.log("🔍 기존 HazardList 데이터 조회 중...");
-            const { data: existingData, error: fetchError } = await App.supabase
-                .from("HazardList")
-                .select("id, cas_nos");
-
-            if (fetchError) {
-                this.log(`❌ 조회 실패: ${fetchError.message}`, "error");
-                return;
-            }
-
-            // Map existing IDs by CAS
-            const idMap = new Map();
-            if (existingData) {
-                existingData.forEach(item => {
-                    if (item.cas_nos) idMap.set(item.cas_nos, item.id);
-                });
-            }
-
-            // Attach IDs to upsertData
-            upsertData.forEach(item => {
-                if (idMap.has(item.cas_nos)) {
-                    item.id = idMap.get(item.cas_nos);
-                }
-            });
-
-            const BATCH_SIZE = 100;
-            const totalBatches = Math.ceil(upsertData.length / BATCH_SIZE);
-            this.log(`💾 DB 저장 시작 (총 ${totalBatches} 배치)`);
-
-            for (let i = 0; i < totalBatches; i++) {
-                const batch = upsertData.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
-                const { error } = await App.supabase.from("HazardList").upsert(batch, { onConflict: 'id' });
-                if (error) this.log(`❌ 배치 ${i + 1} 실패: ${error.message}`, "error");
-                else this.log(`✅ 배치 ${i + 1}/${totalBatches} 완료`);
-            }
-            this.log("🎉 HazardList 동기화 완료!", "success");
-        },
+        // Helper not needed anymore on client but keeping empty or removing if strict
+        processHazardData: async function (rows) { },
 
         // 2. SubstanceRef Sync
         syncSubstanceRef: async function (btn) {
             if (btn) btn.disabled = true;
             try {
-                this.log("🚀 물질 참조 데이터 동기화 시작...");
-                await this.loadPapaParse();
+                this.log("🚀 물질 참조 데이터 동기화 시작 (Server-side)...");
 
                 this.log("📂 data/casimport-correct.csv 파일 읽는 중...");
                 const response = await fetch("data/casimport-correct.csv");
                 if (!response.ok) throw new Error(`파일을 찾을 수 없습니다. (Status: ${response.status})`);
 
                 const csvText = await response.text();
-                Papa.parse(csvText, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: async (results) => {
-                        const rows = results.data;
-                        const insertData = rows.map(row => ({
-                            cas_ref: this.clean(row.cas_ref),
-                            chem_name_kor_ref: this.clean(row.chem_name_kor_ref),
-                            substance_name_ref: this.clean(row.substance_name_ref),
-                            molecular_formula_ref: this.clean(row.molecular_formula_ref)
-                        })).filter(item => item.cas_ref);
+                this.log(`✅ 파일 읽기 성공 (${csvText.length} bytes). 서버로 전송합니다...`);
 
-                        if (!confirm(`총 ${insertData.length}개의 참조 데이터를 업데이트합니다.\n(기존 데이터는 유지/업데이트됩니다)`)) {
-                            this.log("🚫 작업이 취소되었습니다.", "error");
-                            if (btn) btn.disabled = false;
-                            return;
-                        }
-
-                        this.log("🔍 기존 SubstanceRef 데이터 조회 중...");
-                        const { data: existingData, error: fetchError } = await App.supabase
-                            .from("SubstanceRef")
-                            .select("id, cas_ref");
-
-                        if (fetchError) {
-                            this.log(`❌ 조회 실패: ${fetchError.message}`, "error");
-                            if (btn) btn.disabled = false;
-                            return;
-                        }
-
-                        // Map existing IDs by CAS
-                        const idMap = new Map();
-                        if (existingData) {
-                            existingData.forEach(item => {
-                                if (item.cas_ref) idMap.set(item.cas_ref, item.id);
-                            });
-                        }
-
-                        // Attach IDs to insertData
-                        insertData.forEach(item => {
-                            if (idMap.has(item.cas_ref)) {
-                                item.id = idMap.get(item.cas_ref);
-                            }
-                        });
-
-                        const BATCH_SIZE = 100;
-                        const totalBatches = Math.ceil(insertData.length / BATCH_SIZE);
-
-                        for (let i = 0; i < totalBatches; i++) {
-                            const batch = insertData.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
-                            const { error } = await App.supabase.from("SubstanceRef").upsert(batch, { onConflict: 'id' });
-                            if (error) this.log(`❌ 배치 ${i + 1} 실패: ${error.message}`, "error");
-                            else this.log(`✅ 배치 ${i + 1}/${totalBatches} 완료`);
-                        }
-                        this.log("🎉 SubstanceRef 동기화 완료!", "success");
-                        if (btn) btn.disabled = false;
-                    },
-                    error: (err) => { throw err; }
+                const { data, error } = await App.supabase.functions.invoke('system-admin', {
+                    body: {
+                        action: 'sync_substance_ref',
+                        csv_content: csvText
+                    }
                 });
+
+                if (error) throw error;
+                if (data?.error) throw new Error(data.error);
+
+                this.log(`🎉 동기화 완료! (데이터: ${data.data.count}개)`, "success");
+
             } catch (err) {
                 this.log(`❌ 오류 발생: ${err.message}`, "error");
+            } finally {
                 if (btn) btn.disabled = false;
             }
         },
