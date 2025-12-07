@@ -580,6 +580,12 @@
 
         if (!confirm(`사용량을 등록하시겠습니까?`)) return;
 
+        const supabase = App.supabase;
+        if (!supabase) {
+            alert("서버 연결에 실패했습니다 (Supabase Init Failed).");
+            return;
+        }
+
         try {
             const { data, error } = await supabase.functions.invoke('usage-manager', {
                 body: {

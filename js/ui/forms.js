@@ -68,6 +68,155 @@
   }
 
   // -------------------------------------------------
+  // 🧪 약품 입고 폼 초기화
+  // -------------------------------------------------
+  async function initInventoryForm(mode = "create", detail = null) {
+    await App.includeHTML("pages/inventory-form.html", "form-container");
+    reset();
+    set("mode", mode);
+
+    // 🏷 타이틀 & 버튼 제어
+    const title = document.querySelector("#inventory-form h1");
+    const submitBtn = document.getElementById("inventory-submit-button");
+    const statusMsg = document.getElementById("statusMessage");
+
+    if (title) {
+      title.textContent = mode === "edit" ? "약품 정보 수정" : "약품 입고 정보 입력";
+    }
+
+    if (submitBtn) {
+      submitBtn.textContent = mode === "edit" ? "수정 완료" : "약품 입고 정보 저장";
+    }
+
+    // ✅ State 복원 (Edit 모드)
+    if (detail) {
+      set("inventoryId", detail.id);
+      set("cas_rn", detail.Substance?.cas_rn);
+      set("purchase_volume", detail.purchase_volume);
+      set("unit", detail.unit);
+      set("bottle_type", detail.bottle_type);
+      set("classification", detail.classification);
+      set("status", detail.status);
+      set("concentration_value", detail.concentration_value);
+      set("concentration_unit", detail.concentration_unit);
+      set("manufacturer", detail.manufacturer);
+      set("purchase_date", detail.purchase_date);
+
+      // Location logic needs helper or manual set
+      // For now, let's just set the basics. Location restoration is complex and usually requires cascading selects.
+      // We can trigger the first select change if we have area_id.
+    }
+
+    // ------------------------------------------------------------
+    // 버튼 그룹 설정
+    // ------------------------------------------------------------
+    const groups = [
+      "unit_buttons",
+      "bottle_type_buttons",
+      "classification_buttons",
+      "state_buttons",
+      "concentration_unit_buttons",
+      "manufacturer_buttons",
+      // Location buttons are handled dynamically in location logic
+    ];
+
+    groups.forEach(id => {
+      setupButtonGroup(id, (btn) => {
+        const val = btn.dataset.value;
+        // ID에서 '_buttons' 제거하여 state key 추정 (예: unit_buttons -> unit)
+        const key = id.replace("_buttons", "");
+
+        if (key === "manufacturer" && val === "기타") {
+          document.getElementById("other_manufacturer_group").style.display = "block";
+          set(key, null);
+          // focus input
+        } else if (key === "manufacturer") {
+          document.getElementById("other_manufacturer_group").style.display = "none";
+          set(key, val);
+        } else {
+          set(key, val);
+        }
+      });
+    });
+
+    // Manufacturer Other Input
+    const manOther = document.getElementById("manufacturer_other");
+    if (manOther) {
+      manOther.addEventListener("input", (e) => set("manufacturer_custom", e.target.value));
+    }
+
+    // ------------------------------------------------------------
+    // 📸 카메라/사진 (inventory-form.html IDs)
+    // ------------------------------------------------------------
+    const photoBtn = document.getElementById("photo-btn");
+    const cameraBtn = document.getElementById("camera-btn");
+    const cameraCancelBtn = document.getElementById("camera-cancel-btn");
+    const photoInput = document.getElementById("photo-input");
+    const cameraInput = document.getElementById("camera-input");
+
+    if (photoBtn && photoInput) {
+      photoBtn.onclick = () => photoInput.click();
+      photoInput.onchange = (e) => processImage(e.target.files[0], (res) => {
+        set("photo_320_base64", res.base64_320);
+        set("photo_160_base64", res.base64_160);
+        // preview logic (simple img tag append)
+        const preview = document.getElementById("photo-preview");
+        preview.innerHTML = `<img src="${res.base64_320}" style="width:100%;height:100%;object-fit:contain;">`;
+      });
+    }
+
+    if (cameraBtn) {
+      cameraBtn.onclick = () => {
+        // Inventory specific camera logic or reuse App.Camera
+        startCamera("camera-stream", "photo-preview", "camera-btn", "camera-cancel-btn");
+      };
+    }
+
+    // ------------------------------------------------------------
+    // 🗺 보관 위치 로직 (Cascading Selects)
+    // ------------------------------------------------------------
+    // This requires loading Areas/Cabinets.
+    // Simplifying for now: Just bind the select events if they exist.
+    // Full implementation requires fetching data.
+    // For now, let's ensure the function exists to fix the ReferenceError.
+
+    // ------------------------------------------------------------
+    // 📝 폼 제출
+    // ------------------------------------------------------------
+    const form = document.getElementById("inventory-form");
+    if (form) {
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        // Collect Input Values manually for non-button inputs
+        set("cas_rn", document.getElementById("cas_rn").value);
+        set("purchase_volume", document.getElementById("purchase_volume").value);
+        set("concentration_value", document.getElementById("concentration_value").value);
+        set("purchase_date", document.getElementById("purchase_date").value);
+
+        // Handle Save
+        // Inventory save logic is likely different from handleSave (which is for Cabinets)
+        // But handleSave might be generic? No, handleSave calls App.Cabinet.
+        // We need App.Inventory.create / update.
+
+        try {
+          const payload = await makePayload(dump()); // Validate & Transform
+          if (mode === "create") {
+            await App.Inventory.create(payload);
+            alert("✅ 등록 완료");
+          } else {
+            await App.Inventory.update(detail.id, payload);
+            alert("✅ 수정 완료");
+          }
+          App.Router.go("inventory");
+        } catch (err) {
+          console.error(err);
+          if (statusMsg) statusMsg.textContent = "저장 실패: " + err.message;
+        }
+      };
+    }
+  }
+
+  // -------------------------------------------------
   // 🧭 시약장 폼 초기화 (create / edit 모드 완전 복원)
   // -------------------------------------------------
   async function initCabinetForm(mode = "create", detail = null) {
