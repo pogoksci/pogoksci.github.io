@@ -1244,7 +1244,7 @@
 
             form.removeAttribute('data-mode');
             form.removeAttribute('data-id');
-            document.querySelector('.modal-title').textContent = '키트 등록';
+            modal.querySelector('.modal-title').textContent = '키트 등록';
             document.getElementById('btn-save-kit').textContent = '등록';
 
             classSelect.style.display = 'block';
@@ -1282,7 +1282,7 @@
             if (btnTakePhoto) btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
             form.setAttribute('data-mode', 'edit');
             form.setAttribute('data-id', kit.id);
-            document.querySelector('.modal-title').textContent = '키트 정보 수정';
+            modal.querySelector('.modal-title').textContent = '키트 정보 수정';
             document.getElementById('btn-save-kit').textContent = '수정 완료';
 
             classSelect.style.display = 'none';
