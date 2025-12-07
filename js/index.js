@@ -23,6 +23,7 @@
   ];
   const uiModules = [
     "./js/ui/cabinet.js",
+    "./js/ui/equipment-cabinet.js", // ✅ 교구·물품장 설정 모듈 추가
     "./js/ui/forms.js",
     "./js/ui/inventory.js",
     "./js/ui/inventory-detail.js",
