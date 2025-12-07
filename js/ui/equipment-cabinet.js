@@ -118,24 +118,34 @@
     // 4️⃣ 생성/수정/삭제 (Edge Function 호출)
     // ------------------------------------------------------------
     async function createCabinet(payload) {
-        const API = getAPI();
+        const supabase = getSupabase(); // Use supabase directly
         // Edge Function 'equipment-cabinet' 호출
-        await API.callEdge('equipment-cabinet', {
-            method: 'POST',
-            body: payload
+        const { data, error } = await supabase.functions.invoke('equipment-cabinet', {
+            body: {
+                method: 'POST',
+                ...payload
+            }
         });
+
+        if (error) throw error;
+        return data;
     }
 
     async function updateCabinet(id, payload) {
-        const API = getAPI();
+        const supabase = getSupabase();
         const patchPayload = {
             ...payload,
             cabinet_id: id
         };
-        await API.callEdge('equipment-cabinet', {
-            method: 'PATCH',
-            body: patchPayload
+        const { data, error } = await supabase.functions.invoke('equipment-cabinet', {
+            body: {
+                method: 'PATCH',
+                ...patchPayload
+            }
         });
+
+        if (error) throw error;
+        return data;
     }
 
     async function deleteCabinet(id) {
@@ -143,13 +153,13 @@
         if (!confirm("정말 삭제하시겠습니까?")) return;
 
         try {
-            // Cabinet 삭제 Edge Function이 'table' 파라미터를 지원하므로 활용 시도
-            // 만약 Edge Function이 Cabinet 테이블만 강제한다면 오류가 날 수 있음.
-            // 안전하게 직접 Delete 후 Storage 파일 정리는 추후 고려
-            // 우선 API.callEdge 사용 시도 (cabinet.js 참조)
-            await API.callEdge(`${API.EDGE.DELETEAREA}?id=${id}&table=EquipmentCabinet`, {
-                method: "DELETE",
+            // API.callEdge 삭제 기능을 supabase.functions.invoke로 대체
+            const supabase = getSupabase();
+            const { error } = await supabase.functions.invoke('equipment-cabinet', {
+                body: { method: 'DELETE', id: id }
             });
+
+            if (error) throw error;
 
             alert("✅ 삭제되었습니다.");
             await App.includeHTML("pages/equipment-cabinet-list.html");
