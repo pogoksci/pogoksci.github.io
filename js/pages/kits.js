@@ -803,54 +803,9 @@
                                 <div id="kit-storage-selector" style="background:#f9f9f9; padding:10px; border-radius:8px;"></div>
                             </div>
 
+
                             <!-- Photo Input -->
-// ... (In submit handler)
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            // ... validation ...
-            
-            // 위치 정보 가져오기
-            const locSelection = App.StorageSelector.getSelection();
-            // JSON 저장 (나중에 복원을 위해)
-            // 하지만 리스트에 보여줄 땐 텍스트가 필요함. 
-            // user_kits 테이블에 location 컬럼 하나뿐이라면, JSON을 저장하고
-            // 리스트/상세 조회 시 파싱해서 보여주는게 베스트.
-            
-            const locationJson = JSON.stringify(locSelection);
-            
-            // payload.location = locationJson;
-            // ...
-        });
-// ...
-
-// ... (In loadDetail - render logic)
-// Parse JSON and display
-function formatLocation(locStr) {
-    try {
-        const parsed = JSON.parse(locStr);
-        if (parsed && parsed.mode) { 
-             // It's our JSON. Fetch names? 
-             // StorageSelector doesn't return names, only IDs.
-             // This is a problem. We need names for display without querying DB every time.
-             // OR, StorageSelector.getSelection() should return names too.
-        }
-    } catch(e) {}
-    return locStr; // Fallback
-}
-```
-
-            ** Correction **: `StorageSelector` state only stores IDs(`area_id`, `cabinet_id`).It selects names in UI but state is IDs.
-If I save only IDs`{area_id: 1, cabinet_id: 2...}`, I can't display "Science Lab > Cabinet A" without joining or querying. `user_kits` usually has just a text `location`.
-        Refactoring `StorageSelector` to return Names * and * IDs is safer.
-            Let's verify `storage-selector.js` again. It has `options` with labels. But `state` only saves IDs.
-I should update `storage-selector.js` to store Labels / Names in `state` as well, `area_name`, `cabinet_name`.
-
-** Updated Refactor Plan for `storage-selector.js` **:
-            - Update`loadAreas`, `loadCabinets` callbacks to store`label`(name) in state.
-- e.g. `state.area_name = opt.label`.
-
-I will do this quick update to `storage-selector.js` FIRST, then`kits.js`.This is critical for display efficiency.
-                            < div class= "form-group" >
+                            <div class="form-group">
                                 <label>사진</label>
                                 <div class="kit-photo-container">
                                     <div class="kit-photo-preview-box">
@@ -868,14 +823,14 @@ I will do this quick update to `storage-selector.js` FIRST, then`kits.js`.This i
                                     </div>
                                 </div>
                             </div>
-                        </div >
+                        </div>
             <div class="modal-actions">
                 <button type="button" id="btn-cancel-kit" class="btn-cancel">취소</button>
                 <button type="submit" id="btn-save-kit" class="btn-primary">등록</button>
             </div>
-                    </form >
-                </div >
-            </div > `;
+                    </form>
+                </div>
+            </div>`;
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
@@ -980,7 +935,7 @@ I will do this quick update to `storage-selector.js` FIRST, then`kits.js`.This i
             canvas.getContext('2d').drawImage(videoStream, 0, 0);
 
             canvas.toBlob((blob) => {
-                const file = new File([blob], `capture - ${ Date.now() }.jpg`, { type: "image/jpeg" });
+                const file = new File([blob], `capture - ${Date.now()}.jpg`, { type: "image/jpeg" });
 
                 // Update file input manually (using DataTransfer to simulate file selection)
                 const dataTransfer = new DataTransfer();
@@ -1343,7 +1298,7 @@ I will do this quick update to `storage-selector.js` FIRST, then`kits.js`.This i
             if (catalogItem) {
                 updateNameSelect('all', catalogItem.id);
             } else {
-                nameSelect.innerHTML = `< option value = "${kit.kit_name}" selected > ${ kit.kit_name }</option > `;
+                nameSelect.innerHTML = `< option value = "${kit.kit_name}" selected > ${kit.kit_name}</option > `;
             }
 
             document.getElementById('kit-quantity').value = kit.quantity;
@@ -1516,16 +1471,16 @@ I will do this quick update to `storage-selector.js` FIRST, then`kits.js`.This i
 
             if (!data) {
                 if (isCasNo(cas)) {
-                    console.log(`Fetching info for ${ cas }...`);
+                    console.log(`Fetching info for ${cas}...`);
                     try {
                         await supabase.functions.invoke('kit-casimport', {
                             body: { cas_rn: cas }
                         });
                     } catch (e) {
-                        console.error(`Failed to import ${ cas }: `, e);
+                        console.error(`Failed to import ${cas}: `, e);
                     }
                 } else {
-                    console.log(`Inserting manual entry for ${ cas }...`);
+                    console.log(`Inserting manual entry for ${cas}...`);
                     try {
                         await supabase.from('kit_chemicals').insert({
                             cas_no: cas,
@@ -1534,7 +1489,7 @@ I will do this quick update to `storage-selector.js` FIRST, then`kits.js`.This i
                             msds_data: null
                         });
                     } catch (e) {
-                        console.error(`Failed to insert manual entry ${ cas }: `, e);
+                        console.error(`Failed to insert manual entry ${cas}: `, e);
                     }
                 }
             }
@@ -1564,7 +1519,7 @@ I will do this quick update to `storage-selector.js` FIRST, then`kits.js`.This i
         const toRemove = targetCasList.filter(cas => !activeCasSet.has(cas));
 
         if (toRemove.length > 0) {
-            console.log(`Cleaning up unused chemicals: ${ toRemove.join(', ') } `);
+            console.log(`Cleaning up unused chemicals: ${toRemove.join(', ')} `);
             await supabase
                 .from('kit_chemicals')
                 .delete()
