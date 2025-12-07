@@ -911,6 +911,7 @@
 
   async function handleEquipmentSave() {
     const state = App.State.dump();
+    console.log("🔍 [DEBUG] handleEquipmentSave - Current State Mode:", state.mode);
     const payload = await App.Utils.makePayload(state);
 
     // Map text buttons to integers for DB

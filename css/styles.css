@@ -911,7 +911,8 @@ button:disabled {
 
 ================================================================= */
 
-#location-list-page #cabinet-list-container {
+#location-list-page #cabinet-list-container,
+#equipment-cabinet-list-container {
 
   display: grid;
 
