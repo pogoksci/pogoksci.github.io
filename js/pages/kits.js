@@ -26,6 +26,29 @@
         "09": "수생 환경 유독성(Hazardous to the Environment)\n· 수생환경 유해성",
     };
 
+    function formatLocation(jsonStr) {
+        if (!jsonStr) return '위치 미지정';
+        try {
+            if (jsonStr.trim().startsWith('{')) {
+                const loc = JSON.parse(jsonStr);
+                const parts = [];
+                if (loc.area_name) parts.push(loc.area_name);
+                if (loc.cabinet_name) parts.push(loc.cabinet_name);
+
+                const det = [];
+                if (loc.door_vertical) det.push(loc.door_vertical + '번');
+                if (loc.door_horizontal) det.push(loc.door_horizontal + '번');
+                if (loc.internal_shelf_level) det.push(loc.internal_shelf_level + '단');
+                if (loc.storage_column) det.push(loc.storage_column + '열');
+
+                if (det.length > 0) parts.push(det.join(' '));
+
+                return parts.join(' > ') || '위치 미지정';
+            }
+        } catch (e) { /* ignore */ }
+        return jsonStr;
+    }
+
     const Kits = {
         async init() {
             console.log("📦 Kit Page Initialized");
@@ -159,7 +182,7 @@
                                 <div class="kit-quantity" style="font-size: 14px; color: #555; font-weight: normal;">수량: ${kit.quantity}개</div>
                             </div>
                             <div class="inventory-card__line3" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
-                                <div class="kit-location" style="font-size: 13px; color: #777;"></div>
+                                <div class="kit-location" style="font-size: 13px; color: #777;">${formatLocation(kit.location)}</div>
                                 <div class="inventory-card__actions" style="display: flex; gap: 5px;">
                                     <button class="icon-btn stock-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="재고 관리">
                                         <span class="material-symbols-outlined" style="font-size: 20px; color: #4caf50;">inventory</span>
@@ -259,7 +282,7 @@
                     </div>
                     <div class="kit-info-row">
                         <span class="label">보관 위치</span>
-                        <span class="value" id="detail-kit-location">(지정되지 않음)</span>
+                        <span class="value" id="detail-kit-location">${formatLocation(kit.location)}</span>
                     </div>
                     <div class="kit-info-row" id="kit-row-3">
                         <span class="label">구성 약품</span>
@@ -768,13 +791,66 @@
                                 <input type="number" id="kit-quantity" class="form-input" value="1" min="1" required>
                             </div>
 
+// ... (Around line 770 in setupRegisterModal)
                             <div class="form-group">
                                 <label for="kit-date">구입일</label>
                                 <input type="date" id="kit-date" class="form-input" required>
                             </div>
 
-                            <!-- Photo Input -->
+                            <!-- ✅ 보관 위치 선택기 추가 -->
                             <div class="form-group">
+                                <label>보관 위치 설정</label>
+                                <div id="kit-storage-selector" style="background:#f9f9f9; padding:10px; border-radius:8px;"></div>
+                            </div>
+
+                            <!-- Photo Input -->
+// ... (In submit handler)
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // ... validation ...
+            
+            // 위치 정보 가져오기
+            const locSelection = App.StorageSelector.getSelection();
+            // JSON 저장 (나중에 복원을 위해)
+            // 하지만 리스트에 보여줄 땐 텍스트가 필요함. 
+            // user_kits 테이블에 location 컬럼 하나뿐이라면, JSON을 저장하고
+            // 리스트/상세 조회 시 파싱해서 보여주는게 베스트.
+            
+            const locationJson = JSON.stringify(locSelection);
+            
+            // payload.location = locationJson;
+            // ...
+        });
+// ...
+
+// ... (In loadDetail - render logic)
+// Parse JSON and display
+function formatLocation(locStr) {
+    try {
+        const parsed = JSON.parse(locStr);
+        if (parsed && parsed.mode) { 
+             // It's our JSON. Fetch names? 
+             // StorageSelector doesn't return names, only IDs.
+             // This is a problem. We need names for display without querying DB every time.
+             // OR, StorageSelector.getSelection() should return names too.
+        }
+    } catch(e) {}
+    return locStr; // Fallback
+}
+```
+
+            ** Correction **: `StorageSelector` state only stores IDs(`area_id`, `cabinet_id`).It selects names in UI but state is IDs.
+If I save only IDs`{area_id: 1, cabinet_id: 2...}`, I can't display "Science Lab > Cabinet A" without joining or querying. `user_kits` usually has just a text `location`.
+        Refactoring `StorageSelector` to return Names * and * IDs is safer.
+            Let's verify `storage-selector.js` again. It has `options` with labels. But `state` only saves IDs.
+I should update `storage-selector.js` to store Labels / Names in `state` as well, `area_name`, `cabinet_name`.
+
+** Updated Refactor Plan for `storage-selector.js` **:
+            - Update`loadAreas`, `loadCabinets` callbacks to store`label`(name) in state.
+- e.g. `state.area_name = opt.label`.
+
+I will do this quick update to `storage-selector.js` FIRST, then`kits.js`.This is critical for display efficiency.
+                            < div class= "form-group" >
                                 <label>사진</label>
                                 <div class="kit-photo-container">
                                     <div class="kit-photo-preview-box">
@@ -792,14 +868,14 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="modal-actions">
-                            <button type="button" id="btn-cancel-kit" class="btn-cancel">취소</button>
-                            <button type="submit" id="btn-save-kit" class="btn-primary">등록</button>
-                        </div>
-                    </form>
-                </div>
-            </div>`;
+                        </div >
+            <div class="modal-actions">
+                <button type="button" id="btn-cancel-kit" class="btn-cancel">취소</button>
+                <button type="submit" id="btn-save-kit" class="btn-primary">등록</button>
+            </div>
+                    </form >
+                </div >
+            </div > `;
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
@@ -904,7 +980,7 @@
             canvas.getContext('2d').drawImage(videoStream, 0, 0);
 
             canvas.toBlob((blob) => {
-                const file = new File([blob], `capture-${Date.now()}.jpg`, { type: "image/jpeg" });
+                const file = new File([blob], `capture - ${ Date.now() }.jpg`, { type: "image/jpeg" });
 
                 // Update file input manually (using DataTransfer to simulate file selection)
                 const dataTransfer = new DataTransfer();
@@ -954,7 +1030,7 @@
         if (btnAddCas) {
             btnAddCas.addEventListener('click', () => {
                 const div = document.createElement('div');
-                div.innerHTML = `<input type="text" class="form-input cas-input" placeholder="CAS (예: 7732-18-5)" style="margin-bottom: 5px;">`;
+                div.innerHTML = `< input type = "text" class="form-input cas-input" placeholder = "CAS (예: 7732-18-5)" style = "margin-bottom: 5px;" > `;
                 casInputContainer.appendChild(div.firstChild);
             });
         }
@@ -1039,6 +1115,15 @@
                 const purchaseDate = document.getElementById('kit-date').value;
                 const file = fileInput ? fileInput.files[0] : null;
 
+                // ✅ 위치 정보 가져오기
+                let locationJson = null;
+                if (App.StorageSelector) {
+                    const locSelection = App.StorageSelector.getSelection();
+                    if (locSelection.area_id) {
+                        locationJson = JSON.stringify(locSelection);
+                    }
+                }
+
                 // 2. Prepare Payload for Edge Function
                 // Helper to convert File to Base64
                 const toBase64 = (file) => new Promise((resolve, reject) => {
@@ -1065,7 +1150,8 @@
                     kit_cas: customCas,
                     quantity: quantity,
                     purchase_date: purchaseDate,
-                    photo_base64: photoBase64
+                    photo_base64: photoBase64,
+                    location: locationJson
                 };
 
                 // 3. Call Edge Function
@@ -1257,11 +1343,24 @@
             if (catalogItem) {
                 updateNameSelect('all', catalogItem.id);
             } else {
-                nameSelect.innerHTML = `<option value="${kit.kit_name}" selected>${kit.kit_name}</option>`;
+                nameSelect.innerHTML = `< option value = "${kit.kit_name}" selected > ${ kit.kit_name }</option > `;
             }
 
             document.getElementById('kit-quantity').value = kit.quantity;
             document.getElementById('kit-date').value = kit.purchase_date;
+
+            // ✅ 위치 정보 복원
+            let defaultLoc = {};
+            try {
+                if (kit.location && kit.location.trim().startsWith('{')) {
+                    defaultLoc = JSON.parse(kit.location);
+                }
+            } catch (e) {
+                console.warn('위치 정보 파싱 실패:', e);
+            }
+            if (App.StorageSelector && App.StorageSelector.init) {
+                App.StorageSelector.init("kit-storage-selector", defaultLoc, "EQUIPMENT");
+            }
 
             if (kit.image_url) {
                 previewImg.src = kit.image_url;
@@ -1281,7 +1380,7 @@
         if (document.getElementById('modal-kit-stock')) return;
 
         const modalHtml = `
-            <div id="modal-kit-stock" class="modal-overlay" style="display: none; z-index: 1200;">
+            < div id = "modal-kit-stock" class="modal-overlay" style = "display: none; z-index: 1200;" >
                 <div class="modal-content stock-modal-content">
                     <h3 class="modal-title">재고 관리</h3>
                     <p id="stock-kit-name" class="modal-subtitle" style="margin-bottom: 15px;"></p>
@@ -1311,7 +1410,7 @@
                         </div>
                     </form>
                 </div>
-            </div>`;
+            </div > `;
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
@@ -1417,16 +1516,16 @@
 
             if (!data) {
                 if (isCasNo(cas)) {
-                    console.log(`Fetching info for ${cas}...`);
+                    console.log(`Fetching info for ${ cas }...`);
                     try {
                         await supabase.functions.invoke('kit-casimport', {
                             body: { cas_rn: cas }
                         });
                     } catch (e) {
-                        console.error(`Failed to import ${cas}: `, e);
+                        console.error(`Failed to import ${ cas }: `, e);
                     }
                 } else {
-                    console.log(`Inserting manual entry for ${cas}...`);
+                    console.log(`Inserting manual entry for ${ cas }...`);
                     try {
                         await supabase.from('kit_chemicals').insert({
                             cas_no: cas,
@@ -1435,7 +1534,7 @@
                             msds_data: null
                         });
                     } catch (e) {
-                        console.error(`Failed to insert manual entry ${cas}: `, e);
+                        console.error(`Failed to insert manual entry ${ cas }: `, e);
                     }
                 }
             }
@@ -1465,7 +1564,7 @@
         const toRemove = targetCasList.filter(cas => !activeCasSet.has(cas));
 
         if (toRemove.length > 0) {
-            console.log(`Cleaning up unused chemicals: ${toRemove.join(', ')} `);
+            console.log(`Cleaning up unused chemicals: ${ toRemove.join(', ') } `);
             await supabase
                 .from('kit_chemicals')
                 .delete()
