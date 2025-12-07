@@ -1315,11 +1315,19 @@
             }
 
             // Storage Selector 초기화
+            console.log("Checking App.StorageSelector:", !!(globalThis.App && globalThis.App.StorageSelector));
             if (App.StorageSelector && typeof App.StorageSelector.init === 'function') {
-                // Ensure the container exists before init (it should, but safety first)
-                if (document.getElementById("kit-storage-selector")) {
+                const container = document.getElementById("kit-storage-selector");
+                console.log("Checking container 'kit-storage-selector':", container);
+
+                if (container) {
+                    console.log("Calling App.StorageSelector.init with:", "kit-storage-selector", defaultLoc, "EQUIPMENT");
                     App.StorageSelector.init("kit-storage-selector", defaultLoc, "EQUIPMENT");
+                } else {
+                    console.error("Critical: kit-storage-selector container missing!");
                 }
+            } else {
+                console.error("App.StorageSelector is missing or init is not a function");
             }
 
             if (kit.image_url) {
