@@ -22,6 +22,25 @@
     storage_column: null,
   };
 
+  const LABELS = {
+    INVENTORY: {
+      step1: "1. 약품실",
+      step2: "2. 수납함",
+      step3: "3. 수납위치_도어_상중하",
+      step4: "4. 수납위치_도어_좌우",
+      step5: "5. 수납위치_도어내부_단",
+      step6: "6. 수납위치_도어내부_보관열"
+    },
+    EQUIPMENT: {
+      step1: "1. 장소",
+      step2: "2. 교구·물품장",
+      step3: "3. 수납위치_도어_상중하",
+      step4: "4. 수납위치_도어_좌우",
+      step5: "5. 수납위치_도어내부_단",
+      step6: "6. 수납위치_도어내부_보관열"
+    }
+  };
+
   // -------------------------------------------------------------
   // 🔹 공용 UI 생성 헬퍼
   // -------------------------------------------------------------
@@ -141,7 +160,7 @@
       return;
     }
 
-    const step = createStep("1️⃣ 장소 선택");
+    const step = createStep(LABELS[state.mode].step1);
 
     // Dropdown 생성
     const select = document.createElement("select");
@@ -198,7 +217,7 @@
       return;
     }
 
-    const stepText = state.mode === "EQUIPMENT" ? "2️⃣ 교구·물품장 선택" : "2️⃣ 시약장 선택";
+    const stepText = LABELS[state.mode].step2;
     const step = createStep(stepText);
 
     if (!data.length) {
