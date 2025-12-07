@@ -644,7 +644,12 @@
     }
 
     if (cancelBtn)
-      cancelBtn.onclick = () => App.includeHTML("pages/equipment-cabinet-list.html");
+      cancelBtn.onclick = async () => {
+        await App.includeHTML("pages/equipment-cabinet-list.html");
+        if (App.EquipmentCabinet && typeof App.EquipmentCabinet.loadList === "function") {
+          App.EquipmentCabinet.loadList();
+        }
+      };
 
     // ------------------------------------------------------------
     // 1️⃣ 장소 버튼
