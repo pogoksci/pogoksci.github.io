@@ -287,6 +287,7 @@
     const photoBtn = document.getElementById("photo-btn");
     const cameraBtn = document.getElementById("camera-btn");
     const cameraCancelBtn = document.getElementById("camera-cancel-btn");
+    const cameraConfirmBtn = document.getElementById("camera-confirm-btn");
     const photoInput = document.getElementById("photo-input");
     const cameraInput = document.getElementById("camera-input");
     const previewBox = document.getElementById("photo-preview");
