@@ -567,6 +567,8 @@
     loadList,
     bindListPage,
     loadDetail,
+    create: createInventory, // Alias for forms.js
+    update: updateInventory, // Alias for forms.js
     createInventory,
     updateInventory,
     deleteInventory,
