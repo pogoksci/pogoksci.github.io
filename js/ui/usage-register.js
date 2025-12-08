@@ -338,6 +338,17 @@
         // 3. 폼 단위 설정
         document.getElementById("usage-form-unit").textContent = selectedItem.unit;
 
+        // 공병 예상 질량 표시
+        const massDisplay = document.getElementById("estimated-bottle-mass");
+        if (massDisplay) {
+            const massVal = selectedItem.bottle_mass;
+            if (massVal !== null && massVal !== undefined) {
+                massDisplay.textContent = `※시약병의 공병 예상 질량: ${massVal}g`;
+            } else {
+                massDisplay.textContent = "※시약병의 공병 예상 질량: 정보없음";
+            }
+        }
+
         // 4. 스크롤 상단 이동
         window.scrollTo(0, 0);
 
@@ -352,6 +363,10 @@
 
         // 폼 초기화
         document.getElementById("usage-amount").value = "";
+        document.getElementById("usage-remaining-mass").value = ""; // Also clear remaining mass input
+        const massDisplay = document.getElementById("estimated-bottle-mass");
+        if (massDisplay) massDisplay.textContent = "※시약병의 공병 예상 질량: 정보없음";
+
         document.getElementById("usage-history-body").innerHTML = "";
     }
 
