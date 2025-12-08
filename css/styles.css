@@ -454,7 +454,7 @@ button:disabled {
 
   width: auto;
 
-  height: 240px;
+  height: 280px;
 
   max-width: 320px;
 
@@ -5123,7 +5123,6 @@ input[type="date"] {
   justify-content: center;
   overflow: hidden;
   background-color: #fafafa;
-  margin-bottom: 20px;
 }
 
 .photo-preview-box img {
