@@ -278,7 +278,7 @@
 
         isCameraActive = true;
         cameraBtn.innerHTML = '촬영하기';
-        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-flex';
+        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-block';
       } catch (err) {
         console.error("Camera access denied:", err);
         cameraInput.click();
@@ -614,7 +614,7 @@
 
         isCameraActive = true;
         cameraBtn.innerHTML = '촬영하기';
-        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-flex';
+        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-block';
       } catch (err) {
         console.error("Camera access denied or error:", err);
         // Fallback to file input (mobile behavior)
