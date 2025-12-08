@@ -71,6 +71,7 @@
   // 🧪 약품 입고 폼 초기화
   // -------------------------------------------------
   async function initInventoryForm(mode = "create", detail = null) {
+    window.scrollTo(0, 0); // Force scroll to top
     await App.includeHTML("pages/inventory-form.html", "form-container");
     reset();
     set("mode", mode);
@@ -506,8 +507,14 @@
           delete payload.cas_rn; // Belongs to Substance
           delete payload.bottle_type; // Mapped to bottle_identifier
           delete payload.status; // Mapped to state (if present)
-          // photo base64 might be needed if triggers use it, but usually standard is to upload first. 
-          // If error persists on photo, we handles it then.
+
+          // Remove photo base64 (Inventory table doesn't have these columns)
+          delete payload.photo_320_base64;
+          delete payload.photo_160_base64;
+
+          // Prevent overwriting existing photos with null if new photo upload isn't handled here
+          if (payload.photo_url_320 === null) delete payload.photo_url_320;
+          if (payload.photo_url_160 === null) delete payload.photo_url_160;
 
           if (mode === "create") {
             if (typeof App.Inventory.createInventory !== 'function') throw new Error("App.Inventory.createInventory missing");
