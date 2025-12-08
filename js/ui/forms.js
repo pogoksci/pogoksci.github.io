@@ -105,6 +105,75 @@
       // Location logic needs helper or manual set
       // For now, let's just set the basics. Location restoration is complex and usually requires cascading selects.
       // We can trigger the first select change if we have area_id.
+
+      requestAnimationFrame(() => {
+        // 1. Inputs
+        const setInput = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.value = val || "";
+        };
+        setInput("cas_rn", detail.Substance?.cas_rn);
+        setInput("purchase_volume", detail.purchase_volume);
+        setInput("concentration_value", detail.concentration_value);
+        setInput("purchase_date", detail.purchase_date);
+
+        // 2. Buttons
+        // We need to wait for setupButtonGroup to run? No, DOM is there.
+        // But we need to ensure 'active' class is added.
+        // The groups array is defined below, let's use a helper or manual loop.
+
+        const setBtnGroup = (groupId, val) => {
+          const group = document.getElementById(groupId);
+          if (!group) return;
+          let matched = false;
+          Array.from(group.children).forEach(btn => {
+            if (btn.dataset.value == val) {
+              btn.classList.add("active");
+              matched = true;
+            } else {
+              btn.classList.remove("active");
+            }
+          });
+          return matched;
+        };
+
+        setBtnGroup("unit_buttons", detail.unit);
+        setBtnGroup("bottle_type_buttons", detail.bottle_type);
+        setBtnGroup("classification_buttons", detail.classification);
+        setBtnGroup("state_buttons", detail.status); // Note: detail.status maps to state_buttons in UI? Check HTML label.
+        // HTML label is "상태", id="state_buttons". values like "액체", "수용액". 
+        // DB field: 'status' (from line 99: set("status", detail.status)).
+        setBtnGroup("concentration_unit_buttons", detail.concentration_unit);
+
+        // Manufacturer special handling
+        const manVal = detail.manufacturer;
+        const manufacturerMatched = setBtnGroup("manufacturer_buttons", manVal);
+
+        if (!manufacturerMatched && manVal) {
+          // Assume custom/other
+          const otherBtn = document.querySelector("#manufacturer_buttons button[data-value='기타']");
+          if (otherBtn) otherBtn.classList.add("active");
+
+          const otherGroup = document.getElementById("other_manufacturer_group");
+          if (otherGroup) otherGroup.style.display = "block";
+          setInput("manufacturer_other", manVal);
+          // Update state to reflect custom mode?
+          set("manufacturer", "기타");
+          set("manufacturer_custom", manVal);
+        }
+
+        // 3. Photo
+        if (detail.photo_url_320 || detail.photo_url_160) {
+          const url = detail.photo_url_320 || detail.photo_url_160;
+          const img = document.getElementById("preview-img");
+          const placeholder = document.querySelector("#photo-preview .placeholder-text");
+          if (img) {
+            img.src = url;
+            img.style.display = "block";
+          }
+          if (placeholder) placeholder.style.display = "none";
+        }
+      });
     }
 
     // ------------------------------------------------------------
