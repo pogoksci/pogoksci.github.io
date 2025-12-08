@@ -480,6 +480,14 @@
             purchase_date: get("purchase_date")
           });
 
+          // Cleanup payload for Inventory Table (remove Cabinet-specific fields)
+          delete payload.cabinet_name;
+          delete payload.area_name;
+          delete payload.door_vertical_count;
+          delete payload.door_horizontal_count;
+          delete payload.shelf_height;
+          delete payload.storage_columns;
+
           if (mode === "create") {
             if (typeof App.Inventory.createInventory !== 'function') throw new Error("App.Inventory.createInventory missing");
             await App.Inventory.createInventory(payload);
