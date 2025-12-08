@@ -2141,34 +2141,49 @@ body.home-active #splash-screen {
 
 /* ?곗긽???쒕ぉ怨??뺣젹 洹몃９ */
 
-.header-actions {
+/* .header-actions replaced by standardized block below */
 
-  display: flex;
 
-  align-items: flex-end;
 
-  justify-content: flex-end;
-
-  gap: 8px;
-
+/* Standardized Sticky Header */
+.inventory-sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #fff;
+  padding-top: 20px;
+  padding-bottom: 10px;
+  margin-bottom: 0;
+  /* Clear margins to prevent gap */
 }
 
-
-
 .list-header {
-
   display: flex;
-
   justify-content: space-between;
-
-  align-items: flex-end;
-
+  align-items: center;
+  /* Center vertically */
   border-bottom: 1px solid #ddd;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
 
-  padding-bottom: 8px;
+.list-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #222;
+  margin: 0;
+  line-height: 1.2;
+}
 
-  margin-bottom: 10px;
-
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Space out search and buttons */
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  /* Prevent layout shift */
 }
 
 
