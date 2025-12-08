@@ -174,7 +174,7 @@
       if (shelfVal && colVal) {
         shelfPart = `${shelfVal}층 ${colVal}열`;
       } else {
-        if (shelfVal) shelfPart += `${shelfVal}층`;
+        if (shelfVal) shelfPart += `${shelfVal}단`;
         if (colVal) shelfPart += (shelfPart ? " " : "") + `${colVal}열`;
       }
 
