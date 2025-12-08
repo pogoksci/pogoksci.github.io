@@ -809,7 +809,7 @@
                                 <label>사진</label>
                                 <div class="kit-photo-container">
                                     <div class="kit-photo-preview-box">
-                                        <img id="kit-preview-img" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;">
+                                        <img id="kit-preview-img" style="width: 100%; height: 100%; object-fit: cover; display: none;">
                                         <div class="placeholder-text" style="color: #aaa; font-size: 14px;">사진 없음</div>
                                         <video id="kit-camera-stream" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
                                         <canvas id="kit-camera-canvas" style="display:none;"></canvas>
