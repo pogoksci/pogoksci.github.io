@@ -105,10 +105,10 @@
     let tableName = "Cabinet";
     // 컬럼 매핑: 내부 state 이름 -> DB 컬럼 이름
     let colMap = {
-      vert: "door_vertical",
-      horiz: "door_horizontal",
-      shelf: "internal_shelf_level",
-      col: "storage_column"
+      vert: "door_vertical_count",
+      horiz: "door_horizontal_count",
+      shelf: "shelf_height",
+      col: "storage_columns"
     };
 
     if (state.mode === "EQUIPMENT") {
@@ -148,9 +148,13 @@
   // -------------------------------------------------------------
   async function loadAreas(container) {
     const supabase = getSupabase();
+    let cabinetTable = "Cabinet";
+    if (state.mode === "EQUIPMENT") cabinetTable = "EquipmentCabinet";
+
+    // Cabinet이 하나라도 있는 Area만 조회 (!inner join)
     const { data, error } = await supabase
       .from("Area")
-      .select("id, area_name")
+      .select(`id, area_name, ${cabinetTable}!inner(id)`)
       .order("area_name");
 
     console.log("StorageSelector: loadAreas called. Data:", data, "Error:", error);
@@ -167,7 +171,17 @@
     select.className = "form-input"; // Use global input style
     select.innerHTML = '<option value="" disabled selected>-- 장소를 선택하세요 --</option>';
 
-    data.forEach(area => {
+    // 중복 제거 (Area 하나에 여러 Cabinet이 있을 수 있음)
+    const uniqueAreas = [];
+    const seenIds = new Set();
+    data.forEach(d => {
+      if (!seenIds.has(d.id)) {
+        seenIds.add(d.id);
+        uniqueAreas.push(d);
+      }
+    });
+
+    uniqueAreas.forEach(area => {
       const opt = document.createElement("option");
       opt.value = area.id;
       opt.textContent = area.area_name;
