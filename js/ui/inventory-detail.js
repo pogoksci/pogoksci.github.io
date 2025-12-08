@@ -72,7 +72,7 @@
         converted_concentration_value_2, converted_concentration_unit_2,
         school_hazardous_chemical, school_accident_precaution_chemical, special_health_checkup_hazardous_factor,
         toxic_substance, permitted_substance, restricted_substance, prohibited_substance,
-        bottle_mass,
+        bottle_mass, bottle_identifier,
         Substance (
           id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, chem_name_kor_mod, substance_name_mod, molecular_formula_mod, svg_image, has_molfile,
           school_hazardous_chemical_standard, school_accident_precaution_chemical_standard, special_health_checkup_hazardous_factor_standard,

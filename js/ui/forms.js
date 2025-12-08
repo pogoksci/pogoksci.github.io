@@ -113,7 +113,7 @@
           if (el) el.value = val || "";
         };
         setInput("cas_rn", detail.Substance?.cas_rn);
-        setInput("purchase_volume", detail.purchase_volume);
+        setInput("purchase_volume", detail.initial_amount); // CHANGED: purchase_volume -> initial_amount
         setInput("concentration_value", detail.concentration_value);
         setInput("purchase_date", detail.purchase_date);
 
@@ -123,26 +123,38 @@
         // The groups array is defined below, let's use a helper or manual loop.
 
         const setBtnGroup = (groupId, val) => {
+          console.log(`[setBtnGroup] Group: ${groupId}, Value to match: "${val}"`);
           const group = document.getElementById(groupId);
-          if (!group) return;
+          if (!group) {
+            console.warn(`[setBtnGroup] Group element not found for ID: ${groupId}`);
+            return false;
+          }
           let matched = false;
+          // Normalize value for comparison (trim)
+          const normalize = (s) => String(s || "").trim();
+          const targetVal = normalize(val);
+
           Array.from(group.children).forEach(btn => {
-            if (btn.dataset.value == val) {
+            const btnVal = normalize(btn.dataset.value);
+            console.log(`  - Button: "${btn.textContent}" (data-value: "${btnVal}")`);
+            if (btnVal === targetVal) {
               btn.classList.add("active");
               matched = true;
+              console.log(`    -> Matched! Setting active.`);
             } else {
               btn.classList.remove("active");
             }
           });
+          if (!matched) {
+            console.log(`[setBtnGroup] No match found for group "${groupId}" with value "${val}"`);
+          }
           return matched;
         };
 
         setBtnGroup("unit_buttons", detail.unit);
-        setBtnGroup("bottle_type_buttons", detail.bottle_type);
+        setBtnGroup("bottle_type_buttons", detail.bottle_identifier); // CHANGED: bottle_type -> bottle_identifier
         setBtnGroup("classification_buttons", detail.classification);
-        setBtnGroup("state_buttons", detail.status); // Note: detail.status maps to state_buttons in UI? Check HTML label.
-        // HTML label is "상태", id="state_buttons". values like "액체", "수용액". 
-        // DB field: 'status' (from line 99: set("status", detail.status)).
+        setBtnGroup("state_buttons", detail.state); // CHANGED: status -> state
         setBtnGroup("concentration_unit_buttons", detail.concentration_unit);
 
         // Manufacturer special handling
@@ -156,7 +168,8 @@
 
           const otherGroup = document.getElementById("other_manufacturer_group");
           if (otherGroup) otherGroup.style.display = "block";
-          setInput("manufacturer_other", manVal);
+          const manInput = document.getElementById("manufacturer_other");
+          if (manInput) manInput.value = manVal;
           // Update state to reflect custom mode?
           set("manufacturer", "기타");
           set("manufacturer_custom", manVal);
@@ -358,7 +371,7 @@
         Object.assign(defaultLoc, {
           area_id: detail.Cabinet?.Area?.id,
           area_name: detail.Cabinet?.Area?.area_name,
-          cabinet_id: detail.cabinet_id,
+          cabinet_id: detail.Cabinet?.id || detail.cabinet_id,
           cabinet_name: detail.Cabinet?.cabinet_name,
           door_vertical: detail.door_vertical,
           door_horizontal: detail.door_horizontal,
