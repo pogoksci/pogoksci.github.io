@@ -411,12 +411,24 @@
           const payload = await makePayload(dump()); // Validate & Transform
 
           // Override makePayload's cabinet logic for Inventory
+          // Override makePayload's cabinet logic for Inventory & Add Inventory fields
           Object.assign(payload, {
             cabinet_id: get("cabinet_id"),
             door_vertical: get("door_vertical"),
             door_horizontal: get("door_horizontal"),
             internal_shelf_level: get("internal_shelf_level"),
-            storage_column: get("storage_column")
+            storage_column: get("storage_column"),
+            // Inventory Specific Fields
+            cas_rn: get("cas_rn"),
+            initial_amount: get("purchase_volume"),
+            unit: get("unit"),
+            bottle_identifier: get("bottle_type"),
+            classification: get("classification"),
+            state: get("state"),
+            concentration_value: get("concentration_value"),
+            concentration_unit: get("concentration_unit"),
+            manufacturer: get("manufacturer") || get("manufacturer_custom"),
+            purchase_date: get("purchase_date")
           });
 
           if (mode === "create") {
