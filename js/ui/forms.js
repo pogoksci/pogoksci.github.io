@@ -398,10 +398,7 @@
         // Get Location
         if (App.StorageSelector) {
           const loc = App.StorageSelector.getSelection();
-          if (!loc.cabinet_id) {
-            alert("수납함을 선택해주세요.");
-            return;
-          }
+          // if (!loc.cabinet_id) check removed for optional location
           // Update State with Location
           set("cabinet_id", loc.cabinet_id);
           set("door_vertical", loc.door_vertical);
