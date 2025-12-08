@@ -68,7 +68,11 @@
         btn.classList.add("active");
       }
 
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", (e) => {
+        // Remove active class from siblings
+        group.querySelectorAll('.btn-location').forEach(b => b.classList.remove('active'));
+        // Add active class to clicked button
+        e.currentTarget.classList.add('active');
         onClick(opt.value);
       });
 
@@ -323,7 +327,9 @@
 
     const options = Array.from({ length: count }, (_, i) => {
       let label = `${i + 1}번`;
-      if (count === 2) {
+      if (count === 1) {
+        label = "문";
+      } else if (count === 2) {
         label = i === 0 ? "왼쪽" : "오른쪽";
       }
       return {
