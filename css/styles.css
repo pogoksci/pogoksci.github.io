@@ -801,7 +801,7 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(100% - 24px);
+  width: 100%;
   max-width: 100%;
   border: 1px solid #ccc;
   background-color: #f9f9f9;

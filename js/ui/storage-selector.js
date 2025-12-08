@@ -52,7 +52,7 @@
     if (options.length > 0 && options.length <= 12) {
       group.style.display = "grid";
       group.style.gridTemplateColumns = `repeat(${options.length}, 1fr)`;
-      group.style.gap = "10px 0"; // CSS와 동일하게 gap 설정
+      group.style.gap = "12px"; // CSS gap match
       // 모바일(좁은 화면) 대응을 위해 items가 많으면 줄바꿈이 일어날 수 있도록 예외처리 가능하나
       // 현재 CSS 구조상 grid가 유리.
     }
