@@ -351,7 +351,7 @@
     };
 
     // Helper: Take Photo
-    const takePhoto = () => {
+    const takePhoto = async () => {
       if (!videoStream || !canvas) return console.error("Video or Canvas missing");
       canvas.width = videoStream.videoWidth;
       canvas.height = videoStream.videoHeight;
@@ -359,7 +359,10 @@
 
       const base64 = canvas.toDataURL("image/jpeg");
 
-      processImage(base64, (resized) => {
+      if (App.Camera && App.Camera.processImage) {
+        const resized = await App.Camera.processImage(base64);
+        if (!resized) return;
+
         set("photo_320_base64", resized.base64_320);
         set("photo_160_base64", resized.base64_160);
 
@@ -376,17 +379,17 @@
           img.src = resized.base64_320;
           previewBox.insertBefore(img, previewBox.firstChild);
         }
+      }
 
-        const placeholder = previewBox.querySelector('.placeholder-text');
-        if (placeholder) placeholder.style.display = 'none';
+      const placeholder = previewBox.querySelector('.placeholder-text');
+      if (placeholder) placeholder.style.display = 'none';
 
-        // Review Mode
-        videoStream.pause();
-        videoStream.style.display = 'none';
+      // Review Mode
+      videoStream.pause();
+      videoStream.style.display = 'none';
 
-        cameraBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> 다시 촬영';
-        if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'inline-flex';
-      });
+      cameraBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> 다시 촬영';
+      if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'inline-flex';
     };
 
     // Event Listeners
@@ -801,7 +804,7 @@
       }
     };
 
-    const takeCabinetPhoto = () => {
+    const takeCabinetPhoto = async () => {
       if (!videoStream || !canvas) return;
       canvas.width = videoStream.videoWidth;
       canvas.height = videoStream.videoHeight;
@@ -809,25 +812,28 @@
 
       const base64 = canvas.toDataURL("image/jpeg");
 
-      processImage(base64, (resized) => {
-        set("photo_320_base64", resized.base64_320);
-        set("photo_160_base64", resized.base64_160);
+      if (App.Camera && App.Camera.processImage) {
+        const resized = await App.Camera.processImage(base64);
+        if (resized) {
+          set("photo_320_base64", resized.base64_320);
+          set("photo_160_base64", resized.base64_160);
 
-        const placeholder = previewBox.querySelector('.placeholder-text');
-        if (placeholder) placeholder.style.display = 'none';
+          const placeholder = previewBox.querySelector('.placeholder-text');
+          if (placeholder) placeholder.style.display = 'none';
 
-        let img = previewBox.querySelector('img');
-        if (!img) {
-          img = document.createElement('img');
-          img.style.width = "100%";
-          img.style.height = "100%";
-          img.style.objectFit = "cover";
-          previewBox.insertBefore(img, previewBox.firstChild);
+          let img = previewBox.querySelector('img');
+          if (!img) {
+            img = document.createElement('img');
+            img.style.width = "100%";
+            img.style.height = "100%";
+            img.style.objectFit = "cover";
+            previewBox.insertBefore(img, previewBox.firstChild);
+          }
+          img.src = resized.base64_320;
+          img.style.display = 'block';
+          img.style.objectFit = 'cover';
         }
-        img.src = resized.base64_320;
-        img.style.display = 'block';
-        img.style.objectFit = 'cover';
-      });
+      }
 
       // Review Mode
       videoStream.pause();
