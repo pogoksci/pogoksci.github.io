@@ -287,7 +287,7 @@
   // 🔹 3. 문 상/중/하 선택
   // -------------------------------------------------------------
   function loadDoorVertical(container) {
-    const step = createStep("3️⃣ 문 상/중/하 선택");
+    const step = createStep("3. 문 상/중/하 선택");
 
     const count = Number(state.door_vertical_total) || 1;
     // 상/중/하 이름 매핑은 개수에 따라 다를 수 있으나, 여기선 단순히 번호(1번, 2번...) 혹은 상/하
@@ -295,7 +295,7 @@
     // 교구장도 동일한 로직을 사용하겠습니다.
 
     const options = Array.from({ length: count }, (_, i) => ({
-      label: `${i + 1}번`,
+      label: `${i + 1}층`,
       value: i + 1,
     }));
 
@@ -318,13 +318,19 @@
   // 🔹 4. 문 좌/우 선택
   // -------------------------------------------------------------
   function loadDoorHorizontal(container) {
-    const step = createStep("4️⃣ 문 좌/우 선택");
+    const step = createStep("4. 문 좌/우 선택");
     const count = Number(state.door_horizontal_total) || 1;
 
-    const options = Array.from({ length: count }, (_, i) => ({
-      label: `${i + 1}번`,
-      value: i + 1,
-    }));
+    const options = Array.from({ length: count }, (_, i) => {
+      let label = `${i + 1}번`;
+      if (count === 2) {
+        label = i === 0 ? "왼쪽" : "오른쪽";
+      }
+      return {
+        label: label,
+        value: i + 1,
+      };
+    });
 
     const group = createButtonGroup(
       options,
@@ -344,13 +350,13 @@
   // 🔹 5. 내부 선반 선택
   // -------------------------------------------------------------
   function loadShelfLevels(container) {
-    const step = createStep("5️⃣ 내부 선반 선택");
+    const step = createStep("5. 내부 선반 선택");
     const count = Number(state.shelf_level_total) || 1;
 
     const options = Array.from({ length: count }, (_, i) => ({
       label: `${i + 1}단`,
       value: i + 1,
-    }));
+    })).reverse(); // 역순 정렬 (3단, 2단, 1단)
 
     const group = createButtonGroup(
       options,
@@ -370,7 +376,7 @@
   // 🔹 6. 칸(열) 선택
   // -------------------------------------------------------------
   function loadColumns(container) {
-    const step = createStep("6️⃣ 칸(열) 선택");
+    const step = createStep("6. 칸(열) 선택");
     const count = Number(state.storage_column_total) || 1;
 
     const options = Array.from({ length: count }, (_, i) => ({

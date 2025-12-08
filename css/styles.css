@@ -278,15 +278,10 @@ button:disabled {
 
 
 .button-group button.active {
-
-  background-color: #00a0b2;
-
+  background-color: #00A0B2;
   color: white;
-
-  border-color: #00a0b2;
-
+  border-color: #00A0B2;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-
 }
 
 
