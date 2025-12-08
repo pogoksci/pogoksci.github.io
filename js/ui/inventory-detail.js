@@ -172,7 +172,7 @@
       const colVal = data.storage_column;
 
       if (shelfVal && colVal) {
-        shelfPart = `${shelfVal}층 ${colVal}열`;
+        shelfPart = `${shelfVal}단 ${colVal}열`;
       } else {
         if (shelfVal) shelfPart += `${shelfVal}단`;
         if (colVal) shelfPart += (shelfPart ? " " : "") + `${colVal}열`;

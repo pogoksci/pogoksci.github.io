@@ -5132,3 +5132,21 @@ input[type="date"] {
   font-weight: bold;
   color: #333;
 }
+
+/* Detail Location Box Fixes */
+.detail-location-section {
+  background-color: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.location-text {
+  margin: 0;
+  font-size: 15px;
+  color: #333;
+}
