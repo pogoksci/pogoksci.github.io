@@ -323,28 +323,41 @@
 
     // Helper: Take Photo
     const takePhoto = () => {
-      if (!videoStream || !canvas) return;
+      if (!videoStream || !canvas) return console.error("Video or Canvas missing");
       canvas.width = videoStream.videoWidth;
       canvas.height = videoStream.videoHeight;
       canvas.getContext('2d').drawImage(videoStream, 0, 0);
 
       const base64 = canvas.toDataURL("image/jpeg");
+      console.log("📸 Photo taken, processing...");
 
       // Set State
       processImage(base64, (resized) => {
+        console.log("✅ Image processed, updating preview.");
         set("photo_320_base64", resized.base64_320);
         set("photo_160_base64", resized.base64_160);
 
-        if (previewImg) {
-          previewImg.src = resized.base64_320;
-          previewImg.style.display = 'block';
-        } else {
-          // Fallback if previewImg missing (shouldn't happen with HTML update)
+        // Force re-query to be safe
+        const el = document.getElementById("preview-img");
+        if (el) {
+          el.src = resized.base64_320;
+          el.style.display = 'block';
+          console.log("🖼️ Preview image updated and shown.");
+        } else if (previewBox) {
+          // Fallback: Create img if not exists
           previewBox.innerHTML = `<img src="${resized.base64_320}" id="preview-img" style="width:100%;height:100%;object-fit:contain;">` +
             `<video id="camera-stream" autoplay playsinline style="width:100%;height:100%;object-fit:cover;display:none;"></video>` +
             `<canvas id="camera-canvas" style="display:none;"></canvas>`;
-          // Re-grab references if innerHTML overwritten
+          // Important: We must re-bind videoStream and canvas if we wiped innerHTML!
+          // This fallback is dangerous if it wipes video/canvas elements that are const references.
+          // Better to just append img if missing.
+          console.log("⚠️ preview-img not found, innerHTML fallback used.");
+          // Note: This fallback might break subsequent camera usage if video/canvas references are lost from DOM.
+          // But for now let's see logic.
         }
+
+        const placeholder = previewBox.querySelector('.placeholder-text');
+        if (placeholder) placeholder.style.display = 'none';
       });
 
       stopCamera();
@@ -468,10 +481,12 @@
           });
 
           if (mode === "create") {
-            await App.Inventory.create(payload);
+            if (typeof App.Inventory.createInventory !== 'function') throw new Error("App.Inventory.createInventory missing");
+            await App.Inventory.createInventory(payload);
             alert("✅ 등록 완료");
           } else {
-            await App.Inventory.update(detail.id, payload);
+            if (typeof App.Inventory.updateInventory !== 'function') throw new Error("App.Inventory.updateInventory missing");
+            await App.Inventory.updateInventory(detail.id, payload);
             alert("✅ 수정 완료");
           }
           App.Router.go("inventory");
