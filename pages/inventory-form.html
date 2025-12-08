@@ -45,9 +45,14 @@
                 <canvas id="camera-canvas" style="display: none;"></canvas>
             </div>
             <div class="photo-buttons">
-                <button type="button" id="photo-btn">파일에서 선택</button>
-                <button type="button" id="camera-btn">카메라로 촬영</button>
-                <button type="button" id="camera-cancel-btn" style="display: none;">촬영 취소</button>
+                <button type="button" id="camera-btn"><span class="material-symbols-outlined">photo_camera</span> 카메라로
+                    촬영</button>
+                <button type="button" id="photo-btn"><span class="material-symbols-outlined">image</span> 파일에서
+                    선택</button>
+                <button type="button" id="camera-confirm-btn" style="display: none;"><span
+                        class="material-symbols-outlined">check</span> 확인</button>
+                <button type="button" id="camera-cancel-btn" style="display: none;"><span
+                        class="material-symbols-outlined">close</span> 취소</button>
             </div>
         </div>
         <input type="file" id="photo-input" accept="image/*" style="display: none;">

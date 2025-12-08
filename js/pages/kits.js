@@ -815,9 +815,10 @@
                                         <canvas id="kit-camera-canvas" style="display:none;"></canvas>
                                     </div>
                                     <div class="kit-photo-actions">
+                                        <button type="button" id="btn-kit-file" class="btn-secondary-action"><span class="material-symbols-outlined">image</span> 파일에서 선택</button>
                                         <button type="button" id="btn-kit-camera" class="btn-secondary-action"><span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영</button>
-                                        <button type="button" id="btn-kit-file" class="btn-secondary-action"><span class="material-symbols-outlined">image</span> 파일 선택</button>
-                                        <button type="button" id="btn-cancel-camera" class="btn-secondary-action" style="display: none;"><span class="material-symbols-outlined">close</span> 촬영 취소</button>
+                                        <button type="button" id="btn-kit-confirm" class="btn-secondary-action" style="display: none;"><span class="material-symbols-outlined">check</span> 확인</button>
+                                        <button type="button" id="btn-cancel-camera" class="btn-secondary-action" style="display: none;"><span class="material-symbols-outlined">close</span> 취소</button>
                                         <input type="file" id="kit-file-input" accept="image/*" style="display: none;">
                                         <input type="file" id="kit-camera-input" accept="image/*" capture="environment" style="display: none;">
                                     </div>
@@ -881,12 +882,13 @@
             fileInput.click();
         });
 
+        const btnKitConfirm = document.getElementById('btn-kit-confirm');
+
         const startCamera = async () => {
             try {
                 const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
 
                 if (!isModalOpen) {
-                    // Modal was closed while we were waiting for camera
                     newStream.getTracks().forEach(track => track.stop());
                     return;
                 }
@@ -894,19 +896,26 @@
                 stream = newStream;
                 videoStream.srcObject = stream;
                 videoStream.style.display = 'block';
+                videoStream.play(); // Ensure play
                 previewImg.style.display = 'none';
 
                 const placeholder = previewDiv.querySelector('.placeholder-text');
                 if (placeholder) placeholder.style.display = 'none';
 
-
-
                 isCameraActive = true;
+
+                // UI: Record Mode
                 btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
+
+                // Unbind previous onclick to ensure clean slate? 
+                // We handle "Take" vs "Start" inside the main listener check `isCameraActive`.
+                // Actually `isCameraActive` is true now.
+
                 if (btnCancelCamera) btnCancelCamera.style.display = 'inline-flex';
+                if (btnSelectPhoto) btnSelectPhoto.style.display = 'none';
+                if (btnKitConfirm) btnKitConfirm.style.display = 'none';
             } catch (err) {
                 console.error("Camera access denied or error:", err);
-                // Fallback to file input (mobile behavior)
                 cameraInput.click();
             }
         };
@@ -916,7 +925,6 @@
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
             }
-            // Fallback: check video srcObject
             if (videoStream.srcObject) {
                 const tracks = videoStream.srcObject.getTracks();
                 if (tracks) tracks.forEach(track => track.stop());
@@ -925,8 +933,17 @@
 
             videoStream.style.display = 'none';
             isCameraActive = false;
+
+            // UI: Idle Mode
             btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
             if (btnCancelCamera) btnCancelCamera.style.display = 'none';
+            if (btnSelectPhoto) btnSelectPhoto.style.display = 'inline-flex';
+            if (btnKitConfirm) btnKitConfirm.style.display = 'none';
+
+            // Ensure preview is visible if we have one
+            if (previewImg.src && previewImg.src !== window.location.href) { // check valid src
+                previewImg.style.display = 'block';
+            }
         };
 
         const takePhoto = () => {
@@ -937,29 +954,61 @@
             canvas.toBlob((blob) => {
                 const file = new File([blob], `capture - ${Date.now()}.jpg`, { type: "image/jpeg" });
 
-                // Update file input manually (using DataTransfer to simulate file selection)
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(file);
                 fileInput.files = dataTransfer.files;
 
-                // Show preview
                 previewImg.src = URL.createObjectURL(blob);
                 previewImg.style.display = 'block';
 
-                stopCamera();
+                // stopCamera(); // OLD behavior
+
+                // NEW: Review Mode
+                videoStream.pause();
+                videoStream.style.display = 'none';
+
                 btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">replay</span> 다시 촬영';
+                // btnTakePhoto click will fall through to logic: 
+                // Inside listener: if(isCameraActive) takePhoto().
+                // But we want RETAKE.
+                // We need to handle this.
+                // isCameraActive is STILL true.
+                // But we want to Restart stream.
+
+                if (btnKitConfirm) btnKitConfirm.style.display = 'inline-flex';
+
             }, 'image/jpeg');
         };
 
         if (btnTakePhoto) {
             btnTakePhoto.addEventListener('click', () => {
                 if (isCameraActive) {
-                    takePhoto();
+                    // Check if we are in "Retake" state or "Record" state?
+                    // Text content check is brittle.
+                    // If video is paused/hidden, we are in Review.
+                    if (videoStream.style.display === 'none') {
+                        // RETAKE logic
+                        videoStream.style.display = 'block';
+                        videoStream.play();
+                        previewImg.style.display = 'none';
+                        btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
+                        if (btnKitConfirm) btnKitConfirm.style.display = 'none';
+                    } else {
+                        // TAKE logic
+                        takePhoto();
+                    }
                 } else {
                     startCamera();
                 }
             });
         }
+
+        if (btnKitConfirm) {
+            btnKitConfirm.addEventListener('click', () => {
+                stopCamera();
+            });
+        }
+
         if (fileInput) fileInput.addEventListener('change', handleFileSelect);
         if (cameraInput) cameraInput.addEventListener('change', handleFileSelect);
 

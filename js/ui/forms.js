@@ -495,6 +495,50 @@
             purchase_date: get("purchase_date")
           });
 
+          // 📸 UPLOAD PHOTOS to 'reagent-photos' bucket
+          if (payload.photo_320_base64) {
+            try {
+              const ts = Date.now();
+              const rnd = Math.random().toString(36).substr(2, 5);
+
+              // Upload 320px
+              const blob320 = App.Utils.base64ToBlob(payload.photo_320_base64);
+              const path320 = `inventory/${ts}_${rnd}_320.jpg`;
+
+              // Ensure bucket exists or just Assume 'reagent-photos' exists as per user
+              const { error: err320 } = await supabase.storage
+                .from("reagent-photos")
+                .upload(path320, blob320, { upsert: true });
+
+              if (err320) throw err320;
+
+              const { data: data320 } = supabase.storage.from("reagent-photos").getPublicUrl(path320);
+              payload.photo_url_320 = data320.publicUrl;
+
+              // Upload 160px (thumbnail) if available
+              if (payload.photo_160_base64) {
+                const blob160 = App.Utils.base64ToBlob(payload.photo_160_base64);
+                const path160 = `inventory/${ts}_${rnd}_160.jpg`;
+                const { error: err160 } = await supabase.storage
+                  .from("reagent-photos")
+                  .upload(path160, blob160, { upsert: true });
+
+                if (!err160) {
+                  const { data: data160 } = supabase.storage.from("reagent-photos").getPublicUrl(path160);
+                  payload.photo_url_160 = data160.publicUrl;
+                }
+              } else {
+                payload.photo_url_160 = payload.photo_url_320;
+              }
+
+              console.log("✅ Photo uploaded:", payload.photo_url_320);
+
+            } catch (uploadErr) {
+              console.error("Photo upload failed:", uploadErr);
+              if (!confirm("사진 업로드에 실패했습니다. 사진 없이 저장하시겠습니까?")) return;
+            }
+          }
+
           // Cleanup payload for Inventory Table (remove Cabinet-specific fields)
           delete payload.cabinet_name;
           delete payload.area_name;
@@ -658,17 +702,20 @@
     // ------------------------------------------------------------
     // 3️⃣ 사진 업로드 처리
     // ------------------------------------------------------------
+    // 3️⃣ 사진 업로드 처리 (Cabinet)
+    // ------------------------------------------------------------
     const photoInput = document.getElementById("cabinet-photo-input");
     const cameraInput = document.getElementById("cabinet-camera-input");
     const previewBox = document.getElementById("cabinet-photo-preview");
     const cameraBtn = document.getElementById("cabinet-camera-btn");
     const photoBtn = document.getElementById("cabinet-photo-btn");
     const cameraCancelBtn = document.getElementById("cabinet-camera-cancel-btn");
+    const cameraConfirmBtn = document.getElementById("cabinet-camera-confirm-btn"); // NEW
     const videoStream = document.getElementById("cabinet-camera-stream");
     const canvas = document.getElementById("cabinet-camera-canvas");
     let isCameraActive = false;
 
-    // Ensure previous stream is stopped when initializing form
+    // Ensure previous stream is stopped
     if (cabinetStream) {
       cabinetStream.getTracks().forEach(track => track.stop());
       cabinetStream = null;
@@ -681,27 +728,35 @@
       }
       if (videoStream && videoStream.srcObject) {
         const tracks = videoStream.srcObject.getTracks();
-        if (tracks) tracks.forEach(track => track.stop());
+        if (tracks) tracks.forEach(t => t.stop());
         videoStream.srcObject = null;
       }
 
       if (videoStream) videoStream.style.display = 'none';
 
       isCameraActive = false;
-      if (cameraBtn) cameraBtn.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
-      // Cancel button is inside the container, so it hides with it, but good to be explicit if needed
+      if (cameraBtn) {
+        cameraBtn.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
+        cameraBtn.onclick = () => startCabinetCamera(); // Reset handler
+      }
+      if (photoBtn) photoBtn.style.display = 'inline-flex';
       if (cameraCancelBtn) cameraCancelBtn.style.display = 'none';
+      if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'none';
+
+      // Keep preview image visible
+      const existingImg = previewBox.querySelector('img');
+      if (existingImg) existingImg.style.display = 'block';
     };
 
     const startCabinetCamera = async () => {
       try {
         const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-
         cabinetStream = newStream;
         videoStream.srcObject = cabinetStream;
         videoStream.style.display = 'block';
+        videoStream.play();
 
-        // Hide existing image if any
+        // Hide existing image
         const existingImg = previewBox.querySelector('img');
         if (existingImg) existingImg.style.display = 'none';
 
@@ -709,11 +764,16 @@
         if (placeholder) placeholder.style.display = 'none';
 
         isCameraActive = true;
-        cameraBtn.innerHTML = '촬영하기';
-        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-block';
+
+        cameraBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
+        cameraBtn.onclick = () => takeCabinetPhoto();
+
+        if (photoBtn) photoBtn.style.display = 'none';
+        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-flex';
+        if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'none';
+
       } catch (err) {
         console.error("Camera access denied or error:", err);
-        // Fallback to file input (mobile behavior)
         cameraInput.click();
       }
     };
@@ -726,16 +786,10 @@
 
       const base64 = canvas.toDataURL("image/jpeg");
 
-      // Update State (resize logic handled in processImage if needed, but here we just store base64 for now or use processImage helper)
-      // The original code used processImage for file input, let's reuse it or just store directly if that's what inventory does.
-      // Inventory stores directly. Cabinet used processImage to resize. Let's stick to resizing if possible or just store raw for now to match inventory logic which seems simpler.
-      // Wait, cabinet form uses photo_320_base64 and photo_160_base64. I should probably use processImage to maintain consistency.
-
       processImage(base64, (resized) => {
         set("photo_320_base64", resized.base64_320);
         set("photo_160_base64", resized.base64_160);
 
-        // Show preview
         const placeholder = previewBox.querySelector('.placeholder-text');
         if (placeholder) placeholder.style.display = 'none';
 
@@ -751,8 +805,24 @@
         previewBox.appendChild(img);
       });
 
-      stopCabinetCamera();
-      cameraBtn.innerHTML = '다시 촬영';
+      // Review Mode
+      videoStream.pause();
+      videoStream.style.display = 'none';
+
+      cameraBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> 다시 촬영';
+      cameraBtn.onclick = () => {
+        // Retake
+        videoStream.style.display = 'block';
+        videoStream.play();
+        const img = previewBox.querySelector('img');
+        if (img) img.style.display = 'none';
+
+        cameraBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
+        cameraBtn.onclick = () => takeCabinetPhoto();
+        if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'none';
+      };
+
+      if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'inline-flex';
     };
 
     const handleFile = (file) => {
@@ -791,19 +861,15 @@
     }
 
     if (cameraBtn) {
-      cameraBtn.onclick = () => {
-        if (isCameraActive) {
-          takeCabinetPhoto();
-        } else {
-          startCabinetCamera();
-        }
-      };
+      cameraBtn.onclick = () => startCabinetCamera();
     }
 
     if (cameraCancelBtn) {
-      cameraCancelBtn.onclick = () => {
-        stopCabinetCamera();
-      };
+      cameraCancelBtn.onclick = () => stopCabinetCamera();
+    }
+
+    if (cameraConfirmBtn) {
+      cameraConfirmBtn.onclick = () => stopCabinetCamera();
     }
 
     if (photoInput) photoInput.onchange = (e) => handleFile(e.target.files[0]);
@@ -1045,12 +1111,15 @@
     // ------------------------------------------------------------
     // NOTE: We need separate event listeners for equipment camera since IDs are different
     // For simplicity, we can duplicate the logic or refactor. Duplicating for safety now.
+    // 3️⃣ 사진 (Equipment)
+    // ------------------------------------------------------------
     const photoInput = document.getElementById("equipment-photo-input");
     const cameraInput = document.getElementById("equipment-camera-input");
     const previewBox = document.getElementById("equipment-photo-preview");
     const cameraBtn = document.getElementById("equipment-camera-btn");
     const photoBtn = document.getElementById("equipment-photo-btn");
     const cameraCancelBtn = document.getElementById("equipment-camera-cancel-btn");
+    const cameraConfirmBtn = document.getElementById("equipment-camera-confirm-btn"); // NEW
     const videoStream = document.getElementById("equipment-camera-stream");
     const canvas = document.getElementById("equipment-camera-canvas");
     let isCameraActive = false;
@@ -1061,10 +1130,25 @@
         equipmentStream.getTracks().forEach(t => t.stop());
         equipmentStream = null;
       }
+      if (videoStream && videoStream.srcObject) {
+        const tracks = videoStream.srcObject.getTracks();
+        if (tracks) tracks.forEach(t => t.stop());
+        videoStream.srcObject = null;
+      }
+
       if (videoStream) videoStream.style.display = "none";
       isCameraActive = false;
-      if (cameraBtn) cameraBtn.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
+
+      if (cameraBtn) {
+        cameraBtn.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
+        cameraBtn.onclick = () => startCameraFunc();
+      }
+      if (photoBtn) photoBtn.style.display = "inline-flex";
       if (cameraCancelBtn) cameraCancelBtn.style.display = "none";
+      if (cameraConfirmBtn) cameraConfirmBtn.style.display = "none";
+
+      const existingImg = previewBox.querySelector('img');
+      if (existingImg) existingImg.style.display = "block";
     };
 
     const startCameraFunc = async () => {
@@ -1073,11 +1157,18 @@
         equipmentStream = stream;
         videoStream.srcObject = stream;
         videoStream.style.display = "block";
-        isCameraActive = true;
-        cameraBtn.innerHTML = "촬영하기";
-        if (cameraCancelBtn) cameraCancelBtn.style.display = "inline-flex";
+        videoStream.play();
 
-        // Hide placeholder
+        isCameraActive = true;
+
+        cameraBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
+        cameraBtn.onclick = () => takePhoto();
+
+        if (photoBtn) photoBtn.style.display = "none";
+        if (cameraCancelBtn) cameraCancelBtn.style.display = "inline-flex";
+        if (cameraConfirmBtn) cameraConfirmBtn.style.display = "none";
+
+        // Hide placeholder/img
         const placeholder = previewBox.querySelector(".placeholder-text");
         if (placeholder) placeholder.style.display = "none";
         const exist = previewBox.querySelector("img");
@@ -1109,12 +1200,30 @@
         previewBox.innerHTML = "";
         previewBox.appendChild(img);
       });
-      stopCamera();
-      cameraBtn.innerHTML = "다시 촬영";
+
+      // Review Mode
+      videoStream.pause();
+      videoStream.style.display = "none";
+
+      cameraBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> 다시 촬영';
+      cameraBtn.onclick = () => {
+        videoStream.style.display = "block";
+        videoStream.play();
+        const img = previewBox.querySelector('img');
+        if (img) img.style.display = "none";
+
+        cameraBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
+        cameraBtn.onclick = () => takePhoto();
+        if (cameraConfirmBtn) cameraConfirmBtn.style.display = "none";
+      };
+
+      if (cameraConfirmBtn) cameraConfirmBtn.style.display = "inline-flex";
     };
 
-    if (cameraBtn) cameraBtn.onclick = () => isCameraActive ? takePhoto() : startCameraFunc();
+    if (cameraBtn) cameraBtn.onclick = () => startCameraFunc();
     if (cameraCancelBtn) cameraCancelBtn.onclick = stopCamera;
+    if (cameraConfirmBtn) cameraConfirmBtn.onclick = stopCamera;
+
     if (photoBtn) photoBtn.onclick = () => { if (isCameraActive) stopCamera(); photoInput.click(); };
 
     const handleFile = (f) => {
