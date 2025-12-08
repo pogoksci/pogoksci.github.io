@@ -432,9 +432,20 @@
     // 기본값 자동 오픈 (순차적)
     if (state.area_id) await loadCabinets(container, state.area_id);
     if (state.cabinet_id) {
-      // loadCabinets 내부에서 구조를 읽으므로, 비동기 처리를 기다려야 하지만
-      // 여기서는 간단히 UI 순차 렌더링을 위해 약간의 지연이나 구조 호출을 보장해야 함.
-      // loadCabinets가 async이므로 await loadCabinets 완료 후 구조가 state에 로드됨.
+      // 🟢 Fix: Explicitly load structure for the selected cabinet
+      const structure = await loadCabinetStructure(state.cabinet_id);
+      if (structure) {
+        state.door_vertical_total = structure.door_vertical;
+        state.door_horizontal_total = structure.door_horizontal;
+        state.shelf_level_total = structure.internal_shelf_level;
+        state.storage_column_total = structure.storage_column;
+      } else {
+        // Fallback defaults
+        state.door_vertical_total = 1;
+        state.door_horizontal_total = 1;
+        state.shelf_level_total = 1;
+        state.storage_column_total = 1;
+      }
 
       // 그 후 UI 그리기
       if (state.door_vertical) loadDoorVertical(container);

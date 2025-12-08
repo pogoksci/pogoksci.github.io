@@ -152,7 +152,43 @@
         };
 
         setBtnGroup("unit_buttons", detail.unit);
-        setBtnGroup("bottle_type_buttons", detail.bottle_identifier); // CHANGED: bottle_type -> bottle_identifier
+
+        // Bottle Type Restoration (Mass -> Type -> Text)
+        let inferredType = null;
+        const mass = Number(detail.bottle_mass);
+        const vol = Number(detail.initial_amount); // saved as initial_amount in DB
+
+        if (mass && vol) {
+          // Mapping based on calculateBottleMass logic & user input
+          // Glass often used masses:
+          if ((vol === 25 && mass === 65) ||
+            (vol === 100 && mass === 120) ||
+            (vol === 500 && mass === 400) ||
+            (vol === 1000 && mass === 510)) {
+            inferredType = "갈색유리"; // Default to Brown Glass as per user request for 400g
+          }
+          // Plastic (typically 500ml references in logic)
+          else if (vol === 500) {
+            if (mass === 40) inferredType = "PE"; // Semi-transparent
+            else if (mass === 80) inferredType = "PE"; // Brown Plastic
+            else if (mass === 75) inferredType = "PP"; // White Plastic
+          }
+        }
+
+        const rawBottleVal = inferredType || detail.bottle_identifier || detail.bottle_type;
+
+        const bottleMap = {
+          "Brown Glass": "갈색유리", "Clear Glass": "투명유리",
+          "Brown": "갈색유리", "Clear": "투명유리",
+          "PE": "PE", "PP": "PP", "Metal": "금속", "Stainless": "스텐",
+          "Aluminum": "알루미늄", "Others": "기타"
+        };
+
+        const finalBottleVal = bottleMap[rawBottleVal] || rawBottleVal;
+        console.log(`[BottleRestore] Mass: ${mass}, Vol: ${vol} -> Inferred: ${inferredType}, Final: ${finalBottleVal}`);
+
+        setBtnGroup("bottle_type_buttons", finalBottleVal);
+
         setBtnGroup("classification_buttons", detail.classification);
         setBtnGroup("state_buttons", detail.state); // CHANGED: status -> state
         setBtnGroup("concentration_unit_buttons", detail.concentration_unit);
