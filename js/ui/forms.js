@@ -148,27 +148,135 @@
     // ------------------------------------------------------------
     // 📸 카메라/사진 (inventory-form.html IDs)
     // ------------------------------------------------------------
+    // ------------------------------------------------------------
+    // 📸 카메라/사진 (inventory-form.html IDs)
+    // ------------------------------------------------------------
     const photoBtn = document.getElementById("photo-btn");
     const cameraBtn = document.getElementById("camera-btn");
     const cameraCancelBtn = document.getElementById("camera-cancel-btn");
     const photoInput = document.getElementById("photo-input");
     const cameraInput = document.getElementById("camera-input");
+    const previewBox = document.getElementById("photo-preview");
+    const previewImg = document.getElementById("preview-img");
+    const videoStream = document.getElementById("camera-stream");
+    const canvas = document.getElementById("camera-canvas");
 
-    if (photoBtn && photoInput) {
-      photoBtn.onclick = () => photoInput.click();
-      photoInput.onchange = (e) => processImage(e.target.files[0], (res) => {
-        set("photo_320_base64", res.base64_320);
-        set("photo_160_base64", res.base64_160);
-        // preview logic (simple img tag append)
-        const preview = document.getElementById("photo-preview");
-        preview.innerHTML = `<img src="${res.base64_320}" style="width:100%;height:100%;object-fit:contain;">`;
+    let isCameraActive = false;
+
+    // Helper: Stop Camera
+    const stopCamera = () => {
+      if (inventoryStream) {
+        inventoryStream.getTracks().forEach(track => track.stop());
+        inventoryStream = null;
+      }
+      if (videoStream && videoStream.srcObject) {
+        const tracks = videoStream.srcObject.getTracks();
+        if (tracks) tracks.forEach(t => t.stop());
+        videoStream.srcObject = null;
+      }
+      if (videoStream) videoStream.style.display = 'none';
+
+      isCameraActive = false;
+      if (cameraBtn) cameraBtn.innerHTML = '카메라로 촬영';
+      if (cameraCancelBtn) cameraCancelBtn.style.display = 'none';
+    };
+
+    // Helper: Start Camera
+    const startCameraFunc = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        inventoryStream = stream;
+        videoStream.srcObject = inventoryStream;
+        videoStream.style.display = 'block';
+
+        // Hide preview info
+        if (previewImg) previewImg.style.display = 'none';
+        const placeholder = previewBox.querySelector('.placeholder-text');
+        if (placeholder) placeholder.style.display = 'none';
+
+        isCameraActive = true;
+        cameraBtn.innerHTML = '촬영하기';
+        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-flex';
+      } catch (err) {
+        console.error("Camera access denied:", err);
+        cameraInput.click();
+      }
+    };
+
+    // Helper: Take Photo
+    const takePhoto = () => {
+      if (!videoStream || !canvas) return;
+      canvas.width = videoStream.videoWidth;
+      canvas.height = videoStream.videoHeight;
+      canvas.getContext('2d').drawImage(videoStream, 0, 0);
+
+      const base64 = canvas.toDataURL("image/jpeg");
+
+      // Set State
+      processImage(base64, (resized) => {
+        set("photo_320_base64", resized.base64_320);
+        set("photo_160_base64", resized.base64_160);
+
+        if (previewImg) {
+          previewImg.src = resized.base64_320;
+          previewImg.style.display = 'block';
+        } else {
+          // Fallback if previewImg missing (shouldn't happen with HTML update)
+          previewBox.innerHTML = `<img src="${resized.base64_320}" id="preview-img" style="width:100%;height:100%;object-fit:contain;">` +
+            `<video id="camera-stream" autoplay playsinline style="width:100%;height:100%;object-fit:cover;display:none;"></video>` +
+            `<canvas id="camera-canvas" style="display:none;"></canvas>`;
+          // Re-grab references if innerHTML overwritten
+        }
       });
+
+      stopCamera();
+      cameraBtn.innerHTML = '다시 촬영';
+    };
+
+    // Event Listeners
+    if (photoBtn && photoInput) {
+      photoBtn.onclick = () => {
+        if (isCameraActive) stopCamera();
+        photoInput.click();
+      };
+
+      photoInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          processImage(ev.target.result, (resized) => {
+            set("photo_320_base64", resized.base64_320);
+            set("photo_160_base64", resized.base64_160);
+
+            if (previewImg) {
+              previewImg.src = resized.base64_320;
+              previewImg.style.display = 'block';
+              const placeholder = previewBox.querySelector('.placeholder-text');
+              if (placeholder) placeholder.style.display = 'none';
+            }
+          });
+        };
+        reader.readAsDataURL(file);
+      };
     }
 
     if (cameraBtn) {
       cameraBtn.onclick = () => {
-        // Inventory specific camera logic or reuse App.Camera
-        startCamera("camera-stream", "photo-preview", "camera-btn", "camera-cancel-btn");
+        if (isCameraActive) {
+          takePhoto();
+        } else {
+          startCameraFunc();
+        }
+      };
+    }
+
+    if (cameraCancelBtn) {
+      cameraCancelBtn.onclick = () => {
+        stopCamera();
+        // Restore preview if exists in state? 
+        // For now, simple stop.
       };
     }
 
