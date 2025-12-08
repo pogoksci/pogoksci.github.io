@@ -488,6 +488,13 @@
           delete payload.shelf_height;
           delete payload.storage_columns;
 
+          // Remove fields not in Inventory Table schema
+          delete payload.cas_rn; // Belongs to Substance
+          delete payload.bottle_type; // Mapped to bottle_identifier
+          delete payload.status; // Mapped to state (if present)
+          // photo base64 might be needed if triggers use it, but usually standard is to upload first. 
+          // If error persists on photo, we handles it then.
+
           if (mode === "create") {
             if (typeof App.Inventory.createInventory !== 'function') throw new Error("App.Inventory.createInventory missing");
             await App.Inventory.createInventory(payload);
