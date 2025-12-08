@@ -112,7 +112,21 @@
           const el = document.getElementById(id);
           if (el) el.value = val || "";
         };
-        setInput("cas_rn", detail.Substance?.cas_rn);
+        if (detail.Substance?.cas_rn) {
+          const casEl = document.getElementById("cas_rn");
+          if (casEl) {
+            casEl.value = detail.Substance.cas_rn;
+            casEl.readOnly = true;
+            casEl.style.backgroundColor = "#f0f0f0";
+            // Remove previous listeners if any (clone node or assume fresh form)
+            // Since form is re-injected, listener is fresh.
+            casEl.onclick = () => {
+              alert("⚠️ CAS 번호는 수정할 수 없습니다.\n약품 종류가 변경되었다면 [새 약품 등록]을 이용해주세요.");
+            };
+          }
+        } else {
+          setInput("cas_rn", "");
+        }
         setInput("purchase_volume", detail.initial_amount); // CHANGED: purchase_volume -> initial_amount
         setInput("concentration_value", detail.concentration_value);
         setInput("purchase_date", detail.purchase_date);
