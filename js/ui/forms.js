@@ -225,7 +225,7 @@
           const manInput = document.getElementById("manufacturer_other");
           if (manInput) manInput.value = manVal;
           // Update state to reflect custom mode?
-          set("manufacturer", "기타");
+          set("manufacturer", null); // "기타" -> null so makePayload uses custom value
           set("manufacturer_custom", manVal);
         }
 
