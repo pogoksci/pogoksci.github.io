@@ -277,7 +277,25 @@
 
     const volInput = document.getElementById("purchase_volume");
     if (volInput) {
-      volInput.addEventListener("input", updateMass);
+      volInput.addEventListener("input", (e) => {
+        updateMass();
+        set("current_amount", e.target.value); // current_amount matches purchase_volume for new/edit generally
+      });
+    }
+
+    const concInput = document.getElementById("concentration_value");
+    if (concInput) {
+      concInput.addEventListener("input", (e) => {
+        set("concentration_value", e.target.value);
+      });
+    }
+
+    // manufacturer_custom listener
+    const manInput = document.getElementById("manufacturer_other");
+    if (manInput) {
+      manInput.addEventListener("input", (e) => {
+        set("manufacturer_custom", e.target.value);
+      });
     }
 
     groups.forEach(id => {
@@ -725,7 +743,15 @@
               // 🧮 Calculate Conversions (Server-side simulation)
               if (payload.concentration_value && payload.concentration_unit) {
                 const densityProp = subData.Properties?.find(p => p.name === "Density");
-                const densityVal = densityProp ? parseFloat(densityProp.property) : 1;
+                let densityVal = 1;
+                if (densityProp && densityProp.property) {
+                  // Extract first number from string (e.g. "1.23 g/cm3" -> 1.23)
+                  const match = densityProp.property.match(/[0-9]*\.?[0-9]+/);
+                  if (match) {
+                    densityVal = parseFloat(match[0]);
+                  }
+                }
+
                 const conversions = App.Utils.computeConversions({
                   value: payload.concentration_value,
                   unit: payload.concentration_unit,
@@ -748,14 +774,14 @@
                 if (conversions) {
                   if (payload.concentration_unit === "%") {
                     payload.converted_concentration_value_1 = conversions.molarity;
-                    payload.converted_concentration_unit_1 = annotateUnit("M");
+                    payload.converted_concentration_unit_1 = conversions.molarity != null ? annotateUnit("M") : null;
                     payload.converted_concentration_value_2 = conversions.molality;
-                    payload.converted_concentration_unit_2 = annotateUnit("m");
+                    payload.converted_concentration_unit_2 = conversions.molality != null ? annotateUnit("m") : null;
                   } else if (payload.concentration_unit === "M" || payload.concentration_unit === "N") {
                     payload.converted_concentration_value_1 = conversions.percent;
-                    payload.converted_concentration_unit_1 = "%";
+                    payload.converted_concentration_unit_1 = conversions.percent != null ? "%" : null;
                     payload.converted_concentration_value_2 = conversions.molality;
-                    payload.converted_concentration_unit_2 = annotateUnit("m");
+                    payload.converted_concentration_unit_2 = conversions.molality != null ? annotateUnit("m") : null;
                   }
                 }
               }
