@@ -217,6 +217,96 @@
           }
           if (placeholder) placeholder.style.display = "none";
         }
+
+        // 4. MSDS PDF UI (Edit Mode)
+        const msdsInput = document.getElementById("msds-pdf-input");
+        if (msdsInput && detail.msds_pdf_url) {
+          // Hide input
+          const container = msdsInput.closest(".form-group");
+          const inputGroup = container.querySelectorAll("input, p");
+          inputGroup.forEach(el => el.style.display = "none");
+
+          // Create File Display UI
+          let fileDisplay = container.querySelector(".msds-file-display");
+          if (!fileDisplay) {
+            fileDisplay = document.createElement("div");
+            fileDisplay.className = "msds-file-display";
+            fileDisplay.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px;";
+            container.appendChild(fileDisplay);
+          }
+
+          // Extract filename from URL (decode URI component)
+          const fileName = decodeURIComponent(detail.msds_pdf_url.split("/").pop()).split("_").slice(2).join("_") || "MSDS_File.pdf";
+
+          fileDisplay.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+              <span class="material-symbols-outlined" style="color: #e74c3c;">picture_as_pdf</span>
+              <a href="${detail.msds_pdf_url}" target="_blank" style="text-decoration: none; color: #333; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
+                ${fileName}
+              </a>
+            </div>
+            <button type="button" class="btn-delete-msds" style="background: none; border: none; cursor: pointer; color: #888;">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          `;
+
+          // Bind Delete Action
+          const delBtn = fileDisplay.querySelector(".btn-delete-msds");
+          delBtn.onclick = async () => {
+            if (!confirm("MSDS 파일을 삭제하시겠습니까? (복구할 수 없습니다)")) return;
+
+            try {
+              const supabase = App.supabase;
+              const hash = detail.msds_pdf_hash;
+              let safeToDeleteFile = true;
+
+              // Check Reference Count if hash exists
+              if (hash) {
+                const { count, error } = await supabase
+                  .from("Inventory")
+                  .select("id", { count: "exact", head: true })
+                  .eq("msds_pdf_hash", hash);
+
+                if (!error && count > 1) {
+                  safeToDeleteFile = false; // Used by others
+                  console.log(`ℹ️ MSDS file is used by ${count} items. Skipping bucket delete.`);
+                }
+              }
+
+              // 1. Delete from Bucket (if safe)
+              if (safeToDeleteFile) {
+                // Extract path from public URL
+                const urlObj = new URL(detail.msds_pdf_url);
+                const path = urlObj.pathname.split("/public/msds-pdf/")[1];
+                if (path) {
+                  const { error: storeErr } = await supabase.storage.from("msds-pdf").remove([decodeURIComponent(path)]);
+                  if (storeErr) console.warn("Bucket delete warning:", storeErr);
+                }
+              }
+
+              // 2. Update DB (Set null)
+              const { error: dbErr } = await supabase
+                .from("Inventory")
+                .update({ msds_pdf_url: null, msds_pdf_hash: null })
+                .eq("id", detail.id);
+
+              if (dbErr) throw dbErr;
+
+              // 3. Update UI
+              alert("삭제되었습니다.");
+              fileDisplay.remove();
+              inputGroup.forEach(el => el.style.display = ""); // Show input again
+
+              // Update local state to reflect deletion (so payload doesn't resurrect it)
+              set("msds_pdf_url", null);
+              set("msds_pdf_hash", null); // Assuming you might have logic that reads this from detail
+
+            } catch (err) {
+              console.error("Delete failed:", err);
+              alert("파일 삭제 중 오류가 발생했습니다.");
+            }
+          };
+        }
       });
     }
 
