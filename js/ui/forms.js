@@ -676,8 +676,8 @@
 
           // Let's check if we can fix this.
 
-          delete payload.bottle_type; // Mapped to bottle_identifier
-          delete payload.state; // Mapped to status (Wait, line 517 mapped state -> state. Now we map to status)
+          // delete payload.bottle_type; // KEEP THIS
+          // delete payload.state; // KEEP THIS
           // We should delete 'state' key to avoid error.
 
           // Remove photo base64 (Inventory table doesn't have these columns)
@@ -694,17 +694,55 @@
 
           if (!payload.substance_id && casRn) {
             // 1. Try exact match
-            let { data: subData } = await supabase.from("Substance").select("id").eq("cas_rn", casRn).maybeSingle();
+            let { data: subData } = await supabase.from("Substance").select("id, molecular_mass, Properties(name, property)").eq("cas_rn", casRn).maybeSingle();
 
             // 2. If not found, try removing dashes (if input had dashes)
             if (!subData && casRn.includes("-")) {
               const stripped = casRn.replace(/-/g, "");
-              const { data: subData2 } = await supabase.from("Substance").select("id").eq("cas_rn", stripped).maybeSingle();
+              const { data: subData2 } = await supabase.from("Substance").select("id, molecular_mass, Properties(name, property)").eq("cas_rn", stripped).maybeSingle();
               if (subData2) subData = subData2;
             }
 
             if (subData) {
               payload.substance_id = subData.id;
+
+              // 🧮 Calculate Conversions (Server-side simulation)
+              if (payload.concentration_value && payload.concentration_unit) {
+                const densityProp = subData.Properties?.find(p => p.name === "Density");
+                const densityVal = densityProp ? parseFloat(densityProp.property) : 1;
+                const conversions = App.Utils.computeConversions({
+                  value: payload.concentration_value,
+                  unit: payload.concentration_unit,
+                  molarMass: subData.molecular_mass,
+                  density: densityVal
+                });
+
+                const annotateUnit = (unit) => {
+                  if (!unit) return unit;
+                  const stateVal = String(payload.state || "").trim().toLowerCase();
+                  const solids = ["파우더", "조각", "비드", "펠렛", "리본", "막대", "벌크", "고체"];
+                  const isSolid = solids.some((k) => stateVal.includes(k));
+                  const isGas = stateVal.includes("기체") || stateVal.includes("gas");
+                  const isLiquid = stateVal === "액체" || stateVal.includes("liquid");
+                  if (unit === "M" && (isSolid || isGas)) return `${unit} (의미 없음)`;
+                  if (unit === "m" && (isLiquid || isGas)) return `${unit} (정의 불가)`;
+                  return unit;
+                };
+
+                if (conversions) {
+                  if (payload.concentration_unit === "%") {
+                    payload.converted_concentration_value_1 = conversions.molarity;
+                    payload.converted_concentration_unit_1 = annotateUnit("M");
+                    payload.converted_concentration_value_2 = conversions.molality;
+                    payload.converted_concentration_unit_2 = annotateUnit("m");
+                  } else if (payload.concentration_unit === "M" || payload.concentration_unit === "N") {
+                    payload.converted_concentration_value_1 = conversions.percent;
+                    payload.converted_concentration_unit_1 = "%";
+                    payload.converted_concentration_value_2 = conversions.molality;
+                    payload.converted_concentration_unit_2 = annotateUnit("m");
+                  }
+                }
+              }
             } else {
               // ------------------------------------------------------------
               // 🌟 Auto-Import Logic (User's expected behavior)
