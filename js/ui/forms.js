@@ -625,17 +625,22 @@
 
           // CRITICAL: Resolve substance_id if missing
           let casRn = get("cas_rn");
-          if (casRn) casRn = casRn.trim(); // Trim whitespace
+          if (casRn) casRn = casRn.trim();
 
           if (!payload.substance_id && casRn) {
-            // We need to query Substance table
-            const { data: subData } = await supabase.from("Substance").select("id").eq("cas_rn", casRn).maybeSingle();
+            // 1. Try exact match
+            let { data: subData } = await supabase.from("Substance").select("id").eq("cas_rn", casRn).maybeSingle();
+
+            // 2. If not found, try removing dashes (if input had dashes)
+            if (!subData && casRn.includes("-")) {
+              const stripped = casRn.replace(/-/g, "");
+              const { data: subData2 } = await supabase.from("Substance").select("id").eq("cas_rn", stripped).maybeSingle();
+              if (subData2) subData = subData2;
+            }
+
             if (subData) {
               payload.substance_id = subData.id;
             } else {
-              // Try identifying if it is an issue of dashes?
-              // Some DBs store as 12345-67-8, some 12345678.
-              // Let's stick to simple trim first but enhance error.
               throw new Error(`해당 CAS 번호(${casRn})의 시약 정보를 찾을 수 없습니다.\n먼저 [시약/물질 관리]에서 해당 CAS를 등록해주세요.`);
             }
           }
