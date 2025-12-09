@@ -25,6 +25,9 @@
     const v = Number(volume);
     const t = String(type).trim().replace(/\s+/g, ""); // 공백 제거
 
+    // 0. 기타 (0으로 설정)
+    if (t === "기타") return 0;
+
     // 1. 유리 (갈색유리, 투명유리)
     if (t.includes("유리")) {
       if (v === 25) return 65;
@@ -177,7 +180,11 @@
         const bottleMap = {
           "Brown Glass": "갈색유리", "Clear Glass": "투명유리",
           "Brown": "갈색유리", "Clear": "투명유리",
-          "PE": "PE", "PP": "PP", "Metal": "금속", "Stainless": "스텐",
+          "Brown Plastic": "갈색플라스틱", "White Plastic": "흰색플라스틱",
+          "Semi-transparent Plastic": "반투명플라스틱",
+          "PE": "반투명플라스틱", // PE는 보통 반투명
+          "PP": "흰색플라스틱",   // PP는 보통 흰색 (불투명)
+          "Metal": "금속", "Stainless": "스텐",
           "Aluminum": "알루미늄", "Others": "기타"
         };
 
@@ -334,7 +341,7 @@
       const type = activeBtn ? activeBtn.dataset.value : null;
 
       const mass = calculateBottleMass(vol, type);
-      if (mass) {
+      if (mass !== null) {
         set("bottle_mass", mass);
         console.log(`⚖️ 공병 질량 자동 계산: ${mass}g (Vol: ${vol}, Type: ${type})`);
       } else {
