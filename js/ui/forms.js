@@ -250,8 +250,32 @@
       "state_buttons",
       "concentration_unit_buttons",
       "manufacturer_buttons",
+      "manufacturer_buttons",
       // Location buttons are handled dynamically in location logic
     ];
+
+    // ------------------------------------------------------------
+    // 🧮 공병 질량 자동 계산 리스너 (Auto-Calculate Mass)
+    // ------------------------------------------------------------
+    const updateMass = () => {
+      const vol = document.getElementById("purchase_volume").value;
+      const typeContainer = document.getElementById("bottle_type_buttons");
+      const activeBtn = typeContainer.querySelector(".active");
+      const type = activeBtn ? activeBtn.dataset.value : null;
+
+      const mass = calculateBottleMass(vol, type);
+      if (mass) {
+        set("bottle_mass", mass);
+        console.log(`⚖️ 공병 질량 자동 계산: ${mass}g (Vol: ${vol}, Type: ${type})`);
+      } else {
+        set("bottle_mass", null);
+      }
+    };
+
+    const volInput = document.getElementById("purchase_volume");
+    if (volInput) {
+      volInput.addEventListener("input", updateMass);
+    }
 
     groups.forEach(id => {
       setupButtonGroup(id, (btn) => {
@@ -266,6 +290,9 @@
         } else if (key === "manufacturer") {
           document.getElementById("other_manufacturer_group").style.display = "none";
           set(key, val);
+        } else if (key === "bottle_type") {
+          set(key, val);
+          updateMass(); // Trigger mass calc on type change
         } else {
           set(key, val);
         }
@@ -506,24 +533,21 @@
           // Override makePayload's cabinet logic for Inventory & Add Inventory fields
           Object.assign(payload, {
             cabinet_id: get("cabinet_id") || null, // Ensure null if undefined/empty
-            door_vertical: get("door_vertical"), // Stored as string or int in Inventory? Likely same as cabinet keys
+            door_vertical: get("door_vertical"),
             door_horizontal: get("door_horizontal"),
             internal_shelf_level: get("internal_shelf_level"),
             storage_column: get("storage_column"),
             // Inventory Specific Fields
             cas_rn: get("cas_rn"),
-            current_amount: isNaN(vol) ? 0 : vol, // Map to current_amount, default to 0 if invalid
+            initial_amount: vol, // ✅ initial_amount 추가
+            current_amount: isNaN(vol) ? 0 : vol,
             unit: get("unit"),
             bottle_identifier: get("bottle_type"),
+            bottle_mass: get("bottle_mass"), // ✅ bottle_mass 추가
+            state: get("state"), // ✅ state (성상) 추가 (액체, 고체 등)
             classification: get("classification"),
-            status: get("status"), // state -> status (forms.js 208 maps state_buttons -> state, but inventory uses status?)
-            // Wait, line 208 said "status -> state".
-            // Inventory table likely has 'status' column.
-            // line 517 used `state: get("state")`.
-            // let's check schema/vars.
-            // In initInventoryForm restoration: set("status", detail.status). 
-            // But state_buttons maps to 'state'.
-            // So we should map get("state") to payload.status.
+            // status: get("status"), // ❌ Remove this line to avoid confusion. Handled below.
+            status: get("status") || "사용중", // ✅ status (사용상태) 기본값 처리
             concentration_value: conc,
             concentration_unit: get("concentration_unit"),
             manufacturer: get("manufacturer") || get("manufacturer_custom"),
@@ -533,7 +557,7 @@
           // Correction: In initInventoryForm (line 100), we set "status" from detail.status.
           // But the buttons ID is "state_buttons". setupButtonGroup (line 260) sets "state".
           // So we should read "state" from App.State and map it to "status" in payload.
-          payload.status = get("state"); // Map key 'state' to column 'status'
+
 
           // 📸 UPLOAD PHOTOS to 'reagent-photos' bucket
           if (payload.photo_320_base64) {
@@ -576,6 +600,42 @@
             } catch (uploadErr) {
               console.error("Photo upload failed:", uploadErr);
               if (!confirm("사진 업로드에 실패했습니다. 사진 없이 저장하시겠습니까?")) return;
+            }
+          }
+
+          // 📄 UPLOAD MSDS PDF to 'msds-pdf' bucket
+          const msdsInput = document.getElementById("msds-pdf-input");
+          if (msdsInput && msdsInput.files && msdsInput.files[0]) {
+            try {
+              const file = msdsInput.files[0];
+              const ts = Date.now();
+              const rnd = Math.random().toString(36).substr(2, 5);
+
+              // Validate size (max 3MB)
+              if (file.size > 3 * 1024 * 1024) {
+                alert("MSDS 파일 크기는 3MB를 초과할 수 없습니다.");
+                throw new Error("File too large");
+              }
+
+              // File path: msds/{cas_rn}_{timestamp}.pdf or similar
+              // Let's use simple random for uniqueness
+              const path = `msds/${ts}_${rnd}_${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+
+              const { error: msdsErr } = await supabase.storage
+                .from("msds-pdf")
+                .upload(path, file, { upsert: true });
+
+              if (msdsErr) throw msdsErr;
+
+              const { data: msdsData } = supabase.storage.from("msds-pdf").getPublicUrl(path);
+              payload.msds_pdf_url = msdsData.publicUrl;
+              console.log("✅ MSDS PDF uploaded:", payload.msds_pdf_url);
+
+            } catch (msdsErr) {
+              console.error("MSDS Upload failed:", msdsErr);
+              alert("MSDS 파일 업로드에 실패했습니다. (크기 초과 또는 네트워크 오류)");
+              // Proceed without MSDS?? User might want to retry.
+              return;
             }
           }
 
