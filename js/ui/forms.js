@@ -641,7 +641,46 @@
             if (subData) {
               payload.substance_id = subData.id;
             } else {
-              throw new Error(`해당 CAS 번호(${casRn})의 시약 정보를 찾을 수 없습니다.\n먼저 [시약/물질 관리]에서 해당 CAS를 등록해주세요.`);
+              // ------------------------------------------------------------
+              // 🌟 Auto-Import Logic (User's expected behavior)
+              // ------------------------------------------------------------
+              console.log(`[Inventory] CAS(${casRn}) not found locally. Triggering auto-import via casimport...`);
+
+              const fnUrl = App.API?.EDGE?.CASIMPORT || `https://muprmzkvrjacqatqxayf.supabase.co/functions/v1/casimport`;
+
+              const headers = {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${App.API?.SUPABASE_ANON_KEY || supabase.supabaseKey}`
+              };
+
+              // Send POST request to create substance
+              const impRes = await fetch(fnUrl, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({ type: "inventory", cas_rn: casRn })
+              });
+
+              if (!impRes.ok) {
+                const errMsg = await impRes.text();
+                throw new Error(`CAS(${casRn}) 자동 등록 실패: ${errMsg}`);
+              }
+
+              const impData = await impRes.json();
+              if (impData.error) throw new Error(impData.error);
+
+              // Check if we got substance_id back
+              const newSubId = impData.data?.id || impData.data?.substance_id;
+
+              if (!newSubId) {
+                // Fallback: Query again if function didn't return ID directly
+                const { data: retryData } = await supabase.from("Substance").select("id").eq("cas_rn", casRn).maybeSingle();
+                if (retryData) payload.substance_id = retryData.id;
+                else throw new Error("자동 등록이 완료되었으나 물질 정보를 조회할 수 없습니다.");
+              } else {
+                payload.substance_id = newSubId;
+              }
+
+              console.log(`✅ Auto-import successful. Substance ID: ${payload.substance_id}`);
             }
           }
 
