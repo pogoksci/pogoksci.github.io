@@ -171,29 +171,8 @@
 
         setBtnGroup("unit_buttons", detail.unit);
 
-        // Bottle Type Restoration (Mass -> Type -> Text)
-        let inferredType = null;
-        const mass = Number(detail.bottle_mass);
-        const vol = Number(detail.current_amount); // saved as current_amount in DB
-
-        if (mass && vol) {
-          // Mapping based on calculateBottleMass logic & user input
-          // Glass often used masses:
-          if ((vol === 25 && mass === 65) ||
-            (vol === 100 && mass === 120) ||
-            (vol === 500 && mass === 400) ||
-            (vol === 1000 && mass === 510)) {
-            inferredType = "갈색유리"; // Default to Brown Glass as per user request for 400g
-          }
-          // Plastic (typically 500ml references in logic)
-          else if (vol === 500) {
-            if (mass === 40) inferredType = "PE"; // Semi-transparent
-            else if (mass === 80) inferredType = "PE"; // Brown Plastic
-            else if (mass === 75) inferredType = "PP"; // White Plastic
-          }
-        }
-
-        const rawBottleVal = inferredType || detail.bottle_identifier || detail.bottle_type;
+        // Bottle Type Restoration (Simple direct map)
+        const rawBottleVal = detail.bottle_type || detail.bottle_identifier;
 
         const bottleMap = {
           "Brown Glass": "갈색유리", "Clear Glass": "투명유리",
@@ -203,8 +182,6 @@
         };
 
         const finalBottleVal = bottleMap[rawBottleVal] || rawBottleVal;
-        console.log(`[BottleRestore] Mass: ${mass}, Vol: ${vol} -> Inferred: ${inferredType}, Final: ${finalBottleVal}`);
-
         setBtnGroup("bottle_type_buttons", finalBottleVal);
 
         setBtnGroup("classification_buttons", detail.classification);
