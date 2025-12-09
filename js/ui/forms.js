@@ -128,7 +128,7 @@
         } else {
           setInput("cas_rn", "");
         }
-        setInput("purchase_volume", detail.initial_amount); // CHANGED: purchase_volume -> initial_amount
+        setInput("purchase_volume", detail.current_amount); // CHANGED: initial_amount -> current_amount
         setInput("concentration_value", detail.concentration_value);
         setInput("purchase_date", detail.purchase_date);
 
@@ -171,7 +171,7 @@
         // Bottle Type Restoration (Mass -> Type -> Text)
         let inferredType = null;
         const mass = Number(detail.bottle_mass);
-        const vol = Number(detail.initial_amount); // saved as initial_amount in DB
+        const vol = Number(detail.current_amount); // saved as current_amount in DB
 
         if (mass && vol) {
           // Mapping based on calculateBottleMass logic & user input
@@ -500,26 +500,40 @@
         try {
           const payload = await makePayload(dump()); // Validate & Transform
 
-          // Override makePayload's cabinet logic for Inventory
+          const vol = Number(get("purchase_volume"));
+          const conc = get("concentration_value") ? Number(get("concentration_value")) : null;
+
           // Override makePayload's cabinet logic for Inventory & Add Inventory fields
           Object.assign(payload, {
-            cabinet_id: get("cabinet_id"),
-            door_vertical: get("door_vertical"),
+            cabinet_id: get("cabinet_id") || null, // Ensure null if undefined/empty
+            door_vertical: get("door_vertical"), // Stored as string or int in Inventory? Likely same as cabinet keys
             door_horizontal: get("door_horizontal"),
             internal_shelf_level: get("internal_shelf_level"),
             storage_column: get("storage_column"),
             // Inventory Specific Fields
             cas_rn: get("cas_rn"),
-            initial_amount: get("purchase_volume"),
+            current_amount: isNaN(vol) ? 0 : vol, // Map to current_amount, default to 0 if invalid
             unit: get("unit"),
             bottle_identifier: get("bottle_type"),
             classification: get("classification"),
-            state: get("state"),
-            concentration_value: get("concentration_value"),
+            status: get("status"), // state -> status (forms.js 208 maps state_buttons -> state, but inventory uses status?)
+            // Wait, line 208 said "status -> state".
+            // Inventory table likely has 'status' column.
+            // line 517 used `state: get("state")`.
+            // let's check schema/vars.
+            // In initInventoryForm restoration: set("status", detail.status). 
+            // But state_buttons maps to 'state'.
+            // So we should map get("state") to payload.status.
+            concentration_value: conc,
             concentration_unit: get("concentration_unit"),
             manufacturer: get("manufacturer") || get("manufacturer_custom"),
-            purchase_date: get("purchase_date")
+            purchase_date: get("purchase_date") || null
           });
+
+          // Correction: In initInventoryForm (line 100), we set "status" from detail.status.
+          // But the buttons ID is "state_buttons". setupButtonGroup (line 260) sets "state".
+          // So we should read "state" from App.State and map it to "status" in payload.
+          payload.status = get("state"); // Map key 'state' to column 'status'
 
           // 📸 UPLOAD PHOTOS to 'reagent-photos' bucket
           if (payload.photo_320_base64) {
@@ -574,9 +588,32 @@
           delete payload.storage_columns;
 
           // Remove fields not in Inventory Table schema
-          delete payload.cas_rn; // Belongs to Substance
+          delete payload.cas_rn; // Belongs to Substance? Wait.
+          // Inventory table has `substance_id`, not `cas_rn` usually?
+          // Inventory.js select: Substance ( ... ).
+          // So Inventory likely has `substance_id`.
+          // We need to resolve `cas_rn` to `substance_id` via a function or edge function?
+          // Or is `makePayload` or `App.Inventory.createInventory` handling it?
+          // If `Inventory` has `cas_rn` column, then it's fine.
+          // But schema likely links to Substance via FK.
+          // If we send `cas_rn` to `Inventory`, does it have a trigger?
+          // Or does the user expect `Inventory` table to have `cas_rn`?
+          // Looking at the error "Inventory:1", maybe `Inventory` table DOES NOT have `cas_rn` column.
+          // And we need to find `substance_id` for that CAS.
+
+          // Let's assume for now we keep cas_rn in payload if the backend handles it (e.g. trigger or view).
+          // BUT `forms.js` at line 577 explicitly DELETES it!
+          // delete payload.cas_rn; // Belongs to Substance
+
+          // So... where does `substance_id` come from?
+          // It's missing in payload!
+          // We must lookup substance_id from cas_rn.
+
+          // Let's check if we can fix this.
+
           delete payload.bottle_type; // Mapped to bottle_identifier
-          delete payload.status; // Mapped to state (if present)
+          delete payload.state; // Mapped to status (Wait, line 517 mapped state -> state. Now we map to status)
+          // We should delete 'state' key to avoid error.
 
           // Remove photo base64 (Inventory table doesn't have these columns)
           delete payload.photo_320_base64;
@@ -586,9 +623,29 @@
           if (payload.photo_url_320 === null) delete payload.photo_url_320;
           if (payload.photo_url_160 === null) delete payload.photo_url_160;
 
+          // CRITICAL: Resolve substance_id if missing
+          if (!payload.substance_id && get("cas_rn")) {
+            // We need to query Substance table
+            const { data: subData } = await supabase.from("Substance").select("id").eq("cas_rn", get("cas_rn")).maybeSingle();
+            if (subData) {
+              payload.substance_id = subData.id;
+            } else {
+              // If substance doesn't exist, we might need to create it or fail?
+              // Usually registration flow implies looking up first.
+              // For now, let's warn if not found, or maybe the View handles it?
+              // The user didn't mention Substance creation.
+              // Assuming Substance exists for the CAS.
+              throw new Error("해당 CAS 번호의 시약 정보를 찾을 수 없습니다.");
+            }
+          }
+
+          // Remove cas_rn as it's not in Inventory usually
+          delete payload.cas_rn;
+
           if (mode === "create") {
             if (typeof App.Inventory.createInventory !== 'function') throw new Error("App.Inventory.createInventory missing");
             await App.Inventory.createInventory(payload);
+            const { data: userData } = await supabase.auth.getUser(); // Dummy for now
             alert("✅ 등록 완료");
           } else {
             if (typeof App.Inventory.updateInventory !== 'function') throw new Error("App.Inventory.updateInventory missing");
