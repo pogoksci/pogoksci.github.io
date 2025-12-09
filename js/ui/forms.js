@@ -624,18 +624,19 @@
           if (payload.photo_url_160 === null) delete payload.photo_url_160;
 
           // CRITICAL: Resolve substance_id if missing
-          if (!payload.substance_id && get("cas_rn")) {
+          let casRn = get("cas_rn");
+          if (casRn) casRn = casRn.trim(); // Trim whitespace
+
+          if (!payload.substance_id && casRn) {
             // We need to query Substance table
-            const { data: subData } = await supabase.from("Substance").select("id").eq("cas_rn", get("cas_rn")).maybeSingle();
+            const { data: subData } = await supabase.from("Substance").select("id").eq("cas_rn", casRn).maybeSingle();
             if (subData) {
               payload.substance_id = subData.id;
             } else {
-              // If substance doesn't exist, we might need to create it or fail?
-              // Usually registration flow implies looking up first.
-              // For now, let's warn if not found, or maybe the View handles it?
-              // The user didn't mention Substance creation.
-              // Assuming Substance exists for the CAS.
-              throw new Error("해당 CAS 번호의 시약 정보를 찾을 수 없습니다.");
+              // Try identifying if it is an issue of dashes?
+              // Some DBs store as 12345-67-8, some 12345678.
+              // Let's stick to simple trim first but enhance error.
+              throw new Error(`해당 CAS 번호(${casRn})의 시약 정보를 찾을 수 없습니다.\n먼저 [시약/물질 관리]에서 해당 CAS를 등록해주세요.`);
             }
           }
 
