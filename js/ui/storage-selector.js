@@ -449,9 +449,9 @@
 
       // 그 후 UI 그리기
       loadDoorVertical(container);
-      if (state.door_horizontal) loadDoorHorizontal(container);
-      if (state.internal_shelf_level) loadShelfLevels(container);
-      if (state.storage_column) loadColumns(container);
+      loadDoorHorizontal(container);
+      loadShelfLevels(container);
+      loadColumns(container);
     }
   }
 

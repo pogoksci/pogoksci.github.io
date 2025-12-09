@@ -95,7 +95,10 @@
       set("cas_rn", detail.Substance?.cas_rn);
       set("purchase_volume", detail.purchase_volume);
       set("unit", detail.unit);
+      set("purchase_volume", detail.purchase_volume);
+      set("unit", detail.unit);
       set("bottle_type", detail.bottle_type);
+      set("bottle_identifier", detail.bottle_identifier); // ✅ 식별자 복원
       set("classification", detail.classification);
       set("status", detail.status);
       set("concentration_value", detail.concentration_value);
@@ -542,7 +545,11 @@
             initial_amount: vol, // ✅ initial_amount 추가
             current_amount: isNaN(vol) ? 0 : vol,
             unit: get("unit"),
-            bottle_identifier: get("bottle_type"),
+            current_amount: isNaN(vol) ? 0 : vol,
+            unit: get("unit"),
+            // bottle_identifier: get("bottle_type"), // ❌ Incorrect
+            // ✅ bottle_identifier logic: Use existing (Edit) or Generate New (Create)
+            bottle_identifier: get("bottle_identifier") || `${get("cas_rn")}-${crypto.randomUUID()}`,
             bottle_mass: get("bottle_mass"), // ✅ bottle_mass 추가
             state: get("state"), // ✅ state (성상) 추가 (액체, 고체 등)
             classification: get("classification"),
