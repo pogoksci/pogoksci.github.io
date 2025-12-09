@@ -116,40 +116,51 @@
       photo_url_320: state.mode === 'edit' && !state.photo_320_base64 ? state.photo_url_320 : null,
       photo_url_160: state.mode === 'edit' && !state.photo_160_base64 ? state.photo_url_160 : null,
     };
-    function computeConversions({ value, unit, molarMass, density }) {
-      const v = Number(value);
-      const mw = Number(molarMass);
-      const rho = Number(density) || 1; // g/mL
-      const result = { percent: null, molarity: null, molality: null };
+  }
 
-      if (!Number.isFinite(v) || !Number.isFinite(mw) || mw <= 0) return null;
+  function computeConversions({ value, unit, molarMass, density }) {
+    const v = Number(value);
+    const mw = Number(molarMass);
+    const rho = Number(density) || 1; // g/mL
+    const result = { percent: null, molarity: null, molality: null };
 
-      if (unit === "%") {
-        const massSolute = v;
-        const totalMass = 100;
-        const solutionVolumeL = (totalMass / rho) / 1000;
-        const moles = massSolute / mw;
-        result.molarity = solutionVolumeL > 0 ? moles / solutionVolumeL : null;
+    if (!Number.isFinite(v) || !Number.isFinite(mw) || mw <= 0) return null;
 
-        const solventMassKg = (totalMass - massSolute) / 1000;
-        result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
-        result.percent = v;
-      } else if (unit === "M" || unit === "N") {
-        const effectiveM = v;
-        const solutionVolumeL = 1;
-        const moles = effectiveM * solutionVolumeL;
-        const soluteMassG = moles * mw;
-        const solutionMassG = solutionVolumeL * 1000 * rho;
+    if (unit === "%") {
+      const massSolute = v;
+      const totalMass = 100;
+      const solutionVolumeL = (totalMass / rho) / 1000;
+      const moles = massSolute / mw;
+      result.molarity = solutionVolumeL > 0 ? moles / solutionVolumeL : null;
 
-        result.percent = solutionMassG > 0 ? (soluteMassG / solutionMassG) * 100 : null;
+      const solventMassKg = (totalMass - massSolute) / 1000;
+      result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
+      result.percent = v;
+    } else if (unit === "M" || unit === "N") {
+      const effectiveM = v;
+      const solutionVolumeL = 1;
+      const moles = effectiveM * solutionVolumeL;
+      const soluteMassG = moles * mw;
+      const solutionMassG = solutionVolumeL * 1000 * rho;
 
-        const solventMassKg = (solutionMassG - soluteMassG) / 1000;
-        result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
-        result.molarity = effectiveM;
-      }
-      return result;
+      result.percent = solutionMassG > 0 ? (soluteMassG / solutionMassG) * 100 : null;
+
+      const solventMassKg = (solutionMassG - soluteMassG) / 1000;
+      result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
+      result.molarity = effectiveM;
     }
+    return result;
+  }
 
-    globalThis.App = globalThis.App || {};
-    globalThis.App.Utils = { sleep, collectFormData, setupButtonGroup, makePayload, base64ToBlob, computeConversions };
-  }) ();
+  async function computeFileHash(file) {
+    if (!file) return null;
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    return hashHex;
+  }
+
+  globalThis.App = globalThis.App || {};
+  globalThis.App.Utils = { sleep, collectFormData, setupButtonGroup, makePayload, base64ToBlob, computeConversions, computeFileHash };
+})();

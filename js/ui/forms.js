@@ -553,6 +553,7 @@
             classification: get("classification"),
             // status: get("status"), // ❌ Remove this line to avoid confusion. Handled below.
             status: get("status") || "사용중", // ✅ status (사용상태) 기본값 처리
+            msds_pdf_hash: get("msds_pdf_hash") || null,
             concentration_value: conc,
             concentration_unit: get("concentration_unit"),
             manufacturer: get("manufacturer") || get("manufacturer_custom"),
@@ -613,33 +614,48 @@
           if (msdsInput && msdsInput.files && msdsInput.files[0]) {
             try {
               const file = msdsInput.files[0];
-              const ts = Date.now();
-              const rnd = Math.random().toString(36).substr(2, 5);
 
-              // Validate size (max 3MB)
-              if (file.size > 3 * 1024 * 1024) {
-                alert("MSDS 파일 크기는 3MB를 초과할 수 없습니다.");
-                throw new Error("File too large");
+              // 1. Compute Hash
+              const fileHash = await App.Utils.computeFileHash(file);
+              payload.msds_pdf_hash = fileHash;
+
+              // 2. Check for Duplicates
+              const { data: dupData } = await supabase
+                .from("Inventory")
+                .select("msds_pdf_url")
+                .eq("msds_pdf_hash", fileHash)
+                .limit(1)
+                .maybeSingle();
+
+              if (dupData && dupData.msds_pdf_url) {
+                console.log("♻️ Duplicate MSDS found. Reusing URL:", dupData.msds_pdf_url);
+                payload.msds_pdf_url = dupData.msds_pdf_url;
+              } else {
+                // 3. Upload New File
+                // Validate size (max 3MB)
+                if (file.size > 3 * 1024 * 1024) {
+                  alert("MSDS 파일 크기는 3MB를 초과할 수 없습니다.");
+                  throw new Error("File too large");
+                }
+
+                const ts = Date.now();
+                const rnd = Math.random().toString(36).substr(2, 5);
+                const path = `msds/${ts}_${rnd}_${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+
+                const { error: msdsErr } = await supabase.storage
+                  .from("msds-pdf")
+                  .upload(path, file, { upsert: true });
+
+                if (msdsErr) throw msdsErr;
+
+                const { data: msdsData } = supabase.storage.from("msds-pdf").getPublicUrl(path);
+                payload.msds_pdf_url = msdsData.publicUrl;
+                console.log("✅ MSDS PDF uploaded:", payload.msds_pdf_url);
               }
-
-              // File path: msds/{cas_rn}_{timestamp}.pdf or similar
-              // Let's use simple random for uniqueness
-              const path = `msds/${ts}_${rnd}_${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-
-              const { error: msdsErr } = await supabase.storage
-                .from("msds-pdf")
-                .upload(path, file, { upsert: true });
-
-              if (msdsErr) throw msdsErr;
-
-              const { data: msdsData } = supabase.storage.from("msds-pdf").getPublicUrl(path);
-              payload.msds_pdf_url = msdsData.publicUrl;
-              console.log("✅ MSDS PDF uploaded:", payload.msds_pdf_url);
 
             } catch (msdsErr) {
               console.error("MSDS Upload failed:", msdsErr);
               alert("MSDS 파일 업로드에 실패했습니다. (크기 초과 또는 네트워크 오류)");
-              // Proceed without MSDS?? User might want to retry.
               return;
             }
           }

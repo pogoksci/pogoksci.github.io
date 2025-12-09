@@ -492,8 +492,27 @@
 
   async function deleteInventory(id) {
     const supabase = getSupabase();
-    const { error } = await supabase.from("Inventory").delete().eq("id", id);
-    if (error) alert("삭제 중 오류가 발생했습니다.");
+    const fnUrl = App.API?.EDGE?.CASIMPORT || `https://muprmzkvrjacqatqxayf.supabase.co/functions/v1/casimport`;
+
+    try {
+      const response = await fetch(`${fnUrl}?type=inventory&id=${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${App.API?.SUPABASE_ANON_KEY || supabase.supabaseKey}`,
+        }
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `Server error: ${response.status}`);
+      }
+
+      console.log(`✅ Inventory(${id}) deleted via Edge Function.`);
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert(`삭제 중 오류가 발생했습니다: ${err.message}`);
+      throw err;
+    }
   }
 
   // ------------------------------------------------------------
