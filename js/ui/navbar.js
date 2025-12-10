@@ -61,15 +61,31 @@
       });
     }
 
+    // 1-1) Navbar 모드 전환 (Chemical <-> Equipment)
+    function switchMode(mode) {
+      // Toggle Navbar Items
+      const chemicalItems = document.querySelectorAll('.mode-chemical');
+      const equipmentItems = document.querySelectorAll('.mode-equipment');
+
+      if (mode === 'CHEMICAL') {
+        chemicalItems.forEach(el => el.style.display = 'flex'); // Flex for navbar items
+        equipmentItems.forEach(el => el.style.display = 'none');
+      } else if (mode === 'EQUIPMENT') {
+        chemicalItems.forEach(el => el.style.display = 'none');
+        equipmentItems.forEach(el => el.style.display = 'flex');
+      }
+    }
+
     // 1) Start 메뉴 안의 버튼들
     const menuInventory = document.getElementById("menu-inventory-btn");
     if (menuInventory) {
       menuInventory.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
+        switchMode('CHEMICAL'); // Switch Navbar
         await App.Router.go("inventory");
         closeStartMenu();
-        setActive("menu-inventory-btn");
+        setActive("nav-inventory"); // Highlight corresponding navbar item
       });
     }
 
@@ -77,9 +93,14 @@
     if (menuEquipment) {
       menuEquipment.addEventListener("click", async (e) => {
         e.preventDefault();
-        // TODO: 교구/물품 페이지 연결
-        alert("교구·물품·설비 페이지는 준비 중입니다.");
+        document.body.classList.remove("home-active");
+        switchMode('EQUIPMENT'); // Switch Navbar
+        // Default to Kit page since others are not ready?
+        // User didn't specify page, just navbar change.
+        // Let's go to Kits as it is the functional one.
+        await App.Router.go("kits");
         closeStartMenu();
+        setActive("nav-kit");
       });
     }
 
@@ -248,6 +269,28 @@
         await App.Router.go("kits"); // ✅ 키트 페이지 연결
         closeStartMenu();
         setActive("nav-kit");
+      });
+    }
+
+    const navTeachingAids = document.getElementById("nav-teaching-aids");
+    if (navTeachingAids) {
+      navTeachingAids.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        await App.Router.go("teachingAids");
+        closeStartMenu();
+        setActive("nav-teaching-aids");
+      });
+    }
+
+
+
+    const navFacilities = document.getElementById("nav-facilities");
+    if (navFacilities) {
+      navFacilities.addEventListener("click", (e) => {
+        e.preventDefault();
+        alert("설비 관리 페이지는 준비 중입니다.");
+        setActive("nav-facilities");
       });
     }
   }

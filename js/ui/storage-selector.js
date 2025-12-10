@@ -449,9 +449,11 @@
 
       // 그 후 UI 그리기
       loadDoorVertical(container);
-      loadDoorHorizontal(container);
-      loadShelfLevels(container);
-      loadColumns(container);
+      if (state.mode !== "EQUIPMENT") {
+        loadDoorHorizontal(container);
+        loadShelfLevels(container);
+        loadColumns(container);
+      }
     }
   }
 

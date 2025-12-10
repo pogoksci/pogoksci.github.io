@@ -33,6 +33,7 @@
     "./js/ui/usage-register.js?v=4", // ✅ 캐시 갱신을 위해 버전 추가
     "./js/ui/waste.js", // ✅ 폐수 관리 모듈 추가
     "./js/pages/kits.js", // ✅ 키트 페이지 로직
+    "./js/pages/teaching-aids.js", // ✅ 교구 페이지 로직
     "./js/ui/export-page.js", // ✅ 데이터 내보내기 페이지 로직
   ];
   const componentModules = [

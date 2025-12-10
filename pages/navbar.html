@@ -7,28 +7,40 @@
     <span>Menu</span>
   </a>
 
-  <!-- 약품 관리 -->
-  <a href="#" id="nav-inventory" class="nav-item">
+  <!-- 약품 관리 (Mode: Chemical) -->
+  <a href="#" id="nav-inventory" class="nav-item mode-chemical">
     <span class="material-symbols-outlined nav-icon">science</span>
     <span>약품 관리</span>
   </a>
 
-  <!-- 사용량 등록 -->
-  <a href="#" id="nav-usage" class="nav-item">
+  <!-- 수불 등록 (Mode: Chemical) -->
+  <a href="#" id="nav-usage" class="nav-item mode-chemical">
     <span class="material-symbols-outlined nav-icon">edit_square</span>
-    <span>사용량 등록</span>
+    <span>수불 등록</span>
   </a>
 
-  <!-- 폐수 등록 -->
-  <a href="#" id="nav-waste" class="nav-item">
+  <!-- 폐수 관리 (Mode: Chemical) -->
+  <a href="#" id="nav-waste" class="nav-item mode-chemical">
     <span class="material-symbols-outlined nav-icon">delete_forever</span>
-    <span>폐수 등록</span>
+    <span>폐수 관리</span>
   </a>
 
-  <!-- 키트 -->
-  <a href="#" id="nav-kit" class="nav-item">
+  <!-- 키트 (Mode: Equipment) -->
+  <a href="#" id="nav-kit" class="nav-item mode-equipment" style="display: none;">
     <span class="material-symbols-outlined nav-icon">inventory_2</span>
     <span>키트</span>
+  </a>
+
+  <!-- 교구 (Mode: Equipment) -->
+  <a href="#" id="nav-teaching-aids" class="nav-item mode-equipment" style="display: none;">
+    <span class="material-symbols-outlined nav-icon">school</span>
+    <span>교구</span>
+  </a>
+
+  <!-- 설비 (Mode: Equipment) -->
+  <a href="#" id="nav-facilities" class="nav-item mode-equipment" style="display: none;">
+    <span class="material-symbols-outlined nav-icon">settings_input_component</span>
+    <span>설비</span>
   </a>
 </nav>
 
@@ -40,9 +52,9 @@
       <span class="material-symbols-outlined">science</span> 약품
     </a>
 
-    <!-- 2. 교구·물품·설비 -->
+    <!-- 2. 키트·교구·설비 -->
     <a href="#" id="menu-equipment-btn" class="menu-item">
-      <span class="material-symbols-outlined">biotech</span> 교구·물품·설비
+      <span class="material-symbols-outlined">biotech</span> 키트·교구·설비
     </a>
 
     <!-- 3. 과학실 사용기록·예약 -->

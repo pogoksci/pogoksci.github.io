@@ -15,6 +15,8 @@
     wasteForm: "pages/waste-form.html",
     kits: "pages/kits.html",
     kitDetail: "pages/kit-detail.html", // ✅ 키트 상세 페이지 추가
+    teachingAids: "pages/teaching-aids.html", // ✅ 교구 페이지 추가
+    teachingAidDetail: "pages/teaching-aid-detail.html", // ✅ 교구 상세 페이지 추가
     export: "pages/export.html", // ✅ 내보내기 페이지 추가
   };
 
@@ -139,6 +141,18 @@
         }
         break;
 
+      case "teachingAids":
+        if (App?.TeachingAids?.init) {
+          await App.TeachingAids.init();
+        }
+        break;
+
+      case "teachingAidDetail":
+        if (App?.TeachingAids?.loadDetail && params.id) {
+          await App.TeachingAids.loadDetail(params.id);
+        }
+        break;
+
 
 
       case "main":
@@ -156,6 +170,8 @@
       wasteList: "nav-waste",
       wasteForm: "nav-waste",
       kits: "nav-kit",
+      teachingAids: "nav-teaching-aids", // 교구 메뉴 활성화
+      teachingAidDetail: "nav-teaching-aids",
       export: "menu-export", // 내보내기 메뉴 활성화
       main: "menu-home"
     };

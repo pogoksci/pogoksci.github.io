@@ -2238,7 +2238,8 @@ body.home-active #splash-screen {
 
 /* Refresh 踰꾪듉 */
 #refresh-btn,
-#kit-refresh-btn {
+#kit-refresh-btn,
+#aid-refresh-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2261,7 +2262,9 @@ body.home-active #splash-screen {
 
 
 
-#refresh-btn:hover {
+#refresh-btn:hover,
+#kit-refresh-btn:hover,
+#aid-refresh-btn:hover {
 
   background-color: #e8f4ff;
 
@@ -4589,7 +4592,8 @@ input[type="date"] {
 }
 
 #inventory-search-input,
-#kit-search-input {
+#kit-search-input,
+#aid-search-input {
   border: none;
   outline: none;
   padding: 0 8px;
@@ -4607,7 +4611,9 @@ input[type="date"] {
 #sort-toggle,
 #refresh-btn,
 #kit-sort-toggle,
-#kit-refresh-btn {
+#kit-refresh-btn,
+#aid-sort-toggle,
+#aid-refresh-btn {
   height: 30px !important;
   font-size: 13px;
   /* 폰트 크기 약간 축소 */
@@ -4618,7 +4624,9 @@ input[type="date"] {
 #sort-toggle .material-symbols-outlined,
 #refresh-btn .material-symbols-outlined,
 #kit-sort-toggle .material-symbols-outlined,
-#kit-refresh-btn .material-symbols-outlined {
+#kit-refresh-btn .material-symbols-outlined,
+#aid-sort-toggle .material-symbols-outlined,
+#aid-refresh-btn .material-symbols-outlined {
   font-size: 18px;
   /* 아이콘 크기 조정 */
 }
@@ -5071,7 +5079,7 @@ input[type="date"] {
 .stock-modal-content {
   max-width: 400px;
   width: 90%;
-  padding: 20px 12px;
+  padding: 20px;
   align-items: stretch;
 }
 
@@ -5498,4 +5506,26 @@ input[type="date"] {
   color: #555;
   border-color: #ddd;
   box-shadow: none;
+}
+
+/* Kit Class Checkboxes (Grid Layout) */
+#kit-class-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 4px;
+  /* Reduced gap */
+  width: 100%;
+  margin-top: 10px;
+}
+
+#kit-class-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 14px;
+  margin-bottom: 0;
+  /* Remove default margin */
+  height: 25px;
 }

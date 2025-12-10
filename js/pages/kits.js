@@ -766,7 +766,7 @@
                                 <!-- Custom Kit Checkbox -->
                                 <div id="custom-kit-checkbox-wrapper" class="custom-kit-checkbox-wrapper">
                                     <input type="checkbox" id="check-custom-kit">
-                                    <label for="check-custom-kit">키트 선택 목록에 없는 새로운 종류의 키트를 등록할 경우 체크하세요.</label>
+                                    <label for="check-custom-kit">키트 목록에 없는 새로운 키트를 등록할 경우 체크하세요.</label>
                                 </div>
 
                                 <!-- Custom Kit Inputs -->
@@ -1348,7 +1348,7 @@
             document.getElementById('btn-save-kit').textContent = '수정 완료';
 
             classSelect.style.display = 'none';
-            classCheckboxesDiv.style.display = 'flex';
+            classCheckboxesDiv.style.display = 'grid';
             classSelect.required = false;
 
             const currentClasses = (kit.kit_class || '').split(',').map(s => s.trim());
