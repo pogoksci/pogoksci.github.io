@@ -519,7 +519,8 @@
   // 6️⃣ 정렬 & 버튼 UI
   // ------------------------------------------------------------
   function bindListPage() {
-
+    // ✅ 페이지 진입 시 정렬 상태 초기화 (메뉴 이동 후 복귀 시 초기화 보장)
+    currentSort = "category_name_kor";
 
     // ✅ SortDropdown 초기화
     if (App.SortDropdown && App.SortDropdown.init) {

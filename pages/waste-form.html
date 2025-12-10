@@ -1,59 +1,62 @@
-<!-- /pages/waste-form.html -->
-<form id="waste-form" autocomplete="off" style="padding-bottom: 80px;">
-    <h2>폐수 등록</h2>
-
-    <div class="form-group">
-        <label for="waste_date">등록일 *</label>
-        <input type="date" id="waste_date" name="waste_date" required>
+<form id="waste-form" autocomplete="off" class="inventory-detail-page-form" style="padding-bottom: 80px;">
+    <div class="form-fixed-header">
+        <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #333;">폐수 등록</h3>
     </div>
 
-    <div class="form-group">
-        <label>분류 *</label>
-        <div class="button-group" id="waste_classification_buttons">
-            <button type="button" data-value="산">산</button>
-            <button type="button" data-value="알칼리">알칼리</button>
-            <button type="button" data-value="유기물">유기물</button>
-            <button type="button" data-value="무기물">무기물</button>
-            <button type="button" data-value="기타">기타</button>
+    <div class="detail-scroll-container">
+        <div class="form-group">
+            <label for="waste_date">등록일 *</label>
+            <input type="date" id="waste_date" name="waste_date" required>
         </div>
-    </div>
 
-    <div class="form-group"
-        style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
-        <label style="color: #00a0b2; margin-bottom: 12px; display: block;">폐기량 입력 (택 1) *</label>
-
-        <div style="display: flex; gap: 10px; align-items: flex-start;">
-            <div style="flex: 1;">
-                <label for="waste_amount_direct" style="font-size: 13px; color: #555;">1. 폐수량 직접 입력 (g)</label>
-                <input type="number" id="waste_amount_direct" placeholder="예: 500" step="any">
-            </div>
-
-            <div style="display: flex; align-items: center; padding-top: 25px; color: #aaa; font-size: 12px;">
-                또는
-            </div>
-
-            <div style="flex: 1;">
-                <label for="waste_total_mass" style="font-size: 13px; color: #555;">2. 폐수통 전체 질량 (g)</label>
-                <input type="number" id="waste_total_mass" placeholder="예: 2500" step="any">
+        <div class="form-group">
+            <label>분류 *</label>
+            <div class="button-group" id="waste_classification_buttons">
+                <button type="button" data-value="산">산</button>
+                <button type="button" data-value="알칼리">알칼리</button>
+                <button type="button" data-value="유기물">유기물</button>
+                <button type="button" data-value="무기물">무기물</button>
+                <button type="button" data-value="기타">기타</button>
             </div>
         </div>
-        <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: right;">* 전체 질량 입력 시 이전 기록과 비교하여 자동 계산
-        </p>
-    </div>
 
-    <div class="form-group">
-        <label for="waste_manager">담당</label>
-        <input type="text" id="waste_manager" placeholder="담당자 이름">
-    </div>
+        <div class="form-group"
+            style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
+            <label style="color: #00a0b2; margin-bottom: 12px; display: block;">폐기량 입력 (택 1) *</label>
 
-    <div class="form-group">
-        <label for="waste_remarks">비고</label>
-        <input type="text" id="waste_remarks" placeholder="특이사항 등">
-    </div>
+            <div style="display: flex; gap: 10px; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <label for="waste_amount_direct" style="font-size: 13px; color: #555;">1. 폐수량 직접 입력 (g)</label>
+                    <input type="number" id="waste_amount_direct" placeholder="예: 500" step="any">
+                </div>
 
-    <div class="form-bottom-buttons">
-        <button type="button" id="waste-cancel-button"
-            style="flex: 1; background-color: #e0e0e0; color: #333; padding: 12px; border: none; border-radius: 5px; font-size: 16px; font-weight: 600;">취소</button>
-        <button type="submit" id="waste-submit-button" style="flex: 1;">폐수 정보 저장</button>
+                <div style="display: flex; align-items: center; padding-top: 25px; color: #aaa; font-size: 12px;">
+                    또는
+                </div>
+
+                <div style="flex: 1;">
+                    <label for="waste_total_mass" style="font-size: 13px; color: #555;">2. 폐수통 전체 질량 (g)</label>
+                    <input type="number" id="waste_total_mass" placeholder="예: 2500" step="any">
+                </div>
+            </div>
+            <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: right;">* 전체 질량 입력 시 이전 기록과 비교하여 자동 계산
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label for="waste_manager">담당</label>
+            <input type="text" id="waste_manager" placeholder="담당자 이름">
+        </div>
+
+        <div class="form-group">
+            <label for="waste_remarks">비고</label>
+            <input type="text" id="waste_remarks" placeholder="특이사항 등">
+        </div>
+
+        <div class="form-bottom-buttons" style="padding-bottom: 30px;">
+            <button type="button" id="waste-cancel-button"
+                style="flex: 1; background-color: #e0e0e0; color: #333; padding: 12px; border: none; border-radius: 5px; font-size: 16px; font-weight: 600;">취소</button>
+            <button type="submit" id="waste-submit-button" style="flex: 1;">폐수 정보 저장</button>
+        </div>
     </div>
 </form>

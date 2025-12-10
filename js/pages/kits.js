@@ -52,6 +52,7 @@
     const Kits = {
         async init() {
             console.log("📦 Kit Page Initialized");
+            currentSort = 'name_class'; // 정렬 상태 초기화
 
             // 1. Setup FAB
             if (App.Fab) {
@@ -1094,7 +1095,12 @@
                 const isCustom = checkCustom?.checked;
 
                 if (mode === 'edit') {
-                    finalKitName = nameSelect.value; // Name is read-only or pre-selected in edit
+                    if (nameSelect.selectedIndex >= 0) {
+                        const selectedOption = nameSelect.options[nameSelect.selectedIndex];
+                        finalKitName = selectedOption.dataset.name || selectedOption.value;
+                    } else {
+                        finalKitName = nameSelect.value;
+                    }
                 } else {
                     if (isCustom) {
                         if (classSelect.value === 'all') return alert("새로운 종류의 키트 등록 시 '전체'를 선택할 수 없습니다.");
@@ -1406,8 +1412,8 @@
         const modalHtml = `
             <div id="modal-kit-stock" class="modal-overlay" style="display: none; z-index: 1200;">
                 <div class="modal-content stock-modal-content">
-                    <h3 class="modal-title">재고 관리</h3>
-                    <p id="stock-kit-name" class="modal-subtitle" style="margin-bottom: 15px;"></p>
+                    <h3 class="modal-title" style="text-align: center; margin: 0;">재고 관리</h3>
+                    <p id="stock-kit-name" class="modal-subtitle" style="text-align: center; margin-bottom: 15px;"></p>
 
                     <form id="form-kit-stock">
                         <div class="form-group">

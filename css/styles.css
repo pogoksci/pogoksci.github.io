@@ -111,29 +111,19 @@ label {
 
 
 input[type="text"],
-
 input[type="number"],
-
 input[type="date"],
-
 select {
-
   width: 100%;
-
-  padding: 10px;
-
+  padding: 8px 10px;
+  font-size: 14px;
+  height: 36px;
   margin-top: 5px;
-
   border: 1px solid #ddd;
-
   border-radius: 4px;
-
   box-sizing: border-box;
-
   background-color: #fff;
-
   appearance: none;
-
 }
 
 
@@ -5081,6 +5071,8 @@ input[type="date"] {
 .stock-modal-content {
   max-width: 400px;
   width: 90%;
+  padding: 20px 12px;
+  align-items: stretch;
 }
 
 .stock-type-group {
@@ -5204,14 +5196,13 @@ input[type="date"] {
   flex-direction: column;
 
   /* Break out of #form-container padding (20px 20px 100px 20px) */
-  margin: 0 -20px -100px -20px;
-  width: calc(100% + 40px);
+  margin: 0 0 -100px 0;
+  width: 100%;
 
   height: 100dvh;
 
-  /* Restore internal spacing */
-  padding: 0 20px 60px 20px;
-  /* Bottom 60px for Navbar space */
+  /* Matches .fixed-page-layout padding (8px 16px) + Bottom Nav (60px) */
+  padding: 6px 16px 60px 16px;
 
   box-sizing: border-box;
   background-color: #fff;
@@ -5223,9 +5214,12 @@ input[type="date"] {
   top: 0;
   z-index: 10;
   background-color: #fff;
+
+  /* Restore padding for title spacing */
   padding-top: 0;
-  padding-bottom: 15px;
-  /* Spacing below title */
+  padding-bottom: 12px;
+  /* 12px gap between title and divider */
+
   border-bottom: 1px solid #ddd;
   /* Divider line */
   flex-shrink: 0;
@@ -5236,6 +5230,9 @@ input[type="date"] {
 .form-fixed-header h2 {
   font-size: 20px;
   margin: 0;
+  /* margin-bottom 12px is handled by header container margin? 
+     No, list has margin-bottom on H2. Let's enable it here just in case, 
+     but user asked for header margin. I'll stick to container margin for spacing below divider. */
 }
 
 .detail-scroll-container {
@@ -5243,6 +5240,25 @@ input[type="date"] {
   overflow-y: auto;
   padding-bottom: 30px;
   /* Bottom padding for scroll area */
+}
+
+#msds-pdf-input {
+  border: none;
+  background: transparent;
+  padding: 0;
+  height: auto;
+}
+
+/* Storage Selector Buttons (Standardize Height) */
+.btn-location {
+  height: 36px !important;
+  /* Force height to match inputs */
+  padding: 0 10px !important;
+  /* Reset padding for flex centering */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
 }
 
 /* =================================================================
@@ -5286,15 +5302,16 @@ input[type="date"] {
   border: 2px solid #2196f3;
   /* Highlight */
   background: #f8fbff;
+  margin-left: 0;
 }
 
 /* Form Card */
 .form-container-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
+  /* background: white; */
+  /* border-radius: 16px; */
+  padding: 0;
   margin-top: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  /* box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05); */
 }
 
 .form-container-card h3 {
@@ -5334,13 +5351,15 @@ input[type="date"] {
 
 .form-group select,
 .form-group input {
-  padding: 12px;
+  padding: 8px 10px;
+  /* Match global/button padding */
   border: 1px solid #ddd;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 14px;
+  /* Match button font size */
   background: #fff;
-  height: 48px;
-  /* Force equal height */
+  height: 36px;
+  /* Match button height */
   box-sizing: border-box;
   margin: 0;
   /* Remove default margin */

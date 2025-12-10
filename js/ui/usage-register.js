@@ -14,6 +14,7 @@
     // ------------------------------------------------------------
     async function init() {
         console.log("🚀 UsageRegister.init()");
+        currentSort = "category_name_kor"; // 정렬 상태 초기화
 
         // 날짜 기본값: 오늘
         const dateInput = document.getElementById("usage-date");
@@ -336,7 +337,7 @@
         displayContainer.innerHTML = renderItemCard(selectedItem, true);
 
         // 3. 폼 단위 설정
-        document.getElementById("usage-form-unit").textContent = selectedItem.unit;
+        document.getElementById("usage-unit-display").textContent = selectedItem.unit;
 
         // 공병 예상 질량 표시
         const massDisplay = document.getElementById("estimated-bottle-mass");
@@ -366,6 +367,10 @@
         document.getElementById("usage-remaining-mass").value = ""; // Also clear remaining mass input
         const massDisplay = document.getElementById("estimated-bottle-mass");
         if (massDisplay) massDisplay.textContent = "※시약병의 공병 예상 질량: 정보없음";
+
+        // 체크박스 초기화
+        const exhaustCheck = document.getElementById("check-exhausted");
+        if (exhaustCheck) exhaustCheck.checked = false;
 
         document.getElementById("usage-history-body").innerHTML = "";
     }
@@ -417,6 +422,7 @@
     // 4-1. 로그 삭제
     // ------------------------------------------------------------
     async function deleteLog(logId, amount) {
+        const supabase = App.supabase;
         if (!confirm("정말 이 사용 기록을 삭제하시겠습니까?\n삭제된 사용량은 재고에 다시 합산됩니다.")) return;
 
         try {
@@ -436,10 +442,24 @@
             if (selectedItem) {
                 selectedItem.current_amount += amount;
 
+                // Status Revert Logic
+                if (selectedItem.current_amount > 0 && selectedItem.status === '전량소진') {
+                    const { error: updateError } = await supabase
+                        .from('Inventory')
+                        .update({ status: '사용중' })
+                        .eq('id', selectedItem.id);
+
+                    if (!updateError) {
+                        selectedItem.status = '사용중';
+                        alert("상태가 '사용중'으로 변경되었습니다.");
+                    }
+                }
+
                 // 백그라운드 목록 데이터도 갱신
                 const itemInList = allInventory.find(i => i.id === selectedItem.id);
                 if (itemInList) {
                     itemInList.current_amount = selectedItem.current_amount;
+                    itemInList.status = selectedItem.status;
                 }
             }
             refreshUI();
@@ -518,6 +538,8 @@
             return;
         }
 
+        const supabase = App.supabase;
+
         try {
             const { data, error } = await supabase.functions.invoke('usage-manager', {
                 body: {
@@ -540,10 +562,25 @@
             if (selectedItem) {
                 const calculatedNew = selectedItem.current_amount - diff;
                 selectedItem.current_amount = Math.max(0, calculatedNew);
+
+                // Status Revert Logic
+                if (selectedItem.current_amount > 0 && selectedItem.status === '전량소진') {
+                    const { error: updateError } = await supabase
+                        .from('Inventory')
+                        .update({ status: '사용중' })
+                        .eq('id', selectedItem.id);
+
+                    if (!updateError) {
+                        selectedItem.status = '사용중';
+                        alert("상태가 '사용중'으로 변경되었습니다.");
+                    }
+                }
+
                 // 백그라운드 목록 데이터도 갱신
                 const itemInList = allInventory.find(i => i.id === selectedItem.id);
                 if (itemInList) {
                     itemInList.current_amount = selectedItem.current_amount;
+                    itemInList.status = selectedItem.status;
                 }
             }
             refreshUI();
@@ -583,17 +620,39 @@
 
         const usageVal = usageInput.value && !isNaN(parseFloat(usageInput.value)) ? parseFloat(usageInput.value) : null;
         const massVal = massInput.value && !isNaN(parseFloat(massInput.value)) ? parseFloat(massInput.value) : null;
+        let isExhausted = document.getElementById("check-exhausted")?.checked;
+        let autoExhausted = false;
 
-        if ((usageVal !== null && massVal !== null) || (usageVal === null && massVal === null)) {
-            alert("사용량과 사용 후 시약병 질량 중 하나만 입력해주세요.");
-            return;
+        // Auto-detect exhaustion if usage exceeds current amount
+        if (!isExhausted && usageVal !== null && usageVal > selectedItem.current_amount) {
+            if (confirm("입력된 사용량이 현재 잔여량보다 크므로, 전량소모 처리하겠습니다.")) {
+                isExhausted = true;
+                autoExhausted = true;
+            } else {
+                return;
+            }
         }
 
-        // Just basic validation, calculation happens on server
-        if (usageVal !== null && usageVal <= 0) return alert("올바른 사용량을 입력하세요.");
-        if (massVal !== null && massVal < 0) return alert("질량은 음수일 수 없습니다.");
+        let finalUsageVal = usageVal;
+        let finalMassVal = massVal;
 
-        if (!confirm(`사용량을 등록하시겠습니까?`)) return;
+        if (isExhausted) {
+            if (!autoExhausted) {
+                if (!confirm(`해당 약품을 '전량 소진' 처리하시겠습니까?\n남은 수량(${selectedItem.current_amount}${selectedItem.unit})이 모두 사용 처리됩니다.`)) return;
+            }
+            // 전량 소진 시 남은 양 전체를 사용량으로 간주
+            finalUsageVal = selectedItem.current_amount;
+            finalMassVal = null; // 질량 입력 무시
+        } else {
+            if ((usageVal !== null && massVal !== null) || (usageVal === null && massVal === null)) {
+                alert("사용량과 사용 후 시약병 질량 중 하나만 입력해주세요.");
+                return;
+            }
+            if (usageVal !== null && usageVal <= 0) return alert("올바른 사용량을 입력하세요.");
+            if (massVal !== null && massVal < 0) return alert("질량은 음수일 수 없습니다.");
+
+            if (!confirm(`사용량을 등록하시겠습니까?`)) return;
+        }
 
         const supabase = App.supabase;
         if (!supabase) {
@@ -609,8 +668,8 @@
                     usage_date: date,
                     subject,
                     period,
-                    amount: usageVal,
-                    remaining_mass: massVal,
+                    amount: finalUsageVal, // 수정된 변수 사용
+                    remaining_mass: finalMassVal, // 수정된 변수 사용
                     unit: selectedItem.unit
                 }
             });
@@ -631,11 +690,22 @@
                 selectedItem.current_amount = updatedInv.current_amount;
                 selectedItem.status = updatedInv.status;
 
+                // ✅ 전량 소진 체크 시 강제 업데이트 (서버 로직 보완)
+                if (isExhausted) {
+                    await supabase.from("Inventory").update({
+                        status: "전량소진",
+                        current_amount: 0
+                    }).eq("id", selectedItem.id);
+
+                    selectedItem.status = "전량소진";
+                    selectedItem.current_amount = 0;
+                }
+
                 // 백그라운드 목록 데이터도 갱신
                 const itemInList = allInventory.find(i => i.id === selectedItem.id);
                 if (itemInList) {
-                    itemInList.current_amount = updatedInv.current_amount;
-                    itemInList.status = updatedInv.status;
+                    itemInList.current_amount = selectedItem.current_amount;
+                    itemInList.status = selectedItem.status;
                 }
             }
 
