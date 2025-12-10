@@ -20,7 +20,9 @@ body {
 
   /* 媛濡??ㅽ겕濡?諛⑹? */
 
-  overflow-y: auto;
+  overflow: hidden;
+
+  overscroll-behavior: none;
 
   background-color: #ffffff;
 
@@ -4534,15 +4536,18 @@ input[type="date"] {
 }
 
 .inventory-sticky-top {
-  /* Sticky 적용 -> 고정 레이아웃 */
-  position: sticky;
-  top: 0;
+  /* Sticky 제거 -> Flex Layout Static 처리 */
+  /* position: sticky; */
+  /* top: 0; */
+  position: relative;
+  /* 필요한 경우 z-index 유지를 위해 relative 사용 */
   margin: 0;
-  padding: 0 0 18px 0;
+  padding: 0 0 6px 0;
   /* 검색창 하단 여백 18px로 축소 */
   background-color: #fff;
   z-index: 200;
   /* Ensure dropdowns appear above list content (headers are 100) */
+  flex-shrink: 0;
 }
 
 .list-header {
@@ -4551,7 +4556,7 @@ input[type="date"] {
 
 .list-header h2 {
   margin: 0;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   /* 제목과 검색창 사이 간격 12px */
 }
 
@@ -4652,8 +4657,8 @@ input[type="date"] {
 .fixed-page-layout {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 20px);
-  /* 20px top padding 제외 */
+  height: calc(100dvh - 60px);
+  /* Navbar (60px) 고려한 높이 계산 (Mobile DVH 적용) */
   overflow: hidden;
   box-sizing: border-box;
   padding: 8px 16px;
@@ -4719,13 +4724,31 @@ input[type="date"] {
 }
 
 /* Inventory Detail Page Padding */
+/* Inventory Detail Page Padding */
 .inventory-detail-page {
   padding: 16px;
-  padding-bottom: 90px;
-  /* Ensure buttons clear navbar */
+  /* padding-bottom: 90px; Removed - handled by scroll container pb */
   background-color: #fff;
-  min-height: 100%;
+  height: calc(100dvh - 60px);
+  /* Fixed height matching list layout */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-sizing: border-box;
+}
+
+.detail-name-group {
+  flex-shrink: 0;
+  /* Fix header */
+}
+
+.detail-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
+  /* Ensure buttons clear bottom */
+  min-height: 0;
+  /* Flexbox fix */
 }
 
 /* Inventory Form Padding */
@@ -5165,4 +5188,295 @@ input[type="date"] {
   margin: 0;
   font-size: 15px;
   color: #333;
+}
+
+/* Waste List Page Header Alignment */
+#waste-list-page .header-actions {
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* =================================================================
+   Inventory Form Layout (Migrated from inventory-form.html)
+   ================================================================= */
+.inventory-detail-page-form {
+  display: flex;
+  flex-direction: column;
+
+  /* Break out of #form-container padding (20px 20px 100px 20px) */
+  margin: 0 -20px -100px -20px;
+  width: calc(100% + 40px);
+
+  height: 100dvh;
+
+  /* Restore internal spacing */
+  padding: 0 20px 60px 20px;
+  /* Bottom 60px for Navbar space */
+
+  box-sizing: border-box;
+  background-color: #fff;
+  /* Ensure background covers */
+}
+
+.form-fixed-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #fff;
+  padding-top: 0;
+  padding-bottom: 15px;
+  /* Spacing below title */
+  border-bottom: 1px solid #ddd;
+  /* Divider line */
+  flex-shrink: 0;
+  margin-bottom: 12px;
+  /* Space below the divider */
+}
+
+.form-fixed-header h2 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.detail-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 30px;
+  /* Bottom padding for scroll area */
+}
+
+/* =================================================================
+   Usage Register Layout (Migrated from usage-register.html)
+   ================================================================= */
+.usage-page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  /* padding removed for fixed layout */
+}
+
+/* #usage-detail-section padding removed - handled by scroll container */
+
+/* Detail View */
+.detail-top-bar {
+  margin-bottom: 15px;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-text:hover {
+  color: #333;
+  text-decoration: none;
+}
+
+/* Selected Item (Reused style but no hover/cursor) */
+#selected-item-display .inventory-card {
+  cursor: default;
+  transform: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 2px solid #2196f3;
+  /* Highlight */
+  background: #f8fbff;
+}
+
+/* Form Card */
+.form-container-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-top: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.form-container-card h3 {
+  margin: 0 0 20px 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.form-group-date {
+  margin-bottom: 0;
+}
+
+.form-group-date input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 12px !important;
+}
+
+/* .form-group is likely already defined, but let's include it for completeness if specific to usage page or overwrite */
+/* .form-group { flex: 1; display: flex; flex-direction: column; } override might be needed if existing .form-group is different */
+
+.form-group label {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.form-group select,
+.form-group input {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff;
+  height: 48px;
+  /* Force equal height */
+  box-sizing: border-box;
+  margin: 0;
+  /* Remove default margin */
+}
+
+.amount-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.amount-input-wrapper input {
+  flex: 1;
+  text-align: right;
+  font-weight: bold;
+  color: #1565c0;
+}
+
+.btn-submit {
+  width: 100%;
+  background: #00897b;
+  /* Teal color from image */
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+
+.btn-submit:hover {
+  background: #00796b;
+}
+
+/* History Card */
+.history-container-card {
+  margin-top: 30px;
+}
+
+.history-container-card h3 {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 15px;
+}
+
+.usage-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.usage-table th,
+.usage-table td {
+  padding: 12px 15px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.95rem;
+}
+
+.usage-table th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #666;
+}
+
+.usage-table td {
+  color: #333;
+}
+
+.empty-msg {
+  text-align: center;
+  padding: 30px;
+  color: #999;
+}
+
+/* Fix for search input to match inventory style */
+#usage-search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+  font-size: 14px;
+  padding: 0 8px;
+}
+
+.usage-note {
+  font-size: 12px;
+  color: #666;
+  margin-top: 0;
+  margin-bottom: 0;
+  line-height: 1.4;
+}
+
+/* =================================================================
+   Inventory Detail Structure Viewer Styles (Migrated from inventory-detail.html)
+   ================================================================= */
+.view-mode-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.view-mode-btn:hover {
+  background-color: #eee;
+}
+
+.structure-wrapper[data-view-mode="2d"] #btn-view-2d,
+.structure-wrapper[data-view-mode="2d"] #btn-view-2d:hover,
+.structure-wrapper[data-view-mode="3d"] #btn-view-3d,
+.structure-wrapper[data-view-mode="3d"] #btn-view-3d:hover {
+  background-color: #00A0B2;
+  color: #fff;
+  border-color: #00A0B2;
+  box-shadow: 0 0 0 1px #00A0B2 inset;
+}
+
+.structure-wrapper[data-view-mode="2d"] #btn-view-3d:hover,
+.structure-wrapper[data-view-mode="3d"] #btn-view-2d:hover {
+  background-color: #f0f0f0;
+  color: #555;
+  border-color: #ddd;
+  box-shadow: none;
 }
