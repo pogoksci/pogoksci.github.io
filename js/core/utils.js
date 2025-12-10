@@ -121,23 +121,48 @@
   function computeConversions({ value, unit, molarMass, density }) {
     const v = Number(value);
     const mw = Number(molarMass);
-    const rho = Number(density) || 1; // g/mL
+    const dPure = Number(density) || 1; // Pure substance density from DB
+
+    // Result object
     const result = { percent: null, molarity: null, molality: null };
 
     if (!Number.isFinite(v) || !Number.isFinite(mw) || mw <= 0) return null;
 
+    // Helper: Estimate solution density (g/mL) using linear interpolation
+    // solvent (water, d=1) <-> solute (d=dPure)
+    const getDensity = (conc, type) => {
+      if (dPure === 1) return 1;
+      let fraction = 0; // 0 = water, 1 = pure solute
+      if (type === "%") {
+        fraction = conc / 100;
+      } else if (type === "M") {
+        const mPure = (dPure * 1000) / mw;
+        if (mPure > 0) fraction = conc / mPure;
+      }
+      // d_soln = d_water + fraction * (d_solute - d_water)
+      return 1 + (fraction * (dPure - 1));
+    };
+
     if (unit === "%") {
+      const rho = getDensity(v, "%");
+
       const massSolute = v;
       const totalMass = 100;
       const solutionVolumeL = (totalMass / rho) / 1000;
       const moles = massSolute / mw;
+
       result.molarity = solutionVolumeL > 0 ? moles / solutionVolumeL : null;
 
       const solventMassKg = (totalMass - massSolute) / 1000;
       result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
       result.percent = v;
+
+      // Debug info? console.log(`[Conv %] Val:${v}, dPure:${dPure} -> dSoln:${rho.toFixed(3)}, M:${result.molarity?.toFixed(3)}`);
+
     } else if (unit === "M" || unit === "N") {
       const effectiveM = v;
+      const rho = getDensity(effectiveM, "M");
+
       const solutionVolumeL = 1;
       const moles = effectiveM * solutionVolumeL;
       const soluteMassG = moles * mw;
@@ -148,6 +173,8 @@
       const solventMassKg = (solutionMassG - soluteMassG) / 1000;
       result.molality = solventMassKg > 0 ? moles / solventMassKg : null;
       result.molarity = effectiveM;
+
+      // Debug info? console.log(`[Conv M] Val:${effectiveM}, dPure:${dPure} -> dSoln:${rho.toFixed(3)}, %:${result.percent?.toFixed(3)}`);
     }
     return result;
   }
