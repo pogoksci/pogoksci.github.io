@@ -249,13 +249,31 @@
       }
 
       // Original Concentration
-      const concVal = data.concentration_value ? `${data.concentration_value} ${data.concentration_unit || ""}` : "-";
+      // ---------------------------------------------------------
+      // Concentration & Conversion Display Logic
+      // ---------------------------------------------------------
+
+      // Helper to format unit display
+      const formatUnitDisplay = (u) => {
+        if (!u) return "";
+        // Replace % with % (w/w) if not already present
+        if (u.includes("%") && !u.includes("(w/w)")) {
+          return u.replace("%", "% (w/w)");
+        }
+        return u;
+      };
+
+      // 1. Original Concentration
+      const rawConcUnit = data.concentration_unit || "";
+      const displayConcUnit = formatUnitDisplay(rawConcUnit);
+      const concVal = data.concentration_value ? `${data.concentration_value} ${displayConcUnit}` : "-";
       document.getElementById("detail-concentration").textContent = concVal;
 
       const formatConvVal = (num, unitText) => {
+        if (num === null || num === undefined) return "계산불가"; // Explicit failure message
         const n = Number(num);
-        if (!Number.isFinite(n)) return "-";
-        return `${n.toFixed(3)} ${unitText}`;
+        if (!Number.isFinite(n)) return "계산불가";
+        return `${n.toFixed(3)} ${formatUnitDisplay(unitText)}`;
       };
 
       const convState = {
@@ -263,7 +281,24 @@
         label2: "변환농도2",
         value1: "-",
         value2: "-",
+        isError1: false,
+        isError2: false
       };
+
+      // Infer expected targets based on source unit
+      let target1 = { label: "변환농도1", unit: "" };
+      let target2 = { label: "변환농도2", unit: "" };
+
+      // Normalizing check
+      const sourceUnitNorm = rawConcUnit.trim();
+
+      if (sourceUnitNorm.includes("%")) {
+        target1 = { label: "몰농도", unit: "M" };
+        target2 = { label: "몰랄농도", unit: "m" };
+      } else if (sourceUnitNorm.toUpperCase().startsWith("M") || sourceUnitNorm.toUpperCase().startsWith("N")) {
+        target1 = { label: "퍼센트농도", unit: "%" };
+        target2 = { label: "몰랄농도", unit: "m" };
+      }
 
       const annotateUnit = (unit) => {
         const stateVal = String(data.state || "").trim().toLowerCase();
@@ -272,34 +307,37 @@
         const isGas = stateVal.includes("기체") || stateVal.includes("gas");
         const isLiquid = stateVal === "액체" || stateVal.includes("liquid");
 
-        // 이미 텍스트가 포함되어 있다면 중복 추가 방지
-        if (unit.includes("(") || unit.includes(")")) return unit;
-
         if (unit === "M" && (isSolid || isGas)) return `${unit} (의미 없음)`;
         if (unit === "m" && (isLiquid || isGas)) return `${unit} (정의 불가)`;
         return unit;
       };
 
-      if (data.converted_concentration_value_1) {
-        let unit1 = data.converted_concentration_unit_1 || "";
-        unit1 = annotateUnit(unit1); // ✅ Apply Annotation
-        const unit1Norm = (unit1 || "").trim();
+      // Set Labels
+      convState.label1 = target1.label + ":";
+      convState.label2 = target2.label + ":";
 
-        if (unit1Norm.toUpperCase().startsWith("M")) convState.label1 = "몰농도:";
-        else if (unit1Norm.includes("%")) convState.label1 = "퍼센트농도:";
-        else convState.label1 = "Conversion";
-        convState.value1 = formatConvVal(data.converted_concentration_value_1, unit1);
+      // Calculate Value 1
+      if (data.concentration_value) {
+        if (data.converted_concentration_value_1 != null) {
+          const u = annotateUnit(data.converted_concentration_unit_1 || target1.unit);
+          convState.value1 = formatConvVal(data.converted_concentration_value_1, u);
+        } else if (target1.unit) {
+          // Input exists but output is null -> Calculation Impossible
+          convState.value1 = "계산불가";
+          convState.isError1 = true;
+        }
       }
 
-      if (data.converted_concentration_value_2) {
-        let unit2 = data.converted_concentration_unit_2 || "";
-        unit2 = annotateUnit(unit2); // ✅ Apply Annotation
-        const unit2Norm = (unit2 || "").trim();
-
-        if (unit2Norm.toLowerCase().startsWith("m")) convState.label2 = "몰랄농도:";
-        else if (unit2Norm.includes("%")) convState.label2 = "퍼센트농도:";
-        else convState.label2 = "Conversion";
-        convState.value2 = formatConvVal(data.converted_concentration_value_2, unit2);
+      // Calculate Value 2
+      if (data.concentration_value) {
+        if (data.converted_concentration_value_2 != null) {
+          const u = annotateUnit(data.converted_concentration_unit_2 || target2.unit);
+          convState.value2 = formatConvVal(data.converted_concentration_value_2, u);
+        } else if (target2.unit) {
+          // Input exists but output is null -> Calculation Impossible
+          convState.value2 = "계산불가";
+          convState.isError2 = true;
+        }
       }
 
       const convLabel1El = document.getElementById("conv-label-1");
@@ -321,23 +359,42 @@
 
       if (convLabel1El) convLabel1El.textContent = convState.label1;
       if (convLabel2El) convLabel2El.textContent = convState.label2;
+
       if (convValue1El) {
-        // Check plain text for logic
-        if (convState.value1.includes("(의미 없음)") || convState.value1.includes("(정의 불가)")) {
-          convValue1El.classList.add("text-muted-small");
+        // Red color for "계산불가"
+        if (convState.isError1 || convState.value1 === "계산불가") {
+          convValue1El.style.color = "#e74c3c"; // Red
+          convValue1El.style.fontWeight = "bold";
+          convValue1El.textContent = convState.value1;
         } else {
-          convValue1El.classList.remove("text-muted-small");
+          convValue1El.style.color = "";
+          convValue1El.style.fontWeight = "";
+
+          if (convState.value1.includes("(의미 없음)") || convState.value1.includes("(정의 불가)")) {
+            convValue1El.classList.add("text-muted-small");
+          } else {
+            convValue1El.classList.remove("text-muted-small");
+          }
+          convValue1El.innerHTML = formatWithParenSmall(convState.value1);
         }
-        // Render with formatting
-        convValue1El.innerHTML = formatWithParenSmall(convState.value1);
       }
+
       if (convValue2El) {
-        if (convState.value2.includes("(의미 없음)") || convState.value2.includes("(정의 불가)")) {
-          convValue2El.classList.add("text-muted-small");
+        if (convState.isError2 || convState.value2 === "계산불가") {
+          convValue2El.style.color = "#e74c3c";
+          convValue2El.style.fontWeight = "bold";
+          convValue2El.textContent = convState.value2;
         } else {
-          convValue2El.classList.remove("text-muted-small");
+          convValue2El.style.color = "";
+          convValue2El.style.fontWeight = "";
+
+          if (convState.value2.includes("(의미 없음)") || convState.value2.includes("(정의 불가)")) {
+            convValue2El.classList.add("text-muted-small");
+          } else {
+            convValue2El.classList.remove("text-muted-small");
+          }
+          convValue2El.innerHTML = formatWithParenSmall(convState.value2);
         }
-        convValue2El.innerHTML = formatWithParenSmall(convState.value2);
       }
 
       const msdsTitles = [
