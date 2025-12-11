@@ -150,7 +150,7 @@
   // -------------------------------------------------------------
   // 🔹 1. Area 선택 (드롭다운)
   // -------------------------------------------------------------
-  async function loadAreas(container) {
+  async function loadAreas(container, initTimestamp) {
     const supabase = getSupabase();
     let cabinetTable = "Cabinet";
     if (state.mode === "EQUIPMENT") cabinetTable = "EquipmentCabinet";
@@ -162,6 +162,12 @@
       .order("area_name");
 
     console.log("StorageSelector: loadAreas called. Data:", data, "Error:", error);
+
+    // Race Condition Check: If a new init started, abort
+    if (state.initTimestamp !== initTimestamp) {
+      console.warn("StorageSelector: Init aborted due to new request.");
+      return;
+    }
 
     if (error) {
       console.error("❌ Area 불러오기 실패:", error);
@@ -209,6 +215,72 @@
 
     step.appendChild(select);
     container.appendChild(step);
+  }
+
+  // ... (Skipping to init function) ...
+
+  // -------------------------------------------------------------
+  // 🔹 초기화 (inventory-form / kits-modal 에서 호출)
+  // -------------------------------------------------------------
+  async function init(containerId, defaultValue = {}, mode = "INVENTORY") {
+    const container = document.getElementById(containerId);
+    if (!container) return console.error("❌ StorageSelector: container not found");
+
+    container.innerHTML = "";
+
+    // 모드 설정
+    state.mode = mode;
+    state.initTimestamp = Date.now(); // Set new timestamp
+    const currentTimestamp = state.initTimestamp;
+
+    Object.assign(state, {
+      area_id: defaultValue.area_id || null,
+      area_name: defaultValue.area_name || null, // ✅ 이름 복원
+      cabinet_id: defaultValue.cabinet_id || null,
+      cabinet_name: defaultValue.cabinet_name || null, // ✅ 이름 복원
+
+      door_vertical: defaultValue.door_vertical || null,
+      door_horizontal: defaultValue.door_horizontal || null,
+      internal_shelf_level: defaultValue.internal_shelf_level || null,
+      storage_column: defaultValue.storage_column || null,
+    });
+
+    await loadAreas(container, currentTimestamp);
+
+    // Check again before proceeding to dependent cabinets
+    if (state.initTimestamp !== currentTimestamp) return;
+
+    // 기본값 자동 오픈 (순차적)
+    if (state.area_id) await loadCabinets(container, state.area_id);
+    if (state.cabinet_id) {
+      // ... (rest of logic same as before, no race condition risk as loadCabinets is sequential here or handled by user interaction later, 
+      // strictly speaking loadCabinets is also async, but let's assume loadAreas was the main duplication culprit due to initial load race)
+
+      // However, for consistency, if I could pass timestamp to loadCabinets too that would be better, but loadCabinets is also used by event listener which doesn't have initTimestamp. 
+      // Since loadAreas is the entry point for the duplication, checking there is most critical.
+
+      const structure = await loadCabinetStructure(state.cabinet_id);
+      if (structure) {
+        state.door_vertical_total = structure.door_vertical;
+        state.door_horizontal_total = structure.door_horizontal;
+        state.shelf_level_total = structure.internal_shelf_level;
+        state.storage_column_total = structure.storage_column;
+      } else {
+        // Fallback defaults
+        state.door_vertical_total = 1;
+        state.door_horizontal_total = 1;
+        state.shelf_level_total = 1;
+        state.storage_column_total = 1;
+      }
+
+      // 그 후 UI 그리기
+      loadDoorVertical(container);
+      if (state.mode !== "EQUIPMENT") {
+        loadDoorHorizontal(container);
+        loadShelfLevels(container);
+        loadColumns(container);
+      }
+    }
   }
 
   // -------------------------------------------------------------

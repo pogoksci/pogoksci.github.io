@@ -61,46 +61,31 @@
       });
     }
 
-    // 1-1) Navbar 모드 전환 (Chemical <-> Equipment)
+    // 1-1) Navbar 모드 전환 (Merged Mode)
     function switchMode(mode) {
       // Toggle Navbar Items
-      const chemicalItems = document.querySelectorAll('.mode-chemical');
-      const equipmentItems = document.querySelectorAll('.mode-equipment');
+      const managementItems = document.querySelectorAll('.mode-management');
 
-      if (mode === 'CHEMICAL') {
-        chemicalItems.forEach(el => el.style.display = 'flex'); // Flex for navbar items
-        equipmentItems.forEach(el => el.style.display = 'none');
-      } else if (mode === 'EQUIPMENT') {
-        chemicalItems.forEach(el => el.style.display = 'none');
-        equipmentItems.forEach(el => el.style.display = 'flex');
+      if (mode === 'MANAGEMENT') {
+        managementItems.forEach(el => el.style.display = 'flex');
+      } else {
+        // If other modes existed, we would toggle them here.
+        // For now, if not management, maybe hide?
+        // But currently we only have this main mode active when clicking the menu.
+        managementItems.forEach(el => el.style.display = 'none');
       }
     }
 
     // 1) Start 메뉴 안의 버튼들
-    const menuInventory = document.getElementById("menu-inventory-btn");
-    if (menuInventory) {
-      menuInventory.addEventListener("click", async (e) => {
+    const menuManagement = document.getElementById("menu-management-btn");
+    if (menuManagement) {
+      menuManagement.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
-        switchMode('CHEMICAL'); // Switch Navbar
-        await App.Router.go("inventory");
+        switchMode('MANAGEMENT'); // Switch Navbar
+        await App.Router.go("inventory"); // Default to inventory
         closeStartMenu();
-        setActive("nav-inventory"); // Highlight corresponding navbar item
-      });
-    }
-
-    const menuEquipment = document.getElementById("menu-equipment-btn");
-    if (menuEquipment) {
-      menuEquipment.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        switchMode('EQUIPMENT'); // Switch Navbar
-        // Default to Kit page since others are not ready?
-        // User didn't specify page, just navbar change.
-        // Let's go to Kits as it is the functional one.
-        await App.Router.go("kits");
-        closeStartMenu();
-        setActive("nav-kit");
+        setActive("nav-inventory");
       });
     }
 
@@ -272,14 +257,14 @@
       });
     }
 
-    const navTeachingAids = document.getElementById("nav-teaching-aids");
-    if (navTeachingAids) {
-      navTeachingAids.addEventListener("click", async (e) => {
+    const navTeachingTools = document.getElementById("nav-teaching-tools");
+    if (navTeachingTools) {
+      navTeachingTools.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
-        await App.Router.go("teachingAids");
+        await App.Router.go("teachingTools");
         closeStartMenu();
-        setActive("nav-teaching-aids");
+        setActive("nav-teaching-tools");
       });
     }
 

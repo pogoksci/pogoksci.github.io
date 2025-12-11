@@ -7,38 +7,38 @@
     <span>Menu</span>
   </a>
 
-  <!-- 약품 관리 (Mode: Chemical) -->
-  <a href="#" id="nav-inventory" class="nav-item mode-chemical">
+  <!-- 약품 (Mode: Management) -->
+  <a href="#" id="nav-inventory" class="nav-item mode-management">
     <span class="material-symbols-outlined nav-icon">science</span>
-    <span>약품 관리</span>
+    <span>약품</span>
   </a>
 
-  <!-- 수불 등록 (Mode: Chemical) -->
-  <a href="#" id="nav-usage" class="nav-item mode-chemical">
+  <!-- 수불 (Mode: Management) -->
+  <a href="#" id="nav-usage" class="nav-item mode-management">
     <span class="material-symbols-outlined nav-icon">edit_square</span>
-    <span>수불 등록</span>
+    <span>수불</span>
   </a>
 
-  <!-- 폐수 관리 (Mode: Chemical) -->
-  <a href="#" id="nav-waste" class="nav-item mode-chemical">
-    <span class="material-symbols-outlined nav-icon">delete_forever</span>
-    <span>폐수 관리</span>
-  </a>
-
-  <!-- 키트 (Mode: Equipment) -->
-  <a href="#" id="nav-kit" class="nav-item mode-equipment" style="display: none;">
+  <!-- 키트 (Mode: Management) -->
+  <a href="#" id="nav-kit" class="nav-item mode-management">
     <span class="material-symbols-outlined nav-icon">inventory_2</span>
     <span>키트</span>
   </a>
 
-  <!-- 교구 (Mode: Equipment) -->
-  <a href="#" id="nav-teaching-aids" class="nav-item mode-equipment" style="display: none;">
+  <!-- 교구 (Mode: Management) -->
+  <a href="#" id="nav-teaching-tools" class="nav-item mode-management">
     <span class="material-symbols-outlined nav-icon">school</span>
     <span>교구</span>
   </a>
 
-  <!-- 설비 (Mode: Equipment) -->
-  <a href="#" id="nav-facilities" class="nav-item mode-equipment" style="display: none;">
+  <!-- 폐수 (Mode: Management) -->
+  <a href="#" id="nav-waste" class="nav-item mode-management">
+    <span class="material-symbols-outlined nav-icon">delete_forever</span>
+    <span>폐수</span>
+  </a>
+
+  <!-- 설비 (Hidden for now, as requested to exclude) -->
+  <a href="#" id="nav-facilities" class="nav-item mode-hidden" style="display: none;">
     <span class="material-symbols-outlined nav-icon">settings_input_component</span>
     <span>설비</span>
   </a>
@@ -47,14 +47,9 @@
 <!-- Start 메뉴 팝업 -->
 <div id="start-menu" class="start-menu-popup">
   <div class="menu-list">
-    <!-- 1. 약품 -->
-    <a href="#" id="menu-inventory-btn" class="menu-item">
-      <span class="material-symbols-outlined">science</span> 약품
-    </a>
-
-    <!-- 2. 키트·교구·설비 -->
-    <a href="#" id="menu-equipment-btn" class="menu-item">
-      <span class="material-symbols-outlined">biotech</span> 키트·교구·설비
+    <!-- 1. 약품·키트·교구 -->
+    <a href="#" id="menu-management-btn" class="menu-item">
+      <span class="material-symbols-outlined">science</span> 약품·키트·교구
     </a>
 
     <!-- 3. 과학실 사용기록·예약 -->

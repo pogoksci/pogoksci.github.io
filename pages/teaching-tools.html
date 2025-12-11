@@ -1,0 +1,73 @@
+<div class="inventory-page-container">
+    <div id="aid-list-page" class="fixed-page-layout">
+        <div class="inventory-sticky-top">
+            <div class="list-header">
+                <h2>교구</h2>
+            </div>
+
+            <div class="header-actions">
+                <!-- Search -->
+                <div class="search-container">
+                    <span class="material-symbols-outlined" style="color: #888;">search</span>
+                    <input type="text" id="aid-search-input" placeholder="교구 검색...">
+                </div>
+
+                <!-- Sort Dropdown -->
+                <div class="custom-dropdown" id="aid-sort-dropdown">
+                    <button class="dropdown-toggle" id="aid-sort-toggle" aria-haspopup="true" aria-expanded="false"
+                        style="height: 100%;">
+                        <span class="material-symbols-outlined">sort</span>
+                        <span id="aid-sort-label" data-value="aid_class">교구이름(분류)</span>
+                        <span class="material-symbols-outlined arrow">expand_more</span>
+                    </button>
+
+                    <div class="dropdown-menu" id="aid-sort-menu" role="menu">
+                        <div class="dropdown-item" data-value="aid_class">
+                            <span class="material-symbols-outlined">category</span>
+                            교구이름(분류)
+                        </div>
+                        <div class="dropdown-item" data-value="aid_all">
+                            <span class="material-symbols-outlined">sort_by_alpha</span>
+                            교구이름(전체)
+                        </div>
+                        <div class="dropdown-item" data-value="facility_class">
+                            <span class="material-symbols-outlined">settings_input_component</span>
+                            설비이름(분류)
+                        </div>
+                        <div class="dropdown-item" data-value="facility_all">
+                            <span class="material-symbols-outlined">build</span>
+                            설비이름(전체)
+                        </div>
+                        <div class="dropdown-item" data-value="location">
+                            <span class="material-symbols-outlined">location_on</span>
+                            보관장소
+                        </div>
+                        <div class="dropdown-item" data-value="out_of_stock">
+                            <span class="material-symbols-outlined">warning</span>
+                            소모완료교구
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Refresh Button -->
+                <button id="aid-refresh-btn" title="목록 새로고침" aria-label="새로고침" style="height: 100%;">
+                    <span class="material-symbols-outlined">refresh</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sync Status -->
+        <div id="sync-status" class="sync-status-msg"></div>
+
+        <!-- Aid List -->
+        <div id="aid-list" class="inventory-list scrollable-list-container">
+            <!-- Items will be injected here -->
+            <div class="empty-state">
+                <span class="material-symbols-outlined">school</span>
+                <p>등록된 교구가 없습니다.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Register Aid Modal removed (Replaced by tools-form page) -->

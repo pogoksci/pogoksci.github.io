@@ -3061,7 +3061,7 @@ input[type="date"] {
 
   gap: 20px;
 
-  margin-bottom: 30px;
+  margin-bottom: 16px;
 
   /* align-items: flex-start; removed to allow stretch */
 
@@ -3159,7 +3159,7 @@ input[type="date"] {
 
   border: 1px solid #ddd;
 
-  margin-bottom: 30px;
+  margin-bottom: 16px;
 
   clear: both;
 
@@ -3295,7 +3295,7 @@ input[type="date"] {
 
 .chem-section {
 
-  margin: 30px 0;
+  margin: 20px 0;
 
 }
 
@@ -3652,7 +3652,7 @@ input[type="date"] {
 /* MSDS Accordion */
 
 .msds-section {
-
+  margin-top: 50px;
   margin-bottom: 30px;
 
 }
@@ -5528,4 +5528,147 @@ input[type="date"] {
   margin-bottom: 0;
   /* Remove default margin */
   height: 25px;
+}
+
+/* =================================================================
+   Teaching Aid Photo Container (Replicated from Kit)
+================================================================= */
+.aid-photo-container {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  margin-top: 5px;
+  align-items: flex-start;
+}
+
+.aid-photo-preview-box {
+  height: 240px;
+  width: auto;
+  aspect-ratio: 3 / 4;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.aid-photo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.aid-photo-actions button {
+  width: 100%;
+}
+
+.aid-photo-preview-box img,
+.aid-photo-preview-box video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Shared Photo Container Styles (Inventory & Tools) */
+.photo-container {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+.photo-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.photo-buttons button {
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Update Photo Preview Box to match Kit dimensions (3:4 ratio, 240px height) */
+.photo-preview-box {
+  height: 240px !important;
+  width: auto !important;
+  aspect-ratio: 3 / 4 !important;
+  max-width: 180px !important;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #fafafa;
+  flex-shrink: 0;
+}
+
+.photo-preview-box img,
+.photo-preview-box video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Medicine (Inventory) Detail Specific Photo Size */
+/* Applies to both Medicine and Tools detail pages as they share .inventory-detail-page class */
+.inventory-detail-page .photo-preview-box {
+  width: 210px !important;
+  height: 280px !important;
+  max-width: none !important;
+  /* Override shared constraint */
+  aspect-ratio: auto !important;
+  /* Use explicit dimensions */
+}
+
+/* Tool/Inventory List Card Image Size */
+.inv-card-img {
+  width: 75px;
+  height: 100px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  margin: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inv-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Inventory/Tool List Card Styles */
+.inventory-card.tool-card {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  /* Forces children (img and content) to equal height */
+  justify-content: flex-start;
+  padding: 0 !important;
+  gap: 0 !important;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }

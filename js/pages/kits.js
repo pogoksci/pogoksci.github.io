@@ -26,27 +26,26 @@
         "09": "수생 환경 유독성(Hazardous to the Environment)\n· 수생환경 유해성",
     };
 
-    function formatLocation(jsonStr) {
-        if (!jsonStr) return '위치 미지정';
-        try {
-            if (jsonStr.trim().startsWith('{')) {
-                const loc = JSON.parse(jsonStr);
-                const parts = [];
-                if (loc.area_name) parts.push(loc.area_name);
-                if (loc.cabinet_name) parts.push(loc.cabinet_name);
+    function formatLocation(val) {
+        if (!val) return '위치 미지정';
+        let loc = val;
+        // Parse if JSON string
+        if (typeof val === 'string' && val.trim().startsWith('{')) {
+            try { loc = JSON.parse(val); } catch (e) { }
+        }
+        // If still string (not JSON), return as is
+        if (typeof loc !== 'object') return loc;
 
-                const det = [];
-                if (loc.door_vertical) det.push(loc.door_vertical + '번');
-                if (loc.door_horizontal) det.push(loc.door_horizontal + '번');
-                if (loc.internal_shelf_level) det.push(loc.internal_shelf_level + '단');
-                if (loc.storage_column) det.push(loc.storage_column + '열');
+        const parts = [];
+        if (loc.area_name) parts.push(loc.area_name);
+        if (loc.cabinet_name) parts.push(loc.cabinet_name);
 
-                if (det.length > 0) parts.push(det.join(' '));
+        if (loc.door_vertical) parts.push(loc.door_vertical + '층');
+        if (loc.door_horizontal) parts.push(loc.door_horizontal + '번');
+        if (loc.internal_shelf_level) parts.push(loc.internal_shelf_level + '단');
+        if (loc.storage_column) parts.push(loc.storage_column + '열');
 
-                return parts.join(' > ') || '위치 미지정';
-            }
-        } catch (e) { /* ignore */ }
-        return jsonStr;
+        return parts.join(' > ') || '위치 미지정';
     }
 
     const Kits = {
@@ -152,38 +151,81 @@
             }
 
             listContainer.innerHTML = '';
+
+            const shouldGroup = (currentSort === 'name_class');
+            let currentCategory = null;
+
             filteredData.forEach(kit => {
+                if (shouldGroup) {
+                    const cat = kit.kit_class || '미분류';
+                    if (cat !== currentCategory) {
+                        currentCategory = cat;
+                        const count = filteredData.filter(k => (k.kit_class || '미분류') === cat).length;
+
+                        const header = document.createElement("div");
+                        header.className = "inventory-section-header";
+                        header.style.position = "sticky";
+                        header.style.top = "0";
+                        header.style.zIndex = "10";
+                        header.style.background = "#f5f8ff";
+                        header.style.padding = "8px 16px";
+                        header.style.borderLeft = "4px solid #00a0b2";
+                        header.style.fontWeight = "bold";
+                        header.style.marginTop = "0";
+                        header.style.marginBottom = "0";
+                        header.style.display = "flex";
+                        header.style.alignItems = "center";
+                        header.style.justifyContent = "space-between";
+
+                        header.innerHTML = `
+                             <span>${cat}</span>
+                             <span class="section-count" style="background:#e1f5fe; color:#00a0b2; padding:2px 8px; border-radius:12px; font-size:12px;">${count}</span>
+                        `;
+                        listContainer.appendChild(header);
+                    }
+                }
+
                 const card = document.createElement('div');
-                card.className = 'inventory-card';
+                card.className = 'inventory-card tool-card'; // Add tool-card for 0 padding reset
                 card.dataset.id = kit.id;
 
                 // Image block
                 let imageBlock = '';
                 if (kit.image_url) {
                     imageBlock = `
-                        <div class="inventory-card__image">
-                            <img src="${kit.image_url}" alt="${kit.kit_name}">
+                        <div class="inv-card-img">
+                            <img src="${kit.image_url}" alt="${kit.kit_name}" loading="lazy">
                         </div>`;
                 } else {
                     imageBlock = `
-                        <div class="inventory-card__image inventory-card__image--empty">
-                            <span class="inventory-card__placeholder">사진 없음</span>
+                        <div class="inv-card-img empty">
+                             <span style="font-size:12px; color:#999;">사진 없음</span>
                         </div>`;
                 }
 
+                // Location formatter
+                const locStr = formatLocation(kit.location);
+
                 card.innerHTML = `
                     ${imageBlock}
-                    <div class="inventory-card__body" style="display: flex; justify-content: space-between; align-items: stretch; width: 100%; padding: 10px; box-sizing: border-box;">
-                        <div class="inventory-card__left" style="display: flex; flex-direction: column; justify-content: space-between; flex: 1;">
-                             <div style="margin-bottom: 2px;">
+                    <div class="inv-card-content" style="display: flex; justify-content: space-between; align-items: stretch; width: 100%; padding: 12px 15px; box-sizing: border-box;">
+                        <div class="inv-card-left" style="display: flex; flex-direction: column; justify-content: space-between; flex: 1;">
+                             <div>
                                 <span class="kit-tag" style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:12px;">${kit.kit_class || '미분류'}</span>
                              </div>
-                             <div class="name-kor" style="font-weight: bold; font-size: 16px; margin: 2px 0;">${kit.kit_name}</div>
-                             <div class="kit-location" style="font-size: 13px; color: #777;">${formatLocation(kit.location)}</div>
+                             <div class="inv-name" style="font-weight: bold; font-size: 16px;">
+                                ${kit.kit_name}
+                             </div>
+                             <div class="inv-location" style="font-size: 13px; color: #777;">
+                                ${locStr}
+                             </div>
                         </div>
 
-                        <div class="inventory-card__right" style="display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; margin-left: 10px;">
-                            <div class="kit-quantity" style="font-size: 14px; color: #555; margin-top: auto; margin-bottom: 5px;">수량: ${kit.quantity}개</div>
+                        <div class="inv-card-right" style="display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; margin-left: 10px;">
+                            <div style="height: 26px;"></div> <!-- Spacer -->
+                            <div class="inv-quantity" style="font-size: 14px; color: #555;">
+                                수량: ${kit.quantity}개
+                            </div>
                             
                             <div class="inventory-card__actions" style="display: flex; gap: 5px;">
                                 <button class="icon-btn stock-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="재고 관리">

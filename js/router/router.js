@@ -15,8 +15,9 @@
     wasteForm: "pages/waste-form.html",
     kits: "pages/kits.html",
     kitDetail: "pages/kit-detail.html", // ✅ 키트 상세 페이지 추가
-    teachingAids: "pages/teaching-aids.html", // ✅ 교구 페이지 추가
-    teachingAidDetail: "pages/teaching-aid-detail.html", // ✅ 교구 상세 페이지 추가
+    teachingTools: "pages/teaching-tools.html", // ✅ 교구 페이지 추가
+    teachingToolsDetail: "pages/teaching-tools-detail.html", // ✅ 교구 상세 페이지 추가
+    toolsForm: "pages/tools-form.html", // ✅ 교구 등록 폼 페이지
     export: "pages/export.html", // ✅ 내보내기 페이지 추가
   };
 
@@ -141,15 +142,21 @@
         }
         break;
 
-      case "teachingAids":
-        if (App?.TeachingAids?.init) {
-          await App.TeachingAids.init();
+      case "teachingTools":
+        if (App?.TeachingTools?.init) {
+          await App.TeachingTools.init();
         }
         break;
 
-      case "teachingAidDetail":
-        if (App?.TeachingAids?.loadDetail && params.id) {
-          await App.TeachingAids.loadDetail(params.id);
+      case "teachingToolsDetail":
+        if (App?.TeachingTools?.loadDetail && params.id) {
+          await App.TeachingTools.loadDetail(params.id);
+        }
+        break;
+
+      case "toolsForm":
+        if (App?.ToolsForm?.init) {
+          await App.ToolsForm.init(params.id);
         }
         break;
 
@@ -170,8 +177,8 @@
       wasteList: "nav-waste",
       wasteForm: "nav-waste",
       kits: "nav-kit",
-      teachingAids: "nav-teaching-aids", // 교구 메뉴 활성화
-      teachingAidDetail: "nav-teaching-aids",
+      teachingTools: "nav-teaching-tools", // 교구 메뉴 활성화
+      teachingToolsDetail: "nav-teaching-tools",
       export: "menu-export", // 내보내기 메뉴 활성화
       main: "menu-home"
     };
