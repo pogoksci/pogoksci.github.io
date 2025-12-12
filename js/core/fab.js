@@ -122,12 +122,25 @@
         };
     }
 
+    function hide() {
+        const fab = document.getElementById("fab-button");
+        if (fab) fab.style.display = "none";
+        toggleMenu(false); // Ensure menu is closed when hiding FAB
+    }
+
+    function show() {
+        const fab = document.getElementById("fab-button");
+        if (fab) fab.style.display = "flex";
+    }
+
     // App 전역 객체가 없으면 생성
     globalThis.App = globalThis.App || {};
 
     // App.Fab 객체를 생성하고 등록
     globalThis.App.Fab = {
         setVisibility: setVisibility,
-        setMenu: setMenu
+        setMenu: setMenu,
+        hide: hide,
+        show: show
     };
 })();

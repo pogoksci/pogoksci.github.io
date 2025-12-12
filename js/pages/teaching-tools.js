@@ -189,7 +189,6 @@
                     ${sectionTag} ${categoryTag} ${statusTag}
                  </div>
                  <div class="inv-name" style="font-weight: bold; font-size: 16px;">
-                    <span style="font-size:12px; color:#666; margin-right:4px; font-weight:normal;">${displayNo}</span>
                     ${item.tools_name}
                  </div>
                  <div class="inv-location" style="font-size: 13px; color: #777;">
@@ -198,15 +197,12 @@
             </div>
 
             <div class="inv-card-right" style="display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; margin-left: 10px;">
-                <div style="height: 26px;"></div> <!-- Spacer with height to match Tag Line + adjust for button height -->
+                <div style="font-size:12px; color:#666; font-weight:normal;">${displayNo}</div>
                 <div class="inv-quantity" style="font-size: 14px; color: #555;">
                     수량: ${item.stock}개
                 </div>
                 
                 <div class="inventory-card__actions" style="display: flex; gap: 5px;">
-                    <button class="icon-btn stock-tool-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="재고 관리">
-                        <span class="material-symbols-outlined" style="font-size: 20px; color: #4caf50;">inventory</span>
-                    </button>
                     <button class="icon-btn edit-tool-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="수정">
                         <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
                     </button>
@@ -220,12 +216,6 @@
             container.appendChild(card);
 
             // Bind Events
-            const stockBtn = card.querySelector('.stock-tool-btn');
-            stockBtn.onclick = (e) => {
-                e.stopPropagation();
-                // TODO: Open Stock Modal
-                alert("재고 관리 기능은 준비 중입니다.");
-            };
 
             const editBtn = card.querySelector('.edit-tool-btn');
             editBtn.onclick = (e) => {
@@ -511,7 +501,7 @@
         App.Fab.setMenu([
             {
                 icon: "inventory",
-                label: "재고 관리",
+                label: "사용 등록",
                 color: "#4caf50", // Green
                 onClick: () => openStockModal(tool)
             },
@@ -540,21 +530,23 @@
         const modalHtml = `
             <div id="modal-tool-stock" class="modal-overlay" style="display: none; z-index: 1200;">
                 <div class="modal-content stock-modal-content">
-                    <h3 class="modal-title" style="text-align: center; margin: 0;">재고 관리</h3>
-                    <p id="stock-tool-name" class="modal-subtitle" style="text-align: center; margin-bottom: 15px;"></p>
+                    <h3 id="stock-tool-name" class="modal-title" style="text-align: center; margin: 0 0 15px 0; padding-bottom: 15px; border-bottom: 1px solid #eee;"></h3>
 
                     <form id="form-tool-stock">
+                        <!-- Hidden Input for Type -->
+                        <input type="hidden" id="tool-stock-type" value="usage">
+
                         <div class="form-group">
-                            <label>등록 유형</label>
-                            <div class="stock-type-group">
-                                <label class="stock-type-label"><input type="radio" name="tool-stock-type" value="usage" checked> 사용 (차감)</label>
-                                <label class="stock-type-label"><input type="radio" name="tool-stock-type" value="purchase"> 추가 (증가)</label>
+                            <label style="margin-bottom:8px; display:block; color:#666; font-size:13px;">등록 유형</label>
+                            <div class="stock-toggle-group" style="display:flex; gap:0; border:1px solid #ddd; border-radius:6px; overflow:hidden;">
+                                <button type="button" class="stock-toggle-btn active" data-type="usage" style="flex:1; padding:12px; border:none; background:#fff; cursor:pointer; font-weight:bold; color:#ccc; transition:all 0.2s;">사용 (차감)</button>
+                                <button type="button" class="stock-toggle-btn" data-type="purchase" style="flex:1; padding:12px; border:none; background:#f5f5f5; cursor:pointer; font-weight:bold; color:#ccc; border-left:1px solid #ddd; transition:all 0.2s;">추가 (증가)</button>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="stock-tool-amount">수량</label>
-                            <input type="number" id="stock-tool-amount" class="form-input" min="1" value="1" required>
+                            <label for="stock-tool-amount" id="label-stock-amount">사용 수량</label>
+                            <input type="number" id="stock-tool-amount" class="form-input" min="1" value="1" required style="font-size:16px; padding:12px;">
                         </div>
 
                         <div class="form-group">
@@ -579,18 +571,24 @@
 
         btnCancel.addEventListener('click', () => {
             modal.style.display = 'none';
+            if (App.Fab && typeof App.Fab.show === 'function') App.Fab.show();
+            else if (App.Fab) App.Fab.setVisibility(true);
         });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!currentTool) return;
 
-            const type = form.querySelector('input[name="tool-stock-type"]:checked').value;
+            if (!currentTool) return;
+
+            const type = document.getElementById('tool-stock-type').value;
             const amount = parseInt(document.getElementById('stock-tool-amount').value, 10);
             const date = document.getElementById('stock-tool-date').value;
 
             await handleStockChange(currentTool, type, amount, date);
             modal.style.display = 'none';
+            if (App.Fab && typeof App.Fab.show === 'function') App.Fab.show();
+            else if (App.Fab) App.Fab.setVisibility(true); // Fallback
         });
 
         // Assign to local variable to be used by FAB
@@ -600,12 +598,55 @@
             document.getElementById('stock-tool-amount').value = 1;
             document.getElementById('stock-tool-date').valueAsDate = new Date();
 
-            // Default to 'usage' checked
-            const usageRadio = form.querySelector('input[value="usage"]');
-            if (usageRadio) usageRadio.checked = true;
+            document.getElementById('stock-tool-date').valueAsDate = new Date();
+
+            // Default to 'usage'
+            updateToggleState('usage');
 
             modal.style.display = 'flex';
+            if (App.Fab && typeof App.Fab.hide === 'function') App.Fab.hide();
+            else if (App.Fab) App.Fab.setVisibility(false); // Fallback
         };
+
+        // Helper to handle toggle visuals
+        function updateToggleState(type) {
+            const hiddenInput = document.getElementById('tool-stock-type');
+            const labelAmount = document.getElementById('label-stock-amount');
+            const btns = modal.querySelectorAll('.stock-toggle-btn');
+
+            hiddenInput.value = type;
+
+            btns.forEach(btn => {
+                const btnType = btn.dataset.type;
+                if (btnType === type) {
+                    btn.classList.add('active');
+                    // Active Styles
+                    if (type === 'usage') {
+                        btn.style.background = '#ffebee'; // Light Red
+                        btn.style.color = '#c62828';
+                        labelAmount.textContent = "사용 수량 (몇 개를 썼나요?)";
+                        labelAmount.style.color = '#c62828';
+                    } else {
+                        btn.style.background = '#e3f2fd'; // Light Blue
+                        btn.style.color = '#1565c0';
+                        labelAmount.textContent = "추가 수량 (몇 개가 늘었나요?)";
+                        labelAmount.style.color = '#1565c0';
+                    }
+                } else {
+                    btn.classList.remove('active');
+                    // Inactive Styles
+                    btn.style.background = '#f9f9f9';
+                    btn.style.color = '#aaa';
+                }
+            });
+        }
+
+        // Toggle Click Events
+        modal.querySelectorAll('.stock-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                updateToggleState(btn.dataset.type);
+            });
+        });
     }
 
     async function handleStockChange(tool, type, amount, date) {

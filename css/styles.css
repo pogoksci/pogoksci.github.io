@@ -602,7 +602,7 @@ button:disabled {
 
   align-items: center;
 
-  z-index: 2000;
+  z-index: 4000;
 
 }
 
@@ -1246,7 +1246,7 @@ button:disabled {
 
   box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
 
-  z-index: 1000;
+  z-index: 3000;
 
   backdrop-filter: blur(10px);
 
@@ -1346,7 +1346,7 @@ button:disabled {
 
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 
-  z-index: 1010;
+  z-index: 3100;
 
   padding: 12px;
 
@@ -1545,17 +1545,38 @@ FAB
   font-weight: 600;
   line-height: normal;
   box-shadow: 0 4px 12px rgba(0, 160, 178, 0.3);
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  z-index: 1001;
-  /* Navbar(1000)蹂대떎 ??*/
+
+  /* z-index conflicts removed */
   cursor: pointer;
   transition: all 0.2s ease;
   width: auto;
   max-width: 600px;
   white-space: nowrap;
+}
+
+/* Stock Management Modal Specifics */
+.stock-modal-content {
+  width: calc(100% - 60px) !important;
+  max-width: 500px !important;
+  max-height: calc(100% - 60px) !important;
+  margin: 0 !important;
+  /* Centered by flex overlay */
+  padding: 20px !important;
+  /* Revert internal padding to standard */
+}
+
+.stock-modal-content .modal-actions {
+  gap: 12px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+  width: 100% !important;
+  border-top: none !important;
 }
 
 .fab:hover {
@@ -4807,8 +4828,8 @@ input[type="date"] {
   top: 0;
   border-top: 20px solid #fff;
   /* Opaque gap to hide scrolled content */
-  z-index: 1000;
-  /* Above scrolled content */
+  z-index: 10;
+  /* Above scrolled content, but below FAB/Navbar */
   margin-top: 0 !important;
   /* Remove transparent margin */
   background-color: #f0f7fb;
@@ -5797,15 +5818,31 @@ input[type="date"] {
   object-fit: cover;
 }
 
-/* Medicine (Inventory) Detail Specific Photo Size */
-/* Applies to both Medicine and Tools detail pages as they share .inventory-detail-page class */
-.inventory-detail-page .photo-preview-box {
-  width: 210px !important;
-  height: 280px !important;
-  max-width: none !important;
-  /* Override shared constraint */
+/* 4. Ensure Photo Box Auto-adjusts (Natural height 280px) */
+.inventory-detail-page .photo-preview-box,
+#detail-aid-photo,
+#detail-kit-photo,
+#detail-photo {
+  height: auto !important;
+  min-height: 280px !important;
+  /* Allow it to be at least 280px */
+  max-height: 280px !important;
+  /* Restrict it to match 7 rows * 40px */
   aspect-ratio: auto !important;
-  /* Use explicit dimensions */
+  /* Let flex/grid determine aspect if needed, or containment */
+
+  /* Fix Width for 3:4 Ratio (210px x 280px) */
+  width: 210px !important;
+  max-width: 210px !important;
+  min-width: 210px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Ensure images inside fit nicely */
+.photo-preview-box img {
+  object-fit: contain !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* Tool/Inventory List Card Image Size */
@@ -5880,7 +5917,7 @@ input[type="date"] {
   display: flex;
   flex-direction: column;
   position: relative;
-  padding: 0 !important;
+  padding: 20px !important;
   /* Reset legacy padding */
   overflow: hidden;
   /* Prevent child overflow */
@@ -5920,7 +5957,6 @@ input[type="date"] {
 .modal-footer,
 .modal-actions {
   flex-shrink: 1;
-  padding: 15px 25px;
   border-top: 1px solid #ddd;
   background-color: #fff;
   display: flex;
@@ -5976,4 +6012,175 @@ input[type="date"] {
   height: 100%;
   object-fit: cover;
   background: #000;
+}
+
+/* =================================================================
+   Detail Page Refactored Layout (Strict 210px x 280px Alignment)
+   ================================================================= */
+
+/* Container Setup */
+.detail-grid {
+  display: flex !important;
+  gap: 0 !important;
+  align-items: flex-start !important;
+}
+
+/* LEFT: Photo Section (240px Container for Alignment, Photo 210px) */
+.detail-left {
+  flex: 0 0 240px !important;
+  width: 240px !important;
+  height: 280px !important;
+  margin-right: 20px !important;
+  /* Spacing matched to .chem-grid gap (20px) */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  /* Center the 210px photo in the 240px column */
+}
+
+.photo-preview-box,
+#detail-aid-photo,
+#detail-kit-photo,
+#detail-photo {
+  width: 210px !important;
+  height: 280px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  display: flex !important;
+  justify-content: center !important;
+  /* Horizontally Center */
+  align-items: center !important;
+  /* Vertically Center */
+  background-color: #fafafa !important;
+  border: 1px solid #eee !important;
+  border-radius: 8px !important;
+  padding: 0 !important;
+  position: relative !important;
+}
+
+/* Image Logic: Scale height to 280px, allow width to overflow (Center Crop) */
+.photo-preview-box img {
+  height: 280px !important;
+  width: auto !important;
+  max-width: none !important;
+  /* Allow width to exceed 210px */
+  max-height: none !important;
+  object-fit: fill !important;
+  /* Disable object-fit to rely on manual sizing matches user alg algo */
+  flex-shrink: 0 !important;
+  font-size: 13px;
+  /* For alt text */
+  color: #999;
+}
+
+/* Fallback Text centering (when no image) */
+.photo-preview-box span {
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+
+/* RIGHT: Information Section (Height 280px, 7 Rows x 40px) */
+.detail-right {
+  flex: 1 !important;
+  height: 280px !important;
+  min-height: 280px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+}
+
+/* Info Lists (Container) */
+.kit-info,
+.detail-info-list,
+.chem-info-list-container,
+.chem-info {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 280px !important;
+  width: 100% !important;
+  border-top: 1px solid #eee !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+
+/* Info Rows (Common Style for all types) */
+.kit-info-row,
+.detail-info-list li,
+.detail-info-list .info-item,
+.chem-info-row,
+.chem-info .chem-info-row {
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  border-bottom: 1px solid #eee !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+}
+
+/* Typography Harmony */
+.kit-info-row .label,
+.detail-info-list li .label,
+.detail-info-list .info-item .label,
+.chem-info-row .label {
+  width: 80px !important;
+  /* Fixed label width */
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #555 !important;
+  flex-shrink: 0 !important;
+  margin-right: 10px !important;
+}
+
+.kit-info-row .value,
+.detail-info-list li .value,
+.detail-info-list .info-item .value,
+.chem-info-row .value {
+  font-size: 13px !important;
+  color: #333 !important;
+  flex: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.2 !important;
+}
+
+/* Form Photo Preview (Chemicals & Teaching Tools) */
+#photo-preview,
+/* Chemical Form */
+#tools-photo-preview
+
+/* Teaching Tools Form */
+  {
+  width: 210px !important;
+  height: 280px !important;
+  min-width: 210px !important;
+  max-width: 210px !important;
+  overflow: hidden !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  margin-bottom: 10px;
+  /* Spacing */
+  background-color: #fafafa !important;
+  border: 1px solid #eee !important;
+  padding: 0 !important;
+}
+
+/* Ensure content fills the 210x280 box */
+#photo-preview img,
+#tools-photo-preview img,
+#photo-preview video,
+#tools-photo-preview video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
 }

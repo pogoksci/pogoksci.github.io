@@ -133,6 +133,15 @@
 
         // Submit
         form.addEventListener('submit', handleSubmit);
+
+        // Cancel
+        document.getElementById('btn-cancel-tools').addEventListener('click', () => {
+            if (currentMode === 'edit' && currentId) {
+                App.Router.go('teachingToolsDetail', { id: currentId });
+            } else {
+                App.Router.go('teachingTools');
+            }
+        });
     }
 
     function setupBtnGroup(group, callback) {
