@@ -217,9 +217,6 @@
                             </div>
                             
                             <div class="inventory-card__actions" style="display: flex; gap: 5px;">
-                                <button class="icon-btn stock-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="재고 관리">
-                                    <span class="material-symbols-outlined" style="font-size: 20px; color: #4caf50;">inventory</span>
-                                </button>
                                 <button class="icon-btn edit-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="수정">
                                     <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
                                 </button>
@@ -235,16 +232,6 @@
                 card.addEventListener('click', () => {
                     App.Router.go('kitDetail', { id: kit.id });
                 });
-
-                // Stock Button
-                const stockBtn = card.querySelector('.stock-kit-btn');
-                if (stockBtn) {
-                    stockBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        setupStockModal();
-                        openStockModal(kit);
-                    });
-                }
 
                 // Edit Button
                 const editBtn = card.querySelector('.edit-kit-btn');
@@ -330,6 +317,7 @@
             // 4. Load Chemicals & Logs
             await loadChemicals(kit);
             await loadUsageLogs(kit);
+            setupDetailFab(kit);
         }
     };
 
@@ -338,9 +326,10 @@
         const { data, error } = await supabase.from('experiment_kit').select('*').order('kit_name');
         if (error) {
             console.error('Failed to load catalog:', error);
-            return;
+            return [];
         }
         catalog = data;
+        return data;
     }
 
     async function deleteKit(id) {
@@ -555,6 +544,41 @@
             console.error("Log fetch error:", e);
             tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">기록을 불러오지 못했습니다.</td></tr>';
         }
+    }
+
+    function setupDetailFab(kit) {
+        if (!App.Fab) return;
+
+        App.Fab.setMenu([
+            {
+                icon: "inventory",
+                label: "사용 등록",
+                color: "#4caf50", // Green
+                onClick: () => {
+                    if (window.openStockModal) window.openStockModal(kit);
+                }
+            },
+            {
+                icon: "edit",
+                label: "정보 수정",
+                color: "#2196f3", // Blue
+                onClick: () => {
+                    if (window.openEditKitModal) window.openEditKitModal(kit);
+                }
+            },
+            {
+                icon: "delete",
+                label: "키트 삭제",
+                color: "#999", // Grey
+                onClick: async () => {
+                    if (confirm('정말 삭제하시겠습니까?')) {
+                        await deleteKit(kit.id);
+                        App.Router.go("kits");
+                    }
+                }
+            }
+        ]);
+        App.Fab.setVisibility(true);
     }
 
     async function renderInlineChemInfo(casInput, kitChemData = null) {
@@ -787,688 +811,19 @@
         }
     }
 
-    // ---- Register/Edit Modal ----
+    // ---- Register/Edit Modal (Deprecated) ----
     function setupRegisterModal() {
-        // Remove ALL old versions to prevent duplicates (using querySelectorAll to catch multiple stale instances)
-        document.querySelectorAll('#modal-register-kit').forEach(el => el.remove());
-        document.querySelectorAll('#modal-register-kit-v2').forEach(el => el.remove());
-
-        const modalHtml = `
-            <div id="modal-register-kit-v2" class="modal-overlay" style="display: none; z-index: 1200;">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 class="modal-title">키트 등록</h3>
-                    </div>
-                    <form id="form-register-kit" novalidate style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label for="kit-class-select">분류</label>
-                                <select id="kit-class-select" class="form-input" required>
-                                    <option value="" disabled selected>분류를 선택하세요</option>
-                                    <option value="all">전체</option>
-                                    <option value="물리학">물리학</option>
-                                    <option value="화학">화학</option>
-                                    <option value="생명과학">생명과학</option>
-                                    <option value="지구과학">지구과학</option>
-                                    <option value="융합과학">융합과학</option>
-                                    <option value="기타">기타</option>
-                                </select>
-                                <div id="kit-class-checkboxes" class="kit-class-checkboxes">
-                                    <label><input type="checkbox" value="물리학"> 물리학</label>
-                                    <label><input type="checkbox" value="화학"> 화학</label>
-                                    <label><input type="checkbox" value="생명과학"> 생명과학</label>
-                                    <label><input type="checkbox" value="지구과학"> 지구과학</label>
-                                    <label><input type="checkbox" value="융합과학"> 융합과학</label>
-                                    <label><input type="checkbox" value="기타"> 기타</label>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="kit-name-select">키트명</label>
-                                <select id="kit-name-select" class="form-input" disabled required>
-                                    <option value="" disabled selected>분류를 먼저 선택하세요</option>
-                                </select>
-                                
-                                <!-- Custom Kit Checkbox -->
-                                <div id="custom-kit-checkbox-wrapper" class="custom-kit-checkbox-wrapper">
-                                    <input type="checkbox" id="check-custom-kit">
-                                    <label for="check-custom-kit">키트 목록에 없는 새로운 키트를 등록할 경우 체크하세요.</label>
-                                </div>
-
-                                <!-- Custom Kit Inputs -->
-                                <div id="custom-kit-inputs" class="custom-kit-inputs">
-                                    <div class="form-group">
-                                        <label for="custom-kit-name">등록하려는 키트 이름</label>
-                                        <input type="text" id="custom-kit-name" class="form-input" placeholder="키트 이름을 입력하세요">
-                                    </div>
-                                    
-                                    <div class="form-group" style="margin-top: 10px;">
-                                        <label>구성 약품 (CAS No.)</label>
-                                        <div id="cas-input-container">
-                                            <input type="text" class="form-input cas-input" placeholder="CAS1 (예: 7732-18-5)" style="margin-bottom: 5px;">
-                                        </div>
-                                        <button type="button" id="btn-add-cas" class="btn-add-cas">+ CAS 추가</button>
-                                        <p style="font-size: 11px; color: #888; margin-top: 5px;">* CAS 입력란이 부족할 경우 추가버튼을 누르세요.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="kit-quantity">수량</label>
-                                <input type="number" id="kit-quantity" class="form-input" value="1" min="1" required>
-                            </div>
-
-
-                            <div class="form-group">
-                                <label for="kit-date">구입일</label>
-                                <input type="date" id="kit-date" class="form-input" required>
-                            </div>
-
-                            <!-- ✅ 보관 위치 선택기 추가 -->
-                            <div class="form-group">
-                                <label>보관 위치 설정</label>
-                                <div id="kit-storage-selector" style="background:#f9f9f9; padding:10px; border-radius:8px;"></div>
-                            </div>
-
-
-                            <!-- Photo Input -->
-                            <div class="form-group">
-                                <label>사진</label>
-                                <div class="kit-photo-container">
-                                    <div class="kit-photo-preview-box">
-                                        <img id="kit-preview-img" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                                        <div class="placeholder-text" style="color: #aaa; font-size: 14px;">사진 없음</div>
-                                        <video id="kit-camera-stream" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
-                                        <canvas id="kit-camera-canvas" style="display:none;"></canvas>
-                                    </div>
-                                    <div class="kit-photo-actions">
-                                        <button type="button" id="btn-kit-file" class="btn-secondary-action"><span class="material-symbols-outlined">image</span> 파일에서 선택</button>
-                                        <button type="button" id="btn-kit-camera" class="btn-secondary-action"><span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영</button>
-                                        <button type="button" id="btn-kit-confirm" class="btn-secondary-action" style="display: none;"><span class="material-symbols-outlined">check</span> 확인</button>
-                                        <button type="button" id="btn-cancel-camera" class="btn-secondary-action" style="display: none;"><span class="material-symbols-outlined">close</span> 취소</button>
-                                        <input type="file" id="kit-file-input" accept="image/*" style="display: none;">
-                                        <input type="file" id="kit-camera-input" accept="image/*" capture="environment" style="display: none;">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-            <div class="modal-actions">
-                <button type="button" id="btn-cancel-kit" class="btn-cancel">취소</button>
-                <button type="submit" id="btn-save-kit" class="btn-primary">등록</button>
-            </div>
-                    </form>
-                </div>
-            </div>`;
-
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-        // Elements
-        const modal = document.getElementById('modal-register-kit-v2');
-        const form = document.getElementById('form-register-kit');
-        const btnCancel = document.getElementById('btn-cancel-kit');
-        const classSelect = document.getElementById('kit-class-select');
-        const nameSelect = document.getElementById('kit-name-select');
-        const classCheckboxesDiv = document.getElementById('kit-class-checkboxes');
-        const customInputs = document.getElementById('custom-kit-inputs');
-        const previewImg = document.getElementById('kit-preview-img');
-        const previewDiv = document.querySelector('.kit-photo-preview-box');
-        const fileInput = document.getElementById('kit-file-input');
-        const cameraInput = document.getElementById('kit-camera-input');
-        const checkCustom = document.getElementById('check-custom-kit');
-        const btnTakePhoto = document.getElementById('btn-kit-camera');
-        const btnSelectPhoto = document.getElementById('btn-kit-file');
-        const videoStream = document.getElementById('kit-camera-stream');
-        const canvas = document.getElementById('kit-camera-canvas');
-        const btnAddCas = document.getElementById('btn-add-cas');
-        const casInputContainer = document.getElementById('cas-input-container');
-        const btnCancelCamera = document.getElementById('btn-cancel-camera');
-        let stream = null;
-        let isCameraActive = false;
-        let isModalOpen = false;
-
-        function getElements() {
-            return { form, btnCancel, classSelect, nameSelect, classCheckboxesDiv, customInputs, previewImg, previewDiv, fileInput, checkCustom };
-        }
-
-        // Photo Handlers
-        const handleFileSelect = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    previewImg.src = e.target.result;
-                    previewImg.style.display = 'block';
-                    previewDiv.querySelector('.placeholder-text').style.display = 'none';
-                };
-                reader.readAsDataURL(file);
-            }
-        };
-
-        if (btnSelectPhoto) btnSelectPhoto.addEventListener('click', () => {
-            if (isCameraActive) stopCamera();
-            fileInput.click();
-        });
-
-        const btnKitConfirm = document.getElementById('btn-kit-confirm');
-
-        const startCamera = async () => {
-            try {
-                const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-
-                if (!isModalOpen) {
-                    newStream.getTracks().forEach(track => track.stop());
-                    return;
-                }
-
-                stream = newStream;
-                videoStream.srcObject = stream;
-                videoStream.style.display = 'block';
-                videoStream.play(); // Ensure play
-                previewImg.style.display = 'none';
-
-                const placeholder = previewDiv.querySelector('.placeholder-text');
-                if (placeholder) placeholder.style.display = 'none';
-
-                isCameraActive = true;
-
-                // UI: Record Mode
-                btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
-
-                // Unbind previous onclick to ensure clean slate? 
-                // We handle "Take" vs "Start" inside the main listener check `isCameraActive`.
-                // Actually `isCameraActive` is true now.
-
-                if (btnCancelCamera) btnCancelCamera.style.display = 'inline-flex';
-                if (btnSelectPhoto) btnSelectPhoto.style.display = 'none';
-                if (btnKitConfirm) btnKitConfirm.style.display = 'none';
-            } catch (err) {
-                console.error("Camera access denied or error:", err);
-                cameraInput.click();
-            }
-        };
-
-        const stopCamera = () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-            if (videoStream.srcObject) {
-                const tracks = videoStream.srcObject.getTracks();
-                if (tracks) tracks.forEach(track => track.stop());
-                videoStream.srcObject = null;
-            }
-
-            videoStream.style.display = 'none';
-            isCameraActive = false;
-
-            // UI: Idle Mode
-            btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
-            if (btnCancelCamera) btnCancelCamera.style.display = 'none';
-            if (btnSelectPhoto) btnSelectPhoto.style.display = 'inline-flex';
-            if (btnKitConfirm) btnKitConfirm.style.display = 'none';
-
-            // Ensure preview is visible if we have one
-            if (previewImg.src && previewImg.src !== window.location.href) { // check valid src
-                previewImg.style.display = 'block';
-            }
-        };
-
-        const takePhoto = () => {
-            canvas.width = videoStream.videoWidth;
-            canvas.height = videoStream.videoHeight;
-            canvas.getContext('2d').drawImage(videoStream, 0, 0);
-
-            canvas.toBlob((blob) => {
-                const file = new File([blob], `capture - ${Date.now()}.jpg`, { type: "image/jpeg" });
-
-                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(file);
-                fileInput.files = dataTransfer.files;
-
-                previewImg.src = URL.createObjectURL(blob);
-                previewImg.style.display = 'block';
-
-                // stopCamera(); // OLD behavior
-
-                // NEW: Review Mode
-                videoStream.pause();
-                videoStream.style.display = 'none';
-
-                btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">replay</span> 다시 촬영';
-                // btnTakePhoto click will fall through to logic: 
-                // Inside listener: if(isCameraActive) takePhoto().
-                // But we want RETAKE.
-                // We need to handle this.
-                // isCameraActive is STILL true.
-                // But we want to Restart stream.
-
-                if (btnKitConfirm) btnKitConfirm.style.display = 'inline-flex';
-
-            }, 'image/jpeg');
-        };
-
-        if (btnTakePhoto) {
-            btnTakePhoto.addEventListener('click', () => {
-                if (isCameraActive) {
-                    // Check if we are in "Retake" state or "Record" state?
-                    // Text content check is brittle.
-                    // If video is paused/hidden, we are in Review.
-                    if (videoStream.style.display === 'none') {
-                        // RETAKE logic
-                        videoStream.style.display = 'block';
-                        videoStream.play();
-                        previewImg.style.display = 'none';
-                        btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
-                        if (btnKitConfirm) btnKitConfirm.style.display = 'none';
-                    } else {
-                        // TAKE logic
-                        takePhoto();
-                    }
-                } else {
-                    startCamera();
-                }
-            });
-        }
-
-        if (btnKitConfirm) {
-            btnKitConfirm.addEventListener('click', () => {
-                stopCamera();
-            });
-        }
-
-        if (fileInput) fileInput.addEventListener('change', handleFileSelect);
-        if (cameraInput) cameraInput.addEventListener('change', handleFileSelect);
-
-        // Custom Kit Checkbox Handler
-        if (checkCustom) {
-            checkCustom.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    customInputs.style.display = 'block';
-                    nameSelect.disabled = true;
-                    nameSelect.innerHTML = '<option value="" disabled selected>직접 입력 모드</option>';
-                } else {
-                    customInputs.style.display = 'none';
-                    if (classSelect.value && classSelect.value !== 'all') {
-                        updateNameSelect(classSelect.value);
-                    } else {
-                        nameSelect.disabled = true;
-                        nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
-                    }
-                }
-            });
-        }
-
-        if (btnAddCas) {
-            btnAddCas.addEventListener('click', () => {
-                const div = document.createElement('div');
-                div.innerHTML = `< input type = "text" class="form-input cas-input" placeholder = "CAS (예: 7732-18-5)" style = "margin-bottom: 5px;" > `;
-                casInputContainer.appendChild(div.firstChild);
-            });
-        }
-
-
-        if (btnCancelCamera) {
-            btnCancelCamera.addEventListener('click', () => {
-                stopCamera();
-            });
-        }
-
-        btnCancel.addEventListener('click', () => {
-            isModalOpen = false;
-            if (isCameraActive) stopCamera();
-            modal.style.display = 'none';
-        });
-
-        classSelect.addEventListener('change', (e) => {
-            const val = e.target.value;
-            if (val) {
-                if (checkCustom && checkCustom.checked) {
-                    // Do nothing if custom mode is on
-                } else {
-                    updateNameSelect(val);
-                }
-            }
-        });
-
-        modal.addEventListener('submit', async (e) => {
-            if (e.target.id === 'form-register-kit') {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const { form, classCheckboxesDiv, classSelect, nameSelect, fileInput, checkCustom } = getElements();
-
-                // 1. Class & Name Logic
-                let kitClass = '';
-                const mode = form.getAttribute('data-mode');
-                const editId = form.getAttribute('data-id');
-
-                if (mode === 'edit') {
-                    const checked = Array.from(classCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
-                        .map(cb => cb.value);
-                    kitClass = checked.join(', ');
-                } else {
-                    if (!classSelect.value) return alert('분류를 선택하세요.');
-                    if (classSelect.value === 'all') {
-                        const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-                        kitClass = selectedOption.dataset.class || '기타';
-                    } else {
-                        kitClass = classSelect.value;
-                    }
-                }
-
-                let finalKitName = '';
-                let customCas = null;
-                const isCustom = checkCustom?.checked;
-
-                if (mode === 'edit') {
-                    if (nameSelect.selectedIndex >= 0) {
-                        const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-                        finalKitName = selectedOption.dataset.name || selectedOption.value;
-                    } else {
-                        finalKitName = nameSelect.value;
-                    }
-                } else {
-                    if (isCustom) {
-                        if (classSelect.value === 'all') return alert("새로운 종류의 키트 등록 시 '전체'를 선택할 수 없습니다.");
-                        const customNameInput = document.getElementById('custom-kit-name');
-                        finalKitName = customNameInput.value.trim();
-                        if (!finalKitName) {
-                            alert("키트 이름을 입력하세요.");
-                            customNameInput.focus();
-                            return;
-                        }
-                        const casInputs = document.querySelectorAll('.cas-input');
-                        const casList = Array.from(casInputs).map(input => input.value.trim()).filter(val => val);
-                        if (casList.length > 0) customCas = casList.join(', ');
-                    } else {
-                        const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-                        if (!selectedOption || selectedOption.disabled) return alert("키트를 선택하세요.");
-                        finalKitName = selectedOption.dataset.name;
-                    }
-                }
-
-                const quantity = parseInt(document.getElementById('kit-quantity').value, 10);
-                const purchaseDate = document.getElementById('kit-date').value;
-                const file = fileInput ? fileInput.files[0] : null;
-
-                // ✅ 위치 정보 가져오기
-                let locationJson = null;
-                if (App.StorageSelector) {
-                    const locSelection = App.StorageSelector.getSelection();
-                    if (locSelection.area_id) {
-                        locationJson = JSON.stringify(locSelection);
-                    }
-                }
-
-                // 2. Prepare Payload for Edge Function
-                // Helper to convert File to Base64
-                const toBase64 = (file) => new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = error => reject(error);
-                });
-
-                let photoBase64 = null;
-                if (file) {
-                    try {
-                        photoBase64 = await toBase64(file);
-                    } catch (err) {
-                        return alert("사진 처리 중 오류가 발생했습니다.");
-                    }
-                }
-
-                const payload = {
-                    mode: mode || 'create',
-                    id: editId ? parseInt(editId) : null,
-                    kit_name: finalKitName,
-                    kit_class: kitClass,
-                    kit_cas: customCas,
-                    quantity: quantity,
-                    purchase_date: purchaseDate,
-                    photo_base64: photoBase64,
-                    location: locationJson
-                };
-
-                // 3. Call Edge Function
-                const btnSave = document.getElementById('btn-save-kit');
-                const originText = btnSave.textContent;
-                btnSave.textContent = '처리 중...';
-                btnSave.disabled = true;
-
-                try {
-                    const { data, error } = await supabase.functions.invoke('kit-register', {
-                        body: payload
-                    });
-
-                    if (error) throw error;
-                    if (data?.error) throw new Error(data.error);
-
-                    alert(mode === 'edit' ? '✅ 수정되었습니다.' : '✅ 등록되었습니다.');
-                    modal.style.display = 'none';
-
-                    if (document.getElementById('kit-detail-page-container') && editId) {
-                        Kits.loadDetail(editId);
-                    } else {
-                        Kits.loadUserKits();
-                    }
-
-                    // For new registrations, process chemicals (optional, since EF might not handle chem details fully yet?)
-                    // Logic was: await processKitChemicals(finalKitName);
-                    // EF handles catalog creation, but maybe 'processKitChemicals' does something else like fetching CAS info?
-                    // Yes, it fetches MSDS/Chem properties. We should still run this client-side for now or EF needs to do it.
-                    // Let's keep it client-side for post-processing to fetch MSDS data if needed.
-                    if (mode !== 'edit' || (quantity > 0)) { // Ensure we process if quantity added
-                        // Wait a bit for DB propagation? Not strictly necessary if using same DB instance
-                        await processKitChemicals(finalKitName);
-                    }
-                    if (mode === 'edit' && quantity === 0) {
-                        await checkAndCleanupChemicals(finalKitName);
-                    }
-
-                    // Update Catalog locally if custom
-                    if (isCustom && data.data && !catalog.find(c => c.kit_name === finalKitName)) {
-                        // Ideally reload catalog, but pushing placeholder helps
-                        // EF returns 'data' which is the user_kit record, not catalog.
-                        // So let's reload catalog to be safe.
-                        loadCatalog();
-                    }
-
-                } catch (err) {
-                    console.error('Edge Function Error:', err);
-                    alert('작업 실패: ' + err.message);
-                } finally {
-                    btnSave.textContent = originText;
-                    btnSave.disabled = false;
-                }
-            }
-        });
-
-        function updateNameSelect(selectedClass, selectedKitId = null) {
-            console.log('updateNameSelect called with:', selectedClass);
-            const { nameSelect } = getElements();
-            if (!nameSelect) {
-                console.error('nameSelect element not found');
-                return;
-            }
-
-            console.log('Catalog size:', catalog.length);
-
-            // Enable and reset immediately
-            nameSelect.disabled = false;
-            nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
-            console.log('nameSelect enabled and reset');
-
-            let filtered = [];
-            if (selectedClass === 'all') {
-                filtered = catalog;
-            } else {
-                filtered = catalog.filter(k => k.kit_class && k.kit_class.includes(selectedClass));
-            }
-
-            // Filter out invalid entries
-            filtered = filtered.filter(k => k && k.kit_name);
-            console.log('Filtered valid kits count:', filtered.length);
-
-            if (filtered.length === 0) {
-                const opt = document.createElement('option');
-                opt.value = "";
-                opt.textContent = "해당 분류의 키트가 없습니다";
-                opt.disabled = true;
-                nameSelect.appendChild(opt);
-                return;
-            }
-
-            try {
-                filtered.sort((a, b) => a.kit_name.localeCompare(b.kit_name));
-
-                filtered.forEach(k => {
-                    const opt = document.createElement('option');
-                    opt.value = k.id;
-                    opt.textContent = k.kit_name;
-                    opt.dataset.cas = k.kit_cas || '';
-                    opt.dataset.name = k.kit_name;
-                    opt.dataset.class = k.kit_class;
-                    if (selectedKitId && k.id == selectedKitId) {
-                        opt.selected = true;
-                    }
-                    nameSelect.appendChild(opt);
-                });
-                console.log('nameSelect options populated successfully');
-            } catch (err) {
-                console.error('Error populating nameSelect:', err);
-                alert('키트 목록을 불러오는 중 오류가 발생했습니다.');
-            }
-        }
-
-        Kits.openRegisterModal = () => {
-            const { form, previewDiv, classSelect, classCheckboxesDiv, nameSelect, customInputs } = getElements();
-            const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
-
-            if (!form) return;
-            form.reset();
-
-            // Reset Photo UI
-            if (isCameraActive) stopCamera();
-            if (previewImg) {
-                previewImg.src = '';
-                previewImg.style.display = 'none';
-            }
-            if (videoStream) videoStream.style.display = 'none';
-            if (canvas) canvas.style.display = 'none';
-            if (previewDiv) {
-                previewDiv.style.display = 'flex'; // Ensure box is visible
-                const placeholder = previewDiv.querySelector('.placeholder-text');
-                if (placeholder) placeholder.style.display = 'block';
-            }
-            if (btnTakePhoto) btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
-
-            form.removeAttribute('data-mode');
-            form.removeAttribute('data-id');
-            modal.querySelector('.modal-title').textContent = '키트 등록';
-            document.getElementById('btn-save-kit').textContent = '등록';
-
-            classSelect.style.display = 'block';
-            classCheckboxesDiv.style.display = 'none';
-            classSelect.required = true;
-
-            nameSelect.disabled = true;
-            nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
-            document.getElementById('kit-date').valueAsDate = new Date();
-
-            // Init Storage Selector for Registration (Empty default)
-            if (App.StorageSelector && typeof App.StorageSelector.init === 'function') {
-                if (document.getElementById("kit-storage-selector")) {
-                    App.StorageSelector.init("kit-storage-selector", {}, "EQUIPMENT");
-                }
-            }
-
-            if (customWrapper) customWrapper.style.display = 'flex';
-            if (customInputs) customInputs.style.display = 'none';
-
-            isModalOpen = true;
-            modal.style.display = 'flex';
-        };
-
-        window.openEditKitModal = (kit) => {
-            const { form, previewDiv, classSelect, classCheckboxesDiv, nameSelect, customInputs, previewImg } = getElements();
-            const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
-
-            if (!form) return;
-            form.reset();
-
-            // Reset Photo UI
-            if (isCameraActive) stopCamera();
-            if (previewImg) previewImg.style.display = 'none'; // Will be shown if image exists
-            if (videoStream) videoStream.style.display = 'none';
-            if (canvas) canvas.style.display = 'none';
-            if (previewDiv) {
-                previewDiv.style.display = 'flex';
-                const placeholder = previewDiv.querySelector('.placeholder-text');
-                if (placeholder) placeholder.style.display = 'block'; // Will be hidden if image exists
-            }
-            if (btnTakePhoto) btnTakePhoto.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
-            form.setAttribute('data-mode', 'edit');
-            form.setAttribute('data-id', kit.id);
-            modal.querySelector('.modal-title').textContent = '키트 정보 수정';
-            document.getElementById('btn-save-kit').textContent = '수정 완료';
-
-            classSelect.style.display = 'none';
-            classCheckboxesDiv.style.display = 'grid';
-            classSelect.required = false;
-
-            const currentClasses = (kit.kit_class || '').split(',').map(s => s.trim());
-            classCheckboxesDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                cb.checked = currentClasses.includes(cb.value);
-            });
-
-            const catalogItem = catalog.find(c => c.kit_name === kit.kit_name);
-            if (catalogItem) {
-                updateNameSelect('all', catalogItem.id);
-            } else {
-                nameSelect.innerHTML = `<option value="${kit.kit_name}" selected>${kit.kit_name}</option>`;
-            }
-
-            document.getElementById('kit-quantity').value = kit.quantity;
-            document.getElementById('kit-date').value = kit.purchase_date;
-
-            // ✅ 위치 정보 복원
-            let defaultLoc = {};
-            try {
-                if (kit.location && typeof kit.location === 'string' && kit.location.trim().startsWith('{')) {
-                    defaultLoc = JSON.parse(kit.location);
-                }
-            } catch (e) {
-                console.warn('위치 정보 파싱 실패:', e);
-            }
-
-            // Storage Selector 초기화
-            console.log("Checking App.StorageSelector:", !!(globalThis.App && globalThis.App.StorageSelector));
-            if (App.StorageSelector && typeof App.StorageSelector.init === 'function') {
-                const container = document.getElementById("kit-storage-selector");
-                console.log("Checking container 'kit-storage-selector':", container);
-
-                if (container) {
-                    console.log("Calling App.StorageSelector.init with:", "kit-storage-selector", defaultLoc, "EQUIPMENT");
-                    App.StorageSelector.init("kit-storage-selector", defaultLoc, "EQUIPMENT");
-                } else {
-                    console.error("Critical: kit-storage-selector container missing!");
-                }
-            } else {
-                console.error("App.StorageSelector is missing or init is not a function");
-            }
-
-            if (kit.image_url) {
-                previewImg.src = kit.image_url;
-                previewDiv.style.display = 'block';
-            }
-
-            if (customWrapper) customWrapper.style.display = 'none';
-            if (customInputs) customInputs.style.display = 'none';
-
-            isModalOpen = true;
-            modal.style.display = 'flex';
-        };
+        // Modal removed. Replaced by Page.
     }
+
+    // Redirects to Page
+    Kits.openRegisterModal = () => {
+        App.Router.go("kitForm");
+    };
+
+    window.openEditKitModal = (kit) => {
+        App.Router.go("kitForm", { id: kit.id });
+    };
 
     // ---- Stock Modal ----
     function setupStockModal() {
@@ -1477,35 +832,33 @@
         const modalHtml = `
             <div id="modal-kit-stock" class="modal-overlay" style="display: none; z-index: 1200;">
                 <div class="modal-content stock-modal-content">
-                    <div class="modal-header">
-                        <h3 class="modal-title">재고 관리</h3>
-                    </div>
-                    <form id="form-kit-stock" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
-                        <div class="modal-body">
-                            <p id="stock-kit-name" class="modal-subtitle" style="text-align: center; margin-bottom: 15px; font-weight: bold;"></p>
+                    <h3 id="stock-kit-name" class="modal-title" style="text-align: center; margin: 0 0 15px 0; padding-bottom: 15px; border-bottom: 1px solid #eee;"></h3>
 
-                            <div class="form-group">
-                                <label>등록 유형</label>
-                                <div class="stock-type-group">
-                                    <label class="stock-type-label"><input type="radio" name="stock-type" value="usage" checked> 사용 (차감)</label>
-                                    <label class="stock-type-label"><input type="radio" name="stock-type" value="purchase"> 구입 (추가)</label>
-                                </div>
-                            </div>
+                    <form id="form-kit-stock">
+                        <!-- Hidden Input for Type -->
+                        <input type="hidden" id="stock-type" value="usage">
 
-                            <div class="form-group">
-                                <label for="stock-amount">수량</label>
-                                <input type="number" id="stock-amount" class="form-input" min="1" value="1" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="stock-date">날짜</label>
-                                <input type="date" id="stock-date" class="form-input" required>
+                        <div class="form-group">
+                            <label style="margin-bottom:8px; display:block; color:#666; font-size:13px;">등록 유형</label>
+                            <div class="stock-toggle-group" style="display:flex; gap:0; border:1px solid #ddd; border-radius:6px; overflow:hidden;">
+                                <button type="button" class="stock-toggle-btn active" data-type="usage" style="flex:1; padding:12px; border:none; background:#ffebee; cursor:pointer; font-weight:bold; color:#c62828; transition:all 0.2s;">사용 (차감)</button>
+                                <button type="button" class="stock-toggle-btn" data-type="purchase" style="flex:1; padding:12px; border:none; background:#f9f9f9; cursor:pointer; font-weight:bold; color:#aaa; border-left:1px solid #ddd; transition:all 0.2s;">구입 (추가)</button>
                             </div>
                         </div>
 
-                        <div class="modal-footer">
-                            <button type="button" id="btn-cancel-stock" class="btn-cancel">취소</button>
-                            <button type="submit" id="btn-save-stock" class="btn-primary">저장</button>
+                        <div class="form-group">
+                            <label for="stock-amount" id="label-stock-amount" style="color:#c62828;">사용 수량 (몇 개를 썼나요?)</label>
+                            <input type="number" id="stock-amount" class="form-input" min="1" value="1" required style="font-size:16px; padding:12px;">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="stock-date">날짜</label>
+                            <input type="date" id="stock-date" class="form-input" required>
+                        </div>
+
+                        <div class="modal-actions" style="margin-top:20px; display:flex; gap:10px;">
+                            <button type="button" id="btn-cancel-stock" class="btn-cancel" style="flex:1;">취소</button>
+                            <button type="submit" id="btn-save-stock" class="btn-primary" style="flex:1;">저장</button>
                         </div>
                     </form>
                 </div>
@@ -1516,17 +869,57 @@
         const modal = document.getElementById('modal-kit-stock');
         const form = document.getElementById('form-kit-stock');
         const btnCancel = document.getElementById('btn-cancel-stock');
+        const hiddenType = document.getElementById('stock-type');
+        const toggleBtns = modal.querySelectorAll('.stock-toggle-btn');
+        const amountLabel = document.getElementById('label-stock-amount');
         let currentKit = null;
+
+        // Toggle Logic
+        toggleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.type;
+                updateToggleState(type);
+            });
+        });
+
+        function updateToggleState(type) {
+            hiddenType.value = type;
+
+            toggleBtns.forEach(btn => {
+                const btnType = btn.dataset.type;
+                if (btnType === type) {
+                    btn.classList.add('active');
+                    // Active Styles
+                    if (type === 'usage') {
+                        btn.style.background = '#ffebee'; // Light Red
+                        btn.style.color = '#c62828';
+                        amountLabel.textContent = "사용 수량 (몇 개를 썼나요?)";
+                        amountLabel.style.color = '#c62828';
+                    } else {
+                        btn.style.background = '#e3f2fd'; // Light Blue
+                        btn.style.color = '#1565c0';
+                        amountLabel.textContent = "구입 수량 (몇 개를 샀나요?)";
+                        amountLabel.style.color = '#1565c0';
+                    }
+                } else {
+                    btn.classList.remove('active');
+                    // Inactive Styles
+                    btn.style.background = '#f9f9f9';
+                    btn.style.color = '#aaa';
+                }
+            });
+        }
 
         btnCancel.addEventListener('click', () => {
             modal.style.display = 'none';
+            if (App.Fab && typeof App.Fab.show === 'function') App.Fab.show(); // Restore FAB if needed
         });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!currentKit) return;
 
-            const type = form.querySelector('input[name="stock-type"]:checked').value;
+            const type = hiddenType.value;
             const amount = parseInt(document.getElementById('stock-amount').value, 10);
             const date = document.getElementById('stock-date').value;
 
@@ -1537,8 +930,16 @@
         window.openStockModal = (kit) => {
             currentKit = kit;
             document.getElementById('stock-kit-name').textContent = kit.kit_name;
+
+            // Reset to Usage default
+            hiddenType.value = 'usage';
             document.getElementById('stock-amount').value = 1;
             document.getElementById('stock-date').valueAsDate = new Date();
+
+            // Trigger click on Usage button to reset styles
+            const usageBtn = modal.querySelector('.stock-toggle-btn[data-type="usage"]');
+            if (usageBtn) usageBtn.click();
+
             modal.style.display = 'flex';
         };
     }
@@ -1915,6 +1316,7 @@
 
     // ---- Export to App ----
     globalThis.App = globalThis.App || {};
+    Kits.loadCatalog = loadCatalog; // ✅ Export loadCatalog
     globalThis.App.Kits = Kits;
 
 })();

@@ -325,7 +325,25 @@
             };
 
             setText('detail-aid-name', tool.tools_name);
-            setText('detail-aid-class', `${tool.tools_section || ''} > ${tool.tools_category || ''}`);
+
+            // Styled Tags for Class (Section & Category)
+            const section = tool.tools_section || '교구';
+            const category = tool.tools_category || '-';
+
+            const sectionTag = `<span class="kit-tag" style="background:#f3e5f5; color:#7b1fa2; padding:2px 6px; border-radius:4px; font-size:12px; margin-right:5px;">${section}</span>`;
+            const categoryTag = `<span class="kit-tag" style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:12px;">${category}</span>`;
+
+            const classEl = document.getElementById('detail-aid-class');
+            if (classEl) {
+                // Remove container styling to let inner tags handle it
+                classEl.removeAttribute('class');
+                classEl.style.background = 'none';
+                classEl.style.padding = '0';
+                classEl.style.color = 'inherit';
+                classEl.style.fontSize = 'inherit';
+                classEl.style.marginLeft = '10px';
+                classEl.innerHTML = `${sectionTag}${categoryTag}`;
+            }
             // 1. Tool/Item Code (Row 1)
             const isFacility = (tool.tools_section || '').trim() === '설비';
             const row1Label = document.getElementById('detail-row-1-label');

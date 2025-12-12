@@ -18,6 +18,7 @@
     teachingTools: "pages/teaching-tools.html", // ✅ 교구 페이지 추가
     teachingToolsDetail: "pages/teaching-tools-detail.html", // ✅ 교구 상세 페이지 추가
     toolsForm: "pages/tools-form.html", // ✅ 교구 등록 폼 페이지
+    kitForm: "pages/kit-form.html", // ✅ 키트 등록 폼 페이지
     equipmentCabinets: "pages/equipment-cabinet-list.html", // ✅ 교구·물품장 설정 페이지
     export: "pages/export.html", // ✅ 내보내기 페이지 추가
   };
@@ -164,6 +165,12 @@
       case "toolsForm":
         if (App?.ToolsForm?.init) {
           await App.ToolsForm.init(params.id);
+        }
+        break;
+
+      case "kitForm":
+        if (App?.KitForm?.init) {
+          await App.KitForm.init(params.id);
         }
         break;
 

@@ -35,6 +35,7 @@
     "./js/pages/kits.js", // ✅ 키트 페이지 로직
     "./js/pages/teaching-tools.js", // ✅ 교구 페이지 로직
     "./js/pages/tools-form.js", // ✅ 교구 등록 폼 로직
+    "./js/pages/kit-form.js", // ✅ 키트 등록 폼 로직
     "./js/ui/export-page.js", // ✅ 데이터 내보내기 페이지 로직
   ];
   const componentModules = [

@@ -6154,15 +6154,16 @@ input[type="date"] {
 
 /* Form Photo Preview (Chemicals & Teaching Tools) */
 #photo-preview,
-/* Chemical Form */
-#tools-photo-preview
-
-/* Teaching Tools Form */
-  {
+#tools-photo-preview,
+#detail-aid-photo,
+#detail-kit-photo,
+#kit-photo-preview {
   width: 210px !important;
   height: 280px !important;
   min-width: 210px !important;
   max-width: 210px !important;
+  min-height: 280px !important;
+  max-height: 280px !important;
   overflow: hidden !important;
   border-radius: 8px !important;
   display: flex !important;
