@@ -1,19 +1,23 @@
 <!-- /pages/kit-detail.html -->
-<div id="kit-detail-page-container" class="inventory-detail-page">
+<div class="layout-container">
     <!-- Header -->
-    <div class="detail-name-group">
-        <h2 id="detail-kit-name"></h2>
-        <span id="detail-kit-class" class="kit-tag"
-            style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:14px; margin-left: 10px;"></span>
+    <div class="layout-header no-actions">
+        <div class="detail-name-group">
+            <h2 id="detail-kit-name" style="margin: 0; padding: 0; font-size: 20px; font-weight: 700; color: #333;">
+            </h2>
+            <span id="detail-kit-class" class="kit-tag"
+                style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:14px; margin-left: 10px;"></span>
+        </div>
     </div>
 
     <!-- Scrollable Content -->
-    <div class="detail-scroll-container">
+    <div class="layout-content scroll-padding-nav">
         <!-- 2-Column Grid -->
         <div class="detail-grid">
             <!-- Left: Photo -->
             <div class="detail-left">
-                <div class="photo-preview-box" id="detail-kit-photo">
+                <div class="photo-preview-box" id="detail-kit-photo"
+                    style="width: 210px; height: 280px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
                     <!-- Photo will be inserted here -->
                 </div>
             </div>

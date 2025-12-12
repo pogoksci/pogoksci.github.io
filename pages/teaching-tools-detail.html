@@ -1,33 +1,57 @@
-<!-- /pages/teaching-aid-detail.html -->
-<div id="aid-detail-page-container" class="inventory-detail-page">
+<!-- /pages/teaching-tools-detail.html -->
+<div class="layout-container">
     <!-- Header -->
-    <div class="detail-name-group">
-        <h2 id="detail-aid-name"></h2>
-        <span id="detail-aid-class" class="kit-tag"
-            style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:14px; margin-left: 10px;"></span>
+    <div class="layout-header no-actions">
+        <div class="detail-name-group">
+            <h2 id="detail-aid-name" style="margin: 0; padding: 0; font-size: 20px; font-weight: 700; color: #333;">
+            </h2>
+            <span id="detail-aid-class" class="kit-tag"
+                style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:14px; margin-left: 10px;"></span>
+        </div>
     </div>
 
     <!-- Scrollable Content -->
-    <div class="detail-scroll-container">
+    <div class="layout-content scroll-padding-nav">
         <!-- 2-Column Grid -->
         <div class="detail-grid">
             <!-- Left: Photo -->
             <div class="detail-left">
-                <div class="photo-preview-box" id="detail-aid-photo">
+                <div class="photo-preview-box" id="detail-aid-photo"
+                    style="width: 210px; height: 280px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
                     <!-- Photo will be inserted here -->
                 </div>
             </div>
 
             <!-- Right: Info -->
             <div class="detail-right">
-                <div class="detail-info-list">
-                    <div class="info-item">
-                        <span class="label">수량</span>
-                        <span class="value" id="detail-aid-quantity"></span>
+                <div class="kit-info">
+                    <div class="kit-info-row">
+                        <span class="label" id="detail-row-1-label">교구코드</span>
+                        <span class="value" id="detail-row-1-value"></span>
                     </div>
-                    <div class="info-item">
+                    <div class="kit-info-row">
+                        <span class="label">소요기준</span>
+                        <span class="value" id="detail-row-2-value"></span>
+                    </div>
+                    <div class="kit-info-row">
+                        <span class="label">기준량</span>
+                        <span class="value" id="detail-row-3-value"></span>
+                    </div>
+                    <div class="kit-info-row">
+                        <span class="label">보유량</span>
+                        <span class="value" id="detail-row-4-value"></span>
+                    </div>
+                    <div class="kit-info-row">
+                        <span class="label">보유율</span>
+                        <span class="value" id="detail-row-5-value"></span>
+                    </div>
+                    <div class="kit-info-row">
+                        <span class="label">필수/기준</span>
+                        <span class="value" id="detail-row-6-value"></span>
+                    </div>
+                    <div class="kit-info-row">
                         <span class="label">보관 위치</span>
-                        <span class="value" id="detail-aid-location"></span>
+                        <span class="value" id="detail-row-7-value"></span>
                     </div>
                 </div>
             </div>
@@ -42,7 +66,9 @@
                         <tr>
                             <th>날짜</th>
                             <th>유형</th>
-                            <th style="text-align: right;">변동/수량</th>
+                            <th>변동</th>
+                            <th>수량</th>
+                            <th style="width: 100px;">수정/삭제</th>
                         </tr>
                     </thead>
                     <tbody id="aid-usage-logs-body">

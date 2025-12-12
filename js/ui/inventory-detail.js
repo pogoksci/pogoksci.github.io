@@ -123,7 +123,7 @@
       const photoDiv = document.getElementById("detail-photo");
       const photoUrl = data.photo_url_320 || data.photo_url_160 || "";
       photoDiv.innerHTML = photoUrl
-        ? `<img src="${photoUrl}" alt="시약 사진">`
+        ? `<img src="${photoUrl}" alt="시약 사진" style="width: 100%; height: 100%; object-fit: cover; object-position: center;">`
         : `<span>사진 없음</span>`;
 
       if (data.Substance?.id) {

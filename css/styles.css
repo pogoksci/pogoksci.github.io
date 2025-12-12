@@ -1,6 +1,6 @@
-/* =================================================================
+﻿/* =================================================================
 
-   湲곕낯 ?ㅽ???(Body, Form ??
+   疫꿸퀡???????(Body, Form ??
 
 ================================================================= */
 
@@ -18,19 +18,19 @@ body {
 
   overflow-x: hidden;
 
-  /* 媛濡??ㅽ겕濡?諛⑹? */
+  /* 揶쎛嚥???쎄쾿嚥?獄쎻뫗? */
 
-  overflow: hidden;
+  overflow-y: auto;
 
   overscroll-behavior: none;
 
   background-color: #ffffff;
 
-  /* ???꾩껜 ?숈씪 諛곌꼍??*/
+  /* ???袁⑷퍥 ??덉뵬 獄쏄퀗瑗??*/
 
   font-family: 'Noto Sans KR', Arial, sans-serif;
 
-  /* ?고듃 怨좎젙 */
+  /* ?怨좊뱜 ?⑥쥙??*/
 
   color: #333;
 
@@ -43,16 +43,52 @@ h1,
 h2,
 
 h3 {
-
   color: #333;
-
 }
+
+/* Standardized Sticky Header to match '?쏀뭹 愿由? */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: #fff;
+
+  /* Spacing: User explicit request -> Left padding 16px */
+  /* Top 8px, Bottom 15px, Right 16px (symmetric) */
+  padding: 8px 16px 15px 16px;
+
+  /* Reset margins (User wanted padding, not margin) */
+  margin: 0 0 0 0;
+
+  /* Border: handled by ::after */
+  border-bottom: none;
+
+  /* Text Style: Restored to match Inventory (20px, Bold) */
+  font-size: 20px;
+  font-weight: 700;
+  color: #222;
+  line-height: 1.3;
+}
+
+.sticky-header::after {
+  content: "";
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 16px;
+  right: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+
+
+
 
 
 
 /* =================================================================
 
-   ??洹몃９ ?ㅽ???================================================================= */
+   ??域밸챶竊??????================================================================= */
 
 .form-group {
 
@@ -74,27 +110,25 @@ h3 {
 
 /* =================================================================
 
-   ??而⑦뀒?대꼫 ?ㅽ???================================================================= */
+   ???뚢뫂???瑗??????================================================================= */
 
-#form-container {
-
-  max-width: 1200px;
-
-  margin: 0 auto;
-
-  padding: 20px 20px 100px 20px;
-
-  /* 좌우 여백, 하단 여백 추가 (스크롤 문제 해결) */
-
-  box-sizing: border-box;
-
+html,
+body.home-active {
+  /* ... existing styles ... */
+  /* Prevent elastic scrolling/overscroll globally */
+  overscroll-behavior-y: none;
 }
+
+/* =================================================================
+   Main Content Container
+   ================================================================= */
+/* #form-container style moved to Universal Layout section */
 
 
 
 /* =================================================================
 
-   ?덉씠釉?諛??낅젰 ?꾨뱶 ?ㅽ???================================================================= */
+   ??됱뵠??獄???낆젾 ?袁⑤굡 ?????================================================================= */
 
 label {
 
@@ -130,7 +164,7 @@ select {
 
 /* =================================================================
 
-   Select 諛뺤뒪 ?ㅽ???================================================================= */
+   Select 獄쏅벡???????================================================================= */
 
 select {
 
@@ -162,7 +196,7 @@ select:focus {
 
 /* =================================================================
 
-   踰꾪듉 ?ㅽ???(湲곕낯 踰꾪듉 諛??좏깮 踰꾪듉)
+   甕곌쑵???????(疫꿸퀡??甕곌쑵??獄??醫뤾문 甕곌쑵??
 
 ================================================================= */
 
@@ -200,7 +234,7 @@ button:disabled {
 
 /* =================================================================
 
-   踰꾪듉 洹몃９ ?ㅽ???================================================================= */
+   甕곌쑵??域밸챶竊??????================================================================= */
 
 .button-group {
 
@@ -284,11 +318,11 @@ button:disabled {
 
   justify-content: space-between;
 
-  /* ?묐걹 ?뺣젹 */
+  /* ?臾먭국 ?類ｌ졊 */
 
   gap: 12px;
 
-  /* 踰꾪듉 ?ъ씠 媛꾧꺽 */
+  /* 甕곌쑵??????揶쏄쑨爰?*/
 
   margin-top: 24px;
 
@@ -298,7 +332,7 @@ button:disabled {
 
   padding: 0 8px;
 
-  /* ?됱쓽 醫뚯슦 ?щ갚怨??숈씪?섍쾶 議곗젙 (?꾩슂???섏젙) */
+  /* ??깆벥 ?ル슣????媛싨???덉뵬??띿쓺 鈺곌퀣??(?袁⑹뒄????륁젟) */
 
 }
 
@@ -308,7 +342,7 @@ button:disabled {
 
   flex: 1;
 
-  /* 媛?踰꾪듉 ?숈씪??鍮꾩쑉 */
+  /* 揶?甕곌쑵????덉뵬????쑴??*/
 
   padding: 12px 0;
 
@@ -328,7 +362,7 @@ button:disabled {
 
 
 
-/* 痍⑥냼 踰꾪듉 ?ㅽ???*/
+/* ?띯뫁??甕곌쑵???????*/
 #cancel-form-btn,
 #equipment-cancel-btn {
   background-color: #e0e0e0;
@@ -342,7 +376,7 @@ button:disabled {
 
 
 
-/* ?깅줉 踰꾪듉 ?ㅽ???*/
+/* ?源낆쨯 甕곌쑵???????*/
 
 #cabinet-submit-button {
 
@@ -362,7 +396,7 @@ button:disabled {
 
 
 
-/* ?섏젙 踰꾪듉 (?깅줉 踰꾪듉怨??숈씪 ?ㅽ??? */
+/* ??륁젟 甕곌쑵??(?源낆쨯 甕곌쑵?됪???덉뵬 ????? */
 #cabinet-save-btn,
 #equipment-save-btn {
   background-color: #00a0b2;
@@ -410,7 +444,7 @@ button:disabled {
 
   object-fit: contain;
 
-  /* 鍮꾩쑉 ?좎??섎ŉ 異뺤냼/?뺣? */
+  /* ??쑴???醫???렽??곕벡???類? */
 
   border-radius: 6px;
 
@@ -420,7 +454,7 @@ button:disabled {
 
 /* =================================================================
 
-   ?ъ쭊 ?깅줉 ?곸뿭
+   ??彛??源낆쨯 ?怨몃열
 
 ================================================================= */
 
@@ -452,7 +486,7 @@ button:disabled {
 
   aspect-ratio: 3 / 4;
 
-  /* ?몃줈??諛뺤뒪 ?좎? */
+  /* ?紐껋쨮??獄쏅벡???醫? */
 
   border: 1px solid #ddd;
 
@@ -482,7 +516,7 @@ button:disabled {
 
   padding-top: 100%;
 
-  /* ?뺤궗媛곹삎 蹂댁젙 (aspect-ratio fallback) */
+  /* ?類ㅺ텢揶쏄낱??癰귣똻??(aspect-ratio fallback) */
 
 }
 
@@ -506,7 +540,7 @@ button:disabled {
 
   object-fit: contain;
 
-  /* 鍮꾩쑉 ?좎? + ?섎┝ ?놁쓬 */
+  /* ??쑴???醫? + ??롡뵝 ??곸벉 */
 
   object-position: center;
 
@@ -546,7 +580,7 @@ button:disabled {
 
 /* =================================================================
 
-   移대찓??紐⑤떖 ?ㅽ???================================================================= */
+   燁삳?李??筌뤴뫀???????================================================================= */
 
 .modal-overlay {
 
@@ -703,7 +737,7 @@ button:disabled {
 
 /* =================================================================
 
-   蹂닿? ?꾩튂 ?ㅼ젙 (6?④퀎)
+   癰귣떯? ?袁⑺뒄 ??쇱젟 (6??ｍ?
 
 ================================================================= */
 
@@ -771,25 +805,25 @@ button:disabled {
 
 
 
-/* ?꾩튂 ?좏깮 踰꾪듉 (btn-location) ?ㅽ???*/
+/* ?袁⑺뒄 ?醫뤾문 甕곌쑵??(btn-location) ?????*/
 
-/* 버튼 그룹 컨테이너 */
+/* 踰꾪듉 洹몃９ 而⑦뀒?대꼫 */
 .button-group {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  /* 변경: 10px -> 12px */
+  /* 蹂寃? 10px -> 12px */
   justify-content: flex-start;
 }
 
 .button-group .btn-location {
   /* flex-basis: calc(16.66% - 10px); */
   /* flex-grow: 0; */
-  /* 기존 flex 스타일 제거 및 공통 스타일 유지 */
+  /* 湲곗〈 flex ?ㅽ????쒓굅 諛?怨듯넻 ?ㅽ????좎? */
   height: 40px;
   padding: 0;
   margin: 0;
-  /* 변경: 0 12px -> 0 (주황색 마진 제거) */
+  /* 蹂寃? 0 12px -> 0 (二쇳솴??留덉쭊 ?쒓굅) */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -884,8 +918,7 @@ button:disabled {
 
 /* =================================================================
 
-   ?쒖빟??紐⑸줉 移대뱶
-
+   ??뽯튋??筌뤴뫖以?燁삳?諭?
 ================================================================= */
 
 #location-list-page #cabinet-list-container,
@@ -903,7 +936,7 @@ button:disabled {
 
 
 
-/* ?쒖빟??紐⑸줉??2?대줈 諛곗튂 */
+/* ??뽯튋??筌뤴뫖以??2??以?獄쏄퀣??*/
 
 .cabinet-list {
 
@@ -911,33 +944,33 @@ button:disabled {
 
   flex-wrap: wrap;
 
-  /* ??以꾩뿉 ?щ윭 ??ぉ???ㅻ룄濡??ㅼ젙 */
+  /* ??餓κ쑴肉????????????삳즲嚥???쇱젟 */
 
   gap: 20px;
 
-  /* ?몃깽?좊━ 移대뱶 ?덉씠?꾩썐 */
+  /* ?紐껉뭣?醫듼봺 燁삳?諭???됱뵠?袁⑹뜍 */
 
   justify-content: space-between;
 
-  /* ??ぉ 媛꾧꺽 議곗젙 */
+  /* ????揶쏄쑨爰?鈺곌퀣??*/
 
 }
 
 
 
-/* 媛??쒖빟??移대뱶 */
+/* 揶???뽯튋??燁삳?諭?*/
 
 .cabinet-card {
 
   flex: 1 1 calc(50% - 10px);
 
-  /* ??以꾩뿉 2媛쒖뵫 諛곗튂 */
+  /* ??餓κ쑴肉?2揶쏆뮇逾?獄쏄퀣??*/
 
   box-sizing: border-box;
 
   margin-bottom: 20px;
 
-  /* ?섎떒 ?щ갚 */
+  /* ??롫뼊 ??媛?*/
 
   background-color: #fff;
 
@@ -979,7 +1012,7 @@ button:disabled {
 
 .cabinet-card .card-info .area-name::before {
 
-  content: "·";
+  content: "쨌";
 
   margin: 0 6px 0 2px;
 
@@ -1006,7 +1039,7 @@ button:disabled {
 
   aspect-ratio: 3 / 4;
 
-  /* 鍮꾩쑉 ?좎?, padding-top 遺덊븘??*/
+  /* ??쑴???醫?, padding-top ?븍뜇釉??*/
 
   background-color: #f0f0f0;
 
@@ -1040,7 +1073,7 @@ button:disabled {
 
   object-fit: contain;
 
-  /* ?대?吏 ?꾩껜 ?쒖떆, ?먮Ⅴ吏 ?딆쓬 */
+  /* ???筌왖 ?袁⑷퍥 ??뽯뻻, ?癒?뀮筌왖 ??놁벉 */
 
   display: block;
 
@@ -1192,8 +1225,7 @@ button:disabled {
 
 /* =================================================================
 
-   ?섎떒 ?대퉬寃뚯씠??諛?諛?硫붾돱
-
+   ??롫뼊 ???у칰??뵠??獄?獄?筌롫뗀??
 ================================================================= */
 
 .navbar {
@@ -1294,7 +1326,7 @@ button:disabled {
 
 /* =================================================================
 
-   ?쒖옉硫붾돱 ?앹뾽 (Start Menu)
+   ??뽰삂筌롫뗀????밸씜 (Start Menu)
 
 ================================================================= */
 
@@ -1370,15 +1402,15 @@ button:disabled {
 
 .menu-item:hover {
 
-  /* hover ?④낵 */
+  /* hover ??ｋ궢 */
 
   background-color: #00a0b2;
 
-  /* 硫붿씤而щ윭? ?숈씪 */
+  /* 筌롫뗄?ㅸ뚎됱쑎?? ??덉뵬 */
 
   color: #fff;
 
-  /* 湲???곗깋 */
+  /* 疫꼲???怨쀪퉳 */
 
 }
 
@@ -1386,7 +1418,7 @@ button:disabled {
 
 .menu-item:hover i,
 
-/* hover ???꾩씠肄??됱긽???④퍡 蹂寃?*/
+/* hover ???袁⑹뵠????깃맒????ｍ뜞 癰궰野?*/
 
 .menu-item:hover svg {
 
@@ -1518,7 +1550,7 @@ FAB
   justify-content: center;
   gap: 8px;
   z-index: 1001;
-  /* Navbar(1000)보다 위 */
+  /* Navbar(1000)蹂대떎 ??*/
   cursor: pointer;
   transition: all 0.2s ease;
   width: auto;
@@ -1848,7 +1880,7 @@ FAB
 
 /* =================================================================
 
-   ?쒖빟??媛쒖꽑 (area-button-group / 湲고? ?낅젰 ?꾨뱶)
+   ??뽯튋??揶쏆뮇苑?(area-button-group / 疫꿸퀬? ??낆젾 ?袁⑤굡)
 
 ================================================================= */
 
@@ -1936,7 +1968,7 @@ FAB
 
 /* =================================================================
 
-   ??SciManager (濡쒓퀬) ?붾㈃ 諛?怨좎젙 濡쒕뵫/?ㅽ뵆?섏떆 ?붾㈃
+   ??SciManager (嚥≪뮄?? ?遺얇늺 獄??⑥쥙??嚥≪뮆逾???쎈탣??뤿뻻 ?遺얇늺
 
 ================================================================= */
 
@@ -2117,8 +2149,7 @@ body.home-active #splash-screen {
 
 /*--------------------------
 
-?쒖빟 紐⑸줉
-
+??뽯튋 筌뤴뫖以?
 ---------------------------*/
 
 #inventory-list-page {
@@ -2131,7 +2162,7 @@ body.home-active #splash-screen {
 
 
 
-/* ?곗긽???쒕ぉ怨??뺣젹 洹몃９ */
+/* ?怨쀪맒????뺛걠???類ｌ졊 域밸챶竊?*/
 
 /* .header-actions replaced by standardized block below */
 
@@ -2196,7 +2227,7 @@ body.home-active #splash-screen {
 
 
 
-/* 媛먯떥??諛뺤뒪 (select wrapper) */
+/* 揶쏅Ŋ???獄쏅벡??(select wrapper) */
 
 .select-wrapper {
 
@@ -2212,7 +2243,7 @@ body.home-active #splash-screen {
 
   height: 28px;
 
-  /* ?먯뿰?ㅻ윭???띿뒪???믪씠 */
+  /* ?癒?염??살쑎????용뮞???誘れ뵠 */
 
   display: flex;
 
@@ -2236,7 +2267,7 @@ body.home-active #splash-screen {
 
 
 
-/* Refresh 踰꾪듉 */
+/* Refresh 甕곌쑵??*/
 #refresh-btn,
 #kit-refresh-btn,
 #aid-refresh-btn {
@@ -2286,7 +2317,7 @@ body.home-active #splash-screen {
 
 /* ---------------------------
 
-   而ㅼ뒪? ?쒕∼?ㅼ슫
+   ?뚣끉??? ??뺚댘??쇱뒲
 
 ---------------------------- */
 
@@ -2330,7 +2361,7 @@ body.home-active #splash-screen {
 
   height: 28px;
 
-  /* ??踰꾪듉 ?믪씠 */
+  /* ??甕곌쑵???誘れ뵠 */
 
   box-sizing: border-box;
 }
@@ -2357,7 +2388,7 @@ body.home-active #splash-screen {
   margin-left: 4px;
   transition: transform 0.25s ease;
   pointer-events: none;
-  /* 클릭 이벤트가 버튼으로 전달되도록 설정 */
+  /* ?대┃ ?대깽?멸? 踰꾪듉?쇰줈 ?꾨떖?섎룄濡??ㅼ젙 */
 }
 
 .dropdown-toggle .material-symbols-outlined {
@@ -2365,7 +2396,7 @@ body.home-active #splash-screen {
   vertical-align: middle;
   color: #555;
   pointer-events: none;
-  /* 클릭 이벤트가 버튼으로 전달되도록 설정 */
+  /* ?대┃ ?대깽?멸? 踰꾪듉?쇰줈 ?꾨떖?섎룄濡??ㅼ젙 */
 }
 
 
@@ -2464,7 +2495,7 @@ body.home-active #splash-screen {
 
 
 
-/* Fade-in ?좊땲硫붿씠??*/
+/* Fade-in ?醫딅빍筌롫뗄???*/
 
 @keyframes fadeIn {
 
@@ -2490,7 +2521,7 @@ body.home-active #splash-screen {
 
 
 
-/* ?몃깽?좊━ 移대뱶 (?쒖빟??移대뱶 ?ㅽ???蹂듭궗) */
+/* ?紐껉뭣?醫듼봺 燁삳?諭?(??뽯튋??燁삳?諭??????癰귣벊沅? */
 
 .inventory-card {
 
@@ -2508,7 +2539,7 @@ body.home-active #splash-screen {
 
 
 
-/* ?щ젰(DatePicker) ?섎┝ 諛⑹? */
+/* ????DatePicker) ??롡뵝 獄쎻뫗? */
 
 #form-container,
 
@@ -2526,15 +2557,15 @@ input[type="date"] {
 
   font-family: inherit;
 
-  /* 遺紐⑥? ?숈씪??湲瑗??ъ슜 */
+  /* ?봔筌뤴뫁? ??덉뵬??疫꼲??????*/
 
   font-size: inherit;
 
-  /* 二쇰? input怨??ш린 ?쇱튂 */
+  /* 雅뚯눖? input????由???깊뒄 */
 
   color: inherit;
 
-  /* 湲?먯깋???숈씪?섍쾶 */
+  /* 疫꼲?癒?퉳????덉뵬??띿쓺 */
 
   letter-spacing: 0.02em;
 
@@ -2550,7 +2581,7 @@ input[type="date"] {
 
 
 
-/* 占싸븝옙占썰리 카占쏙옙 占쏙옙占싱아울옙 */
+/* ?좎떥釉앹삕?좎뜲由?移닷뜝?숈삕 ?좎룞?쇿뜝?깆븘?몄삕 */
 
 .inventory-section-header {
   display: flex;
@@ -2558,38 +2589,38 @@ input[type="date"] {
   justify-content: space-between;
   padding: 8px 16px;
   margin: 0 8px;
-  /* 상단 마진 제거 (그룹에서 처리) */
+  /* ?곷떒 留덉쭊 ?쒓굅 (洹몃９?먯꽌 泥섎━) */
   font-weight: 600;
   color: #333;
   background: #f5f8ff;
   border-left: 4px solid #00a0b2;
   border-radius: 4px;
   position: sticky;
-  /* 스크롤 시 상단 고정 */
+  /* ?ㅽ겕濡????곷떒 怨좎젙 */
   top: 0;
-  z-index: 100;
-  /* 목록보다 위에 표시 (확실하게) */
+  z-index: 10;
+  /* 紐⑸줉蹂대떎 ?꾩뿉 ?쒖떆 (?뺤떎?섍쾶) */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  /* 고정 시 입체감 추가 */
+  /* 怨좎젙 ???낆껜媛?異붽? */
 }
 
 .inventory-section-group {
   margin-top: 12px;
   scroll-snap-align: start;
-  /* 그룹 시작 부분에 스냅 */
+  /* 洹몃９ ?쒖옉 遺遺꾩뿉 ?ㅻ깄 */
   scroll-margin-top: 50px;
-  /* 스냅 시 헤더 높이만큼 여백 확보 */
+  /* ?ㅻ깄 ???ㅻ뜑 ?믪씠留뚰겮 ?щ갚 ?뺣낫 */
 }
 
 .inventory-section-group:first-child {
   margin-top: 0;
 }
 
-/* ... (중략) ... */
+/* ... (以묐왂) ... */
 
 
 
-/* ... (중략) ... */
+/* ... (以묐왂) ... */
 
 .inventory-card {
   display: flex;
@@ -2603,7 +2634,7 @@ input[type="date"] {
   z-index: 1;
 
   scroll-snap-align: start;
-  /* 카드 시작 부분에 스냅 */
+  /* 移대뱶 ?쒖옉 遺遺꾩뿉 ?ㅻ깄 */
 }
 
 
@@ -4517,26 +4548,32 @@ input[type="date"] {
 }
 
 /* =================================================================
-   약품 관리 화면 레이아웃 (Sticky Header & Scrollable List)
+   ?쏀뭹 愿由??붾㈃ ?덉씠?꾩썐 (Sticky Header & Scrollable List)
 ================================================================= */
 /* =================================================================
-   약품 관리 화면 레이아웃 (Sticky Header & Scrollable List)
+   ?쏀뭹 愿由??붾㈃ ?덉씠?꾩썐 (Sticky Header & Scrollable List)
 ================================================================= */
 .inventory-page-container,
 .usage-page-container {
   max-width: 1200px;
   margin: 0 auto;
+  height: 100%;
+  /* Pass down height from form-container */
 }
 
 .inventory-sticky-top {
-  /* Sticky 제거 -> Flex Layout Static 처리 */
+  /* Sticky ?쒓굅 -> Flex Layout Static 泥섎━ */
   /* position: sticky; */
   /* top: 0; */
   position: relative;
-  /* 필요한 경우 z-index 유지를 위해 relative 사용 */
+  z-index: 2000;
+  /* Top z-index */
+  overflow: visible;
+  /* Allow dropdowns to overflow */
+  /* ?꾩슂??寃쎌슦 z-index ?좎?瑜??꾪빐 relative ?ъ슜 */
   margin: 0;
   padding: 0 0 6px 0;
-  /* 검색창 하단 여백 18px로 축소 */
+  /* 寃?됱갹 ?섎떒 ?щ갚 18px濡?異뺤냼 */
   background-color: #fff;
   z-index: 200;
   /* Ensure dropdowns appear above list content (headers are 100) */
@@ -4550,7 +4587,7 @@ input[type="date"] {
 .list-header h2 {
   margin: 0;
   margin-bottom: 0;
-  /* 제목과 검색창 사이 간격 12px */
+  /* ?쒕ぉ怨?寃?됱갹 ?ъ씠 媛꾧꺽 12px */
 }
 
 .header-actions {
@@ -4561,10 +4598,10 @@ input[type="date"] {
 
 
 
-/* 검색창 스타일 (인라인 스타일 대체) */
+/* 寃?됱갹 ?ㅽ???(?몃씪???ㅽ????泥? */
 .search-container {
   flex: 1;
-  /* 남은 공간 차지 */
+  /* ?⑥? 怨듦컙 李⑥? */
   display: flex;
   align-items: center;
   background: #fff;
@@ -4573,12 +4610,12 @@ input[type="date"] {
   padding: 0 8px;
   height: 30px;
   box-sizing: border-box;
-  /* 테두리 포함 크기 계산 */
+  /* ?뚮몢由??ы븿 ?ш린 怨꾩궛 */
 }
 
 .search-container .material-symbols-outlined {
   font-size: 16px !important;
-  /* 아이콘 크기 축소 (20px -> 16px) */
+  /* ?꾩씠肄??ш린 異뺤냼 (20px -> 16px) */
 }
 
 .search-container input {
@@ -4600,14 +4637,14 @@ input[type="date"] {
   font-size: 14px;
   width: 100%;
   height: 100%;
-  /* 부모 높이 채우기 */
+  /* 遺紐??믪씠 梨꾩슦湲?*/
   line-height: 28px;
-  /* 텍스트 수직 중앙 정렬 보조 */
+  /* ?띿뒪???섏쭅 以묒븰 ?뺣젹 蹂댁“ */
   background: transparent;
-  /* 배경 투명 */
+  /* 諛곌꼍 ?щ챸 */
 }
 
-/* 드롭다운 및 버튼 높이 조절 */
+/* ?쒕∼?ㅼ슫 諛?踰꾪듉 ?믪씠 議곗젅 */
 #sort-toggle,
 #refresh-btn,
 #kit-sort-toggle,
@@ -4616,7 +4653,7 @@ input[type="date"] {
 #aid-refresh-btn {
   height: 30px !important;
   font-size: 13px;
-  /* 폰트 크기 약간 축소 */
+  /* ?고듃 ?ш린 ?쎄컙 異뺤냼 */
   display: flex;
   align-items: center;
 }
@@ -4628,7 +4665,7 @@ input[type="date"] {
 #aid-sort-toggle .material-symbols-outlined,
 #aid-refresh-btn .material-symbols-outlined {
   font-size: 18px;
-  /* 아이콘 크기 조정 */
+  /* ?꾩씠肄??ш린 議곗젙 */
 }
 
 /* =================================================================
@@ -4650,37 +4687,162 @@ input[type="date"] {
 }
 
 /* =================================================================
-   Common Layout Classes (Standardized Header & List)
+   Universal Layout Architecture (New Standard)
    ================================================================= */
-.fixed-page-layout {
+
+/* 1. Global Container Reset */
+#form-container {
+  width: 100%;
+  height: 100dvh;
+  /* Always full viewport height */
+  overflow: hidden;
+  /* Never scroll the body */
+  padding: 0 !important;
+  /* Zero padding global reset */
+  box-sizing: border-box;
+  background-color: #fff;
+}
+
+/* Remove old fixed-page-mode connector */
+/* #form-container.fixed-page-mode { ... } (Deleted) */
+
+
+/* 2. Layout Container */
+.layout-container {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 60px);
-  /* Navbar (60px) 고려한 높이 계산 (Mobile DVH 적용) */
-  overflow: hidden;
-  box-sizing: border-box;
-  padding: 8px 16px;
-  /* Common padding for both Inventory and Usage pages */
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
 }
 
-.scrollable-list-container {
+/* 3. Fixed Header (The "25px Rule") */
+.layout-header {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  z-index: 2000;
+  /* Ensure this is top */
+  overflow: visible;
+  /* Allow dropdown overflow */
+
+  /* Spacing: Top 25px, Left 25px, Right 25px */
+  padding: 25px 25px 15px 25px;
+
+  /* Border Separator */
+  border-bottom: 1px solid #ddd;
+}
+
+.layout-header h2 {
+  margin: 0;
+  padding: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #222;
+  line-height: 1.3;
+}
+
+/* Modifier: No Actions (Has Separator, Reduced Padding) */
+.layout-header.no-actions {
+  padding-bottom: 5px !important;
+  /* Reduced to 5px to move separator up */
+  border-bottom: 1px solid #ddd;
+  /* The only separator */
+}
+
+/* Ensure no internal borders create double lines */
+.detail-name-group,
+.detail-name-group h2,
+.layout-header h2 {
+  border-bottom: none !important;
+}
+
+/* 4. Scrollable Content */
+.layout-content {
   flex-grow: 1;
   overflow-y: auto;
-  padding-bottom: 120px;
-  /* FAB 공간 확보 (88px -> 120px) */
   min-height: 0;
-  /* Flexbox scrolling fix */
+  /* Flexbox scroll fix */
+
+  /* Content Padding: Matches Header's 25px Left/Right */
+  padding: 20px 25px 0 25px;
+  /* Bottom padding handled by utility classes */
 }
 
-/* Custom Scrollbar for .scrollable-list-container */
-.scrollable-list-container::-webkit-scrollbar {
+/* Scroll Padding Utilities */
+.scroll-padding-nav {
+  padding-bottom: 80px !important;
+}
+
+.scroll-padding-fab {
+  padding-bottom: 150px !important;
+}
+
+/* Fix for Scroll Leak in List Pages */
+.layout-content.inventory-list {
+  padding-top: 0 !important;
+}
+
+/* Custom Scrollbar for Content */
+.layout-content::-webkit-scrollbar {
   width: 6px;
-  display: block;
 }
 
-.scrollable-list-container::-webkit-scrollbar-thumb {
+.layout-content::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 3px;
+}
+
+/* Helper for header actions (optional) */
+.header-actions {
+  display: flex;
+  margin-top: 15px;
+  /* Spacing between title and actions */
+}
+
+/* Fix for Inventory Section Header (Sticky with Opaquq Gap) */
+.inventory-section-header {
+  position: sticky;
+  top: 0;
+  border-top: 20px solid #fff;
+  /* Opaque gap to hide scrolled content */
+  z-index: 1000;
+  /* Above scrolled content */
+  margin-top: 0 !important;
+  /* Remove transparent margin */
+  background-color: #f0f7fb;
+  /* Default background */
+
+  /* Simulate Border-Left using Gradient to avoid 'Spike' (Miter) with Border-Top */
+  background-image: linear-gradient(to right, #00a0b2 4px, transparent 4px);
+  background-repeat: no-repeat;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  /* Left Padding: 4px (Visual Border) + 16px (Spacing) = 20px */
+  padding: 8px 16px 8px 20px;
+
+  border-bottom: 1px solid #e0e0e0;
+  border-left: none !important;
+  /* Remove real border to prevent spike */
+}
+
+/* Reverted: Title is clean again */
+.section-title {
+  font-weight: 700;
+  color: #333;
+}
+
+.section-count {
+  background: #e1f5fe;
+  color: #0288d1;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
 }
 
 .scrollable-list-container::-webkit-scrollbar-track {
@@ -5161,7 +5323,7 @@ input[type="date"] {
   display: flex;
   align-items: center;
   padding-bottom: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   border-bottom: 1px solid #eee;
 }
 
@@ -5371,6 +5533,18 @@ input[type="date"] {
   box-sizing: border-box;
   margin: 0;
   /* Remove default margin */
+}
+
+/* Cabinet List Grid Layout */
+.cabinet-list {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 25px !important;
+  align-content: start;
+}
+
+.cabinet-list .cabinet-card {
+  width: 100%;
 }
 
 .amount-input-wrapper {
@@ -5671,4 +5845,135 @@ input[type="date"] {
   margin-bottom: 12px;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* =================================================================
+   Universal Modal Layout
+   ================================================================= */
+
+/* 1. Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+  /* Highest priority */
+  opacity: 1;
+  /* Reset logic handled by JS display property usually */
+}
+
+/* 2. Modal Content Container (Flex Column) */
+.modal-content {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 500px;
+  max-height: 85vh;
+  /* Maximum height constraint */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 0 !important;
+  /* Reset legacy padding */
+  overflow: hidden;
+  /* Prevent child overflow */
+}
+
+/* 3. Fixed Modal Header */
+.modal-header {
+  flex-shrink: 0;
+  padding: 20px 25px;
+  border-bottom: 1px solid #ddd;
+  background-color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3,
+.modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* 4. Scrollable Modal Body */
+.modal-body,
+.modal-scroll-content {
+  /* Aliasing for legacy/JS support */
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 25px;
+  min-height: 0;
+  /* Flex fix */
+}
+
+/* 5. Fixed Modal Footer (Optional) */
+.modal-footer,
+.modal-actions {
+  flex-shrink: 1;
+  padding: 15px 25px;
+  border-top: 1px solid #ddd;
+  background-color: #fff;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* 6. Form Group Spacing in Modals */
+.modal-body .form-group {
+  margin-bottom: 20px;
+}
+
+/* 7. Button Styles for Modals */
+.btn-primary {
+  background-color: #00a0b2;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #008c9e;
+}
+
+.btn-cancel,
+.btn-secondary {
+  background-color: #f1f3f5;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover,
+.btn-secondary:hover {
+  background-color: #e9ecef;
+}
+
+/* Camera Modal Specific Adjustments */
+#camera-modal .modal-content,
+.camera-modal .modal-content {
+  max-width: 600px;
+  height: 80vh;
+}
+
+#camera-view {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
 }

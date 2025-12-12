@@ -18,6 +18,7 @@
     teachingTools: "pages/teaching-tools.html", // ✅ 교구 페이지 추가
     teachingToolsDetail: "pages/teaching-tools-detail.html", // ✅ 교구 상세 페이지 추가
     toolsForm: "pages/tools-form.html", // ✅ 교구 등록 폼 페이지
+    equipmentCabinets: "pages/equipment-cabinet-list.html", // ✅ 교구·물품장 설정 페이지
     export: "pages/export.html", // ✅ 내보내기 페이지 추가
   };
 
@@ -56,7 +57,7 @@
     const targetId = "form-container";
     await App.includeHTML(file, targetId);
 
-    // ✅ 렌더 안정화를 위해 2프레임 대기
+    // ✅ Render stabilization wait
     await new Promise((resolve) =>
       requestAnimationFrame(() => requestAnimationFrame(resolve))
     );
@@ -133,6 +134,12 @@
           const mode = params.mode || "create";
           const id = params.id || null;
           App.Waste.initForm(mode, id);
+        }
+        break;
+
+      case "equipmentCabinets":
+        if (App?.EquipmentCabinet?.loadList) {
+          await App.EquipmentCabinet.loadList();
         }
         break;
 

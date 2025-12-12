@@ -114,7 +114,7 @@
             const imageSrc = item.photo_url_320 || item.photo_url_160 || "";
             const imageBlock = imageSrc
               ? `<div class="inventory-card__image">
-                   <img src="${imageSrc}" alt="Inventory Image" />
+                   <img src="${imageSrc}" alt="Inventory Image" style="width: 75px; height: 100px; object-fit: cover; object-position: center;" />
                  </div>`
               : `<div class="inventory-card__image inventory-card__image--empty">
                    <span class="inventory-card__placeholder">사진 없음</span>
@@ -135,7 +135,7 @@
                   <div class="inventory-card__meta">
                     <div class="meta-line1">${item.formula || '-'}</div>
                     <div class="meta-line2">
-                      <span class="meta-label">화학식량</span>
+                      <span class="meta-label">F.W.</span>
                       <span class="meta-value">${item.molecular_mass || '-'}</span>
                     </div>
                     <div class="meta-line3">${item.concentration_text || '-'}</div>

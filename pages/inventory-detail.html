@@ -1,24 +1,25 @@
 <!-- /pages/inventory-detail.html -->
-
-
 <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
 
-
-<div id="detail-page-container" class="inventory-detail-page">
-  <!-- Names Moved Here (Top) -->
-  <div class="detail-name-group">
-    <h2 id="detail-name-kor">정보 로드 중...</h2>
-    <span id="detail-name-eng" class="eng-name"></span>
-    <span id="detail-substance-id" class="substance-id-tag"
-      style="margin-left: auto; color: #888; font-size: 0.9rem;"></span>
+<div class="layout-container">
+  <!-- 1. Header (Universal Layout) -->
+  <div class="layout-header no-actions">
+    <!-- Names Moved Here (Top) -->
+    <div class="detail-name-group">
+      <h2 id="detail-name-kor">정보 로드 중...</h2>
+      <span id="detail-name-eng" class="eng-name"></span>
+      <span id="detail-substance-id" class="substance-id-tag"
+        style="margin-left: auto; color: #888; font-size: 0.9rem;"></span>
+    </div>
   </div>
 
   <!-- 2. Independent Scroll Container -->
-  <div class="detail-scroll-container">
+  <div class="layout-content scroll-padding-nav">
     <!-- 2-Column Grid: Photo & Info -->
     <div class="detail-grid">
       <div class="detail-left">
-        <div id="detail-photo" class="photo-preview-box">
+        <div id="detail-photo" class="photo-preview-box"
+          style="width: 210px; height: 280px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
           <span>사진 없음</span>
         </div>
       </div>
@@ -61,7 +62,8 @@
 
           <div class="structure-footer"
             style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: nowrap;">
-            <span class="license-notice" style="font-size: 10px; color: #aaa; white-space: nowrap;">3D Viewer powered by
+            <span class="license-notice" style="font-size: 10px; color: #aaa; white-space: nowrap;">3D
+              Viewer powered by
               PubChem</span>
             <div style="display: flex; gap: 5px;">
               <button id="btn-view-2d" class="view-mode-btn active">2D</button>
@@ -119,9 +121,6 @@
         <p>MSDS 정보 로드 중...</p>
       </div>
     </div>
-
-    <!-- 4. MSDS PDF Link (Removed - Moved to button row) -->
-    <!-- <div class="detail-section msds-pdf-section"> ... </div> -->
 
     <!-- 5. Hazard Info -->
     <div class="detail-section hazard-section">

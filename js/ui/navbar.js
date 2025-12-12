@@ -115,13 +115,13 @@
     if (menuEquipCabinet) {
       menuEquipCabinet.addEventListener("click", async (e) => {
         e.preventDefault();
-        // ✅ 교구·물품장 설정 페이지 연결
+        // ✅ 교구·물품장 설정 페이지 연결 (Router 사용)
         document.body.classList.remove("home-active");
-        await App.includeHTML("pages/equipment-cabinet-list.html", "form-container");
-        if (App.EquipmentCabinet && App.EquipmentCabinet.loadList) {
-          App.EquipmentCabinet.loadList();
-        }
+
+        await App.Router.go("equipmentCabinets");
+
         closeStartMenu();
+        setActive("menu-equipment-cabinet");
       });
     }
 

@@ -80,7 +80,7 @@
         const { data, error } = await supabase
             .from("Inventory")
             .select(`
-        id, current_amount, unit, status, classification,
+        id, current_amount, unit, status, classification, created_at,
         concentration_value, concentration_unit,
         bottle_mass,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
@@ -383,39 +383,83 @@
         const tbody = document.getElementById("usage-history-body");
         if (!tbody) return;
 
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">로딩 중...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">로딩 중...</td></tr>';
 
+        // Fetch ALL logs to calculate initial amount correctly
         const { data, error } = await supabase
             .from("UsageLog")
             .select("*")
             .eq("inventory_id", inventoryId)
-            .order("usage_date", { ascending: false })
-            .order("created_at", { ascending: false })
-            .limit(10);
+            .order("usage_date", { ascending: true }) // Oldest first
+            .order("created_at", { ascending: true });
 
         if (error) {
             console.error("❌ 사용 기록 로드 실패:", error);
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">기록을 불러오지 못했습니다.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">기록을 불러오지 못했습니다.</td></tr>';
             return;
         }
 
-        if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">사용 기록이 없습니다.</td></tr>';
+        if (!selectedItem) return;
+
+        // Calculate Initial Amount: Current + Sum(All Usage)
+        let totalUsage = 0;
+        if (data) {
+            data.forEach(l => totalUsage += (l.amount || 0));
+        }
+
+        // Handle floating point precision
+        totalUsage = parseFloat(totalUsage.toFixed(2));
+        const initialAmount = parseFloat((selectedItem.current_amount + totalUsage).toFixed(2));
+        const createdAt = selectedItem.created_at ? selectedItem.created_at.split('T')[0] : (new Date().toISOString().split('T')[0]);
+
+        const initialLog = {
+            is_initial: true,
+            usage_date: createdAt,
+            subject: '최초 등록',
+            period: '-',
+            amount: initialAmount,
+            unit: selectedItem.unit
+        };
+
+        let allLogs = [initialLog];
+        if (data) allLogs = [...allLogs, ...data];
+
+        if (allLogs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">기록이 없습니다.</td></tr>';
             return;
         }
 
-        tbody.innerHTML = data.map(log => `
-      <tr id="log-row-${log.id}">
-        <td class="col-date">${log.usage_date}</td>
-        <td class="col-subject">${log.subject}</td>
-        <td class="col-period">${log.period}</td>
-        <td class="col-amount">${log.amount} ${log.unit || ""}</td>
-        <td>
-            <button class="btn-mini btn-edit" onclick="App.UsageRegister.editLog(${log.id})">수정</button>
-            <button class="btn-mini btn-delete" onclick="App.UsageRegister.deleteLog(${log.id}, ${log.amount})">삭제</button>
-        </td>
-      </tr>
-    `).join("");
+        tbody.innerHTML = allLogs.map((log, index) => {
+            const isLast = (index === allLogs.length - 1);
+            // Display stock only on the very last row (most recent)
+            const stockDisplay = isLast ? `${selectedItem.current_amount} ${selectedItem.unit}` : '';
+
+            if (log.is_initial) {
+                return `
+                <tr class="initial-row" style="background:#fcfcfc; color:#555;">
+                    <td class="col-date">${log.usage_date}</td>
+                    <td class="col-subject" style="font-weight:bold;">${log.subject}</td>
+                    <td class="col-period">-</td>
+                    <td class="col-amount">${log.amount} ${log.unit}</td>
+                    <td class="col-stock" style="font-weight:bold; color:#00a0b2;">${stockDisplay}</td>
+                    <td>-</td>
+                </tr>`;
+            } else {
+                return `
+              <tr id="log-row-${log.id}">
+                <td class="col-date">${log.usage_date}</td>
+                <td class="col-subject">${log.subject}</td>
+                <td class="col-period">${log.period}</td>
+                <td class="col-amount">${log.amount} ${log.unit || ""}</td>
+                <td class="col-stock" style="font-weight:bold; color:#00a0b2;">${stockDisplay}</td>
+                <td>
+                    <button class="btn-mini btn-edit" onclick="App.UsageRegister.editLog(${log.id})">수정</button>
+                    <button class="btn-mini btn-delete" onclick="App.UsageRegister.deleteLog(${log.id}, ${log.amount})">삭제</button>
+                </td>
+              </tr>
+            `;
+            }
+        }).join("");
     }
 
     // ------------------------------------------------------------
@@ -513,6 +557,7 @@
                 </select>
             </td>
             <td><input type="number" id="edit-amount-${logId}" value="${amount}" step="0.01" style="width:80px;"></td>
+            <td>-</td>
             <td>
                 <button class="btn-mini btn-save" onclick="App.UsageRegister.saveLog(${logId}, ${amount})">저장</button>
                 <button class="btn-mini btn-cancel" onclick="App.UsageRegister.cancelEdit(${selectedItem.id})">취소</button>
