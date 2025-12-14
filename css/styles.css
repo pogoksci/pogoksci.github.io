@@ -943,7 +943,7 @@ button:disabled {
 
   gap: 16px;
 
-  padding: 20px 16px 0 16px;
+  padding: 0 16px 0 16px;
 
 }
 
@@ -4820,7 +4820,7 @@ input[type="date"] {
   /* Flexbox scroll fix */
 
   /* Content Padding: Matches Header's 25px Left/Right */
-  padding: 20px 25px 0 25px;
+  padding: 0 25px 0 25px;
   /* Bottom padding handled by utility classes */
 }
 
