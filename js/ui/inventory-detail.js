@@ -67,7 +67,7 @@
         .select(`
         id, state, current_amount, initial_amount, unit, classification, manufacturer, purchase_date, photo_url_320, photo_url_160,
         door_vertical, door_horizontal, internal_shelf_level, storage_column, msds_pdf_url,
-        concentration_value, concentration_unit,
+        concentration_value, concentration_unit, valence,
         converted_concentration_value_1, converted_concentration_unit_1,
         converted_concentration_value_2, converted_concentration_unit_2,
         school_hazardous_chemical, school_accident_precaution_chemical, special_health_checkup_hazardous_factor,
@@ -126,8 +126,21 @@
         ? `<img src="${photoUrl}" alt="시약 사진" style="width: 100%; height: 100%; object-fit: cover; object-position: center;">`
         : `<span>사진 없음</span>`;
 
-      if (data.Substance?.id) {
-        document.getElementById("detail-substance-id").textContent = `No.${data.Substance.id}`;
+      if (data.id) {
+        document.getElementById("detail-substance-id").textContent = `No.${data.id}`;
+      }
+
+      const btnGoUsage = document.getElementById("btn-go-usage");
+      if (btnGoUsage) {
+        btnGoUsage.onclick = async () => {
+             // Navigate to usageRegister with inventory info
+             // Assuming usageRegister handles 'detail' or 'inventoryId'
+             if (getApp().Router?.go) {
+                 await getApp().Router.go("usageRegister", { inventoryId: data.id, detail: data });
+             } else {
+                 alert("수불 등록 화면으로 이동할 수 없습니다.");
+             }
+        };
       }
       document.getElementById("detail-cas").textContent = data.Substance?.cas_rn || "-";
       document.getElementById("detail-formula").innerHTML = formula;
@@ -266,7 +279,13 @@
       // 1. Original Concentration
       const rawConcUnit = data.concentration_unit || "";
       const displayConcUnit = formatUnitDisplay(rawConcUnit);
-      const concVal = data.concentration_value ? `${data.concentration_value} ${displayConcUnit}` : "-";
+      let concVal = data.concentration_value ? `${data.concentration_value} ${displayConcUnit}` : "-";
+
+      // ✅ Display Valence if Unit is N
+      if (data.concentration_unit === "N" && data.valence) {
+        concVal += ` (가수: ${data.valence})`;
+      }
+
       document.getElementById("detail-concentration").textContent = concVal;
 
       const formatConvVal = (num, unitText) => {
@@ -634,52 +653,32 @@
       });
 
       document.getElementById("delete-inventory-btn")?.addEventListener("click", async () => {
-        if (!confirm("정말 삭제하시겠습니까?")) return;
+        if (!confirm("정말 삭제하시겠습니까?\n(마지막 재고인 경우 물질 정보와 파일도 함께 삭제됩니다.)")) return;
 
-        if (data.msds_pdf_url) {
-          try {
-            const url = data.msds_pdf_url;
-            const fileName = url.substring(url.lastIndexOf("/") + 1);
+        try {
+          // Use system-admin function for safe cascading delete (Files + Orphan Substance)
+          const { data, error } = await App.supabase.functions.invoke("system-admin", {
+            body: { action: "delete_inventory", inventory_id: inventoryId },
+          });
 
-            if (fileName) {
-              const { error: storageError } = await supabase.storage.from("msds-pdf").remove([fileName]);
+          if (error) throw error;
 
-              if (storageError) {
-                console.warn("PDF 파일 삭제 실패:", storageError);
-              }
-            }
-          } catch (err) {
-            console.warn("PDF 삭제 처리 오류:", err);
+          if (data && data.error) throw new Error(data.error);
+
+          console.log("Delete Success:", data);
+          alert("삭제되었습니다.");
+          
+          if (getApp().Router?.go) {
+            await getApp().Router.go("inventory");
+          } else if (getApp().Inventory?.showListPage) {
+            await getApp().Inventory.showListPage();
           }
-        }
-
-        const app = getApp();
-        const fnBase =
-          app.projectFunctionsBaseUrl || (app.supabaseUrl ? `${app.supabaseUrl}/functions/v1` : "");
-        if (!fnBase) {
-          alert("함수 호출 경로를 찾을 수 없습니다.");
-          return;
-        }
-        const headers = app.supabaseAnonKey
-          ? {
-            apikey: app.supabaseAnonKey,
-            Authorization: `Bearer ${app.supabaseAnonKey}`,
-          }
-          : undefined;
-        const fnUrl = `${fnBase}/casimport?type=inventory&id=${inventoryId}`;
-        const res = await fetch(fnUrl, { method: "DELETE", headers });
-        if (!res.ok) {
-          const msg = await res.text();
-          alert("삭제 실패: " + msg);
-          return;
-        }
-        alert("삭제되었습니다.");
-        if (getApp().Router?.go) {
-          await getApp().Router.go("inventory");
-        } else if (getApp().Inventory?.showListPage) {
-          await getApp().Inventory.showListPage();
+        } catch (err) {
+          console.error("Delete Failed:", err);
+          alert("삭제 중 오류가 발생했습니다: " + err.message);
         }
       });
+
 
       document.getElementById("edit-inventory-btn")?.addEventListener("click", async () => {
         if (getApp().Router?.go) {

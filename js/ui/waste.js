@@ -125,14 +125,16 @@
 
             html += `
             <div class="inventory-section-group" style="border-left: 4px solid #aaa;">
-                <div class="inventory-section-header" style="background: #f0f0f0;">
-                    <div>
-                        <span class="section-title" style="color: #555;">${disposal.classification} (처리완료)</span>
-                        <div style="font-size: 12px; color: #666; margin-top: 4px;">
-                            📅 ${disposal.date} | 🏭 ${disposal.company_name || "업체미지정"} | 👤 ${disposal.manager || "-"}
+                <div class="section-header-wrapper">
+                    <div class="inventory-section-header" style="background: #f0f0f0;">
+                        <div>
+                            <span class="section-title" style="color: #555;">${disposal.classification} (처리완료)</span>
+                            <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                                📅 ${disposal.date} | 🏭 ${disposal.company_name || "업체미지정"} | 👤 ${disposal.manager || "-"}
+                            </div>
                         </div>
+                        <span class="section-count" style="background: #e0e0e0; color: #555;">총 ${totalStr} g</span>
                     </div>
-                    <span class="section-count" style="background: #e0e0e0; color: #555;">총 ${totalStr} g</span>
                 </div>
                 ${itemsHtml}
             </div>`;
@@ -168,16 +170,18 @@
 
                 html += `
                 <div class="inventory-section-group">
-                    <div class="inventory-section-header">
-                        <span class="section-title">${classification}</span>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="section-count" style="background: #ffebee; color: #c62828;">누적: ${totalStr} g</span>
-                            ${showDisposalBtn ? `
-                            <button class="disposal-btn" data-class="${classification}" data-total="${group.total}"
-                                style="font-size: 11px; padding: 4px 8px; border: 1px solid #00a0b2; background: #e0f7fa; color: #006064; border-radius: 4px; cursor: pointer; font-weight: 600; display: flex; align-items: center;">
-                                <span class="material-symbols-outlined" style="font-size: 14px; margin-right: 4px;">local_shipping</span>
-                                폐수위탁처리
-                            </button>` : ""}
+                    <div class="section-header-wrapper">
+                        <div class="inventory-section-header">
+                            <span class="section-title">${classification}</span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="section-count" style="background: #ffebee; color: #c62828;">누적: ${totalStr} g</span>
+                                ${showDisposalBtn ? `
+                                <button class="disposal-btn" data-class="${classification}" data-total="${group.total}"
+                                    style="font-size: 11px; padding: 4px 8px; border: 1px solid #00a0b2; background: #e0f7fa; color: #006064; border-radius: 4px; cursor: pointer; font-weight: 600; display: flex; align-items: center;">
+                                    <span class="material-symbols-outlined" style="font-size: 14px; margin-right: 4px;">local_shipping</span>
+                                    폐수위탁처리
+                                </button>` : ""}
+                            </div>
                         </div>
                     </div>
                     ${itemsHtml}
@@ -190,9 +194,11 @@
 
             html += `
             <div class="inventory-section-group">
-                <div class="inventory-section-header">
-                    <span class="section-title">전체 목록</span>
-                    <span class="section-count" style="background: #ffebee; color: #c62828;">총 누적: ${totalAmount.toLocaleString()} g</span>
+                <div class="section-header-wrapper">
+                    <div class="inventory-section-header">
+                        <span class="section-title">전체 목록</span>
+                        <span class="section-count" style="background: #ffebee; color: #c62828;">총 누적: ${totalAmount.toLocaleString()} g</span>
+                    </div>
                 </div>
                 ${itemsHtml}
             </div>`;

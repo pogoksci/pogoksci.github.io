@@ -17,8 +17,8 @@
   const coreModules = [
     "./js/core/utils.js",
     "./js/core/state.js",
-    "./js/core/api.js",
-    "./js/core/camera.js",
+    "./js/core/api.js",    // 🔄 복구
+    "./js/core/camera.js", // 🔄 복구
     "./js/core/fab.js",
   ];
   const uiModules = [

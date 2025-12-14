@@ -92,7 +92,7 @@
 
       case "usageRegister":
         if (App?.UsageRegister?.init) {
-          await App.UsageRegister.init();
+          await App.UsageRegister.init(params);
         }
         break;
 

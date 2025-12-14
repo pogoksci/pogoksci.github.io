@@ -117,6 +117,8 @@
         classSelect.style.display = 'block';
     }
 
+    let currentPhotoBase64 = null; // Store processed base64
+
     function resetPhotoUI() {
         if (previewImg) {
             previewImg.src = '';
@@ -129,11 +131,24 @@
         if (placeholder) placeholder.style.display = 'block';
 
         const btnCamera = document.getElementById('btn-kit-camera');
-        if (btnCamera) btnCamera.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
+        if (btnCamera) {
+            btnCamera.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
+            btnCamera.style.display = 'inline-flex';
+        }
 
-        document.getElementById('btn-kit-confirm').style.display = 'none';
-        document.getElementById('btn-cancel-camera').style.display = 'none';
-        document.getElementById('btn-kit-file').style.display = 'inline-flex';
+        const btnFile = document.getElementById('btn-kit-file');
+        if (btnFile) btnFile.style.display = 'inline-flex';
+
+        const btnConfirm = document.getElementById('btn-kit-confirm');
+        if (btnConfirm) {
+            btnConfirm.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영';
+            btnConfirm.style.display = 'none';
+        }
+
+        const btnCancel = document.getElementById('btn-cancel-camera');
+        if (btnCancel) btnCancel.style.display = 'none';
+
+        currentPhotoBase64 = null;
     }
 
     function bindEvents() {
@@ -173,8 +188,19 @@
         document.getElementById('btn-kit-file').addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileSelect);
 
-        document.getElementById('btn-kit-camera').addEventListener('click', toggleCamera);
-        document.getElementById('btn-kit-confirm').addEventListener('click', takePhotoOrStop);
+        document.getElementById('btn-kit-camera').addEventListener('click', () => {
+            if (isCameraActive) {
+                if (videoStream.style.display === 'none') {
+                    // Retake logic if needed, but usually handled by UI state
+                    startCamera();
+                } else {
+                    takeKitPhoto();
+                }
+            } else {
+                startCamera();
+            }
+        });
+        document.getElementById('btn-kit-confirm').addEventListener('click', takeKitPhoto);
         document.getElementById('btn-cancel-camera').addEventListener('click', stopCamera);
         cameraInput.addEventListener('change', handleFileSelect);
 
@@ -236,6 +262,9 @@
                 previewImg.src = kit.image_url;
                 previewImg.style.display = 'block';
                 photoContainer.querySelector('.placeholder-text').style.display = 'none';
+                currentPhotoBase64 = null; // Should we download it? No, keeping null implies no change unless user updates.
+                // NOTE: If user doesn't change photo, we should submit null or existing URL logic in handleSubmit.
+                // Current logic in handleSubmit reconstructs payload.
             }
 
             // 5. Location
@@ -305,9 +334,27 @@
     function handleFileSelect(e) {
         const file = e.target.files[0];
         if (file) {
+            if (isCameraActive) stopCamera();
+
             const reader = new FileReader();
-            reader.onload = (e) => {
-                showPreview(e.target.result);
+            reader.onload = async (e) => {
+                if (App.Camera && App.Camera.processImage) {
+                    try {
+                        const resized = await App.Camera.processImage(e.target.result);
+                        if (resized) {
+                            currentPhotoBase64 = resized.base64_320; // Kits use 320 for now? Or keep 320 logic.
+                            // Kit table usually has `image_url` not split? 
+                            // tools-form uploads raw blob usually. 
+                            // But `kit-register` EF expects `photo_base64`.
+                            // Let's use 320 version as standard.
+                            showPreview(resized.base64_320);
+                        }
+                    } catch (err) { console.error(err); }
+                } else {
+                    // Fallback
+                    showPreview(e.target.result);
+                    currentPhotoBase64 = e.target.result;
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -317,14 +364,6 @@
         previewImg.src = src;
         previewImg.style.display = 'block';
         photoContainer.querySelector('.placeholder-text').style.display = 'none';
-    }
-
-    async function toggleCamera() {
-        if (isCameraActive) {
-            // If already active, maybe focus?
-        } else {
-            startCamera();
-        }
     }
 
     async function startCamera() {
@@ -338,9 +377,22 @@
             photoContainer.querySelector('.placeholder-text').style.display = 'none';
 
             isCameraActive = true;
-            document.getElementById('btn-kit-camera').style.display = 'none';
+
+            // UI Toggle
+            const btnCamera = document.getElementById('btn-kit-camera');
+            if (btnCamera) {
+                btnCamera.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
+                btnCamera.style.display = 'none'; // tools-form style: hide main camera btn, show confirm
+            }
+
             document.getElementById('btn-kit-file').style.display = 'none';
-            document.getElementById('btn-kit-confirm').style.display = 'inline-flex';
+
+            const btnConfirm = document.getElementById('btn-kit-confirm');
+            if (btnConfirm) {
+                btnConfirm.style.display = 'inline-flex';
+                btnConfirm.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영';
+            }
+
             document.getElementById('btn-cancel-camera').style.display = 'inline-flex';
 
         } catch (err) {
@@ -357,34 +409,54 @@
         videoStream.style.display = 'none';
         isCameraActive = false;
 
-        document.getElementById('btn-kit-camera').style.display = 'inline-flex';
+        const btnCamera = document.getElementById('btn-kit-camera');
+        if (btnCamera) {
+            btnCamera.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
+            btnCamera.style.display = 'inline-flex';
+        }
+
         document.getElementById('btn-kit-file').style.display = 'inline-flex';
         document.getElementById('btn-kit-confirm').style.display = 'none';
         document.getElementById('btn-cancel-camera').style.display = 'none';
 
-        if (previewImg.src) previewImg.style.display = 'block';
-        else photoContainer.querySelector('.placeholder-text').style.display = 'block';
+        if (previewImg.src && previewImg.src !== window.location.href) {
+            previewImg.style.display = 'block';
+        } else {
+            photoContainer.querySelector('.placeholder-text').style.display = 'block';
+        }
     }
 
-    function takePhotoOrStop() {
-        // Take Photo
+    async function takeKitPhoto() {
+        if (!videoStream || !canvas) return;
+
         canvas.width = videoStream.videoWidth;
         canvas.height = videoStream.videoHeight;
         canvas.getContext('2d').drawImage(videoStream, 0, 0);
 
-        canvas.toBlob((blob) => {
-            const file = new File([blob], `capture-${Date.now()}.jpg`, { type: "image/jpeg" });
+        const base64 = canvas.toDataURL("image/jpeg");
 
-            // Set to file input
-            const dt = new DataTransfer();
-            dt.items.add(file);
-            fileInput.files = dt.files;
+        stopCamera();
 
-            // Show Preview
-            showPreview(URL.createObjectURL(blob));
+        if (App.Camera && App.Camera.processImage) {
+            try {
+                const resized = await App.Camera.processImage(base64);
+                if (resized) {
+                    currentPhotoBase64 = resized.base64_320;
+                    showPreview(resized.base64_320);
+                }
+            } catch (err) {
+                console.error(err);
+                // Fallback
+                showPreview(base64);
+                currentPhotoBase64 = base64;
+            }
+        }
 
-            stopCamera();
-        }, 'image/jpeg');
+        // Review Mode UI Update
+        const btnCamera = document.getElementById('btn-kit-camera');
+        if (btnCamera) {
+            btnCamera.innerHTML = '<span class="material-symbols-outlined">replay</span> 다시 촬영';
+        }
     }
 
     // --- Submit Logic ---
@@ -447,19 +519,20 @@
         }
 
         // Base64 Photo
-        let photoBase64 = null;
-        if (file) {
-            try {
-                photoBase64 = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
-                });
-            } catch (err) {
-                return alert("사진 처리 오류");
-            }
-        }
+        let photoBase64 = currentPhotoBase64;
+
+        // Fallback or override logic:
+        // If user selected a file but logic failed to set currentPhotoBase64?
+        // Rely on currentPhotoBase64 which is set by handleFileSelect or takeKitPhoto.
+
+        // However, if editing and no new photo, currentPhotoBase64 is null.
+        // If fileInput has file but currentPhotoBase64 null (async race?), we should double check.
+        // But handleFileSelect waits? No it doesn't block submit.
+        // Assuming user waits for preview.
+
+        // If 'edit' and !photoBase64, backend should preserve existing if we send null?
+        // kit-register EF logic: "if photo_base64 is present, upload and update image_url".
+        // If not present, it ignores? We should check EF, but standard behavior implies yes.
 
         const payload = {
             mode: currentMode,

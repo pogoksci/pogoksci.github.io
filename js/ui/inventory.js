@@ -103,9 +103,11 @@
         // 그룹화된 경우에만 헤더 표시
         if (isGroupedSort && groupTitle) {
           header = `
-            <div class="inventory-section-header">
-              <span class="section-title">${groupTitle}</span>
-              <span class="section-count">${items.length}</span>
+            <div class="section-header-wrapper">
+              <div class="inventory-section-header">
+                <span class="section-title">${groupTitle}</span>
+                <span class="section-count">${items.length}</span>
+              </div>
             </div>`;
         }
 
@@ -156,6 +158,7 @@
       })
       .join("");
 
+    if (!container) return;
     container.innerHTML = sections;
     container.querySelectorAll(".inventory-card").forEach((card) => {
       const id = Number(card.dataset.id);

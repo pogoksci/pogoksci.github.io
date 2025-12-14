@@ -4,6 +4,14 @@
 
 ================================================================= */
 
+
+:root {
+  --bg-color: #ffffff;
+  --header-bg: #f5f8ff;
+  --header-border: #00a0b2;
+  --text-main: #333333;
+}
+
 html,
 
 body {
@@ -140,6 +148,11 @@ label {
 
   color: #333;
 
+}
+
+.required-mark {
+  color: red;
+  margin-left: 2px;
 }
 
 
@@ -1012,9 +1025,9 @@ button:disabled {
 
 .cabinet-card .card-info .area-name::before {
 
-  content: "쨌"
+  content: ">";
 
-    margin: 0 6px 0 2px;
+  margin: 0 6px 0 2px;
 
   color: #8a8a8a;
 
@@ -2604,33 +2617,51 @@ input[type="date"] {
 
 /* ?좎떥釉앹삕?좎뜲由?移닷뜝?숈삕 ?좎룞?쇿뜝?깆븘?몄삕 */
 
+/* 섹션 헤더 래퍼 (Sticky & Background Mask) */
+.section-header-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--bg-color);
+  /* Wrapper는 흰색(Mask) */
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+
 .inventory-section-header {
+  position: relative;
+  /* 자식 absolute 배치를 위해 */
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  margin: 0 8px;
-  /* ?곷떒 留덉쭊 ?쒓굅 (洹몃９?먯꽌 泥섎━) */
+  margin: 0;
   font-weight: 600;
-  color: #333;
-  background: #f5f8ff;
-  border-left: 4px solid #00a0b2;
-  border-radius: 4px;
-  position: sticky;
-  /* ?ㅽ겕濡????곷떒 怨좎젙 */
+  color: var(--text-main);
+  background: var(--header-bg);
+  /* border-left 제거 (pseudo-element로 대체) */
+  border-radius: 3px;
+  overflow: hidden;
+  /* 자식 요소(선)가 라운드 밖으로 나가지 않도록 */
+}
+
+/* 왼쪽 파란색 선 (Pseudo-element) */
+.inventory-section-header::before {
+  content: "";
+  position: absolute;
+  left: 0;
   top: 0;
-  z-index: 10;
-  /* 紐⑸줉蹂대떎 ?꾩뿉 ?쒖떆 (?뺤떎?섍쾶) */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  /* 怨좎젙 ???낆껜媛?異붽? */
+  bottom: 0;
+  width: 4px;
+  /* 기존 border-left 너비 */
+  background-color: var(--header-border);
 }
 
 .inventory-section-group {
   margin-top: 12px;
   scroll-snap-align: start;
-  /* 洹몃９ ?쒖옉 遺遺꾩뿉 ?ㅻ깄 */
   scroll-margin-top: 50px;
-  /* ?ㅻ깄 ???ㅻ뜑 ?믪씠留뚰겮 ?щ갚 ?뺣낫 */
 }
 
 .inventory-section-group:first-child {
@@ -4753,6 +4784,8 @@ input[type="date"] {
 
   /* Border Separator */
   border-bottom: 1px solid #ddd;
+  margin-bottom: 20px;
+  /* 구분선과 콘텐츠 사이 간격 추가 */
 }
 
 .layout-header h2 {
@@ -4822,34 +4855,7 @@ input[type="date"] {
   /* Spacing between title and actions */
 }
 
-/* Fix for Inventory Section Header (Sticky with Opaquq Gap) */
-.inventory-section-header {
-  position: sticky;
-  top: 0;
-  border-top: 20px solid #fff;
-  /* Opaque gap to hide scrolled content */
-  z-index: 10;
-  /* Above scrolled content, but below FAB/Navbar */
-  margin-top: 0 !important;
-  /* Remove transparent margin */
-  background-color: #f0f7fb;
-  /* Default background */
-
-  /* Simulate Border-Left using Gradient to avoid 'Spike' (Miter) with Border-Top */
-  background-image: linear-gradient(to right, #00a0b2 4px, transparent 4px);
-  background-repeat: no-repeat;
-
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  /* Left Padding: 4px (Visual Border) + 16px (Spacing) = 20px */
-  padding: 8px 16px 8px 20px;
-
-  border-bottom: 1px solid #e0e0e0;
-  border-left: none !important;
-  /* Remove real border to prevent spike */
-}
+/* Duplicate block removed to avoid conflicts with Structural Header at line 2600 */
 
 /* Reverted: Title is clean again */
 .section-title {
@@ -6184,4 +6190,15 @@ input[type="date"] {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
+}
+
+#valence_group {
+  margin-top: 12px;
+}
+/* Usage Register Page Scroll Fix */
+#usage-inventory-list {
+  padding-bottom: 80px;
+  overflow-y: auto;
+  flex: 1;
+  box-sizing: border-box;
 }

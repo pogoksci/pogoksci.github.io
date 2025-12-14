@@ -160,7 +160,13 @@
       // Debug info? console.log(`[Conv %] Val:${v}, dPure:${dPure} -> dSoln:${rho.toFixed(3)}, M:${result.molarity?.toFixed(3)}`);
 
     } else if (unit === "M" || unit === "N") {
-      const effectiveM = v;
+      let effectiveM = v;
+      // If Unit is N, Molarity = Normality / Valence
+      if (unit === "N") {
+        const valence = Number(arguments[0].valence) || 1;
+        effectiveM = v / valence;
+      }
+
       const rho = getDensity(effectiveM, "M");
 
       const solutionVolumeL = 1;

@@ -8,18 +8,20 @@
     <div class="layout-content scroll-padding-nav" style="padding: 25px;">
         <form id="inventory-form" autocomplete="off">
             <div class="form-group">
-                <label for="cas_rn">CAS *</label>
+                <label for="cas_rn">CAS <span class="required-mark">*</span></label>
                 <input type="text" id="cas_rn" name="cas_rn" placeholder="CAS Registry Number (예: 7647-01-0)" required>
             </div>
 
             <div class="form-group">
-                <label for="purchase_volume">구입용량 (숫자) *</label>
+                <label for="purchase_volume">구입용량 (숫자) <span class="required-mark">*</span></label>
                 <input type="number" id="purchase_volume" name="purchase_volume" placeholder="구입 용량" min="0" step="any"
-                    autocomplete="off">
+                    autocomplete="off" required>
             </div>
 
-            <div class="form-group">
-                <label>단위 *</label>
+            <div class="form-group" style="position: relative;">
+                <label>단위 <span class="required-mark">*</span></label>
+                <!-- Hidden input for native validation -->
+                <input type="text" id="unit_hidden" required style="position: absolute; opacity: 0; width: 1px; height: 1px; bottom: 0; left: 50%;">
                 <div class="button-group" id="unit_buttons">
                     <button type="button" data-value="g">g</button>
                     <button type="button" data-value="mL">mL</button>
@@ -27,8 +29,10 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>시약병 형태 *</label>
+            <div class="form-group" style="position: relative;">
+                <label>시약병 형태 <span class="required-mark">*</span></label>
+                <!-- Hidden input for native validation -->
+                <input type="text" id="bottle_type_hidden" required style="position: absolute; opacity: 0; width: 1px; height: 1px; bottom: 0; left: 50%;">
                 <div class="button-group" id="bottle_type_buttons">
                     <button type="button" data-value="갈색유리">갈색유리</button>
                     <button type="button" data-value="투명유리">투명유리</button>
@@ -107,6 +111,7 @@
                     <button type="button" data-value="막대">막대</button>
                     <button type="button" data-value="벌크">벌크</button>
                     <button type="button" data-value="기체">기체</button>
+                    <button type="button" data-value="기타">기타</button>
                 </div>
             </div>
 
@@ -122,6 +127,19 @@
                     <button type="button" data-value="%">%</button>
                     <button type="button" data-value="M">M (몰농도)</button>
                     <button type="button" data-value="N">N (노르말 농도)</button>
+                </div>
+
+                <div class="form-group" id="valence_group" style="display: none;">
+                    <label for="valence_input" style="color: #d32f2f;">가수 (Valence) *</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="number" id="valence_input" name="valence" placeholder="예: 1, 2" min="1" step="1"
+                            style="width: 120px;" autocomplete="off">
+                        <span style="font-size: 13px; color: #666;">
+                            <span class="material-symbols-outlined"
+                                style="font-size: 14px; vertical-align: middle;">info</span>
+                            노르말 농도(N) 계산을 위한 가수입니다.
+                        </span>
+                    </div>
                 </div>
             </div>
 

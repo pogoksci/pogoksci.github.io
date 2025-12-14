@@ -132,27 +132,33 @@
         // 3. Kit Sync
         syncExperimentKits: async function (btn) {
             if (btn) btn.disabled = true;
-            this.log("🚀 실험 키트 데이터 동기화 시작...");
+            try {
+                this.log("🚀 실험 키트 데이터 동기화 시작 (Server-side)...");
 
-            if (App.Utils?.syncExperimentKits) {
-                // Override alert/log of kit-sync.js if possible, or just let it run
-                // kit-sync.js uses alert() and document.getElementById('sync-status')
-                // We can try to hook into it or just call it.
-                // Since kit-sync.js is simple, we can just call it.
-                // But we want logs here.
+                this.log("📂 data/experiment_kit.csv 파일 읽는 중...");
+                const response = await fetch("data/experiment_kit.csv");
+                if (!response.ok) throw new Error(`파일을 찾을 수 없습니다. (Status: ${response.status})`);
 
-                // Let's manually invoke it and catch errors
-                try {
-                    await App.Utils.syncExperimentKits();
-                    this.log("🎉 실험 키트 동기화 완료!", "success");
-                } catch (e) {
-                    this.log(`❌ 키트 동기화 실패: ${e.message}`, "error");
-                }
-            } else {
-                this.log("❌ 키트 동기화 모듈(kit-sync.js)이 로드되지 않았습니다.", "error");
+                const csvText = await response.text();
+                this.log(`✅ 파일 읽기 성공 (${csvText.length} bytes). 서버로 전송합니다...`);
+
+                const { data, error } = await App.supabase.functions.invoke('system-admin', {
+                    body: {
+                        action: 'sync_experiment_kit',
+                        csv_content: csvText
+                    }
+                });
+
+                if (error) throw error;
+                if (data?.error) throw new Error(data.error);
+
+                this.log(`🎉 동기화 완료! (데이터: ${data.data.count}개)`, "success");
+
+            } catch (err) {
+                this.log(`❌ 오류 발생: ${err.message}`, "error");
+            } finally {
+                if (btn) btn.disabled = false;
             }
-
-            if (btn) btn.disabled = false;
         }
     };
 

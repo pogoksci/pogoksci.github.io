@@ -131,12 +131,22 @@
               alert("⚠️ CAS 번호는 수정할 수 없습니다.\n약품 종류가 변경되었다면 [새 약품 등록]을 이용해주세요.");
             };
           }
+          // Form Population
+          setInput("cas_rn", detail.Substance.cas_rn);
+          // Store chemical_formula for Valence Calc
+          set("chemical_formula", detail.Substance.chemical_formula);
+
+          // Populate Inputs from DB or API data
+          if (detail.Substance.chemical_name_ko) setInput("chemical_name_ko", detail.Substance.chemical_name_ko);
         } else {
           setInput("cas_rn", "");
         }
         setInput("purchase_volume", detail.current_amount); // CHANGED: initial_amount -> current_amount
         setInput("concentration_value", detail.concentration_value);
+        setInput("concentration_value", detail.concentration_value);
         setInput("purchase_date", detail.purchase_date);
+        setInput("valence_input", detail.valence); // ✅ Valence Input
+
 
         // 2. Buttons
         // We need to wait for setupButtonGroup to run? No, DOM is there.
@@ -173,6 +183,10 @@
         };
 
         setBtnGroup("unit_buttons", detail.unit);
+        if (detail.unit) {
+          const h = document.getElementById("unit_hidden");
+          if (h) h.value = detail.unit;
+        }
 
         // Bottle Type Restoration (Simple direct map)
         const rawBottleVal = detail.bottle_type || detail.bottle_identifier;
@@ -190,10 +204,19 @@
 
         const finalBottleVal = bottleMap[rawBottleVal] || rawBottleVal;
         setBtnGroup("bottle_type_buttons", finalBottleVal);
+        if (finalBottleVal) {
+          const h = document.getElementById("bottle_type_hidden");
+          if (h) h.value = finalBottleVal;
+        }
 
         setBtnGroup("classification_buttons", detail.classification);
         setBtnGroup("state_buttons", detail.state); // CHANGED: status -> state
         setBtnGroup("concentration_unit_buttons", detail.concentration_unit);
+        // ✅ Valence Visibility Override
+        if (detail.concentration_unit === "N") {
+          const vGroup = document.getElementById("valence_group");
+          if (vGroup) vGroup.style.display = "block";
+        }
 
         // Manufacturer special handling
         const manVal = detail.manufacturer;
@@ -325,11 +348,63 @@
       "bottle_type_buttons",
       "classification_buttons",
       "state_buttons",
-      "concentration_unit_buttons",
+      // "concentration_unit_buttons", // Handled separately for Valence Logic
       "manufacturer_buttons",
       "manufacturer_buttons",
       // Location buttons are handled dynamically in location logic
     ];
+
+    // ------------------------------------------------------------
+    // 🧮 농도 단위 변경 리스너 (Valence UI Toggle)
+    // ------------------------------------------------------------
+    setupButtonGroup("concentration_unit_buttons", (btn) => {
+      const val = btn.dataset.value;
+      set("concentration_unit", val);
+
+      // Toggle Valence Input
+      const valenceGroup = document.getElementById("valence_group");
+      if (valenceGroup) {
+        if (val === "N") {
+          valenceGroup.style.display = "block";
+
+          // Auto-Calculate Valence Logic
+          const storedFormula = get("chemical_formula");
+          const storedClass = get("classification");
+
+          console.log(`[Validation Debug] Formula: "${storedFormula}", Class: "${storedClass}"`);
+
+          if (storedFormula) {
+            const v = getValence(storedFormula, storedClass);
+            console.log(`[Validation Debug] Calculated Valence: ${v}`);
+            const vInput = document.getElementById("valence_input");
+            // Only auto-fill if empty
+            if (vInput) { // Force update for debugging if needed, but respect 'if empty' rule?
+              // User said "3 isn't entered". So it's likely empty.
+              if (!vInput.value) {
+                vInput.value = v;
+                set("valence", v);
+              } else {
+                console.log(`[Validation Debug] Field not empty: ${vInput.value}`);
+              }
+            }
+          } else {
+            console.warn("[Validation Debug] No formula found in state.");
+          }
+        } else {
+          valenceGroup.style.display = "none";
+          set("valence", 1);
+        }
+      }
+    });
+
+    // Valence Input Listener
+    const valenceInput = document.getElementById("valence_input");
+    if (valenceInput) {
+      valenceInput.addEventListener("input", (e) => {
+        const val = Number(e.target.value);
+        if (val > 0) set("valence", val);
+      });
+    }
 
     // ------------------------------------------------------------
     // 🧮 공병 질량 자동 계산 리스너 (Auto-Calculate Mass)
@@ -348,6 +423,14 @@
         set("bottle_mass", null);
       }
     };
+    // ------------------------------------------------------------
+    // 🔍 CAS 번호 조회 리스너 (pre-lookup)
+    // ------------------------------------------------------------
+    const casInput = document.getElementById("cas_rn");
+    if (casInput) {
+      // Re-assign for other references if needed, but ID lookup handles it.
+      // Re-assign for other references if needed, but ID lookup handles it.
+    }
 
     const volInput = document.getElementById("purchase_volume");
     if (volInput) {
@@ -377,6 +460,15 @@
         const val = btn.dataset.value;
         // ID에서 '_buttons' 제거하여 state key 추정 (예: unit_buttons -> unit)
         const key = id.replace("_buttons", "");
+
+        // Sync Hidden Inputs for Native Validation
+        if (key === "unit") {
+          const h = document.getElementById("unit_hidden");
+          if (h) h.value = val;
+        } else if (key === "bottle_type") {
+          const h = document.getElementById("bottle_type_hidden");
+          if (h) h.value = val;
+        }
 
         if (key === "manufacturer" && val === "기타") {
           document.getElementById("other_manufacturer_group").style.display = "block";
@@ -427,23 +519,38 @@
         inventoryStream = null;
       }
       if (videoStream && videoStream.srcObject) {
-        const tracks = videoStream.srcObject.getTracks();
-        if (tracks) tracks.forEach(t => t.stop());
+        // videoStream.srcObject.getTracks().forEach(t => t.stop()); // duplicate check
         videoStream.srcObject = null;
       }
       if (videoStream) videoStream.style.display = 'none';
 
       isCameraActive = false;
-      if (cameraBtn) cameraBtn.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
-      if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'none';
-      if (cameraCancelBtn) cameraCancelBtn.style.display = 'none';
-      if (photoBtn) photoBtn.style.display = 'inline-flex';
+      togglePhotoButtons(false);
 
       // Restore preview if exists
       if (previewImg && previewImg.src && previewImg.src !== window.location.href) {
         previewImg.style.display = 'block';
       }
+
+      const placeholder = previewBox.querySelector('.placeholder-text');
+      if (placeholder && (!previewImg || !previewImg.src || previewImg.style.display === 'none')) {
+        placeholder.style.display = 'block';
+      }
     };
+
+    const togglePhotoButtons = (isCameraOn) => {
+      if (photoBtn) photoBtn.style.display = isCameraOn ? 'none' : 'inline-flex';
+      // Logic: active -> camera btn hidden (or changed?), confirm/cancel shown.
+      // tools-form: camera btn hidden.
+      if (cameraBtn) cameraBtn.style.display = isCameraOn ? 'none' : 'inline-flex';
+
+      if (cameraConfirmBtn) {
+        cameraConfirmBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영';
+        cameraConfirmBtn.style.display = isCameraOn ? 'inline-flex' : 'none';
+      }
+      if (cameraCancelBtn) cameraCancelBtn.style.display = isCameraOn ? 'inline-flex' : 'none';
+    };
+
 
     // Helper: Start Camera
     const startCameraFunc = async () => {
@@ -460,15 +567,11 @@
         if (placeholder) placeholder.style.display = 'none';
 
         isCameraActive = true;
-        cameraBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
-
-        if (photoBtn) photoBtn.style.display = 'none';
-        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-flex';
-        if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'none';
+        togglePhotoButtons(true);
 
       } catch (err) {
         console.error("Camera access denied:", err);
-        cameraInput.click();
+        if (cameraInput) cameraInput.click();
       }
     };
 
@@ -481,37 +584,39 @@
 
       const base64 = canvas.toDataURL("image/jpeg");
 
+      // Stop camera immediately to show preview
+      stopCamera();
+
       if (App.Camera && App.Camera.processImage) {
-        const resized = await App.Camera.processImage(base64);
-        if (!resized) return;
+        try {
+          const resized = await App.Camera.processImage(base64);
+          if (!resized) return;
 
-        set("photo_320_base64", resized.base64_320);
-        set("photo_160_base64", resized.base64_160);
+          set("photo_320_base64", resized.base64_320);
+          set("photo_160_base64", resized.base64_160);
 
-        if (previewImg) {
-          previewImg.src = resized.base64_320;
-          previewImg.style.display = 'block';
-        } else {
-          // Fallback if element missing
-          const img = document.createElement('img');
-          img.id = 'preview-img';
-          img.style.width = '100%';
-          img.style.height = '100%';
-          img.style.objectFit = 'cover';
-          img.src = resized.base64_320;
-          previewBox.insertBefore(img, previewBox.firstChild);
+          if (previewImg) {
+            previewImg.src = resized.base64_320;
+            previewImg.style.display = 'block';
+          } else {
+            // Fallback
+            const img = document.createElement('img');
+            img.id = 'preview-img';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.src = resized.base64_320;
+            previewBox.insertBefore(img, previewBox.firstChild);
+          }
+
+          const placeholder = previewBox.querySelector('.placeholder-text');
+          if (placeholder) placeholder.style.display = 'none';
+
+        } catch (err) {
+          console.error("Image processing failed:", err);
+          alert("사진 처리 중 오류가 발생했습니다.");
         }
       }
-
-      const placeholder = previewBox.querySelector('.placeholder-text');
-      if (placeholder) placeholder.style.display = 'none';
-
-      // Review Mode
-      videoStream.pause();
-      videoStream.style.display = 'none';
-
-      cameraBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> 다시 촬영';
-      if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'inline-flex';
     };
 
     // Event Listeners
@@ -526,8 +631,12 @@
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (ev) => {
-          processImage(ev.target.result, (resized) => {
+        reader.onload = async (ev) => {
+          try {
+            // Fix: Use await instead of callback
+            const resized = await App.Camera.processImage(ev.target.result);
+            if (!resized) return;
+
             set("photo_320_base64", resized.base64_320);
             set("photo_160_base64", resized.base64_160);
 
@@ -537,7 +646,10 @@
               const placeholder = previewBox.querySelector('.placeholder-text');
               if (placeholder) placeholder.style.display = 'none';
             }
-          });
+          } catch (err) {
+            console.error("File processing failed:", err);
+            alert("이미지 처리 중 오류가 발생했습니다.");
+          }
         };
         reader.readAsDataURL(file);
       };
@@ -545,20 +657,14 @@
 
     if (cameraBtn) {
       cameraBtn.onclick = () => {
-        if (isCameraActive) {
-          // If in Review mode, Restart (Retake)
-          if (videoStream.style.display === 'none') {
-            videoStream.style.display = 'block';
-            videoStream.play();
-            if (previewImg) previewImg.style.display = 'none';
-            cameraBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
-            if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'none';
-          } else {
-            takePhoto();
-          }
-        } else {
-          startCameraFunc();
-        }
+        startCameraFunc();
+      };
+    }
+
+    // In tools-form.js, the 'confirm' button is the trigger to take photo.
+    if (cameraConfirmBtn) {
+      cameraConfirmBtn.onclick = () => {
+        takePhoto();
       };
     }
 
@@ -606,8 +712,8 @@
         set("purchase_volume", document.getElementById("purchase_volume").value);
         set("concentration_value", document.getElementById("concentration_value").value);
         set("purchase_date", document.getElementById("purchase_date").value);
+        set("valence", document.getElementById("valence_input").value);
 
-        // Get Location
         if (App.StorageSelector) {
           const loc = App.StorageSelector.getSelection();
           // if (!loc.cabinet_id) check removed for optional location
@@ -618,6 +724,12 @@
           set("internal_shelf_level", loc.internal_shelf_level);
           set("storage_column", loc.storage_column);
         }
+
+        // 🛑 Mandatory Fields Validation -> Replaced by Native HTML5 Validation
+        // if (!vCas || !vVol || !vUnit || !vBottle) {
+        //   alert("다음 필수 항목을 모두 입력해주세요:\n- CAS 번호\n- 구입용량\n- 단위\n- 시약병 형태");
+        //   return;
+        // }
 
         try {
           const payload = await makePayload(dump()); // Validate & Transform
@@ -649,7 +761,8 @@
             concentration_value: conc,
             concentration_unit: get("concentration_unit"),
             manufacturer: get("manufacturer") || get("manufacturer_custom"),
-            purchase_date: get("purchase_date") || null
+            purchase_date: get("purchase_date") || null,
+            valence: get("valence") ? Number(get("valence")) : null
           });
 
           // Correction: In initInventoryForm (line 100), we set "status" from detail.status.
@@ -830,7 +943,8 @@
                   value: payload.concentration_value,
                   unit: payload.concentration_unit,
                   molarMass: subData.molecular_mass,
-                  density: densityVal
+                  density: densityVal,
+                  valence: Number(payload.valence) || 1
                 });
 
                 const annotateUnit = (unit) => {
@@ -1018,6 +1132,8 @@
     const cabOtherInput = document.getElementById("cabinet_other_input");
 
     if (cabGroup) {
+      // 🧮 농도 단위 변경 리스너 (Valence UI Toggle)
+      // ------------------------------------------------------------
       setupButtonGroup("cabinet_name_buttons", (btn) => {
         const value = btn.dataset.value?.trim() || btn.textContent.trim();
 
@@ -1039,6 +1155,8 @@
         set("cabinet_custom_name", e.target.value.trim());
       });
     }
+
+
 
     // ------------------------------------------------------------
     // 3️⃣ 사진 업로드 처리
@@ -1071,26 +1189,31 @@
         cabinetStream = null;
       }
       if (videoStream && videoStream.srcObject) {
-        const tracks = videoStream.srcObject.getTracks();
-        if (tracks) tracks.forEach(t => t.stop());
+        // videoStream.srcObject.getTracks().forEach(t => t.stop());
         videoStream.srcObject = null;
       }
 
       if (videoStream) videoStream.style.display = 'none';
 
       isCameraActive = false;
-      if (cameraBtn) {
-        cameraBtn.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
-      }
-      if (photoBtn) photoBtn.style.display = 'inline-flex';
-      if (cameraCancelBtn) cameraCancelBtn.style.display = 'none';
-      if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'none';
+      toggleCabinetPhotoButtons(false);
 
       // Keep preview image visible
       const existingImg = previewBox.querySelector('img');
       if (existingImg && existingImg.src && existingImg.src !== window.location.href) {
         existingImg.style.display = 'block';
       }
+    };
+
+    const toggleCabinetPhotoButtons = (isCameraOn) => {
+      if (photoBtn) photoBtn.style.display = isCameraOn ? 'none' : 'inline-flex';
+      if (cameraBtn) cameraBtn.style.display = isCameraOn ? 'none' : 'inline-flex';
+
+      if (cameraConfirmBtn) {
+        cameraConfirmBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영';
+        cameraConfirmBtn.style.display = isCameraOn ? 'inline-flex' : 'none';
+      }
+      if (cameraCancelBtn) cameraCancelBtn.style.display = isCameraOn ? 'inline-flex' : 'none';
     };
 
     const startCabinetCamera = async () => {
@@ -1101,7 +1224,7 @@
         videoStream.style.display = 'block';
         videoStream.play();
 
-        // Hide existing image
+        // Check/Hide existing image
         const existingImg = previewBox.querySelector('img');
         if (existingImg) existingImg.style.display = 'none';
 
@@ -1109,16 +1232,11 @@
         if (placeholder) placeholder.style.display = 'none';
 
         isCameraActive = true;
-
-        cameraBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
-
-        if (photoBtn) photoBtn.style.display = 'none';
-        if (cameraCancelBtn) cameraCancelBtn.style.display = 'inline-flex';
-        if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'none';
+        toggleCabinetPhotoButtons(true);
 
       } catch (err) {
         console.error("Camera access denied or error:", err);
-        cameraInput.click();
+        if (cameraInput) cameraInput.click();
       }
     };
 
@@ -1130,38 +1248,42 @@
 
       const base64 = canvas.toDataURL("image/jpeg");
 
+      stopCabinetCamera();
+
       if (App.Camera && App.Camera.processImage) {
-        const resized = await App.Camera.processImage(base64);
-        if (resized) {
-          set("photo_320_base64", resized.base64_320);
-          set("photo_160_base64", resized.base64_160);
+        try {
+          const resized = await App.Camera.processImage(base64);
+          if (resized) {
+            set("photo_320_base64", resized.base64_320);
+            set("photo_160_base64", resized.base64_160);
 
-          const placeholder = previewBox.querySelector('.placeholder-text');
-          if (placeholder) placeholder.style.display = 'none';
+            const placeholder = previewBox.querySelector('.placeholder-text');
+            if (placeholder) placeholder.style.display = 'none';
 
-          let img = previewBox.querySelector('img');
-          if (!img) {
-            img = document.createElement('img');
-            img.style.width = "100%";
-            img.style.height = "100%";
-            img.style.objectFit = "cover";
-            previewBox.insertBefore(img, previewBox.firstChild);
+            let img = previewBox.querySelector('img');
+            if (!img) {
+              img = document.createElement('img');
+              img.style.width = "100%";
+              img.style.height = "100%";
+              img.style.objectFit = "cover";
+              previewBox.insertBefore(img, previewBox.firstChild);
+            }
+            img.src = resized.base64_320;
+            img.style.display = 'block';
+            img.style.objectFit = 'cover';
           }
-          img.src = resized.base64_320;
-          img.style.display = 'block';
-          img.style.objectFit = 'cover';
-        }
+        } catch (e) { console.error(e); }
       }
-
-      // Review Mode
-      videoStream.pause();
-      videoStream.style.display = 'none';
-
-      cameraBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> 다시 촬영';
-      if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'inline-flex';
     };
 
     // Listeners
+    const casInput = document.getElementById("cas_rn");
+    if (casInput) {
+      casInput.addEventListener("blur", (e) => {
+        lookupCAS(e.target.value);
+      });
+    }
+
     if (photoBtn && photoInput) {
       photoBtn.onclick = () => {
         if (isCameraActive) stopCabinetCamera();
@@ -1171,31 +1293,17 @@
 
     if (cameraBtn) {
       cameraBtn.onclick = () => {
-        if (isCameraActive) {
-          if (videoStream.style.display === 'none') {
-            // Retake
-            videoStream.style.display = 'block';
-            videoStream.play();
-            const img = previewBox.querySelector('img');
-            if (img) img.style.display = 'none';
-
-            cameraBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
-            if (cameraConfirmBtn) cameraConfirmBtn.style.display = 'none';
-          } else {
-            takeCabinetPhoto();
-          }
-        } else {
-          startCabinetCamera();
-        }
+        startCabinetCamera();
       };
     }
 
-    if (cameraCancelBtn) {
-      cameraCancelBtn.onclick = () => stopCabinetCamera();
-    }
-
     if (cameraConfirmBtn) {
-      cameraConfirmBtn.onclick = () => stopCabinetCamera();
+      cameraConfirmBtn.onclick = () => {
+        takeCabinetPhoto();
+      };
+    }
+    if (cameraCancelBtn) {
+      cameraCancelBtn.onclick = stopCabinetCamera;
     }
 
     const handleFile = (file) => {
@@ -1203,25 +1311,30 @@
       if (isCameraActive) stopCabinetCamera();
 
       const reader = new FileReader();
-      reader.onload = (e) => {
-        processImage(e.target.result, (resized) => {
-          set("photo_320_base64", resized.base64_320);
-          set("photo_160_base64", resized.base64_160);
+      reader.onload = async (e) => {
+        if (App.Camera && App.Camera.processImage) {
+          try {
+            const resized = await App.Camera.processImage(e.target.result);
+            if (resized) {
+              set("photo_320_base64", resized.base64_320);
+              set("photo_160_base64", resized.base64_160);
 
-          const placeholder = previewBox.querySelector('.placeholder-text');
-          if (placeholder) placeholder.style.display = 'none';
+              const placeholder = previewBox.querySelector('.placeholder-text');
+              if (placeholder) placeholder.style.display = 'none';
 
-          let img = previewBox.querySelector('img');
-          if (!img) {
-            img = document.createElement('img');
-            img.style.width = "100%";
-            img.style.height = "100%";
-            img.style.objectFit = "cover";
-            previewBox.appendChild(img);
-          }
-          img.src = resized.base64_320;
-          img.style.display = 'block';
-        });
+              let img = previewBox.querySelector('img');
+              if (!img) {
+                img = document.createElement('img');
+                img.style.width = "100%";
+                img.style.height = "100%";
+                img.style.objectFit = "cover";
+                previewBox.appendChild(img);
+              }
+              img.src = resized.base64_320;
+              img.style.display = 'block';
+            }
+          } catch (err) { console.error(err); }
+        }
       };
       reader.readAsDataURL(file);
     };
@@ -1322,11 +1435,27 @@
           });
 
           // 🖼 사진 복원 (비율 유지)
+          const placeholder = previewBox.querySelector('.placeholder-text');
+          let img = previewBox.querySelector('img');
+
           if (detail.photo_url_320 || detail.photo_url_160) {
             const url = detail.photo_url_320 || detail.photo_url_160;
-            previewBox.innerHTML = `<img src="${url}" alt="시약장 사진">`;
+
+            if (!img) {
+              img = document.createElement('img');
+              img.style.width = "100%";
+              img.style.height = "100%";
+              img.style.objectFit = "cover";
+              // Insert before placeholder or append?
+              // Placeholder usually centered.
+              previewBox.appendChild(img);
+            }
+            img.src = url;
+            img.style.display = 'block';
+            if (placeholder) placeholder.style.display = 'none';
           } else {
-            previewBox.innerHTML = `<span>사진 없음</span>`;
+            if (img) img.style.display = 'none';
+            if (placeholder) placeholder.style.display = 'block';
           }
 
 
@@ -1490,25 +1619,35 @@
         equipmentStream = null;
       }
       if (videoStream && videoStream.srcObject) {
-        const tracks = videoStream.srcObject.getTracks();
-        if (tracks) tracks.forEach(t => t.stop());
+        // videoStream.srcObject.getTracks().forEach(t => t.stop());
         videoStream.srcObject = null;
       }
 
       if (videoStream) videoStream.style.display = "none";
       isCameraActive = false;
 
-      if (cameraBtn) {
-        cameraBtn.innerHTML = '<span class="material-symbols-outlined">photo_camera</span> 카메라로 촬영';
-      }
-      if (photoBtn) photoBtn.style.display = "inline-flex";
-      if (cameraCancelBtn) cameraCancelBtn.style.display = "none";
-      if (cameraConfirmBtn) cameraConfirmBtn.style.display = "none";
+      toggleEquipmentPhotoButtons(false);
 
       const existingImg = previewBox.querySelector('img');
       if (existingImg && existingImg.src && existingImg.src !== window.location.href) {
         existingImg.style.display = "block";
       }
+
+      const placeholder = previewBox.querySelector('.placeholder-text');
+      if (placeholder && (!existingImg || existingImg.style.display === 'none')) {
+        placeholder.style.display = 'block';
+      }
+    };
+
+    const toggleEquipmentPhotoButtons = (isCameraOn) => {
+      if (photoBtn) photoBtn.style.display = isCameraOn ? 'none' : 'inline-flex';
+      if (cameraBtn) cameraBtn.style.display = isCameraOn ? 'none' : 'inline-flex';
+
+      if (cameraConfirmBtn) {
+        cameraConfirmBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영';
+        cameraConfirmBtn.style.display = isCameraOn ? 'inline-flex' : 'none';
+      }
+      if (cameraCancelBtn) cameraCancelBtn.style.display = isCameraOn ? 'inline-flex' : 'none';
     };
 
     const startCameraFunc = async () => {
@@ -1520,12 +1659,7 @@
         videoStream.play();
 
         isCameraActive = true;
-
-        cameraBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
-
-        if (photoBtn) photoBtn.style.display = "none";
-        if (cameraCancelBtn) cameraCancelBtn.style.display = "inline-flex";
-        if (cameraConfirmBtn) cameraConfirmBtn.style.display = "none";
+        toggleEquipmentPhotoButtons(true);
 
         // Hide placeholder/img
         const placeholder = previewBox.querySelector(".placeholder-text");
@@ -1535,68 +1669,53 @@
 
       } catch (e) {
         console.error(e);
-        cameraInput.click();
+        if (cameraInput) cameraInput.click();
       }
     };
 
-    const takePhoto = () => {
+    const takePhoto = async () => {
       if (!videoStream || !canvas) return;
       canvas.width = videoStream.videoWidth;
       canvas.height = videoStream.videoHeight;
       canvas.getContext("2d").drawImage(videoStream, 0, 0);
       const base64 = canvas.toDataURL("image/jpeg");
 
-      App.Camera.processImage(base64, (resized) => {
-        set("photo_320_base64", resized.base64_320);
-        set("photo_160_base64", resized.base64_160);
+      stopCamera();
 
-        let img = previewBox.querySelector('img');
-        if (!img) {
-          img = document.createElement("img");
-          img.style.width = "100%";
-          img.style.height = "100%";
-          img.style.objectFit = "cover";
-          previewBox.insertBefore(img, previewBox.firstChild);
-        }
-        img.src = resized.base64_320;
-        img.style.display = 'block';
-        img.style.objectFit = 'cover';
+      if (App.Camera && App.Camera.processImage) {
+        try {
+          const resized = await App.Camera.processImage(base64);
+          if (resized) {
+            set("photo_320_base64", resized.base64_320);
+            set("photo_160_base64", resized.base64_160);
 
-        // Remove duplicate images if any (from old logic)
-        // Actually best to just rely on one img
-      });
+            let img = previewBox.querySelector('img');
+            if (!img) {
+              img = document.createElement("img");
+              img.style.width = "100%";
+              img.style.height = "100%";
+              img.style.objectFit = "cover";
+              previewBox.insertBefore(img, previewBox.firstChild);
+            }
+            img.src = resized.base64_320;
+            img.style.display = 'block';
+            img.style.objectFit = 'cover';
 
-      // Review Mode
-      videoStream.pause();
-      videoStream.style.display = "none";
-
-      cameraBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> 다시 촬영';
-
-      if (cameraConfirmBtn) cameraConfirmBtn.style.display = "inline-flex";
+            const placeholder = previewBox.querySelector('.placeholder-text');
+            if (placeholder) placeholder.style.display = 'none';
+          }
+        } catch (e) { console.error(e); }
+      }
     };
 
     if (cameraBtn) {
       cameraBtn.onclick = () => {
-        if (isCameraActive) {
-          if (videoStream.style.display === "none") {
-            // Retake
-            videoStream.style.display = "block";
-            videoStream.play();
-            const img = previewBox.querySelector('img');
-            if (img) img.style.display = "none";
-            cameraBtn.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
-            if (cameraConfirmBtn) cameraConfirmBtn.style.display = "none";
-          } else {
-            takePhoto();
-          }
-        } else {
-          startCameraFunc();
-        }
+        startCameraFunc();
       };
     }
 
+    if (cameraConfirmBtn) cameraConfirmBtn.onclick = takePhoto;
     if (cameraCancelBtn) cameraCancelBtn.onclick = stopCamera;
-    if (cameraConfirmBtn) cameraConfirmBtn.onclick = stopCamera;
 
     if (photoBtn) photoBtn.onclick = () => { if (isCameraActive) stopCamera(); photoInput.click(); };
 
@@ -1605,25 +1724,30 @@
       if (isCameraActive) stopCamera(); // Stop camera if active
 
       const reader = new FileReader();
-      reader.onload = (e) => {
-        App.Camera.processImage(e.target.result, (resized) => {
-          set("photo_320_base64", resized.base64_320);
-          set("photo_160_base64", resized.base64_160);
+      reader.onload = async (e) => {
+        if (App.Camera && App.Camera.processImage) {
+          try {
+            const resized = await App.Camera.processImage(e.target.result);
+            if (resized) {
+              set("photo_320_base64", resized.base64_320);
+              set("photo_160_base64", resized.base64_160);
 
-          let img = previewBox.querySelector("img");
-          if (!img) {
-            img = document.createElement("img");
-            img.style.width = "100%";
-            img.style.height = "100%";
-            img.style.objectFit = "cover";
-            previewBox.appendChild(img);
-          }
-          img.src = resized.base64_320;
-          img.style.display = 'block';
+              let img = previewBox.querySelector("img");
+              if (!img) {
+                img = document.createElement("img");
+                img.style.width = "100%";
+                img.style.height = "100%";
+                img.style.objectFit = "cover";
+                previewBox.appendChild(img);
+              }
+              img.src = resized.base64_320;
+              img.style.display = 'block';
 
-          const placeholder = previewBox.querySelector('.placeholder-text');
-          if (placeholder) placeholder.style.display = 'none';
-        });
+              const placeholder = previewBox.querySelector('.placeholder-text');
+              if (placeholder) placeholder.style.display = 'none';
+            }
+          } catch (err) { console.error(err); }
+        }
       };
       reader.readAsDataURL(f);
     };
@@ -1639,6 +1763,8 @@
         set("door_vertical_count", btn.dataset.value);
       });
     }
+
+
 
     // ------------------------------------------------------------
     // ♻️ Edit 모드 복원
@@ -1679,8 +1805,21 @@
       }
 
       // 3. 사진
+      // 3. 사진
       if (detail.photo_url_320) {
-        previewBox.innerHTML = `<img src="${detail.photo_url_320}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+        const placeholder = previewBox.querySelector('.placeholder-text');
+        let img = previewBox.querySelector('img');
+
+        if (!img) {
+          img = document.createElement('img');
+          img.style.width = "100%";
+          img.style.height = "100%";
+          img.style.objectFit = "cover";
+          previewBox.appendChild(img);
+        }
+        img.src = detail.photo_url_320;
+        img.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
       }
 
       // 4. 도어
@@ -2013,9 +2152,14 @@
   console.log("✅ App.Forms 모듈 초기화 완료 (도어 자동 표시 버전)");
 
   // -------------------------------------------------
+  // 🧪 화학식/가수 처리 유틸리티 (Valence Helpers)
+  // -------------------------------------------------
+  // lookupCAS, getValence, normalizeFormula removed by user request
+
+  // -------------------------------------------------
   // 🧮 농도 변환 유틸리티
   // -------------------------------------------------
-  function computeConversions({ value, unit, molarMass, density }) {
+  function computeConversions({ value, unit, molarMass, density, valence = 1 }) {
     const parseDensity = (d) => {
       if (d === null || d === undefined) return null;
       const match = String(d).match(/-?\d+(?:\.\d+)?/);

@@ -12,8 +12,8 @@
     // ------------------------------------------------------------
     // 1️⃣ 초기화
     // ------------------------------------------------------------
-    async function init() {
-        console.log("🚀 UsageRegister.init()");
+    async function init(params) {
+        console.log("🚀 UsageRegister.init()", params);
         currentSort = "category_name_kor"; // 정렬 상태 초기화
 
         // 날짜 기본값: 오늘
@@ -42,6 +42,19 @@
 
         // 목록 로드
         await loadInventoryList();
+
+        // ✅ 파라미터가 있으면 자동 선택
+        if (params && params.inventoryId) {
+            const targetId = Number(params.inventoryId);
+            // allInventory is populated by loadInventoryList
+            const targetItem = allInventory.find(item => item.id === targetId);
+            if (targetItem) {
+                // selectItem 함수 호출 (아래 정의됨)
+                selectItem(targetId); 
+            } else {
+                console.warn(`⚠️ 요청된 Inventory ID(${targetId})를 목록에서 찾을 수 없습니다.`);
+            }
+        }
     }
 
     function bindEvents() {
@@ -190,9 +203,11 @@
             let header = "";
             if (groupTitle) {
                 header = `
-            <div class="inventory-section-header">
-              <span class="section-title">${groupTitle}</span>
-              <span class="section-count">${items.length}</span>
+            <div class="section-header-wrapper">
+              <div class="inventory-section-header">
+                <span class="section-title">${groupTitle}</span>
+                <span class="section-count">${items.length}</span>
+              </div>
             </div>`;
             }
             return `

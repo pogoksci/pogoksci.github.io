@@ -162,6 +162,9 @@
                         currentCategory = cat;
                         const count = filteredData.filter(k => (k.kit_class || '미분류') === cat).length;
 
+                        const wrapper = document.createElement("div");
+                        wrapper.className = "section-header-wrapper";
+
                         const header = document.createElement("div");
                         header.className = "inventory-section-header";
                         // Styles are now handled by styles.css (including gradient border fix)
@@ -170,7 +173,8 @@
                              <span class="section-title">${cat}</span>
                              <span class="section-count">${count}</span>
                         `;
-                        listContainer.appendChild(header);
+                        wrapper.appendChild(header);
+                        listContainer.appendChild(wrapper);
                     }
                 }
 
