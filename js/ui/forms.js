@@ -1230,6 +1230,25 @@
     if (cameraInput) cameraInput.onchange = (e) => handleFile(e.target.files[0]);
 
     // ------------------------------------------------------------
+    // 4️⃣ 도어/선반/열 버튼 그룹 설정 (공통)
+    // ------------------------------------------------------------
+    [
+      "door_vertical_split_buttons",
+      "door_horizontal_split_buttons",
+      "shelf_height_buttons",
+      "storage_columns_buttons"
+    ].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        setupButtonGroup(id, (btn) => {
+          const value = btn.dataset.value || btn.textContent.trim();
+          set(id.replace("_buttons", ""), value);
+        });
+      }
+    });
+
+    // ------------------------------------------------------------
+
     // 4️⃣ edit 모드 — 기존 값 복원
     // ------------------------------------------------------------
     if (mode === "edit" && detail) {
@@ -1310,21 +1329,7 @@
             previewBox.innerHTML = `<span>사진 없음</span>`;
           }
 
-          // ✅ edit 모드에서도 버튼 클릭이 가능하도록 이벤트 재연결
-          [
-            "door_vertical_split_buttons",
-            "door_horizontal_split_buttons",
-            "shelf_height_buttons",
-            "storage_columns_buttons"
-          ].forEach((id) => {
-            const el = document.getElementById(id);
-            if (el) {
-              setupButtonGroup(id, (btn) => {
-                const value = btn.dataset.value || btn.textContent.trim();
-                set(id.replace("_buttons", ""), value);
-              });
-            }
-          });
+
         });
       });
     }
