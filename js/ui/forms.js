@@ -53,6 +53,7 @@
       const payload = await makePayload(state);
       if (!payload.cabinet_name) return alert("시약장 이름을 입력하거나 선택하세요.");
       if (!payload.area_name) return alert("시약장 위치를 선택하세요.");
+      if (!state.door_vertical_split) return alert("외부 도어의 상하분리 형태를 선택하세요.");
 
       if (state.mode === "create") {
         await App.Cabinet.createCabinet(payload);

@@ -353,6 +353,21 @@
 
       clearNextSteps(container, 2);
       loadDoorVertical(container);
+
+      // 🌟 단순 구조(1x1x1) 자동 처리
+      const isSimple =
+        (Number(state.door_horizontal_total) || 1) <= 1 &&
+        (Number(state.shelf_level_total) || 1) <= 1 &&
+        (Number(state.storage_column_total) || 1) <= 1;
+
+      if (isSimple && state.mode !== "EQUIPMENT") {
+        console.log("⚡ Simple Cabinet Detected. Auto-filling steps 4,5,6.");
+        // Auto-Select 1 for hidden fields
+        state.door_horizontal = 1;
+        state.internal_shelf_level = 1;
+        state.storage_column = 1;
+        // Do not render steps 4, 5, 6
+      }
     });
 
     step.appendChild(select);
@@ -521,10 +536,23 @@
 
       // 그 후 UI 그리기
       loadDoorVertical(container);
+
+      const isSimple =
+        (Number(state.door_horizontal_total) || 1) <= 1 &&
+        (Number(state.shelf_level_total) || 1) <= 1 &&
+        (Number(state.storage_column_total) || 1) <= 1;
+
       if (state.mode !== "EQUIPMENT") {
-        loadDoorHorizontal(container);
-        loadShelfLevels(container);
-        loadColumns(container);
+        if (isSimple) {
+          console.log("⚡ Simple Cabinet Restore. Auto-filling steps 4,5,6.");
+          if (!state.door_horizontal) state.door_horizontal = 1;
+          if (!state.internal_shelf_level) state.internal_shelf_level = 1;
+          if (!state.storage_column) state.storage_column = 1;
+        } else {
+          loadDoorHorizontal(container);
+          loadShelfLevels(container);
+          loadColumns(container);
+        }
       }
     }
   }
