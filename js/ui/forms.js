@@ -114,6 +114,9 @@
       // For now, let's just set the basics. Location restoration is complex and usually requires cascading selects.
       // We can trigger the first select change if we have area_id.
 
+      set("msds_pdf_url", detail.msds_pdf_url); // ✅ URL 복원
+      set("msds_pdf_hash", detail.msds_pdf_hash); // ✅ Hash 복원 (수정 시 유지되도록)
+
       requestAnimationFrame(() => {
         // 1. Inputs
         const setInput = (id, val) => {
@@ -826,16 +829,16 @@
               payload.msds_pdf_hash = fileHash;
 
               // 2. Check for Duplicates
+              // 2. Check for Duplicates
               const { data: dupData } = await supabase
                 .from("Inventory")
                 .select("msds_pdf_url")
                 .eq("msds_pdf_hash", fileHash)
-                .limit(1)
-                .maybeSingle();
+                .limit(1);
 
-              if (dupData && dupData.msds_pdf_url) {
-                console.log("♻️ Duplicate MSDS found. Reusing URL:", dupData.msds_pdf_url);
-                payload.msds_pdf_url = dupData.msds_pdf_url;
+              if (dupData && dupData.length > 0 && dupData[0].msds_pdf_url) {
+                console.log("♻️ Duplicate MSDS found. Reusing URL:", dupData[0].msds_pdf_url);
+                payload.msds_pdf_url = dupData[0].msds_pdf_url;
               } else {
                 // 3. Upload New File
                 // Validate size (max 3MB)
