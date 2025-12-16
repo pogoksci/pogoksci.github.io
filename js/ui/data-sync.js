@@ -48,7 +48,6 @@
         loadPapaParse: function () {
             return new Promise((resolve, reject) => {
                 if (window.Papa) return resolve();
-
                 const script = document.createElement("script");
                 script.src = "https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js";
                 script.onload = resolve;
@@ -57,8 +56,66 @@
             });
         },
 
+        loadSheetJS: function () {
+            return new Promise((resolve, reject) => {
+                if (window.XLSX) return resolve();
+                const script = document.createElement("script");
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+                script.onload = resolve;
+                script.onerror = () => reject("SheetJS 로드 실패");
+                document.head.appendChild(script);
+            });
+        },
+
+        // Unified Parse Helper
+        parseFile: async function (file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            
+            if (ext === 'csv') {
+                await this.loadPapaParse();
+                return new Promise((resolve, reject) => {
+                    this.log("📂 CSV 파일 파싱 중...");
+                    Papa.parse(file, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: (results) => {
+                            this.log(`✅ CSV 파싱 완료 (총 ${results.data.length}개 행)`);
+                            resolve(results.data);
+                        },
+                        error: (err) => reject(new Error(`CSV 파싱 오류: ${err.message}`))
+                    });
+                });
+            } else if (ext === 'xlsx' || ext === 'xls') {
+                await this.loadSheetJS();
+                return new Promise((resolve, reject) => {
+                    this.log("📂 엑셀(XLSX) 파일 파싱 중...");
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            const firstSheetName = workbook.SheetNames[0];
+                            const worksheet = workbook.Sheets[firstSheetName];
+                            
+                            // defval: "" ensures empty cells are empty strings, preventing offset issues if sparse
+                            // raw: false ensures types are converted to strings if needed (dates might be tricky though)
+                            const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                            this.log(`✅ 엑셀 파싱 완료 (총 ${rows.length}개 행)`);
+                            resolve(rows);
+                        } catch (err) {
+                            reject(new Error(`엑셀 파싱 오류: ${err.message}`));
+                        }
+                    };
+                    reader.onerror = (err) => reject(new Error("파일 읽기 실패"));
+                    reader.readAsArrayBuffer(file);
+                });
+            } else {
+                throw new Error("지원하지 않는 파일 형식입니다. (CSV, XLSX, XLS만 가능)");
+            }
+        },
+
         clean: function (val) {
-            if (!val) return null;
+            if (val === undefined || val === null) return null; // undefined check added
             let s = String(val).trim();
             if (s === "" || s === "EMPTY") return null;
             if (s.startsWith("'")) {
@@ -69,18 +126,53 @@
             return s.trim();
         },
 
+        // Helper to fetch System Data (Try XLSX first, then CSV)
+        fetchSystemData: async function(baseName) {
+            // 1. Try XLSX
+            try {
+                const xlsxUrl = `data/${baseName}.xlsx`;
+                this.log(`📂 ${xlsxUrl} 확인 중...`);
+                
+                const response = await fetch(xlsxUrl);
+                if (response.ok) {
+                    await this.loadSheetJS();
+                    const arrayBuffer = await response.arrayBuffer();
+                    const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+                    if (workbook.SheetNames.length === 0) throw new Error("엑셀 파일에 시트가 없습니다.");
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    this.log(`✅ XLSX 발견 및 변환 성공.`);
+                    return XLSX.utils.sheet_to_csv(firstSheet);
+                }
+            } catch (ignore) {
+                // Ignore XLSX error and try CSV
+                console.warn("XLSX fetch failed, trying CSV", ignore);
+            }
+
+            // 2. Fallback to CSV
+            try {
+                const csvUrl = `data/${baseName}.csv`;
+                this.log(`⚠️ XLSX 없음. ${csvUrl} 시도 중...`);
+                
+                const response = await fetch(csvUrl);
+                if (response.ok) {
+                    this.log(`✅ CSV 발견.`);
+                    return await response.text();
+                } else {
+                    throw new Error(`파일을 찾을 수 없습니다: ${baseName}.xlsx 또는 .csv`);
+                }
+            } catch (err) {
+                throw new Error(`데이터 로드 실패: ${err.message}`);
+            }
+        },
+
         // 1. HazardList Sync
         syncHazardList: async function (btn) {
             if (btn) btn.disabled = true;
             try {
                 this.log("🚀 유해화학물질 동기화 시작 (Server-side)...");
 
-                this.log("📂 data/HazardList.csv 파일 읽는 중...");
-                const response = await fetch("data/HazardList.csv");
-                if (!response.ok) throw new Error(`파일을 찾을 수 없습니다. (Status: ${response.status})`);
-
-                const csvText = await response.text();
-                this.log(`✅ 파일 읽기 성공 (${csvText.length} bytes). 서버로 전송합니다...`);
+                const csvText = await this.fetchSystemData("HazardList");
+                this.log(`✅ 데이터 준비 완료 (${csvText.length} bytes). 서버로 전송합니다...`);
 
                 const { data, error } = await App.supabase.functions.invoke('system-admin', {
                     body: {
@@ -110,12 +202,8 @@
             try {
                 this.log("🚀 물질 참조 데이터 동기화 시작 (Server-side)...");
 
-                this.log("📂 data/casimport-correct.csv 파일 읽는 중...");
-                const response = await fetch("data/casimport-correct.csv");
-                if (!response.ok) throw new Error(`파일을 찾을 수 없습니다. (Status: ${response.status})`);
-
-                const csvText = await response.text();
-                this.log(`✅ 파일 읽기 성공 (${csvText.length} bytes). 서버로 전송합니다...`);
+                const csvText = await this.fetchSystemData("casimport-correct");
+                this.log(`✅ 데이터 준비 완료 (${csvText.length} bytes). 서버로 전송합니다...`);
 
                 const { data, error } = await App.supabase.functions.invoke('system-admin', {
                     body: {
@@ -142,12 +230,8 @@
             try {
                 this.log("🚀 실험 키트 데이터 동기화 시작 (Server-side)...");
 
-                this.log("📂 data/experiment_kit.csv 파일 읽는 중...");
-                const response = await fetch("data/experiment_kit.csv");
-                if (!response.ok) throw new Error(`파일을 찾을 수 없습니다. (Status: ${response.status})`);
-
-                const csvText = await response.text();
-                this.log(`✅ 파일 읽기 성공 (${csvText.length} bytes). 서버로 전송합니다...`);
+                const csvText = await this.fetchSystemData("experiment_kit");
+                this.log(`✅ 데이터 준비 완료 (${csvText.length} bytes). 서버로 전송합니다...`);
 
                 const { data, error } = await App.supabase.functions.invoke('system-admin', {
                     body: {
@@ -179,7 +263,7 @@
             const startIdInput = document.getElementById("migration-start-id");
             const endIdInput = document.getElementById("migration-end-id");
 
-            if (!fileInput || !fileInput.files[0]) return alert("CSV 파일을 선택해주세요.");
+            if (!fileInput || !fileInput.files[0]) return alert("파일을 선택해주세요.");
             const startId = parseInt(startIdInput.value);
             if (isNaN(startId)) return alert("시작 ID를 입력해주세요.");
             const endId = endIdInput.value ? parseInt(endIdInput.value) : startId;
@@ -191,61 +275,46 @@
 
             try {
                 this.log(`🚀 마이그레이션 시작 (ID: ${startId} ~ ${endId})`);
-                await this.loadPapaParse();
+                
+                // 1. Unified Parse
+                const rows = await this.parseFile(file);
 
-                // 1. Parse CSV
-                this.log("📂 CSV 파일 파싱 중...");
-                Papa.parse(file, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: async (results) => {
-                        try {
-                            const rows = results.data;
-                            this.log(`✅ CSV 파싱 완료 (총 ${rows.length}개 행)`);
-
-                            // 2. Filter by ID Range
-                            const targets = rows.filter(r => {
-                                const id = parseInt(r.id);
-                                return !isNaN(id) && id >= startId && id <= endId;
-                            });
-
-                            if (targets.length === 0) {
-                                throw new Error(`해당 범위(ID ${startId}~${endId})의 데이터가 없습니다.`);
-                            }
-
-                            this.log(`🎯 대상 데이터: ${targets.length}개. 순차 처리 시작...`);
-
-                            // 3. Process each item sequentially
-                            let successCount = 0;
-                            let failCount = 0;
-
-                            for (const row of targets) {
-                                try {
-                                    await this.processMigrationItem(row);
-                                    successCount++;
-                                } catch (itemErr) {
-                                    console.error(itemErr);
-                                    this.log(`❌ [ID: ${row.id}] 실패: ${itemErr.message}`, "error");
-                                    failCount++;
-                                }
-                            }
-
-                            this.log(`✨ 마이그레이션 종료. 성공: ${successCount}, 실패: ${failCount}`, "success");
-
-                        } catch (parseErr) {
-                            this.log(`❌ 처리 중 오류: ${parseErr.message}`, "error");
-                        } finally {
-                            if (btn) btn.disabled = false;
-                        }
-                    },
-                    error: (err) => {
-                        this.log(`❌ CSV 파싱 오류: ${err.message}`, "error");
-                        if (btn) btn.disabled = false;
-                    }
+                // 2. Filter by ID Range
+                const targets = rows.filter(r => {
+                    // CSV has id column. XLSX might convert keys differently, ensure 'id' key exists.
+                    // Case-insensitive key match might be needed if Excel headers are 'ID' vs 'id'
+                    // For now assuming headers match CSV spec exactly.
+                    const idVal = r.id || r.ID; 
+                    const id = parseInt(idVal);
+                    return !isNaN(id) && id >= startId && id <= endId;
                 });
 
+                if (targets.length === 0) {
+                    throw new Error(`해당 범위(ID ${startId}~${endId})의 데이터가 없습니다.`);
+                }
+
+                this.log(`🎯 대상 데이터: ${targets.length}개. 순차 처리 시작...`);
+
+                // 3. Process each item sequentially
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const row of targets) {
+                    try {
+                        await this.processMigrationItem(row);
+                        successCount++;
+                    } catch (itemErr) {
+                        console.error(itemErr);
+                        this.log(`❌ [ID: ${row.id || row.ID}] 실패: ${itemErr.message}`, "error");
+                        failCount++;
+                    }
+                }
+
+                this.log(`✨ 마이그레이션 종료. 성공: ${successCount}, 실패: ${failCount}`, "success");
+
             } catch (err) {
-                this.log(`❌ 초기화 오류: ${err.message}`, "error");
+                this.log(`❌ 처리 중 오류: ${err.message}`, "error");
+            } finally {
                 if (btn) btn.disabled = false;
             }
         },
@@ -452,7 +521,7 @@
             const startIdInput = document.getElementById("tools-migration-start-id");
             const endIdInput = document.getElementById("tools-migration-end-id");
 
-            if (!fileInput || !fileInput.files[0]) return alert("CSV 파일을 선택해주세요.");
+            if (!fileInput || !fileInput.files[0]) return alert("파일을 선택해주세요.");
             const startId = parseInt(startIdInput.value);
             if (isNaN(startId)) return alert("시작 tools_no를 입력해주세요.");
             const endId = endIdInput.value ? parseInt(endIdInput.value) : startId;
@@ -464,62 +533,43 @@
 
             try {
                 this.log(`🚀 교구 마이그레이션 시작 (tools_no: ${startId} ~ ${endId})`);
-                await this.loadPapaParse();
+                
+                // 1. Unified Parse
+                const rows = await this.parseFile(file);
 
-                // 1. Parse CSV
-                this.log("📂 CSV 파일 파싱 중...");
-                Papa.parse(file, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: async (results) => {
-                        try {
-                            const rows = results.data;
-                            this.log(`✅ CSV 파싱 완료 (총 ${rows.length}개 행)`);
-
-                            // 2. Filter by ID Range
-                            // 순번 -> tools_no 매핑
-                            const targets = rows.filter(r => {
-                                const id = parseInt(r["순번"]);
-                                return !isNaN(id) && id >= startId && id <= endId;
-                            });
-
-                            if (targets.length === 0) {
-                                throw new Error(`해당 범위(tools_no ${startId}~${endId})의 데이터가 없습니다.`);
-                            }
-
-                            this.log(`🎯 대상 데이터: ${targets.length}개. 순차 처리 시작...`);
-
-                            // 3. Process each item sequentially
-                            let successCount = 0;
-                            let failCount = 0;
-
-                            for (const row of targets) {
-                                try {
-                                    await this.processToolsMigrationItem(row);
-                                    successCount++;
-                                } catch (itemErr) {
-                                    console.error(itemErr);
-                                    this.log(`❌ [tools_no: ${row["순번"]}] 실패: ${itemErr.message}`, "error");
-                                    failCount++;
-                                }
-                            }
-
-                            this.log(`✨ 교구 마이그레이션 종료. 성공: ${successCount}, 실패: ${failCount}`, "success");
-
-                        } catch (parseErr) {
-                            this.log(`❌ 처리 중 오류: ${parseErr.message}`, "error");
-                        } finally {
-                            if (btn) btn.disabled = false;
-                        }
-                    },
-                    error: (err) => {
-                        this.log(`❌ CSV 파싱 오류: ${err.message}`, "error");
-                        if (btn) btn.disabled = false;
-                    }
+                // 2. Filter by ID Range
+                // 순번 -> tools_no 매핑
+                const targets = rows.filter(r => {
+                    const id = parseInt(r["순번"]);
+                    return !isNaN(id) && id >= startId && id <= endId;
                 });
 
+                if (targets.length === 0) {
+                    throw new Error(`해당 범위(tools_no ${startId}~${endId})의 데이터가 없습니다.`);
+                }
+
+                this.log(`🎯 대상 데이터: ${targets.length}개. 순차 처리 시작...`);
+
+                // 3. Process each item sequentially
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const row of targets) {
+                    try {
+                        await this.processToolsMigrationItem(row);
+                        successCount++;
+                    } catch (itemErr) {
+                        console.error(itemErr);
+                        this.log(`❌ [tools_no: ${row["순번"]}] 실패: ${itemErr.message}`, "error");
+                        failCount++;
+                    }
+                }
+
+                this.log(`✨ 교구 마이그레이션 종료. 성공: ${successCount}, 실패: ${failCount}`, "success");
+
             } catch (err) {
-                this.log(`❌ 초기화 오류: ${err.message}`, "error");
+                this.log(`❌ 처리 중 오류: ${err.message}`, "error");
+            } finally {
                 if (btn) btn.disabled = false;
             }
         },
@@ -575,20 +625,157 @@
             this.log(`✅ [tools_no: ${toolsNo}] 저장 성공`);
         },
 
-        // --- Equipment Migration (Stub/Restore) ---
+        // --- Equipment Migration ---
         initEquipmentMigration: function() {
-            // Restore functionality or keep stub if previously lost.
-            // For now, allow UI to initialize but warn if clicked until fully restored.
-            // Or better, restore basic handler if easy.
-            const btnSafety = document.getElementById("btn-equipment-migration-start");
-            if (btnSafety) {
-                btnSafety.addEventListener("click", () => {
-                     // Temporary Alert if logic is missing from file
-                    // alert("설비 마이그레이션 기능을 복구 중입니다.");
-                    // Actually, let's just log it.
-                    this.log("설비 마이그레이션 로직을 확인해주세요.", "error");
-                });
+            const btnEquipment = document.getElementById("btn-equipment-migration-start");
+            if (btnEquipment) {
+                btnEquipment.addEventListener("click", () => this.handleEquipmentMigration(btnEquipment));
             }
+        },
+
+        handleEquipmentMigration: async function(btn) {
+            const safetyInput = document.getElementById("equipment-safety-file-input");
+            const generalInput = document.getElementById("equipment-general-file-input");
+
+            if (!safetyInput || !generalInput) return;
+            // 둘 중 하나라도 있으면 진행
+            if (!safetyInput.files[0] && !generalInput.files[0]) {
+                return alert("최소한 하나의 파일(안전설비 또는 일반설비)을 선택해주세요.");
+            }
+
+            if (btn) btn.disabled = true;
+
+            try {
+                this.log("🚀 설비 마이그레이션 시작 (전체 범위)");
+                
+                // 1. Process Safety Equipment
+                if (safetyInput.files[0]) {
+                    await this.processEquipmentFile(safetyInput.files[0], "안전설비");
+                }
+
+                // 2. Process General Equipment
+                if (generalInput.files[0]) {
+                    await this.processEquipmentFile(generalInput.files[0], "일반설비");
+                }
+
+                this.log("✨ 모든 설비 데이터 처리 완료", "success");
+
+            } catch (err) {
+                this.log(`❌ 설비 마이그레이션 중 오류: ${err.message}`, "error");
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        },
+
+        processEquipmentFile: async function(file, type) {
+            this.log(`📂 ${type} 파일 파싱 중... (${file.name})`);
+            try {
+                // Unified Parse
+                const rows = await this.parseFile(file);
+                
+                this.log(`✅ ${type} 파싱 완료 (${rows.length}개 행). 순차 처리 시작...`);
+
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const row of rows) {
+                    try {
+                        // 순번(tools_no)가 없는 행은 건너뜀
+                        if (!row["순번"] && !row["순번"] !== 0) continue; // Check validity more carefully
+
+                        await this.processEquipmentMigrationItem(row, type);
+                        successCount++;
+                    } catch (itemErr) {
+                        console.error(itemErr);
+                        this.log(`❌ [${type} - 순번: ${row["순번"]}] 실패: ${itemErr.message}`, "error");
+                        failCount++;
+                    }
+                }
+                this.log(`📊 ${type} 처리 결과 - 성공: ${successCount}, 실패: ${failCount}`);
+
+            } catch (e) {
+                throw new Error(`${type} 처리 중 오류: ${e.message}`);
+            }
+        },
+
+        processEquipmentMigrationItem: async function(row, equipmentType) {
+            // equipmentType: "안전설비" or "일반설비"
+            // Note: tools_section을 "설비"로 통일하고, 비고나 other fields에 세부타입을 넣을지, 
+            // 아니면 tools_section 자체를 구분할지? 
+            // 교구 로직에서는 tools_section="교구". 
+            // 여기선 tools_section="설비"로 하고 tools_category(과목영역)에 equipmentType을 넣거나 하는 게 좋을듯 하나,
+            // CSV에 "영역" 같은 컬럼이 있는지 확인 필요. 
+            // 데이터가 없으므로 일반적인 매핑을 따름.
+            // "안전설비" -> tools_section="안전설비"? 
+            // 일단 User 요청은 '설비 정보 마이그레이션' 임.
+            // Teaching Tools logic uses "교구".
+            // Let's use "설비" as section, and mapping columns as best effort.
+
+            const toolsNo = this.clean(row["순번"]);
+            
+            // 기준량, 보유량 숫자 변환
+            let standardAmount = row["기준"] ? parseInt(row["기준"].replace(/,/g, "")) : 0;
+            if (isNaN(standardAmount)) standardAmount = 0;
+
+            let stock = row["보유"] ? parseInt(row["보유"].replace(/,/g, "")) : 0;
+            if (isNaN(stock)) stock = 0;
+
+             // 보유율 계산
+             let proportion = 0;
+             if (standardAmount > 0) {
+                 proportion = (stock / standardAmount) * 100;
+             }
+             
+             // CSV Header Checking (based on generic expectations or previous files)
+             // 순번, 설비명, 규격, 단위, 기준, 보유, 상태, 비고 ... (Example)
+             // But relying on user provided naming or similar to Teaching Tools.
+             // Let's assume headers: 순번, 설비명, 규격, ...
+             // Update: Teaching Tools had: 과목, 과목영역, 교구코드, 교구명, 규격, 사용학년, 소요기준, 기준량, 보유량, 필수구분, 기준내외
+             // Equipment might be simpler: 순번, 설비명, 규격, 단위, 기준, 보유, 상태, ... (Guessing)
+             // Safety Equipment often has: 순번, 품명, 규격, 단위, 기준...
+             
+            const payload = {
+                tools_no: parseInt(toolsNo),
+                // tools_category: equipmentType, // '안전설비' or '일반설비'
+                // Or maybe map "구분" column if exists?
+                tools_category: this.clean(row["구분"]) || equipmentType, 
+                
+                tools_name: this.clean(row["품명"] || row["설비명"] || row["교구명"]), // Try typical names
+                specification: this.clean(row["규격"]),
+                
+                standard_amount: standardAmount,
+                stock: stock,
+                
+                // Fields that might not exist in Equipment CSV, fill safely
+                tools_code: this.clean(row["코드"] || ""),
+                stock_period: this.clean(row["과목"] || ""), // 설비는 과목이 없을 수 있음
+                using_class: this.clean(row["사용학년"] || ""),
+                recommended: this.clean(row["소요기준"] || ""),
+                requirement: this.clean(row["필수구분"] || ""),
+                out_of_standard: this.clean(row["기준내외"] || ""),
+
+                tools_section: "설비", // Fixed section
+                purchase_date: "2024-03-01",
+                proportion: parseFloat(proportion.toFixed(2))
+            };
+
+            // Name check
+            if (!payload.tools_name) {
+                // If name missing, try one more generic like 'Name'
+                payload.tools_name = this.clean(row["Name"]);
+                if (!payload.tools_name) {
+                    throw new Error("설비명(품명/교구명)을 찾을 수 없습니다.");
+                }
+            }
+
+            const supabase = App.supabase;
+            const { data, error } = await supabase
+                .from("tools")
+                .upsert(payload, { onConflict: "tools_no" });
+
+            if (error) throw error;
+            
+            // this.log(`   ✅ 저장 성공: ${payload.tools_name}`); // Too verbose?
         },
 
         // 7. User Kit Migration
@@ -602,7 +789,7 @@
             const startIdInput = document.getElementById("user-kit-migration-start-id");
             const endIdInput = document.getElementById("user-kit-migration-end-id");
 
-            if (!fileInput || !fileInput.files[0]) return alert("CSV 파일을 선택해주세요.");
+            if (!fileInput || !fileInput.files[0]) return alert("파일을 선택해주세요.");
             const startId = parseInt(startIdInput.value);
             if (isNaN(startId)) return alert("시작 No를 입력해주세요.");
             const endId = endIdInput.value ? parseInt(endIdInput.value) : startId;
@@ -614,59 +801,41 @@
 
             try {
                 this.log(`🚀 키트 마이그레이션 시작 (No: ${startId} ~ ${endId})`);
-                await this.loadPapaParse();
 
-                this.log("📂 CSV 파일 파싱 중...");
-                Papa.parse(file, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: async (results) => {
-                        try {
-                            const rows = results.data;
-                            this.log(`✅ CSV 파싱 완료 (총 ${rows.length}개 행)`);
+                // 1. Unified Parse
+                const rows = await this.parseFile(file);
 
-                            // Filter by 'no'
-                            const targets = rows.filter(r => {
-                                const id = parseInt(r["no"]);
-                                return !isNaN(id) && id >= startId && id <= endId;
-                            });
-
-                            if (targets.length === 0) {
-                                throw new Error(`해당 범위(No ${startId}~${endId})의 데이터가 없습니다.`);
-                            }
-
-                            this.log(`🎯 대상 데이터: ${targets.length}개. 순차 처리 시작...`);
-
-                            let successCount = 0;
-                            let failCount = 0;
-
-                            for (const row of targets) {
-                                try {
-                                    await this.processUserKitMigrationItem(row);
-                                    successCount++;
-                                } catch (itemErr) {
-                                    console.error(itemErr);
-                                    this.log(`❌ [No: ${row["no"]}] 실패: ${itemErr.message}`, "error");
-                                    failCount++;
-                                }
-                            }
-
-                            this.log(`✨ 키트 마이그레이션 종료. 성공: ${successCount}, 실패: ${failCount}`, "success");
-
-                        } catch (parseErr) {
-                            this.log(`❌ 처리 중 오류: ${parseErr.message}`, "error");
-                        } finally {
-                            if (btn) btn.disabled = false;
-                        }
-                    },
-                    error: (err) => {
-                        this.log(`❌ CSV 파싱 오류: ${err.message}`, "error");
-                        if (btn) btn.disabled = false;
-                    }
+                // 2. Filter by 'no'
+                const targets = rows.filter(r => {
+                    const id = parseInt(r["no"]);
+                    return !isNaN(id) && id >= startId && id <= endId;
                 });
 
+                if (targets.length === 0) {
+                    throw new Error(`해당 범위(No ${startId}~${endId})의 데이터가 없습니다.`);
+                }
+
+                this.log(`🎯 대상 데이터: ${targets.length}개. 순차 처리 시작...`);
+
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const row of targets) {
+                    try {
+                        await this.processUserKitMigrationItem(row);
+                        successCount++;
+                    } catch (itemErr) {
+                        console.error(itemErr);
+                        this.log(`❌ [No: ${row["no"]}] 실패: ${itemErr.message}`, "error");
+                        failCount++;
+                    }
+                }
+
+                this.log(`✨ 키트 마이그레이션 종료. 성공: ${successCount}, 실패: ${failCount}`, "success");
+
             } catch (err) {
-                this.log(`❌ 초기화 오류: ${err.message}`, "error");
+                this.log(`❌ 처리 중 오류: ${err.message}`, "error");
+            } finally {
                 if (btn) btn.disabled = false;
             }
         },

@@ -1,4 +1,5 @@
 <!-- /pages/data-sync.html -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <div class="layout-container">
     <div class="layout-header no-actions">
         <h2
@@ -83,11 +84,11 @@
                         <div class="form-group" style="margin-bottom: 15px">
                             <label
                                 style="display: block; margin-bottom: 5px; font-weight: 500"
-                            >1. CSV 파일 선택</label>
+                            >1. 파일 선택 (CSV, XLSX, XLS)</label>
                             <input
                                 type="file"
                                 id="migration-file-input"
-                                accept=".csv"
+                                accept=".csv, .xlsx, .xls"
                                 class="form-control"
                                 style="width: 100%; padding: 8px"
                             >
@@ -134,6 +135,75 @@
                     </div>
                 </div>
 
+                <!-- 🚀 키트 마이그레이션 섹션 추가 -->
+                <div
+                    style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #eee"
+                >
+                    <h3 style="margin-bottom: 15px">키트 정보 마이그레이션</h3>
+                    <p
+                        style="color: #666; margin-bottom: 20px; font-size: 14px"
+                    >
+                        migration-data_kit.csv 파일을 읽어와 키트 정보를 일괄 등록합니다.<br>
+                        (CSV의 no 컬럼 기준 범위 내의 데이터를 마이그레이션합니다.)
+                    </p>
+
+                    <div
+                        style="background: #fff3e0; padding: 20px; border-radius: 8px; max-width: 500px; margin: 0 auto; text-align: left"
+                    >
+                        <div class="form-group" style="margin-bottom: 15px">
+                            <label
+                                style="display: block; margin-bottom: 5px; font-weight: 500"
+                            >1. 파일 선택 (CSV, XLSX, XLS)</label>
+                            <input
+                                type="file"
+                                id="user-kit-migration-file-input"
+                                accept=".csv, .xlsx, .xls"
+                                class="form-control"
+                                style="width: 100%; padding: 8px"
+                            >
+                        </div>
+
+                        <div
+                            style="display: flex; gap: 15px; margin-bottom: 20px"
+                        >
+                            <div class="form-group" style="flex: 1">
+                                <label
+                                    style="display: block; margin-bottom: 5px; font-weight: 500"
+                                >2. 시작 No</label>
+                                <input
+                                    type="number"
+                                    id="user-kit-migration-start-id"
+                                    class="form-control"
+                                    placeholder="예: 1"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px"
+                                >
+                            </div>
+                            <div class="form-group" style="flex: 1">
+                                <label
+                                    style="display: block; margin-bottom: 5px; font-weight: 500"
+                                >3. 끝 No (선택)</label>
+                                <input
+                                    type="number"
+                                    id="user-kit-migration-end-id"
+                                    class="form-control"
+                                    placeholder="미입력 시 1개만"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px"
+                                >
+                            </div>
+                        </div>
+
+                        <button
+                            id="btn-user-kit-migration-start"
+                            class="btn btn-primary btn-lg"
+                            style="width: 100%; justify-content: center; background-color: #f57c00; border-color: #ef6c00;"
+                        >
+                            <span class="material-symbols-outlined"
+                            >science</span>
+                            <span>키트 마이그레이션 시작</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- 🚀 교구 마이그레이션 섹션 추가 -->
                 <div
                     style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #eee"
@@ -153,11 +223,11 @@
                         <div class="form-group" style="margin-bottom: 15px">
                             <label
                                 style="display: block; margin-bottom: 5px; font-weight: 500"
-                            >1. CSV 파일 선택</label>
+                            >1. 파일 선택 (CSV, XLSX, XLS)</label>
                             <input
                                 type="file"
                                 id="tools-migration-file-input"
-                                accept=".csv"
+                                accept=".csv, .xlsx, .xls"
                                 class="form-control"
                                 style="width: 100%; padding: 8px"
                             >
@@ -222,11 +292,11 @@
                         <div class="form-group" style="margin-bottom: 15px">
                             <label
                                 style="display: block; margin-bottom: 5px; font-weight: 500"
-                            >1. 안전설비 CSV 파일 (학교교구기준목록 (안전설비).csv)</label>
+                            >1. 파일 선택 (CSV, XLSX, XLS)</label>
                             <input
                                 type="file"
                                 id="equipment-safety-file-input"
-                                accept=".csv"
+                                accept=".csv, .xlsx, .xls"
                                 class="form-control"
                                 style="width: 100%; padding: 8px"
                             >
@@ -235,43 +305,20 @@
                         <div class="form-group" style="margin-bottom: 15px">
                             <label
                                 style="display: block; margin-bottom: 5px; font-weight: 500"
-                            >2. 일반설비 CSV 파일 (학교교구기준목록 (일반설비).csv)</label>
+                            >2. 파일 선택 (CSV, XLSX, XLS)</label>
                             <input
                                 type="file"
                                 id="equipment-general-file-input"
-                                accept=".csv"
+                                accept=".csv, .xlsx, .xls"
                                 class="form-control"
                                 style="width: 100%; padding: 8px"
                             >
                         </div>
 
                         <div
-                            style="display: flex; gap: 15px; margin-bottom: 20px"
+                            style="display: none; gap: 15px; margin-bottom: 20px"
                         >
-                            <div class="form-group" style="flex: 1">
-                                <label
-                                    style="display: block; margin-bottom: 5px; font-weight: 500"
-                                >3. 시작 tools_no</label>
-                                <input
-                                    type="number"
-                                    id="equipment-migration-start-id"
-                                    class="form-control"
-                                    placeholder="예: 1"
-                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px"
-                                >
-                            </div>
-                            <div class="form-group" style="flex: 1">
-                                <label
-                                    style="display: block; margin-bottom: 5px; font-weight: 500"
-                                >4. 끝 tools_no (선택)</label>
-                                <input
-                                    type="number"
-                                    id="equipment-migration-end-id"
-                                    class="form-control"
-                                    placeholder="미입력 시 1개만"
-                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px"
-                                >
-                            </div>
+                            <!-- ID 범위 선택 제거됨 (전체 로드) -->
                         </div>
 
                         <button
@@ -285,6 +332,8 @@
                         </button>
                     </div>
                 </div>
+
+
             </div>
         </div>
 
