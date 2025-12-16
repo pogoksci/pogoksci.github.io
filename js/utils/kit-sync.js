@@ -35,7 +35,8 @@
                 return {
                     kit_name: row.kit_name,
                     kit_class: finalClass,
-                    kit_cas: cleanCas
+                    kit_cas: cleanCas,
+                    kit_person: row.kit_person || null
                 };
             }).filter(kit => kit.kit_name); // Filter out empty rows
 
@@ -106,6 +107,7 @@
             row.kit_name = values[1]?.trim();
             row.kit_class = values[2]?.trim();
             row.kit_cas = values[3]?.trim();
+            row.kit_person = values[4]?.trim();
 
             if (row.kit_name) result.push(row);
         }
