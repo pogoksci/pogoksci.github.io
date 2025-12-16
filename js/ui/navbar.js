@@ -280,16 +280,141 @@
     }
   }
 
+  // ---- 인증 상태에 따른 UI 업데이트 ----
+  function updateAuthUI(user) {
+    const role = user?.role || 'guest';
+    
+    // 디버그: 실제 권한 확인
+    // alert(`현재 권한: ${role}`); 
+
+    const startMenu = document.getElementById("start-menu");
+    if (!startMenu) return;
+
+    // 1. 설정 메뉴 (Settings Toggle): Admin, Teacher만 보임
+    const settingsToggle = document.getElementById("menu-settings-toggle");
+    const settingsSubmenu = document.getElementById("submenu-settings");
+
+    if (settingsToggle) {
+        // Teacher or Admin
+        if (['admin', 'teacher'].includes(role)) {
+            settingsToggle.style.display = 'flex'; // block -> flex for alignment
+            // 서브메뉴 상태는 유지하거나 닫음 (여기서는 유지, 사용자가 닫아야 함)
+        } else {
+            settingsToggle.style.display = 'none';
+            // 권한 없으면 서브메뉴도 강제로 닫기
+            if (settingsSubmenu) settingsSubmenu.style.display = 'none';
+        }
+    }
+
+    // 2. DB 초기화 (Reset) & 데이터 동기화 (Data Sync): Admin만 보임
+    const dbResetBtn = document.getElementById("menu-dbreset");
+    const menuDataSync = document.getElementById("menu-datasync");
+    
+    if (dbResetBtn) {
+        dbResetBtn.style.display = (role === 'admin') ? 'flex' : 'none'; // flex for correct alignment
+    }
+    if (menuDataSync) {
+        menuDataSync.style.display = (role === 'admin') ? 'flex' : 'none'; // flex for correct alignment
+    }
+
+    // 3. 기록 및 예약 (Lablog): Admin, Teacher만 보임
+    const menuLablog = document.getElementById("menu-lablog-btn");
+    if (menuLablog) {
+        if (['admin', 'teacher'].includes(role)) {
+            menuLablog.style.display = 'flex'; // block -> flex for alignment
+        } else {
+            menuLablog.style.display = 'none';
+        }
+    }
+
+    // 4. 유저 ID 및 Auth Footer 표시 업데이트
+    // 기존 버튼 방식 제거하고 Footer 영역 자체를 활용
+    const footer = document.getElementById("menu-footer-container");
+    const userIdEl = footer?.querySelector(".user-id");
+    const actionIcon = document.getElementById("auth-action-icon");
+    
+    // 이전에 생성된 버튼이 있다면 삭제 (구버전 호환)
+    const oldBtn = document.getElementById("menu-auth-btn");
+    if (oldBtn) oldBtn.remove();
+
+    if (footer && userIdEl && actionIcon) {
+        if (user) {
+            // 로그인 상태
+            const name = user.email ? user.email.split('@')[0] : 'User';
+            userIdEl.textContent = name;
+            userIdEl.style.fontWeight = 'bold';
+            
+            // 아이콘: 로그아웃
+            actionIcon.textContent = "logout"; // Material Symbol 'logout'
+            
+            // 클릭 동작: 로그아웃 (아이콘 클릭 시에만)
+            actionIcon.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // 버블링 방지
+                if (confirm(`${name}님, 로그아웃 하시겠습니까?`)) {
+                    App.Auth.logout();
+                    closeStartMenu();
+                }
+            };
+            // Footer 전체 클릭 방지
+            footer.onclick = null;
+            footer.style.cursor = 'default';
+        } else {
+            // 게스트 상태
+            userIdEl.textContent = "Guest";
+            userIdEl.style.fontWeight = 'normal';
+            
+            // 아이콘: 로그인 (login 아이콘)
+            actionIcon.textContent = "login";
+            
+            // 클릭 동작: 로그인 페이지 이동 (아이콘 클릭 시에만)
+            actionIcon.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // ✅ 현재 페이지 정보 저장 (로그인 후 복귀를 위해)
+                const current = App.Router.getCurrentState ? App.Router.getCurrentState() : null;
+                if (current && current.pageKey !== 'login') {
+                    sessionStorage.setItem("login_return_route", JSON.stringify(current));
+                }
+
+                // ✅ Splash 화면(Home Active) 해제
+                document.body.classList.remove("home-active");
+
+                if (App.Router && App.Router.go) {
+                    App.Router.go("login");
+                } else {
+                    alert("오류: 페이지 이동 기능(Router)이 로드되지 않았습니다.");
+                }
+                closeStartMenu();
+            };
+            // Footer 전체 클릭 방지
+            footer.onclick = null;
+            footer.style.cursor = 'default';
+        }
+    }
+
+  }
+
   // ---- 초기화 ----
   function setup() {
     setupStartMenuToggle();
     setupExactIdLinks(); // ✅ 단일 바인딩 (정확 ID)
     console.log("✅ Navbar.setup() 완료 — 정확 ID 바인딩/Start 메뉴 토글");
+
+    // ✅ Navbar 로드 시점에 UI 초기화 (User가 없으면 Guest 모드로 적용됨)
+    // 기존에는 user가 있을 때만 호출해서 Guest일 때 기본 Visible 상태가 유지되는 버그가 있었음.
+    if (App.Auth && typeof App.Auth === 'object') {
+        updateAuthUI(App.Auth.user);
+    } else {
+        // Auth 모듈이 아직 로드 안 됐을 수도 있지만, 일단 Guest로 초기화 시도
+        updateAuthUI(null);
+    }
   }
 
   // ---- 전역 등록 ----
   globalThis.App = globalThis.App || {};
-  globalThis.App.Navbar = { setup, setActive, closeStartMenu };
+  globalThis.App.Navbar = { setup, setActive, closeStartMenu, updateAuthUI };
 
   document.addEventListener("DOMContentLoaded", setup);
 })();

@@ -49,6 +49,12 @@
      * @param {boolean} visible - true이면 표시, false이면 숨김
      */
     function setVisibility(visible, text = null, onClickAction = null) {
+        // ✅ 권한 체크: Student/Guest는 FAB 사용 불가 (Add/Create 버튼 등)
+        const role = App.Auth?.user?.role || 'guest';
+        if (!['admin', 'teacher'].includes(role)) {
+            visible = false;
+        }
+
         const fab = document.getElementById("fab-button");
         if (!fab) return;
 
@@ -78,6 +84,13 @@
     }
 
     function setMenu(items) {
+        // ✅ 권한 체크: Student/Guest는 Detail 페이지의 Menu FAB 사용 불가
+        const role = App.Auth?.user?.role || 'guest';
+        if (!['admin', 'teacher'].includes(role)) {
+            hide();
+            return;
+        }
+
         const fab = document.getElementById("fab-button");
         if (!fab) return;
 

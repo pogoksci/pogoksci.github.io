@@ -20,6 +20,7 @@
     "./js/core/api.js",    // 🔄 복구
     "./js/core/camera.js", // 🔄 복구
     "./js/core/fab.js",
+    "./js/ui/auth.js",     // ✅ 인증 모듈 추가
   ];
   const uiModules = [
     "./js/ui/cabinet.js",
@@ -89,6 +90,11 @@
     await App.includeHTML("pages/navbar.html", "navbar-container");
     if (App.Navbar?.setup) App.Navbar.setup();
 
+    // ✅ 인증 초기화 (세션 확인)
+    if (App.Auth?.init) {
+        await App.Auth.init();
+    }
+
     // ---------------------------------------------------
     // ✅ Navbar 로드 후, 스플래시 텍스트를 최종 상태(GOE학교)로 변경
     // ---------------------------------------------------
@@ -100,8 +106,9 @@
     if (schoolEl && SCHOOL) schoolEl.textContent = SCHOOL;
     console.log("🔄 Splash 화면 텍스트 업데이트 완료 (GOE학교)");
 
-    // Main 화면 로드
+    // Main 화면 로드 (로그인 여부와 상관없이 메인 로드)
     await App.includeHTML("pages/main.html", "form-container");
+    console.log("🔓 게스트/로그인 모드 진입");
 
     // FAB 숨김
     App.Fab?.setVisibility(false);

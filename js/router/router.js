@@ -3,6 +3,7 @@
 // ================================================================
 (function () {
   const routes = {
+    login: "pages/login.html", // ✅ 로그인 페이지 추가
     main: "pages/main.html",
     cabinets: "pages/location-list.html",
     addCabinet: "pages/cabinet-form.html",
@@ -176,8 +177,20 @@
 
 
 
+      case "login":
+        if (App?.Auth?.bindLoginForm) {
+            App.Auth.bindLoginForm();
+        }
+        // 로그인 페이지에서는 Navbar 숨기기? (선택사항, 일단은 둠)
+        break;
+
       case "main":
-        // 메인 화면 로직
+        // 메인 화면 로직: Splash 모드 복구
+        document.body.classList.add("home-active");
+        document.body.classList.remove("loaded");
+        
+        // Router.go에서 includeHTML을 호출하므로, 
+        // bootstrap.js 내부 로직이 텍스트 업데이트(App config)는 처리함.
         break;
     }
 
@@ -225,5 +238,5 @@
   // });
 
   globalThis.App = globalThis.App || {};
-  globalThis.App.Router = { go, routes };
+  globalThis.App.Router = { go, routes, getCurrentState: () => currentState };
 })();
