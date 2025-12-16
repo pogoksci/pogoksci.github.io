@@ -133,6 +133,158 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- 🚀 교구 마이그레이션 섹션 추가 -->
+                <div
+                    style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #eee"
+                >
+                    <h3 style="margin-bottom: 15px">교구 정보 마이그레이션</h3>
+                    <p
+                        style="color: #666; margin-bottom: 20px; font-size: 14px"
+                    >
+                        교구수불관리목록.csv 파일을 읽어와 교구 정보를 일괄
+                        등록합니다.<br>
+                        (tools_no 기준 범위 내의 데이터를 마이그레이션합니다.)
+                    </p>
+
+                    <div
+                        style="background: #e3f2fd; padding: 20px; border-radius: 8px; max-width: 500px; margin: 0 auto; text-align: left"
+                    >
+                        <div class="form-group" style="margin-bottom: 15px">
+                            <label
+                                style="display: block; margin-bottom: 5px; font-weight: 500"
+                            >1. CSV 파일 선택</label>
+                            <input
+                                type="file"
+                                id="tools-migration-file-input"
+                                accept=".csv"
+                                class="form-control"
+                                style="width: 100%; padding: 8px"
+                            >
+                        </div>
+
+                        <div
+                            style="display: flex; gap: 15px; margin-bottom: 20px"
+                        >
+                            <div class="form-group" style="flex: 1">
+                                <label
+                                    style="display: block; margin-bottom: 5px; font-weight: 500"
+                                >2. 시작 tools_no</label>
+                                <input
+                                    type="number"
+                                    id="tools-migration-start-id"
+                                    class="form-control"
+                                    placeholder="예: 1"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px"
+                                >
+                            </div>
+                            <div class="form-group" style="flex: 1">
+                                <label
+                                    style="display: block; margin-bottom: 5px; font-weight: 500"
+                                >3. 끝 tools_no (선택)</label>
+                                <input
+                                    type="number"
+                                    id="tools-migration-end-id"
+                                    class="form-control"
+                                    placeholder="미입력 시 1개만"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px"
+                                >
+                            </div>
+                        </div>
+
+                        <button
+                            id="btn-tools-migration-start"
+                            class="btn btn-primary btn-lg"
+                            style="width: 100%; justify-content: center; background-color: #1976d2; border-color: #1565c0;"
+                        >
+                            <span class="material-symbols-outlined"
+                            >construction</span>
+                            <span>교구 마이그레이션 시작</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 🚀 설비 마이그레이션 섹션 추가 -->
+                <div
+                    style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #eee"
+                >
+                    <h3 style="margin-bottom: 15px">설비 정보 마이그레이션</h3>
+                    <p
+                        style="color: #666; margin-bottom: 20px; font-size: 14px"
+                    >
+                        학교교구기준목록 (안전설비/일반설비) CSV 파일을 읽어와 설비 정보를 일괄 등록합니다.<br>
+                        (tools_no 기준 범위 내의 데이터를 마이그레이션합니다.)
+                    </p>
+
+                    <div
+                        style="background: #e8f5e9; padding: 20px; border-radius: 8px; max-width: 500px; margin: 0 auto; text-align: left"
+                    >
+                        <div class="form-group" style="margin-bottom: 15px">
+                            <label
+                                style="display: block; margin-bottom: 5px; font-weight: 500"
+                            >1. 안전설비 CSV 파일 (학교교구기준목록 (안전설비).csv)</label>
+                            <input
+                                type="file"
+                                id="equipment-safety-file-input"
+                                accept=".csv"
+                                class="form-control"
+                                style="width: 100%; padding: 8px"
+                            >
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 15px">
+                            <label
+                                style="display: block; margin-bottom: 5px; font-weight: 500"
+                            >2. 일반설비 CSV 파일 (학교교구기준목록 (일반설비).csv)</label>
+                            <input
+                                type="file"
+                                id="equipment-general-file-input"
+                                accept=".csv"
+                                class="form-control"
+                                style="width: 100%; padding: 8px"
+                            >
+                        </div>
+
+                        <div
+                            style="display: flex; gap: 15px; margin-bottom: 20px"
+                        >
+                            <div class="form-group" style="flex: 1">
+                                <label
+                                    style="display: block; margin-bottom: 5px; font-weight: 500"
+                                >3. 시작 tools_no</label>
+                                <input
+                                    type="number"
+                                    id="equipment-migration-start-id"
+                                    class="form-control"
+                                    placeholder="예: 1"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px"
+                                >
+                            </div>
+                            <div class="form-group" style="flex: 1">
+                                <label
+                                    style="display: block; margin-bottom: 5px; font-weight: 500"
+                                >4. 끝 tools_no (선택)</label>
+                                <input
+                                    type="number"
+                                    id="equipment-migration-end-id"
+                                    class="form-control"
+                                    placeholder="미입력 시 1개만"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px"
+                                >
+                            </div>
+                        </div>
+
+                        <button
+                            id="btn-equipment-migration-start"
+                            class="btn btn-primary btn-lg"
+                            style="width: 100%; justify-content: center; background-color: #2e7d32; border-color: #1b5e20;"
+                        >
+                            <span class="material-symbols-outlined"
+                            >build</span>
+                            <span>설비 마이그레이션 시작</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
