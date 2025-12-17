@@ -22,10 +22,10 @@
         const currentSort = sortLabel ? sortLabel.dataset.value : "created_asc_group";
 
         container.innerHTML = `
-            <p style="padding:0 15px; color:#888;">
-                <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 5px;">sync</span>
-                폐수 목록을 불러오는 중...
-            </p>`;
+            <div class="empty-state">
+                <span class="material-symbols-outlined">hourglass_empty</span>
+                <p>목록을 불러오는 중...</p>
+            </div>`;
 
         // 🚛 폐수위탁처리(분류별) 보기 모드
         if (currentSort === "disposal_group") {
@@ -85,7 +85,29 @@
         }
 
         if (filteredData.length === 0) {
-            container.innerHTML = `<p style="padding:0 15px; color:#888;">표시할 폐수 내역이 없습니다.</p>`;
+            if (filteredData.length === 0) {
+                // Check if filtering was applied (date filtering is always active if default dates are set, but let's check input values)
+                // The user asked for "No Search Results" if searching.
+                // Waste list uses Date Range and Sort. There is no text search bar (Except... wait, there is a search button but no text input in `loadList`? Ah, `waste-start-date` and `end-date` act as filter).
+                // However, `loadList` reads `waste-start-date` and `waste-end-date`.
+                // `js/ui/waste.js` doesn't strictly have a keyword search implemented in `loadList` (it has date filtering).
+                // Wait, `pages/waste-list.html` has a button `waste-search-btn` but no text input?
+                // Ah, `waste-list.html` line 14 has a checkbox, line 20-24 date inputs.
+                // It seems Waste module primarily filters by date.
+                // So if date filter yields no results, is it "No Search Results"? Maybe.
+                // But if simply no waste logs exist at all, it's "No Waste".
+                // Since I can't easily distinguish "No data at all" vs "No data in range" without an extra query, I'll use a generic "No Data" or check if range is default?
+                // Let's use `delete_forever` as default for now, or `search_off` if Filter is clearly user-set?
+                // Actually, `waste-list.html` doesn't have a keyword search input.
+                // So I will just use `delete_forever` with text "기간 내 폐수 내역이 없습니다." (No waste records in period).
+
+                container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-outlined">delete_forever</span>
+                <p>표시할 폐수 내역이 없습니다.</p>
+            </div>`;
+                return;
+            }
             return;
         }
 
@@ -111,7 +133,11 @@
         }
 
         if (!data || data.length === 0) {
-            container.innerHTML = `<p style="padding:0 15px; color:#888;">폐수 처리 이력이 없습니다.</p>`;
+            container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-outlined">delete_forever</span>
+                <p>폐수 처리 이력이 없습니다.</p>
+            </div>`;
             return;
         }
 

@@ -53,9 +53,10 @@
   function renderList(mapped, container) {
     if (!mapped.length) {
       container.innerHTML = `
-        <p id="status-message-inventory-list" style="padding:0 15px; color:#888;">
-          📭 등록된 약품이 없습니다.
-        </p>
+        <div class="empty-state">
+            <span class="material-symbols-outlined">science</span>
+            <p>등록된 약품이 없습니다.</p>
+        </div>
       `;
       return;
     }
@@ -194,13 +195,14 @@
 
     const showStatus = (message) => {
       container.innerHTML = `
-        <p id="status-message-inventory-list" style="padding:0 15px; color:#888;">
-          ${message}
-        </p>
+        <div class="empty-state">
+            <span class="material-symbols-outlined">hourglass_empty</span>
+            <p>${message}</p>
+        </div>
       `;
     };
 
-    showStatus('<span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 5px;">sync</span>약품 목록을 불러오는 중...');
+    showStatus('약품 목록을 불러오는 중...');
 
     const { data, error } = await supabase
       .from("Inventory")
@@ -374,6 +376,17 @@
     }
 
     // ✅ 정렬 및 렌더링
+    // If search produced no results
+    if (query && filtered.length === 0 && allInventoryData.length > 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+            <span class="material-symbols-outlined">search_off</span>
+            <p>검색 결과가 없습니다.</p>
+        </div>
+      `;
+      return;
+    }
+
     const sorted = sortData(filtered, currentSort);
     renderList(sorted, container);
   }

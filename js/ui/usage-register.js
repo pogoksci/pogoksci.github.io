@@ -50,7 +50,7 @@
             const targetItem = allInventory.find(item => item.id === targetId);
             if (targetItem) {
                 // selectItem 함수 호출 (아래 정의됨)
-                selectItem(targetId); 
+                selectItem(targetId);
             } else {
                 console.warn(`⚠️ 요청된 Inventory ID(${targetId})를 목록에서 찾을 수 없습니다.`);
             }
@@ -87,7 +87,13 @@
         if (!supabase) return;
 
         const listContainer = document.getElementById("usage-inventory-list");
-        if (listContainer) listContainer.innerHTML = '<div class="loading-spinner">목록을 불러오는 중...</div>';
+        if (listContainer) {
+            listContainer.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-outlined">hourglass_empty</span>
+                <p>목록을 불러오는 중...</p>
+            </div>`;
+        }
 
         // 필요한 필드 모두 조회 (classification 추가)
         const { data, error } = await supabase
@@ -189,7 +195,19 @@
         });
 
         if (filtered.length === 0) {
-            listContainer.innerHTML = '<div class="empty-msg">검색 결과가 없습니다.</div>';
+            if (query) {
+                listContainer.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-outlined">search_off</span>
+                    <p>검색 결과가 없습니다.</p>
+                </div>`;
+            } else {
+                listContainer.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-outlined">edit_square</span>
+                    <p>등록된 약품이 없습니다.</p>
+                </div>`;
+            }
             return;
         }
 

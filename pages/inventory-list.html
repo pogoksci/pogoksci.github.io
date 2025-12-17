@@ -68,9 +68,10 @@
 
   <!-- 2. Scrollable Content -->
   <div id="inventory-list-container" class="layout-content inventory-list scroll-padding-fab">
-    <p id="status-message-inventory-list" style="padding:0 15px; color:#888;">
-      약품 목록을 불러오는 중...
-    </p>
+    <div class="empty-state">
+      <span class="material-symbols-outlined">hourglass_empty</span>
+      <p>목록을 불러오는 중...</p>
+    </div>
   </div>
 
   <!-- FAB -->

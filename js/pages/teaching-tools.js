@@ -59,7 +59,14 @@
             const supabase = App.supabase;
             if (!supabase) throw new Error("Supabase client not found");
 
-            // Select new columns
+            const container = document.getElementById("aid-list");
+            if (container) {
+                container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-outlined">hourglass_empty</span>
+                <p>목록을 불러오는 중...</p>
+            </div>`;
+            }
             const { data, error } = await supabase
                 .from("tools")
                 .select("*")
@@ -109,11 +116,19 @@
         // Or just list them. Let's just list them for now but maybe show section badge.
 
         if (list.length === 0) {
-            container.innerHTML = `
-        <div class="empty-state">
-          <span class="material-symbols-outlined">school</span>
-          <p>등록된 교구/설비가 없습니다.</p>
-        </div>`;
+            if (state.filterName) {
+                container.innerHTML = `
+                <div class="empty-state">
+                  <span class="material-symbols-outlined">search_off</span>
+                  <p>검색 결과가 없습니다.</p>
+                </div>`;
+            } else {
+                container.innerHTML = `
+                <div class="empty-state">
+                  <span class="material-symbols-outlined">school</span>
+                  <p>등록된 교구/설비가 없습니다.</p>
+                </div>`;
+            }
             return;
         }
 
