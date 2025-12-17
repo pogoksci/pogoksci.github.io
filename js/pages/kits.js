@@ -111,6 +111,13 @@
             const listContainer = document.getElementById('kit-list');
             if (!listContainer) return;
 
+            // Set Loading State
+            listContainer.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-outlined">hourglass_empty</span>
+                    <p>목록을 불러오는 중...</p>
+                </div>`;
+
             let query = supabase.from('user_kits').select('*');
 
             // Apply Sort
@@ -142,11 +149,19 @@
             }
 
             if (!filteredData || filteredData.length === 0) {
-                listContainer.innerHTML = `
-                    <div class="empty-state">
-                        <span class="material-symbols-outlined" style="font-size:48px; color:#ccc;">inventory_2</span>
-                        <p>검색 결과가 없습니다.</p>
-                    </div>`;
+                if (currentSearch) {
+                    listContainer.innerHTML = `
+                        <div class="empty-state">
+                            <span class="material-symbols-outlined" style="font-size:48px; color:#ccc;">search_off</span>
+                            <p>검색 결과가 없습니다.</p>
+                        </div>`;
+                } else {
+                    listContainer.innerHTML = `
+                        <div class="empty-state">
+                            <span class="material-symbols-outlined" style="font-size:48px; color:#ccc;">inventory_2</span>
+                            <p>등록된 키트가 없습니다.</p>
+                        </div>`;
+                }
                 return;
             }
 
