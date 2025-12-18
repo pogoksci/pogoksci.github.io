@@ -21,6 +21,7 @@
     toolsForm: "pages/tools-form.html", // ✅ 교구 등록 폼 페이지
     kitForm: "pages/kit-form.html", // ✅ 키트 등록 폼 페이지
     equipmentCabinets: "pages/equipment-cabinet-list.html", // ✅ 교구·물품장 설정 페이지
+    labSettings: "pages/lab-settings.html", // ✅ 과학실 설정 페이지
     export: "pages/export.html", // ✅ 내보내기 페이지 추가
   };
 
@@ -175,11 +176,15 @@
         }
         break;
 
-
+      case "labSettings": // ✅ 과학실 설정 페이지
+        if (App?.LabSettings?.init) {
+          await App.LabSettings.init();
+        }
+        break;
 
       case "login":
         if (App?.Auth?.bindLoginForm) {
-            App.Auth.bindLoginForm();
+          App.Auth.bindLoginForm();
         }
         // 로그인 페이지에서는 Navbar 숨기기? (선택사항, 일단은 둠)
         break;
@@ -188,7 +193,7 @@
         // 메인 화면 로직: Splash 모드 복구
         document.body.classList.add("home-active");
         document.body.classList.remove("loaded");
-        
+
         // Router.go에서 includeHTML을 호출하므로, 
         // bootstrap.js 내부 로직이 텍스트 업데이트(App config)는 처리함.
         break;

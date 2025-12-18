@@ -38,6 +38,7 @@
     "./js/pages/tools-form.js", // ✅ 교구 등록 폼 로직
     "./js/pages/kit-form.js", // ✅ 키트 등록 폼 로직
     "./js/ui/export-page.js", // ✅ 데이터 내보내기 페이지 로직
+    "./js/pages/lab-settings.js", // ✅ 과학실 설정 페이지 로직
   ];
   const componentModules = [
     "./js/components/sort-dropdown.js", // 🔹 여기 추가됨
@@ -92,7 +93,7 @@
 
     // ✅ 인증 초기화 (세션 확인)
     if (App.Auth?.init) {
-        await App.Auth.init();
+      await App.Auth.init();
     }
 
     // ---------------------------------------------------
