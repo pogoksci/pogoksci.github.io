@@ -91,14 +91,9 @@
 
     const menuLablog = document.getElementById("menu-lablog-btn");
     if (menuLablog) {
-      menuLablog.addEventListener("click", async (e) => {
+      menuLablog.addEventListener("click", (e) => {
         e.preventDefault();
-        // Go to Lab Settings
-        document.body.classList.remove("home-active");
-        switchMode('MANAGEMENT');
-        await App.Router.go("labSettings");
-        closeStartMenu();
-        setActive("nav-lab-settings"); // Assumption: you might need to add this ID or similar
+        alert("서비스 준비중입니다.");
       });
     }
 
@@ -109,6 +104,16 @@
         e.preventDefault();
         document.body.classList.remove("home-active");
         await App.Router.go("labSettings");
+        closeStartMenu();
+      });
+    }
+
+    const menuLabTimetable = document.getElementById("menu-lab-timetable");
+    if (menuLabTimetable) {
+      menuLabTimetable.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        await App.Router.go("labTimetable");
         closeStartMenu();
       });
     }

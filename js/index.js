@@ -39,6 +39,7 @@
     "./js/pages/kit-form.js", // ✅ 키트 등록 폼 로직
     "./js/ui/export-page.js", // ✅ 데이터 내보내기 페이지 로직
     "./js/pages/lab-settings.js", // ✅ 과학실 설정 페이지 로직
+    "./js/pages/lab-timetable.js", // ✅ 시간표 설정 페이지 로직
   ];
   const componentModules = [
     "./js/components/sort-dropdown.js", // 🔹 여기 추가됨

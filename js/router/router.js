@@ -22,6 +22,7 @@
     kitForm: "pages/kit-form.html", // ✅ 키트 등록 폼 페이지
     equipmentCabinets: "pages/equipment-cabinet-list.html", // ✅ 교구·물품장 설정 페이지
     labSettings: "pages/lab-settings.html", // ✅ 과학실 설정 페이지
+    labTimetable: "pages/lab-timetable.html", // ✅ 시간표 설정 페이지
     export: "pages/export.html", // ✅ 내보내기 페이지 추가
   };
 
@@ -179,6 +180,12 @@
       case "labSettings": // ✅ 과학실 설정 페이지
         if (App?.LabSettings?.init) {
           await App.LabSettings.init();
+        }
+        break;
+
+      case "labTimetable":
+        if (App?.LabTimetable?.init) {
+          await App.LabTimetable.init();
         }
         break;
 

@@ -469,34 +469,198 @@
             btnSaveUserSettings.addEventListener('click', async () => {
                 if (!currentSemesterId) { alert('학년도를 선택하세요.'); return; }
 
-                // 1. Save Class Counts
+                // --- 1. Collect Valid Data from UI ---
+                const uiTeachers = Array.from(document.querySelectorAll('#teachers-list input')).map(i => i.value.trim()).filter(v => v);
+                const uiSubjects = Array.from(document.querySelectorAll('#subjects-list input')).map(i => i.value.trim()).filter(v => v);
+                const uiClubs = Array.from(document.querySelectorAll('#clubs-list input')).map(i => i.value.trim()).filter(v => v);
+
                 const c1 = document.getElementById('count-grade-1');
                 const c2 = document.getElementById('count-grade-2');
                 const c3 = document.getElementById('count-grade-3');
-
-                const counts = [
-                    { grade: 1, count: c1 ? c1.value : 0 },
-                    { grade: 2, count: c2 ? c2.value : 0 },
-                    { grade: 3, count: c3 ? c3.value : 0 },
+                const uiCounts = [
+                    { grade: 1, count: parseInt(c1 ? c1.value : 0) || 0 },
+                    { grade: 2, count: parseInt(c2 ? c2.value : 0) || 0 },
+                    { grade: 3, count: parseInt(c3 ? c3.value : 0) || 0 }
                 ];
 
-                await supabase.from('lab_class_counts').delete().eq('semester_id', currentSemesterId);
 
-                const countInserts = counts.map(c => ({
-                    semester_id: currentSemesterId,
-                    grade: c.grade,
-                    class_count: parseInt(c.count) || 0
-                }));
-                await supabase.from('lab_class_counts').insert(countInserts);
+                // --- 2. Check for Changes (UI vs DB) ---
+                // Helper to fetch DB data for comparison
+                async function fetchCurrentData() {
+                    const [t, s, cl, co, sem] = await Promise.all([
+                        supabase.from('lab_teachers').select('name').eq('semester_id', currentSemesterId).order('id'),
+                        supabase.from('lab_subjects').select('name').eq('semester_id', currentSemesterId).order('id'),
+                        supabase.from('lab_clubs').select('name').eq('semester_id', currentSemesterId).order('id'),
+                        supabase.from('lab_class_counts').select('*').eq('semester_id', currentSemesterId),
+                        supabase.from('lab_semesters').select('*').eq('id', currentSemesterId).single()
+                    ]);
+                    return {
+                        teachers: t.data.map(i => i.name),
+                        subjects: s.data.map(i => i.name),
+                        clubs: cl.data.map(i => i.name),
+                        counts: co.data || [],
+                        semester: sem.data
+                    };
+                }
+
+                const dbData = await fetchCurrentData();
+
+                // Comparators
+                const isListDifferent = (arr1, arr2) => {
+                    if (arr1.length !== arr2.length) return true;
+                    // Strict order comparison assuming UI preserves load order? No, set comparison is safer but order matters for inputs.
+                    // Just compare sorted values for equality check? Or strict index?
+                    // Let's use strict index comparison as inputs are list based.
+                    return arr1.some((val, idx) => val !== arr2[idx]);
+                }
+                const isCountDifferent = (ui, db) => {
+                    return ui.some(u => {
+                        const d = db.find(x => x.grade === u.grade);
+                        return u.count !== (d ? d.class_count : 0);
+                    });
+                }
+
+                const hasChanged = isListDifferent(uiTeachers, dbData.teachers) ||
+                    isListDifferent(uiSubjects, dbData.subjects) ||
+                    isListDifferent(uiClubs, dbData.clubs) ||
+                    isCountDifferent(uiCounts, dbData.counts);
 
 
-                // 2. Save Lists
-                await saveDynamicList('lab_teachers', 'teachers-list');
-                await saveDynamicList('lab_subjects', 'subjects-list');
-                await saveDynamicList('lab_clubs', 'clubs-list');
+                if (!hasChanged) {
+                    alert('변경사항이 없습니다.');
+                    return;
+                }
 
-                alert('사용자 설정이 저장되었습니다.');
-                updateTabStatus();
+                // --- 3. Handle Versioning ---
+                const modificationContainer = document.getElementById('modification-date-container');
+                const modificationInput = document.getElementById('modification-date');
+
+                // If not visible yet, show it and stop
+                if (modificationContainer.style.display === 'none') {
+                    modificationContainer.style.display = 'block';
+                    alert('변경된 내용이 감지되었습니다.\n\n수정 기준 날짜를 입력해주세요.\n(입력란은 저장 버튼 위에 있습니다)');
+                    modificationInput.focus();
+                    return;
+                }
+
+                const modDate = modificationInput.value;
+                if (!modDate) {
+                    alert('수정 기준 날짜를 선택해주세요.');
+                    return;
+                }
+
+                if (!confirm(`기준 날짜 [${modDate}]로 새로운 설정 버전을 생성하시겠습니까?\n\n- 기존 설정은 [${modDate}] 전날까지로 보존됩니다.`)) {
+                    return;
+                }
+
+
+                // --- 4. TRANSACTION: Versioning ---
+                try {
+                    // Start of Logic
+                    const oldSemester = dbData.semester;
+                    const oldEnd = new Date(modDate);
+                    oldEnd.setDate(oldEnd.getDate() - 1);
+                    const oldEndDateStr = oldEnd.toISOString().split('T')[0];
+
+                    // --- Naming Logic Modification ---
+                    // Goal: Old -> "Base_N기간", New -> "Base_현재"
+
+                    // 1. Determine "Base Name" (e.g., "2025학년도")
+                    let baseName = oldSemester.name;
+                    // Remove existing suffix if present
+                    baseName = baseName.replace(/_현재$/, '');
+                    baseName = baseName.replace(/_\d+기간$/, '');
+
+                    // 2. Find next sequence number (N)
+                    // Query for all names starting with BaseName + "_"
+                    const { data: existingSimilar, error: searchError } = await supabase
+                        .from('lab_semesters')
+                        .select('name')
+                        .ilike('name', `${baseName}_%`);
+
+                    if (searchError) throw searchError;
+
+                    let maxSeq = 0;
+                    existingSimilar.forEach(item => {
+                        const match = item.name.match(/_(\d+)기간$/);
+                        if (match) {
+                            const seq = parseInt(match[1]);
+                            if (seq > maxSeq) maxSeq = seq;
+                        }
+                    });
+
+                    const nextSeq = maxSeq + 1;
+
+                    // 3. Define Names
+                    const oldNameFinal = `${baseName}_${nextSeq}기간`;
+                    const newNameFinal = `${baseName}_현재`;
+
+
+                    // A. Update Old Semester (Rename to _N기간 & EndDate)
+                    const { error: updateError } = await supabase
+                        .from('lab_semesters')
+                        .update({
+                            name: oldNameFinal,
+                            end_date: oldEndDateStr
+                        })
+                        .eq('id', currentSemesterId);
+
+                    if (updateError) throw updateError;
+
+
+                    // B. Create New Semester (Name as _현재 & StartDate)
+                    const { data: newSemData, error: insertError } = await supabase
+                        .from('lab_semesters')
+                        .insert([{
+                            name: newNameFinal,
+                            start_date: modDate
+                        }])
+                        .select()
+                        .single();
+
+                    if (insertError) throw insertError;
+                    const newSemesterId = newSemData.id;
+
+
+                    // C. Duplicate/Save Data to NEW Semester ID
+
+                    // Counts
+                    const countInserts = uiCounts.map(c => ({
+                        semester_id: newSemesterId,
+                        grade: c.grade,
+                        class_count: c.count
+                    }));
+                    if (countInserts.length) await supabase.from('lab_class_counts').insert(countInserts);
+
+                    // Dynamic Lists (Teachers, Subjects, Clubs) -> Insert UI values as NEW items
+                    const insertList = async (list, table) => {
+                        if (!list.length) return;
+                        const rows = list.map(name => ({
+                            semester_id: newSemesterId,
+                            name: name
+                        }));
+                        await supabase.from(table).insert(rows);
+                    };
+
+                    await insertList(uiTeachers, 'lab_teachers');
+                    await insertList(uiSubjects, 'lab_subjects');
+                    await insertList(uiClubs, 'lab_clubs');
+
+
+                    // Finalize
+                    alert(`저장되었습니다.\n\n이전 기록 보존: ${oldNameFinal} (종료: ${oldEndDateStr})\n현재 설정 적용: ${newNameFinal} (시작: ${modDate})`);
+
+                    // Reset UI
+                    modificationInput.value = '';
+                    modificationContainer.style.display = 'none';
+
+                    // Reload Global State
+                    await loadSemesters(newSemesterId);
+
+                } catch (err) {
+                    console.error('Error in versioning transaction:', err);
+                    alert('저장 중 오류가 발생했습니다: ' + err.message);
+                }
             });
         }
 
