@@ -59,7 +59,12 @@
 
     // ✅ HTML include
     const targetId = "form-container";
-    await App.includeHTML(file, targetId);
+    const loaded = await App.includeHTML(file, targetId);
+
+    if (!loaded) {
+      console.warn(`❌ Router: ${pageKey} 로드 실패 (includeHTML returned false)`);
+      return;
+    }
 
     // ✅ Render stabilization wait
     await new Promise((resolve) =>
