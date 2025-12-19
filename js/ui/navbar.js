@@ -172,14 +172,12 @@
 
           console.log("🔥 DB Reset Started (Server-side)...");
 
-          const { data, error } = await supabase.functions.invoke('system-admin', {
-            body: { action: 'reset_database' }
-          });
+          // 🔥 RPC 호출 (관리자 권한 함수 실행)
+          const { error } = await supabase.rpc('reset_all_data');
 
           if (error) throw error;
-          if (data?.error) throw new Error(data.error);
 
-          console.log(`🗑️ Reset Complete. Deleted ${data.data.deletedFiles} files.`);
+          console.log(`🗑️ Reset Complete.`);
           alert("✅ DB 초기화가 완료되었습니다.");
           location.reload();
 

@@ -477,15 +477,36 @@
                 const c1 = document.getElementById('count-grade-1');
                 const c2 = document.getElementById('count-grade-2');
                 const c3 = document.getElementById('count-grade-3');
+
+                // Parsing with fallback to 0
+                const numC1 = parseInt(c1 ? c1.value : 0) || 0;
+                const numC2 = parseInt(c2 ? c2.value : 0) || 0;
+                const numC3 = parseInt(c3 ? c3.value : 0) || 0;
+
                 const uiCounts = [
-                    { grade: 1, count: parseInt(c1 ? c1.value : 0) || 0 },
-                    { grade: 2, count: parseInt(c2 ? c2.value : 0) || 0 },
-                    { grade: 3, count: parseInt(c3 ? c3.value : 0) || 0 }
+                    { grade: 1, count: numC1 },
+                    { grade: 2, count: numC2 },
+                    { grade: 3, count: numC3 }
                 ];
 
+                // --- 2. Check Strict Validation Rules (All Mmust have at least one entry) ---
+                const hasValidCounts = (numC1 > 0) || (numC2 > 0) || (numC3 > 0); // At least one grade > 0
+                const hasTeachers = uiTeachers.length > 0;
+                const hasSubjects = uiSubjects.length > 0;
+                const hasClubs = uiClubs.length > 0;
 
-                // --- 2. Check for Changes (UI vs DB) ---
-                // Helper to fetch DB data for comparison
+                const validationErrors = [];
+                if (!hasValidCounts) validationErrors.push('- 학급 수 (적어도 한 학년은 입력해야 합니다)');
+                if (!hasTeachers) validationErrors.push('- 과학과 교사 (최소 1명 이상)');
+                if (!hasSubjects) validationErrors.push('- 운영 과목 (최소 1개 이상)');
+                if (!hasClubs) validationErrors.push('- 동아리 (최소 1개 이상)');
+
+                if (validationErrors.length > 0) {
+                    alert('다음 항목을 모두 입력해야 저장할 수 있습니다:\n\n' + validationErrors.join('\n'));
+                    return;
+                }
+
+                // --- 3. Check for Changes (UI vs DB) & Determine Initial State ---
                 async function fetchCurrentData() {
                     const [t, s, cl, co, sem] = await Promise.all([
                         supabase.from('lab_teachers').select('name').eq('semester_id', currentSemesterId).order('id'),
@@ -494,12 +515,18 @@
                         supabase.from('lab_class_counts').select('*').eq('semester_id', currentSemesterId),
                         supabase.from('lab_semesters').select('*').eq('id', currentSemesterId).single()
                     ]);
+
+                    // Determine if DB is empty
+                    const isEmpty = (t.data.length === 0) && (s.data.length === 0) && (cl.data.length === 0) &&
+                        (co.data.length === 0 || co.data.every(x => x.class_count === 0));
+
                     return {
                         teachers: t.data.map(i => i.name),
                         subjects: s.data.map(i => i.name),
                         clubs: cl.data.map(i => i.name),
                         counts: co.data || [],
-                        semester: sem.data
+                        semester: sem.data,
+                        isInitialState: isEmpty
                     };
                 }
 
@@ -508,9 +535,7 @@
                 // Comparators
                 const isListDifferent = (arr1, arr2) => {
                     if (arr1.length !== arr2.length) return true;
-                    // Strict order comparison assuming UI preserves load order? No, set comparison is safer but order matters for inputs.
-                    // Just compare sorted values for equality check? Or strict index?
-                    // Let's use strict index comparison as inputs are list based.
+                    // Strict index comparison as inputs are list based.
                     return arr1.some((val, idx) => val !== arr2[idx]);
                 }
                 const isCountDifferent = (ui, db) => {
@@ -531,7 +556,47 @@
                     return;
                 }
 
-                // --- 3. Handle Versioning ---
+                // --- 4. Logic Branch: Initial Save vs Version Update ---
+
+                // CASE A: Initial Save (DB is empty)
+                // Just save the data directly to the current semester ID
+                if (dbData.isInitialState) {
+                    try {
+                        const insertList = async (list, table) => {
+                            if (!list.length) return;
+                            const rows = list.map(name => ({
+                                semester_id: currentSemesterId,
+                                name: name
+                            }));
+                            await supabase.from(table).insert(rows);
+                        };
+
+                        // Counts (Upsert or Insert) - Since it's initial, likely insert, but use upsert just in case rows exist with 0
+                        const countUpserts = uiCounts.map(c => ({
+                            semester_id: currentSemesterId,
+                            grade: c.grade,
+                            class_count: c.count
+                        }));
+                        // We use upsert for counts because they have unique constraint on (semester_id, grade)? 
+                        // Actually let's delete existing 0-counts first or just upsert. 
+                        // Assuming unique constraint (semester_id, grade).
+                        await supabase.from('lab_class_counts').upsert(countUpserts, { onConflict: 'semester_id, grade' });
+
+                        await insertList(uiTeachers, 'lab_teachers');
+                        await insertList(uiSubjects, 'lab_subjects');
+                        await insertList(uiClubs, 'lab_clubs');
+
+                        alert('기초 설정이 저장되었습니다.');
+                        await loadSemesters(currentSemesterId);
+
+                    } catch (err) {
+                        console.error('Initial save error:', err);
+                        alert('저장 중 오류가 발생했습니다: ' + err.message);
+                    }
+                    return;
+                }
+
+                // CASE B: Existing Data Modification -> Versioning Required
                 const modificationContainer = document.getElementById('modification-date-container');
                 const modificationInput = document.getElementById('modification-date');
 
@@ -553,8 +618,7 @@
                     return;
                 }
 
-
-                // --- 4. TRANSACTION: Versioning ---
+                // --- 5. TRANSACTION: Versioning ---
                 try {
                     // Start of Logic
                     const oldSemester = dbData.semester;

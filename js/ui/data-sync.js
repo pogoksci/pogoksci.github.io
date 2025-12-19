@@ -25,6 +25,9 @@
             const btnKit = document.getElementById("btn-sync-kit");
             if (btnKit) btnKit.addEventListener("click", () => this.syncExperimentKits(btnKit));
 
+            const btnInfoUpdate = document.getElementById("btn-sync-info-update");
+            if (btnInfoUpdate) btnInfoUpdate.addEventListener("click", () => this.syncReagentInfo(btnInfoUpdate));
+
             this.initMigration();
             this.initToolsMigration();
             this.initEquipmentMigration();
@@ -70,7 +73,7 @@
         // Unified Parse Helper
         parseFile: async function (file) {
             const ext = file.name.split('.').pop().toLowerCase();
-            
+
             if (ext === 'csv') {
                 await this.loadPapaParse();
                 return new Promise((resolve, reject) => {
@@ -96,7 +99,7 @@
                             const workbook = XLSX.read(data, { type: 'array' });
                             const firstSheetName = workbook.SheetNames[0];
                             const worksheet = workbook.Sheets[firstSheetName];
-                            
+
                             // defval: "" ensures empty cells are empty strings, preventing offset issues if sparse
                             // raw: false ensures types are converted to strings if needed (dates might be tricky though)
                             const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
@@ -127,12 +130,12 @@
         },
 
         // Helper to fetch System Data (Try XLSX first, then CSV)
-        fetchSystemData: async function(baseName) {
+        fetchSystemData: async function (baseName) {
             // 1. Try XLSX
             try {
                 const xlsxUrl = `data/${baseName}.xlsx`;
                 this.log(`📂 ${xlsxUrl} 확인 중...`);
-                
+
                 const response = await fetch(xlsxUrl);
                 if (response.ok) {
                     await this.loadSheetJS();
@@ -152,7 +155,7 @@
             try {
                 const csvUrl = `data/${baseName}.csv`;
                 this.log(`⚠️ XLSX 없음. ${csvUrl} 시도 중...`);
-                
+
                 const response = await fetch(csvUrl);
                 if (response.ok) {
                     this.log(`✅ CSV 발견.`);
@@ -252,6 +255,27 @@
             }
         },
 
+        // 3-1. Reagent Info Sync (Update existing Inventory from SubstanceRef)
+        syncReagentInfo: async function (btn) {
+            if (btn) btn.disabled = true;
+            try {
+                this.log("🚀 약품 정보 동기화(업데이트) 시작 (RPC)...");
+                this.log("ℹ️ SubstanceRef의 최신 정보를 바탕으로 등록된 약품의 정보를 수정합니다.");
+
+                const { error } = await App.supabase.rpc('sync_reagent_info_from_ref');
+
+                if (error) throw error;
+
+                this.log("🎉 약품 정보 업데이트 완료!", "success");
+                alert("약품 정보가 최신 참조 데이터로 업데이트되었습니다.");
+
+            } catch (err) {
+                this.log(`❌ 오류 발생: ${err.message}`, "error");
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        },
+
         // 4. Migration Tool (Client-Side Logic)
         initMigration: function () {
             const btnMigrate = document.getElementById("btn-migration-start");
@@ -275,7 +299,7 @@
 
             try {
                 this.log(`🚀 마이그레이션 시작 (ID: ${startId} ~ ${endId})`);
-                
+
                 // 1. Unified Parse
                 const rows = await this.parseFile(file);
 
@@ -284,7 +308,7 @@
                     // CSV has id column. XLSX might convert keys differently, ensure 'id' key exists.
                     // Case-insensitive key match might be needed if Excel headers are 'ID' vs 'id'
                     // For now assuming headers match CSV spec exactly.
-                    const idVal = r.id || r.ID; 
+                    const idVal = r.id || r.ID;
                     const id = parseInt(idVal);
                     return !isNaN(id) && id >= startId && id <= endId;
                 });
@@ -324,10 +348,10 @@
             const supabase = App.supabase;
 
             // 1. Clean Data
-            let casRn = this.clean(row.cas_rn); 
+            let casRn = this.clean(row.cas_rn);
             // Note: Already handled by clean(), but ensure strict check logic if needed.
             // row.cas_rn might be "'7647-01-0". clean() removes leading quote.
-            
+
             if (!casRn) throw new Error("CAS 번호가 없습니다.");
 
             // 2. Photo Processing
@@ -341,7 +365,7 @@
                     // Fetch Blob
                     const blob = await this.fetchBlob(oldPhotoUrl);
                     if (blob) {
-                         // Resize
+                        // Resize
                         const base64_320 = await this.resizeImage(blob, 320);
                         const base64_160 = await this.resizeImage(blob, 160);
 
@@ -350,9 +374,9 @@
                         const rnd = Math.random().toString(36).substr(2, 5);
                         const path320 = `inventory/${ts}_${rnd}_320.jpg`;
                         const blob320 = App.Utils.base64ToBlob(base64_320);
-                        
+
                         const { error: err320 } = await supabase.storage.from("reagent-photos").upload(path320, blob320);
-                        if(err320) throw err320;
+                        if (err320) throw err320;
                         const { data: data320 } = supabase.storage.from("reagent-photos").getPublicUrl(path320);
                         photoUrl320 = data320.publicUrl;
 
@@ -361,12 +385,12 @@
                         const blob160 = App.Utils.base64ToBlob(base64_160);
                         const { error: err160 } = await supabase.storage.from("reagent-photos").upload(path160, blob160);
                         if (!err160) {
-                             const { data: data160 } = supabase.storage.from("reagent-photos").getPublicUrl(path160);
-                             photoUrl160 = data160.publicUrl;
+                            const { data: data160 } = supabase.storage.from("reagent-photos").getPublicUrl(path160);
+                            photoUrl160 = data160.publicUrl;
                         }
                         this.log(`   📸 사진 마이그레이션 완료`);
                     }
-                } catch(e) {
+                } catch (e) {
                     this.log(`   ⚠️ 사진 처리 실패 (${photoName}): ${e.message}`);
                 }
             }
@@ -379,34 +403,34 @@
             if (pdfName) {
                 const oldPdfUrl = `https://muprmzkvrjacqatqxayf.supabase.co/storage/v1/object/public/msds-pdf/old_msds-pdf/${pdfName}`;
                 try {
-                     const blob = await this.fetchBlob(oldPdfUrl);
-                     if (blob) {
-                         // Hash
-                         msdsHash = await App.Utils.computeFileHash(blob);
-                         
-                         // Check Duplicate
-                         // Check Duplicate
-                         const { data: dupData } = await supabase.from("Inventory").select("msds_pdf_url").eq("msds_pdf_hash", msdsHash).limit(1);
+                    const blob = await this.fetchBlob(oldPdfUrl);
+                    if (blob) {
+                        // Hash
+                        msdsHash = await App.Utils.computeFileHash(blob);
 
-                         if (dupData && dupData.length > 0 && dupData[0].msds_pdf_url) {
+                        // Check Duplicate
+                        // Check Duplicate
+                        const { data: dupData } = await supabase.from("Inventory").select("msds_pdf_url").eq("msds_pdf_hash", msdsHash).limit(1);
+
+                        if (dupData && dupData.length > 0 && dupData[0].msds_pdf_url) {
                             msdsUrl = dupData[0].msds_pdf_url;
                             this.log("   ♻️ 기존 PDF 재사용");
-                         } else {
+                        } else {
                             // Upload
                             const ts = Date.now();
                             const cleanName = pdfName.replace(/[^a-zA-Z0-9.-]/g, "_");
                             const path = `msds/${ts}_${cleanName}`;
-                            
+
                             const { error: pdfErr } = await supabase.storage.from("msds-pdf").upload(path, blob);
-                            if(pdfErr) throw pdfErr;
-                            
+                            if (pdfErr) throw pdfErr;
+
                             const { data: pdfData } = supabase.storage.from("msds-pdf").getPublicUrl(path);
                             msdsUrl = pdfData.publicUrl;
                             this.log("   📄 PDF 업로드 완료");
-                         }
-                     }
+                        }
+                    }
                 } catch (e) {
-                     this.log(`   ⚠️ PDF 처리 실패 (${pdfName}): ${e.message}`);
+                    this.log(`   ⚠️ PDF 처리 실패 (${pdfName}): ${e.message}`);
                 }
             }
 
@@ -429,7 +453,7 @@
                     status: this.clean(row.status) || "사용중",
                     purchase_date: this.clean(row.purchase_date), // YYYY-MM-DD
                     bottle_mass: this.calculateBottleMass(row.initial_amount, row.bottle_type),  // Auto-calculated logic
-                    
+
                     // Concentrations
                     concentration_value: row.concentration_value ? Number(row.concentration_value) : null,
                     concentration_unit: this.clean(row.concentration_unit),
@@ -463,14 +487,14 @@
         },
 
         // Helper: Fetch Blob
-        fetchBlob: async function(url) {
+        fetchBlob: async function (url) {
             const res = await fetch(url);
             if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
             return await res.blob();
         },
 
         // Helper: Resize Image
-        resizeImage: function(blob, width) {
+        resizeImage: function (blob, width) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.onload = () => {
@@ -488,7 +512,7 @@
         },
 
         // Helper: Bottle Mass Calculation (from forms.js)
-        calculateBottleMass: function(volume, type) {
+        calculateBottleMass: function (volume, type) {
             if (!volume || !type) return null;
             const v = Number(volume);
             const t = String(type).trim().replace(/\s+/g, ""); // 공백 제거
@@ -533,7 +557,7 @@
 
             try {
                 this.log(`🚀 교구 마이그레이션 시작 (tools_no: ${startId} ~ ${endId})`);
-                
+
                 // 1. Unified Parse
                 const rows = await this.parseFile(file);
 
@@ -606,7 +630,7 @@
                 stock: stock,                              // 보유량
                 requirement: this.clean(row["필수구분"]),     // 필수구분
                 out_of_standard: this.clean(row["기준내외"]), // 기준내외
-                
+
                 // Fixed values & Calculated
                 tools_section: "교구",
                 purchase_date: "2024-03-01",
@@ -626,14 +650,14 @@
         },
 
         // --- Equipment Migration ---
-        initEquipmentMigration: function() {
+        initEquipmentMigration: function () {
             const btnEquipment = document.getElementById("btn-equipment-migration-start");
             if (btnEquipment) {
                 btnEquipment.addEventListener("click", () => this.handleEquipmentMigration(btnEquipment));
             }
         },
 
-        handleEquipmentMigration: async function(btn) {
+        handleEquipmentMigration: async function (btn) {
             const safetyInput = document.getElementById("equipment-safety-file-input");
             const generalInput = document.getElementById("equipment-general-file-input");
 
@@ -647,7 +671,7 @@
 
             try {
                 this.log("🚀 설비 마이그레이션 시작 (전체 범위)");
-                
+
                 // 1. Process Safety Equipment
                 if (safetyInput.files[0]) {
                     await this.processEquipmentFile(safetyInput.files[0], "안전설비");
@@ -667,12 +691,12 @@
             }
         },
 
-        processEquipmentFile: async function(file, type) {
+        processEquipmentFile: async function (file, type) {
             this.log(`📂 ${type} 파일 파싱 중... (${file.name})`);
             try {
                 // Unified Parse
                 const rows = await this.parseFile(file);
-                
+
                 this.log(`✅ ${type} 파싱 완료 (${rows.length}개 행). 순차 처리 시작...`);
 
                 let successCount = 0;
@@ -698,7 +722,7 @@
             }
         },
 
-        processEquipmentMigrationItem: async function(row, equipmentType) {
+        processEquipmentMigrationItem: async function (row, equipmentType) {
             // equipmentType: "안전설비" or "일반설비"
             // Note: tools_section을 "설비"로 통일하고, 비고나 other fields에 세부타입을 넣을지, 
             // 아니면 tools_section 자체를 구분할지? 
@@ -712,7 +736,7 @@
             // Let's use "설비" as section, and mapping columns as best effort.
 
             const toolsNo = this.clean(row["순번"]);
-            
+
             // 기준량, 보유량 숫자 변환
             let standardAmount = row["기준"] ? parseInt(row["기준"].replace(/,/g, "")) : 0;
             if (isNaN(standardAmount)) standardAmount = 0;
@@ -720,32 +744,32 @@
             let stock = row["보유"] ? parseInt(row["보유"].replace(/,/g, "")) : 0;
             if (isNaN(stock)) stock = 0;
 
-             // 보유율 계산
-             let proportion = 0;
-             if (standardAmount > 0) {
-                 proportion = (stock / standardAmount) * 100;
-             }
-             
-             // CSV Header Checking (based on generic expectations or previous files)
-             // 순번, 설비명, 규격, 단위, 기준, 보유, 상태, 비고 ... (Example)
-             // But relying on user provided naming or similar to Teaching Tools.
-             // Let's assume headers: 순번, 설비명, 규격, ...
-             // Update: Teaching Tools had: 과목, 과목영역, 교구코드, 교구명, 규격, 사용학년, 소요기준, 기준량, 보유량, 필수구분, 기준내외
-             // Equipment might be simpler: 순번, 설비명, 규격, 단위, 기준, 보유, 상태, ... (Guessing)
-             // Safety Equipment often has: 순번, 품명, 규격, 단위, 기준...
-             
+            // 보유율 계산
+            let proportion = 0;
+            if (standardAmount > 0) {
+                proportion = (stock / standardAmount) * 100;
+            }
+
+            // CSV Header Checking (based on generic expectations or previous files)
+            // 순번, 설비명, 규격, 단위, 기준, 보유, 상태, 비고 ... (Example)
+            // But relying on user provided naming or similar to Teaching Tools.
+            // Let's assume headers: 순번, 설비명, 규격, ...
+            // Update: Teaching Tools had: 과목, 과목영역, 교구코드, 교구명, 규격, 사용학년, 소요기준, 기준량, 보유량, 필수구분, 기준내외
+            // Equipment might be simpler: 순번, 설비명, 규격, 단위, 기준, 보유, 상태, ... (Guessing)
+            // Safety Equipment often has: 순번, 품명, 규격, 단위, 기준...
+
             const payload = {
                 tools_no: parseInt(toolsNo),
                 // tools_category: equipmentType, // '안전설비' or '일반설비'
                 // Or maybe map "구분" column if exists?
-                tools_category: this.clean(row["구분"]) || equipmentType, 
-                
+                tools_category: this.clean(row["구분"]) || equipmentType,
+
                 tools_name: this.clean(row["품명"] || row["설비명"] || row["교구명"]), // Try typical names
                 specification: this.clean(row["규격"]),
-                
+
                 standard_amount: standardAmount,
                 stock: stock,
-                
+
                 // Fields that might not exist in Equipment CSV, fill safely
                 tools_code: this.clean(row["코드"] || ""),
                 stock_period: this.clean(row["과목"] || ""), // 설비는 과목이 없을 수 있음
@@ -774,7 +798,7 @@
                 .upsert(payload, { onConflict: "tools_no" });
 
             if (error) throw error;
-            
+
             // this.log(`   ✅ 저장 성공: ${payload.tools_name}`); // Too verbose?
         },
 
@@ -843,7 +867,7 @@
         processUserKitMigrationItem: async function (row) {
             const no = parseInt(row["no"]);
             const kitId = parseInt(row["kit_id"]);
-            
+
             this.log(`🔄 [No: ${no}] Kit ID: ${kitId} 처리 중...`);
             const supabase = App.supabase;
 
@@ -856,7 +880,7 @@
                 .single();
 
             if (expErr || !expKit) {
-                 throw new Error(`실험 키트(ID: ${kitId}) 정보를 찾을 수 없습니다.`);
+                throw new Error(`실험 키트(ID: ${kitId}) 정보를 찾을 수 없습니다.`);
             }
 
             // 2. Process Photo
@@ -866,28 +890,28 @@
                 try {
                     const oldPhotoUrl = `https://muprmzkvrjacqatqxayf.supabase.co/storage/v1/object/public/kit-photos/old_kit/${photoName}`;
                     const blob = await this.fetchBlob(oldPhotoUrl);
-                    
+
                     if (blob) {
-                         const base64_320 = await this.resizeImage(blob, 320);
-                         
-                         // Upload
-                         const ts = Date.now();
-                         const rnd = Math.random().toString(36).substr(2, 5);
-                         
-                         const path320 = `user_kits/${ts}_${rnd}_320.jpg`;
-                         const blob320 = App.Utils.base64ToBlob(base64_320);
-                         const { error: err320 } = await supabase.storage.from("kit-photos").upload(path320, blob320);
-                         if (err320) throw err320;
-                         const { data: data320 } = supabase.storage.from("kit-photos").getPublicUrl(path320);
-                         imageUrl = data320.publicUrl;
-                         
-                         // 160 size (optional, but requested in Plan)
-                         const base64_160 = await this.resizeImage(blob, 160);
-                         const path160 = `user_kits/${ts}_${rnd}_160.jpg`;
-                         const blob160 = App.Utils.base64ToBlob(base64_160);
-                         await supabase.storage.from("kit-photos").upload(path160, blob160);
-                         
-                         this.log(`   📸 사진 업로드 완료`);
+                        const base64_320 = await this.resizeImage(blob, 320);
+
+                        // Upload
+                        const ts = Date.now();
+                        const rnd = Math.random().toString(36).substr(2, 5);
+
+                        const path320 = `user_kits/${ts}_${rnd}_320.jpg`;
+                        const blob320 = App.Utils.base64ToBlob(base64_320);
+                        const { error: err320 } = await supabase.storage.from("kit-photos").upload(path320, blob320);
+                        if (err320) throw err320;
+                        const { data: data320 } = supabase.storage.from("kit-photos").getPublicUrl(path320);
+                        imageUrl = data320.publicUrl;
+
+                        // 160 size (optional, but requested in Plan)
+                        const base64_160 = await this.resizeImage(blob, 160);
+                        const path160 = `user_kits/${ts}_${rnd}_160.jpg`;
+                        const blob160 = App.Utils.base64ToBlob(base64_160);
+                        await supabase.storage.from("kit-photos").upload(path160, blob160);
+
+                        this.log(`   📸 사진 업로드 완료`);
                     }
                 } catch (e) {
                     this.log(`   ⚠️ 사진 처리 실패 (${photoName}): ${e.message}`);
@@ -898,7 +922,7 @@
             // Columns: kit_name, kit_class, kit_person (from experiment_kit)
             //          quantity, purchase_date (from CSV)
             //          image_url, status
-            
+
             const payload = {
                 kit_name: expKit.kit_name,
                 kit_class: expKit.kit_class,
@@ -911,7 +935,7 @@
 
             const { error: insErr } = await supabase.from('user_kits').insert(payload);
             if (insErr) throw insErr;
-            
+
             this.log(`✅ [No: ${no}] 등록 완료 (${expKit.kit_name})`);
         },
     };

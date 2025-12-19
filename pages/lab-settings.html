@@ -32,10 +32,10 @@
 
                 <div class="form-group">
                     <label for="lab-count">과학실(과학준비실,약품실 등 포함) 개수를 입력하고 설정버튼을 누르세요.</label>
-                    <div class="input-count-wrapper">
+                    <div class="input-count-wrapper" style="display: flex; align-items: center; gap: 8px;">
                         <input type="number" id="lab-count" min="1" max="10" placeholder="개수 입력" value="2"
                             style="flex: 1;">
-                        <button id="btn-set-lab-count" class="btn-primary">설정</button>
+                        <button id="btn-set-lab-count" class="btn-primary" style="white-space: nowrap;">설정</button>
                     </div>
                 </div>
 
@@ -77,13 +77,13 @@
                 <!-- New Semester Modal (Hidden by default) -->
                 <div id="new-semester-form"
                     style="display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
-                    <label>새 학년도 선택</label>
-                    <select id="new-semester-name" class="form-input"></select>
-                    <div style="margin-top: 10px; text-align: right;">
+                    <label style="display: block; margin-bottom: 8px;">새 학년도 선택</label>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="new-semester-name" class="form-input" style="flex: 1;"></select>
                         <button id="btn-save-semester"
-                            style="background: #00a0b2; color: white; border: none; padding: 5px 10px; border-radius: 4px;">추가</button>
+                            style="background: #00a0b2; color: white; border: none; padding: 6px 12px; border-radius: 4px; white-space: nowrap; margin-top: 5px;">추가</button>
                         <button id="btn-cancel-semester"
-                            style="background: #ccc; color: white; border: none; padding: 5px 10px; border-radius: 4px;">취소</button>
+                            style="background: #ccc; color: white; border: none; padding: 6px 12px; border-radius: 4px; white-space: nowrap; margin-top: 5px;">취소</button>
                     </div>
                 </div>
             </div>
