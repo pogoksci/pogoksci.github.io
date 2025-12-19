@@ -327,6 +327,27 @@
                 const name = document.getElementById('new-semester-name').value;
                 if (!name) { alert('학년도를 선택하세요.'); return; }
 
+                // Check for duplicates (Exact match OR Base match)
+                // e.g., if user selects "2025학년도", check if "2025학년도" or "2025학년도_..." exists.
+                const { data: existing, error: checkError } = await supabase
+                    .from('lab_semesters')
+                    .select('name')
+                    .ilike('name', `${name}%`);
+
+                if (checkError) {
+                    alert('중복 확인 중 오류가 발생했습니다: ' + checkError.message);
+                    return;
+                }
+
+                const isDuplicate = existing.some(item =>
+                    item.name === name || item.name.startsWith(name + '_')
+                );
+
+                if (isDuplicate) {
+                    alert('동일 학년도가 이미 등록되어 있어 추가할 수 없습니다.\n해당 학년도를 선택하여 수정하세요.');
+                    return;
+                }
+
                 const { data, error } = await supabase
                     .from('lab_semesters')
                     .insert([{ name: name }])
@@ -395,14 +416,17 @@
                 .eq('semester_id', semesterId);
 
             // Reset inputs
-            const g1 = document.getElementById('count-grade-1'); if (g1) g1.value = 0;
-            const g2 = document.getElementById('count-grade-2'); if (g2) g2.value = 0;
-            const g3 = document.getElementById('count-grade-3'); if (g3) g3.value = 0;
+            const g1 = document.getElementById('count-grade-1'); if (g1) g1.value = '';
+            const g2 = document.getElementById('count-grade-2'); if (g2) g2.value = '';
+            const g3 = document.getElementById('count-grade-3'); if (g3) g3.value = '';
 
             if (data) {
                 data.forEach(item => {
                     const input = document.getElementById(`count-grade-${item.grade}`);
-                    if (input) input.value = item.class_count;
+                    if (input) {
+                        // Display value only if > 0, otherwise empty (placeholder '0' handles the hint)
+                        input.value = item.class_count > 0 ? item.class_count : '';
+                    }
                 });
             }
         }
@@ -545,10 +569,12 @@
                     });
                 }
 
-                const hasChanged = isListDifferent(uiTeachers, dbData.teachers) ||
+                const criticalChanged = isListDifferent(uiTeachers, dbData.teachers) ||
                     isListDifferent(uiSubjects, dbData.subjects) ||
-                    isListDifferent(uiClubs, dbData.clubs) ||
                     isCountDifferent(uiCounts, dbData.counts);
+
+                const clubChanged = isListDifferent(uiClubs, dbData.clubs);
+                const hasChanged = criticalChanged || clubChanged;
 
 
                 if (!hasChanged) {
@@ -556,54 +582,107 @@
                     return;
                 }
 
-                // --- 4. Logic Branch: Initial Save vs Version Update ---
+                // --- 4. Logic Branch: Direct Save vs Version Update ---
 
-                // CASE A: Initial Save (DB is empty)
-                // Just save the data directly to the current semester ID
-                if (dbData.isInitialState) {
+                // Helper: Direct Save Transaction (Reusable)
+                async function executeDirectSave(successMessage) {
                     try {
-                        const insertList = async (list, table) => {
-                            if (!list.length) return;
-                            const rows = list.map(name => ({
-                                semester_id: currentSemesterId,
-                                name: name
-                            }));
-                            await supabase.from(table).insert(rows);
-                        };
-
-                        // Counts (Upsert or Insert) - Since it's initial, likely insert, but use upsert just in case rows exist with 0
+                        // Counts (Delete & Re-insert strategy to avoid constraint 400 errors)
                         const countUpserts = uiCounts.map(c => ({
                             semester_id: currentSemesterId,
                             grade: c.grade,
                             class_count: c.count
                         }));
-                        // We use upsert for counts because they have unique constraint on (semester_id, grade)? 
-                        // Actually let's delete existing 0-counts first or just upsert. 
-                        // Assuming unique constraint (semester_id, grade).
-                        await supabase.from('lab_class_counts').upsert(countUpserts, { onConflict: 'semester_id, grade' });
+                        await supabase.from('lab_class_counts').delete().eq('semester_id', currentSemesterId);
+                        const { error: cntErr } = await supabase.from('lab_class_counts').insert(countUpserts);
+                        if (cntErr) throw cntErr;
 
-                        await insertList(uiTeachers, 'lab_teachers');
-                        await insertList(uiSubjects, 'lab_subjects');
-                        await insertList(uiClubs, 'lab_clubs');
+                        // Lists (Sync)
+                        await saveDynamicList('lab_teachers', 'teachers-list');
+                        await saveDynamicList('lab_subjects', 'subjects-list');
+                        await saveDynamicList('lab_clubs', 'clubs-list');
 
-                        alert('기초 설정이 저장되었습니다.');
+                        alert(successMessage);
                         await loadSemesters(currentSemesterId);
-
                     } catch (err) {
-                        console.error('Initial save error:', err);
+                        console.error('Direct save error:', err);
                         alert('저장 중 오류가 발생했습니다: ' + err.message);
                     }
+                }
+
+                // A. Initial Save (Database Empty)
+                // B. Club-Only Change (Minor) - REMOVED BY REQUEST (All changes trigger prompt)
+                /* 
+                const isDirectSave = !criticalChanged && clubChanged;
+                if (isDirectSave) {
+                     await executeDirectSave('동아리/부서 설정이 업데이트되었습니다.');
+                     return;
+                }
+                */
+
+                // C. Check if this is a "New Creation" Scenario - REVERTED (Handled by isInitialState)
+
+                // D. Critical Changes -> Prompt User (New Version vs Overwrite)
+                // Default: New Version (flow continues downward). 
+                // Option: Overwrite (call executeDirectSave and return).
+
+                // --- Helper: Custom Modal Logic ---
+                function showVersionChoiceModal() {
+                    return new Promise((resolve) => {
+                        const modal = document.getElementById('version-choice-modal');
+                        const btnNew = document.getElementById('btn-choice-new');
+                        const btnOverwrite = document.getElementById('btn-choice-overwrite');
+                        const btnCancel = document.getElementById('btn-choice-cancel');
+
+                        if (!modal || !btnNew || !btnOverwrite) {
+                            // Fallback if modal elements missing
+                            const fallback = confirm('중요 설정이 변경되었습니다.\n[확인] 새 기간 생성\n[취소] 현재 기간 덮어쓰기');
+                            resolve(fallback);
+                            return;
+                        }
+
+                        modal.style.display = 'flex';
+
+                        // Cleanup helper
+                        const cleanup = () => {
+                            modal.style.display = 'none';
+                            btnNew.replaceWith(btnNew.cloneNode(true));
+                            btnOverwrite.replaceWith(btnOverwrite.cloneNode(true));
+                            btnCancel.replaceWith(btnCancel.cloneNode(true));
+                        };
+
+                        // Handlers
+                        btnNew.onclick = () => { cleanup(); resolve(true); }; // True = New Version
+                        btnOverwrite.onclick = () => { cleanup(); resolve(false); }; // False = Overwrite
+                        btnCancel.onclick = () => { cleanup(); resolve(null); }; // Null = Cancel action
+                    });
+                }
+
+                // C. Critical Changes -> Prompt User (New Version vs Overwrite)
+                // Use Custom Modal instead of confirm()
+
+                const choice = await showVersionChoiceModal();
+
+                if (choice === null) {
+                    return; // User cancelled the action entirely
+                }
+
+                if (choice === false) {
+                    // User chose "Overwrite" (Keep Current Period)
+                    await executeDirectSave('현재 기간 설정이 수정되었습니다.');
                     return;
                 }
 
-                // CASE B: Existing Data Modification -> Versioning Required
+                // choice === true -> Proceed to Versioning (below)
+
+                // CASE D: Versioning Required (User chose OK)
                 const modificationContainer = document.getElementById('modification-date-container');
                 const modificationInput = document.getElementById('modification-date');
 
                 // If not visible yet, show it and stop
                 if (modificationContainer.style.display === 'none') {
                     modificationContainer.style.display = 'block';
-                    alert('변경된 내용이 감지되었습니다.\n\n수정 기준 날짜를 입력해주세요.\n(입력란은 저장 버튼 위에 있습니다)');
+                    alert('수정 기준 날짜를 입력해주세요.\n(입력란은 저장 버튼 위에 있습니다)');
                     modificationInput.focus();
                     return;
                 }
