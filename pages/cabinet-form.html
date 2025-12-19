@@ -11,11 +11,9 @@
       <!-- ========================================================= -->
       <div class="form-group">
         <label>1. 시약장이 위치한 장소 *</label>
-        <div id="area-button-group" class="button-group">
-          <button type="button" data-value="과학준비실">과학준비실</button>
-          <button type="button" data-value="과학교과실1">과학교과실1</button>
-          <button type="button" data-value="과학교과실2">과학교과실2</button>
-          <button type="button" data-value="기타" id="area-other-btn">기타</button>
+        <div id="area-button-group" class="button-group"
+          style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+          <!-- Buttons will be loaded dynamically from lab_rooms -->
         </div>
       </div>
 

@@ -11,11 +11,9 @@
             <!-- ========================================================= -->
             <div class="form-group">
                 <label>1. 교구·물품장이 위치한 장소 *</label>
-                <div id="equipment-area-button-group" class="button-group">
-                    <button type="button" data-value="과학준비실">과학준비실</button>
-                    <button type="button" data-value="과학교과실1">과학교과실1</button>
-                    <button type="button" data-value="과학교과실2">과학교과실2</button>
-                    <button type="button" data-value="기타" id="equipment-area-other-btn">기타</button>
+                <div id="equipment-area-button-group" class="button-group"
+                    style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                    <!-- Buttons will be loaded dynamically from lab_rooms -->
                 </div>
             </div>
 
@@ -30,7 +28,7 @@
             <div class="form-group">
                 <label>2. 교구·물품장 이름 *</label>
                 <div id="equipment_name_buttons" class="button-group"
-                    style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;">
+                    style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 12px;">
                     <button type="button" data-value="교구장1">교구장1</button>
                     <button type="button" data-value="교구장2">교구장2</button>
                     <button type="button" data-value="교구장3">교구장3</button>
@@ -41,7 +39,7 @@
                     <button type="button" data-value="교구장8">교구장8</button>
                     <button type="button" data-value="교구장9">교구장9</button>
                     <button type="button" data-value="교구장10">교구장10</button>
-                    <button type="button" data-value="교구장밖">교구장밖</button>
+                    <button type="button" data-value="교구장외부">교구장외부</button>
                     <button type="button" data-value="기타">기타</button>
                 </div>
             </div>
@@ -91,7 +89,7 @@
             </div>
 
             <!-- ========================================================= -->
-            <!-- 4️⃣ 외부 도어의 상하분리 형태 (교구장밖 선택 시 숨김) -->
+            <!-- 4️⃣ 외부 도어의 상하분리 형태 (교구장외부 선택 시 숨김) -->
             <!-- ========================================================= -->
             <div class="form-group" id="equipment-door-step" style="display: block;">
                 <label>4. 외부 도어의 상하분리 형태 *</label>

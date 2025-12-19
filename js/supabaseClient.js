@@ -32,7 +32,14 @@
   // 3️⃣ 클라이언트 생성 및 전역 등록
   // ------------------------------------------------------------
   try {
-    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        storage: sessionStorage,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+      },
+    });
     globalThis.App.supabase = client;
     globalThis.App.supabaseUrl = SUPABASE_URL;
     globalThis.App.supabaseAnonKey = SUPABASE_ANON_KEY;

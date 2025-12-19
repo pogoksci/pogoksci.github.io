@@ -1101,31 +1101,86 @@
     // ------------------------------------------------------------
     // 1️⃣ 장소 버튼 그룹 (기타 처리)
     // ------------------------------------------------------------
+    // ------------------------------------------------------------
+    // 🏷️ 1️⃣ 장소 선택 버튼 동적 로드 (lab_rooms)
+    // ------------------------------------------------------------
+    async function loadLabRooms(targetGroupId, initialValue, areaOtherGroup) {
+      const supabase = App.supabase;
+      const groupEl = document.getElementById(targetGroupId);
+      if (!groupEl) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("lab_rooms")
+          .select("room_name")
+          .order("id", { ascending: true });
+
+        if (error) throw error;
+
+        // 🚨 장소가 하나도 없으면 경고 후 이동
+        if (!data || data.length === 0) {
+          alert("⚠️ 과학실/준비실 정보가 설정되지 않았습니다.\n[설정 > 과학실 설정]에서 장소를 먼저 등록해주세요.");
+          // history.back() 또는 설정 페이지로 이동 (여기선 안전하게 목록으로)
+
+          if (targetGroupId === "equipment-area-button-group") {
+            App.includeHTML("pages/equipment-cabinet-list.html");
+          } else {
+            App.includeHTML("pages/location-list.html");
+          }
+          return;
+        }
+
+        // 버튼 생성
+        groupEl.innerHTML = data.map(room =>
+          `<button type="button" class="btn-group-item" data-value="${room.room_name}">${room.room_name}</button>`
+        ).join("");
+
+        // 📏 그리드 레이아웃 동적 조정 (최대 4개, 4개 이하면 꽉 차게)
+        // 요청사항: "최대 4개인데 버튼이 3개이면 버튼의 폭을 키워서 1줄을 꽉채워야지."
+        const colCount = Math.min(data.length, 4);
+        groupEl.style.display = "grid";
+        groupEl.style.gridTemplateColumns = `repeat(${colCount}, 1fr)`;
+        groupEl.style.gap = "12px";
+
+        // 기타 버튼 로직 제거 (요청사항) - DB에 있는 장소만 선택 가능
+
+        // 버튼 이벤트 바인딩
+        setupButtonGroup(targetGroupId, (btn) => {
+          const value = btn.dataset.value?.trim() || btn.textContent.trim();
+          set("area_buttons", value);
+          set("area_custom_name", null); // 커스텀 네임 사용 안 함
+
+          if (areaOtherGroup) areaOtherGroup.style.display = "none";
+        });
+
+        // 초기값 선택 (Edit 모드 등)
+        if (initialValue) {
+          const targetBtn = Array.from(groupEl.children).find(b => b.dataset.value === initialValue || b.textContent.trim() === initialValue);
+          if (targetBtn) targetBtn.classList.add("active");
+        }
+
+      } catch (err) {
+        console.error("❌ 과학실 정보 로드 실패:", err);
+        alert("과학실 정보를 불러올 수 없습니다.");
+      }
+    }
+
+    // ------------------------------------------------------------
+    // 1️⃣ 장소 버튼 그룹 (DB 로드)
+    // ------------------------------------------------------------
     const areaGroup = document.getElementById("area-button-group");
+    // const areaOtherGroup 는 더이상 사용 안 함 (숨김 처리)
     const areaOtherGroup = document.getElementById("area-other-group");
-    const areaOtherInput = document.getElementById("area-other-input");
 
     if (areaGroup) {
-      setupButtonGroup("area-button-group", (btn) => {
-        const value = btn.dataset.value?.trim() || btn.textContent.trim();
+      if (areaOtherGroup) areaOtherGroup.style.display = 'none'; // 항상 숨김
 
-        if (value === "기타") {
-          areaOtherGroup.style.display = "block";
-          areaOtherInput.value = "";
-          areaOtherInput.focus();
-          set("area_custom_name", "");
-          set("area_buttons", null);
-        } else {
-          areaOtherGroup.style.display = "none";
-          set("area_buttons", value);
-          set("area_custom_name", null);
-        }
-      });
+      const currentAreaName = (mode === "edit" && detail?.area_id?.area_name)
+        ? detail.area_id.area_name
+        : null;
 
-      // 입력란 직접 타이핑 시 State 동기화
-      areaOtherInput.addEventListener("input", (e) => {
-        set("area_custom_name", e.target.value.trim());
-      });
+      // 비동기 로드 실행
+      loadLabRooms("area-button-group", currentAreaName, areaOtherGroup);
     }
 
     // ------------------------------------------------------------
@@ -1471,7 +1526,7 @@
   }
 
   // -------------------------------------------------
-  // 🏫 교구·물품장 폼 초기화 (4단계 Wizard + 교구장밖 예외처리)
+  // 🏫 교구·물품장 폼 초기화 (4단계 Wizard + 교구장외부 예외처리)
   // -------------------------------------------------
   async function initEquipmentCabinetForm(mode = "create", detail = null) {
     await App.includeHTML("pages/equipment-cabinet-form.html", "form-container");
@@ -1530,30 +1585,90 @@
     // ------------------------------------------------------------
     // 1️⃣ 장소 버튼
     // ------------------------------------------------------------
+    // ------------------------------------------------------------
+    // 1️⃣ 장소 버튼 (DB 로드)
+    // ------------------------------------------------------------
     const areaGroup = document.getElementById("equipment-area-button-group");
     const areaOtherGroup = document.getElementById("equipment-area-other-group");
-    const areaOtherInput = document.getElementById("equipment-area-other-input");
+    // const areaOtherInput ... remove
 
     if (areaGroup) {
-      setupButtonGroup("equipment-area-button-group", (btn) => {
-        const value = btn.dataset.value?.trim() || btn.textContent.trim();
-        if (value === "기타") {
-          areaOtherGroup.style.display = "block";
-          areaOtherInput.value = "";
-          areaOtherInput.focus();
-          set("area_custom_name", "");
-          set("area_buttons", null);
-        } else {
-          areaOtherGroup.style.display = "none";
-          set("area_buttons", value);
-          set("area_custom_name", null);
+      if (areaOtherGroup) areaOtherGroup.style.display = 'none';
+
+      const currentAreaName = (mode === "edit" && detail?.area_id?.area_name)
+        ? detail.area_id.area_name
+        : null;
+
+      // 재사용 가능한 loadLabRooms 호출
+      // (initCabinetForm 내부에 정의되어 있으므로 스코프 문제 가능성 -> loadLabRooms를 initCabinetForm 밖으로 빼야 함)
+      // 하지만 이 파일 구조상 initEquipmentCabinetForm과 initCabinetForm은 형제 함수이므로
+      // loadLabRooms를 상위에 정의해야 함.
+      // 일단 아래에서 정의한 loadLabRooms를 참조하려면 호이스팅이 필요하거나 위치를 상위로 옮겨야 함.
+      // => [PLAN] loadLabRooms 함수를 forms.js 최상단(모듈 스코프)이나 로컬 헬퍼로 분리.
+
+      // 현재 이 replace 블록은 initEquipmentCabinetForm 내부임.
+      // loadLabRooms가 initCabinetForm 내부에 있으면 접근 불가.
+      // 따라서, loadLabRooms를 initEquipmentCabinetForm 직전이나 모듈 상단에 정의해야 함.
+      // 이전 replace_file_content에서 initCabinetForm 내부에 넣었으므로, 여기서 다시 접근 불가할 수 있음.
+      // ==> 해결책: loadLabRooms를 initEquipmentCabinetForm 내부에도 복사하거나(중복), 
+      // ==> 더 좋은 방법: 두 함수 밖으로 빼는 것.
+
+      // 이번 턴에서는 일단 **복제**해서 구현하고, 추후 리팩토링 혹은 
+      // replace_file_content를 사용하여 loadLabRooms를 밖으로 빼는 작업을 수행.
+      // 하지만 replace_file_content는 순차적이므로, 이전 호출로 이미 initCabinetForm 내부에 박힘.
+      // 따라서 여기서는 **동일한 로직을 인라인으로 구현**하거나 복사본 함수를 만듦.
+      // 안전하게 "loadEquipmentLabRooms" 라는 이름으로 내부 정의해서 사용.
+
+      async function loadEquipmentLabRooms(targetGroupId, initialValue) {
+        const supabase = App.supabase;
+        const groupEl = document.getElementById(targetGroupId);
+        if (!groupEl) return;
+
+        try {
+          const { data, error } = await supabase
+            .from("lab_rooms")
+            .select("room_name")
+            .order("id", { ascending: true });
+
+          if (error) throw error;
+
+          if (!data || data.length === 0) {
+            alert("⚠️ 과학실/준비실 정보가 설정되지 않았습니다.\n[설정 > 과학실 설정]에서 장소를 먼저 등록해주세요.");
+            App.includeHTML("pages/equipment-cabinet-list.html");
+            return;
+          }
+
+          groupEl.innerHTML = data.map(room =>
+            `<button type="button" class="btn-group-item" data-value="${room.room_name}">${room.room_name}</button>`
+          ).join("");
+
+          // 📏 그리드 레이아웃 동적 조정
+          const colCount = Math.min(data.length, 4);
+          groupEl.style.display = "grid";
+          groupEl.style.gridTemplateColumns = `repeat(${colCount}, 1fr)`;
+          groupEl.style.gap = "10px";
+
+          setupButtonGroup(targetGroupId, (btn) => {
+            const value = btn.dataset.value?.trim() || btn.textContent.trim();
+            set("area_buttons", value);
+            set("area_custom_name", null);
+          });
+
+          if (initialValue) {
+            const targetBtn = Array.from(groupEl.children).find(b => b.dataset.value === initialValue || b.textContent.trim() === initialValue);
+            if (targetBtn) targetBtn.classList.add("active");
+          }
+
+        } catch (err) {
+          console.error("❌ 과학실 정보 로드 실패:", err);
         }
-      });
-      areaOtherInput.addEventListener("input", (e) => set("area_custom_name", e.target.value.trim()));
+      }
+
+      loadEquipmentLabRooms("equipment-area-button-group", currentAreaName);
     }
 
     // ------------------------------------------------------------
-    // 2️⃣ 교구장 이름 (12개 버튼 + 교구장밖 처리)
+    // 2️⃣ 교구장 이름 (12개 버튼 + 교구장외부 처리)
     // ------------------------------------------------------------
     const nameGroup = document.getElementById("equipment_name_buttons");
     const nameOtherGroup = document.getElementById("equipment_name_other-group");
@@ -1570,8 +1685,8 @@
       setupButtonGroup("equipment_name_buttons", (btn) => {
         const value = btn.dataset.value?.trim() || btn.textContent.trim();
 
-        // 🚨 "교구장밖" 선택 시 4단계 숨김
-        if (value === "교구장밖") {
+        // 🚨 "교구장외부" 선택 시 4단계 숨김
+        if (value === "교구장외부") {
           if (doorStep) doorStep.style.display = "none";
           set("door_vertical_count", null); // 값 초기화? or maintain?
         } else {
@@ -1798,7 +1913,7 @@
       nameBtns.forEach(b => {
         if (b.dataset.value === nameVal) { b.classList.add("active"); nameFound = true; }
       });
-      if (nameVal === "교구장밖") {
+      if (nameVal === "교구장외부") {
         if (doorStep) doorStep.style.display = "none";
       }
       if (!nameFound && nameOtherGroup) {
@@ -1891,7 +2006,7 @@
     };
 
     // Special case: Outside Cabinet
-    if (state.cabinet_name_buttons === "교구장밖") {
+    if (state.cabinet_name_buttons === "교구장외부") {
       finalPayload.door_vertical_count = null;
     }
 
