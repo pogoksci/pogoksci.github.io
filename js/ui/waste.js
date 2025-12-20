@@ -549,38 +549,19 @@
             });
         }
 
-        // 정렬 드롭다운 초기화 (재시도 로직 추가)
+        // 정렬 드롭다운 초기화
         if (App.SortDropdown && App.SortDropdown.init) {
-            let retryCount = 0;
-            const maxRetries = 10; // 1초 대기
-
-            const initDropdown = () => {
-                const toggle = document.getElementById("waste-sort-toggle");
-                if (toggle) {
-                    App.SortDropdown.init({
-                        onChange: (val) => {
-                            console.log(`🔽 폐수 정렬 변경: ${val}`);
-                            loadList();
-                        },
-                        defaultLabel: "등록순(분류별)",
-                        defaultValue: "created_asc_group",
-                        toggleId: "waste-sort-toggle",
-                        menuId: "waste-sort-menu",
-                        labelId: "waste-sort-label"
-                    });
-                    console.log("✅ 폐수 정렬 드롭다운 초기화 성공");
-                } else {
-                    if (retryCount < maxRetries) {
-                        retryCount++;
-                        console.warn(`⚠️ 폐수 정렬 토글 버튼 찾기 실패. 재시도 ${retryCount}/${maxRetries}...`);
-                        setTimeout(initDropdown, 100);
-                    } else {
-                        console.error("❌ 폐수 정렬 토글 버튼을 찾을 수 없습니다. (최대 재시도 초과)");
-                    }
-                }
-            };
-
-            initDropdown();
+            App.SortDropdown.init({
+                onChange: (val) => {
+                    console.log(`🔽 폐수 정렬 변경: ${val}`);
+                    loadList();
+                },
+                defaultLabel: "등록순(분류별)",
+                defaultValue: "created_asc_group",
+                toggleId: "waste-sort-toggle",
+                menuId: "waste-sort-menu",
+                labelId: "waste-sort-label"
+            });
         } else {
             console.error("❌ App.SortDropdown 모듈이 로드되지 않았습니다.");
         }

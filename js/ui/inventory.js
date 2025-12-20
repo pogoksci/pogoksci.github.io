@@ -392,6 +392,7 @@
   }
 
   async function showListPage() {
+    const app = getApp(); // Define app locally or use globalThis.App
     const inventoryApi = app.Inventory || {};
     inventoryApi.__manualMount = true;
     app.Inventory = inventoryApi;

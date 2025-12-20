@@ -24,22 +24,24 @@
   ];
   const uiModules = [
     "./js/ui/cabinet.js",
-    "./js/ui/equipment-cabinet.js", // ✅ 교구·물품장 설정 모듈 추가
-    "./js/ui/storage-selector.js", // ✅ 보관위치 선택기 추가
+    "./js/ui/equipment-cabinet.js",
+    "./js/ui/storage-selector.js",
     "./js/ui/forms.js",
     "./js/ui/inventory.js",
     "./js/ui/inventory-detail.js",
     "./js/ui/navbar.js",
     "./js/ui/data-sync.js",
-    "./js/ui/usage-register.js?v=4", // ✅ 캐시 갱신을 위해 버전 추가
-    "./js/ui/waste.js", // ✅ 폐수 관리 모듈 추가
-    "./js/pages/kits.js", // ✅ 키트 페이지 로직
-    "./js/pages/teaching-tools.js", // ✅ 교구 페이지 로직
-    "./js/pages/tools-form.js", // ✅ 교구 등록 폼 로직
-    "./js/pages/kit-form.js", // ✅ 키트 등록 폼 로직
-    "./js/ui/export-page.js", // ✅ 데이터 내보내기 페이지 로직
-    "./js/pages/lab-settings.js", // ✅ 과학실 설정 페이지 로직
-    "./js/pages/lab-timetable.js", // ✅ 시간표 설정 페이지 로직
+    "./js/ui/usage-register.js?v=4",
+    "./js/ui/waste.js",
+    "./js/pages/kits.js",
+    "./js/pages/teaching-tools.js",
+    "./js/pages/tools-form.js",
+    "./js/pages/kit-form.js",
+    "./js/ui/export-page.js",
+    "./js/pages/lab-settings.js",
+    "./js/utils/timetable-import.js",
+    "./js/pages/lab-timetable.js",
+    "./js/pages/lab-timetable-viewer.js",
   ];
   const componentModules = [
     "./js/components/sort-dropdown.js", // 🔹 여기 추가됨

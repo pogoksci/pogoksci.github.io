@@ -13,6 +13,9 @@
         <button class="tab-button" data-tab="user-settings" id="tab-btn-user">
             사용자 기초설정
         </button>
+        <button class="tab-button" data-tab="db-backup" id="tab-btn-backup">
+            DB 백업/복원
+        </button>
     </div>
 
     <!-- 2. Scrollable Content -->
@@ -176,6 +179,51 @@
 
             </div> <!-- End details container -->
 
+        </div>
+
+        <!-- Tab 3: DB Backup/Restore -->
+        <div id="db-backup" class="tab-content">
+            <div class="settings-section">
+                <div class="section-header">
+                    <h3>과학실 설정 데이터 백업/복원</h3>
+                </div>
+
+                <div class="settings-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Export Card -->
+                    <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: #fff;">
+                        <h4 style="margin-top: 0; color: #00a0b2;">설정 내보내기 (Backup)</h4>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+                            현재 설정된 과학실, 학년도, 교사, 과목 등 모든 기초 데이터를 JSON 파일로 다운로드합니다.
+                        </p>
+                        <button id="btn-export-db" class="btn-primary" style="width: 100%;">
+                            <span class="material-symbols-outlined"
+                                style="font-size: 18px; vertical-align: bottom; margin-right: 5px;">download</span>
+                            데이터 내보내기
+                        </button>
+                    </div>
+
+                    <!-- Import Card -->
+                    <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: #fffcfc;">
+                        <h4 style="margin-top: 0; color: #d32f2f;">설정 복원하기 (Restore)</h4>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+                            백업 파일을 업로드하여 설정을 복원합니다.<br>
+                            <strong style="color: #d32f2f;">주의: 현재의 모든 기초 설정이 삭제되고 덮어쓰기 됩니다.</strong>
+                        </p>
+                        <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                        <button id="btn-trigger-import" style="width: 100%; background-color: #d32f2f; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                            <span class="material-symbols-outlined"
+                                style="font-size: 18px; vertical-align: bottom; margin-right: 5px;">upload</span>
+                            데이터 복원하기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Restore Warning/Status -->
+                <div id="restore-status" style="margin-top: 20px; display: none;">
+                    <div style="padding: 15px; border-radius: 6px; font-size: 14px;"></div>
+                </div>
+
+            </div>
         </div>
     </div>
 

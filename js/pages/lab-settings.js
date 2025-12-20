@@ -861,6 +861,151 @@
             await loadDynamicList(tableName, containerId);
         }
         // Initialize after all declarations
+        // ==========================================
+        // Tab 3: DB Backup/Restore Logic
+        // ==========================================
+
+        const btnExportDB = document.getElementById('btn-export-db');
+        const btnTriggerImport = document.getElementById('btn-trigger-import');
+        const importInput = document.getElementById('import-file-input');
+        const restoreStatus = document.querySelector('#restore-status div');
+        const restoreStatusContainer = document.getElementById('restore-status');
+
+        function setRestoreStatus(msg, type = 'info') {
+            restoreStatusContainer.style.display = 'block';
+            restoreStatus.textContent = msg;
+            if (type === 'error') {
+                restoreStatus.style.backgroundColor = '#ffebee';
+                restoreStatus.style.color = '#c62828';
+            } else if (type === 'success') {
+                restoreStatus.style.backgroundColor = '#e8f5e9';
+                restoreStatus.style.color = '#2e7d32';
+            } else {
+                restoreStatus.style.backgroundColor = '#e3f2fd';
+                restoreStatus.style.color = '#1565c0';
+            }
+        }
+
+        // --- Export Logic ---
+        if (btnExportDB) {
+            btnExportDB.addEventListener('click', async () => {
+                try {
+                    btnExportDB.disabled = true;
+                    btnExportDB.innerHTML = '<span class="material-symbols-outlined spin">sync</span> 데이터 수집 중...';
+
+                    // Fetch all data
+                    const [rooms, semesters, counts, teachers, subjects, clubs] = await Promise.all([
+                        supabase.from('lab_rooms').select('*').order('id'),
+                        supabase.from('lab_semesters').select('*').order('id'),
+                        supabase.from('lab_class_counts').select('*').order('id'),
+                        supabase.from('lab_teachers').select('*').order('id'),
+                        supabase.from('lab_subjects').select('*').order('id'),
+                        supabase.from('lab_clubs').select('*').order('id')
+                    ]);
+
+                    // Check errors
+                    if (rooms.error) throw rooms.error;
+                    if (semesters.error) throw semesters.error;
+
+                    const payload = {
+                        version: "1.0",
+                        exported_at: new Date().toISOString(),
+                        lab_rooms: rooms.data,
+                        lab_semesters: semesters.data,
+                        lab_class_counts: counts.data,
+                        lab_teachers: teachers.data,
+                        lab_subjects: subjects.data,
+                        lab_clubs: clubs.data
+                    };
+
+                    const fileName = `과학실설정_백업_${new Date().toISOString().slice(0, 10)}.json`;
+                    downloadJSON(payload, fileName);
+
+                } catch (err) {
+                    console.error('Export failed:', err);
+                    alert('데이터 내보내기 실패: ' + err.message);
+                } finally {
+                    btnExportDB.disabled = false;
+                    btnExportDB.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px; vertical-align: bottom; margin-right: 5px;">download</span> 데이터 내보내기';
+                }
+            });
+        }
+
+        function downloadJSON(data, filename) {
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- Import Logic ---
+        if (btnTriggerImport && importInput) {
+            btnTriggerImport.addEventListener('click', () => {
+                importInput.value = ''; // Reset
+                importInput.click();
+            });
+
+            importInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (!confirm(`[주의] 복원을 진행하면 현재의 과학실 설정, 학년도, 교사 등 모든 기초 데이터가 삭제되고 덮어씌워집니다.\n\n정말 복원하시겠습니까?`)) {
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = async (ev) => {
+                    try {
+                        const json = JSON.parse(ev.target.result);
+                        await handleRestore(json);
+                    } catch (err) {
+                        console.error('JSON Parse Error:', err);
+                        setRestoreStatus('파일 형식이 올바르지 않거나 손상된 JSON 파일입니다.', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        async function handleRestore(payload) {
+            try {
+                setRestoreStatus('데이터 복원 중... 잠시만 기다려주세요.', 'info');
+
+                // Basic Validation
+                if (!payload.lab_rooms || !Array.isArray(payload.lab_rooms)) {
+                    throw new Error('유효하지 않은 백업 파일입니다 (lab_rooms missing).');
+                }
+
+                // Call RPC
+                const { error } = await supabase.rpc('restore_lab_settings', { payload: payload });
+
+                if (error) throw error;
+
+                setRestoreStatus('✅ 복원이 완료되었습니다. 페이지를 새로고침하여 확인하세요.', 'success');
+                alert('복원이 성공적으로 완료되었습니다.');
+                
+                // Optional: Reload Current Tab
+                await loadLabRooms();
+                await updateTabStatus();
+                // If current tab is user settings, reload that too?
+                await loadSemesters();
+
+            } catch (err) {
+                console.error('Restore failed:', err);
+                setRestoreStatus('복원 실패: ' + err.message, 'error');
+                
+                if (err.message.includes('foreign key constraint') || err.code === '23503') {
+                     alert('복원 실패: 다른 데이터(재고 등)가 이 설정을 참조하고 있어 삭제할 수 없습니다.\n관련 데이터를 먼저 정리해야 합니다.');
+                }
+            }
+        }
+
         initTabs();
         await loadLabRooms();
         await loadSemesters();
