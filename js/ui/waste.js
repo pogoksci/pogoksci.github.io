@@ -503,7 +503,15 @@
         if (searchBtn) searchBtn.onclick = loadList;
 
         const newBtn = document.getElementById("new-waste-btn");
-        if (newBtn) newBtn.onclick = () => App.Router.go("wasteForm");
+        if (newBtn) {
+            // ✅ 권한 체크
+            if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
+                newBtn.style.display = "none";
+            } else {
+                newBtn.style.display = "";
+                newBtn.onclick = () => App.Router.go("wasteForm");
+            }
+        }
 
         const startInput = document.getElementById("waste-start-date");
         const endInput = document.getElementById("waste-end-date");

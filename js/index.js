@@ -39,6 +39,7 @@
     "./js/pages/kit-form.js",
     "./js/ui/export-page.js",
     "./js/pages/lab-settings.js",
+    "./js/utils/subject-aliases.js", // ✅ 과목 별칭 (timetable-import보다 먼저 로드)
     "./js/utils/timetable-import.js",
     "./js/pages/lab-timetable.js",
     "./js/pages/lab-timetable-viewer.js",

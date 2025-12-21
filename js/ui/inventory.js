@@ -582,16 +582,22 @@
 
     const newBtn = document.getElementById("new-inventory-btn");
     if (newBtn) {
-      newBtn.onclick = async () => {
-        console.log("🧾 새 약품 등록 버튼 클릭됨");
-        const ok = await App.includeHTML("pages/inventory-form.html", "form-container");
-        if (ok) {
-          console.log("📄 inventory-form.html 로드 완료 → 폼 초기화 시작");
-          App.Forms?.initInventoryForm?.("create", null);
-        } else {
-          console.error("❌ inventory-form.html 로드 실패");
-        }
-      };
+      // ✅ 권한 체크: 쓰기 권한 없으면 숨김
+      if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
+        newBtn.style.display = "none";
+      } else {
+        newBtn.style.display = ""; // 초기화 (재진입 시)
+        newBtn.onclick = async () => {
+          console.log("🧾 새 약품 등록 버튼 클릭됨");
+          const ok = await App.includeHTML("pages/inventory-form.html", "form-container");
+          if (ok) {
+            console.log("📄 inventory-form.html 로드 완료 → 폼 초기화 시작");
+            App.Forms?.initInventoryForm?.("create", null);
+          } else {
+            console.error("❌ inventory-form.html 로드 실패");
+          }
+        };
+      }
     }
   }
 

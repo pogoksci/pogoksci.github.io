@@ -152,13 +152,13 @@
                 if (currentSearch) {
                     listContainer.innerHTML = `
                         <div class="empty-state">
-                            <span class="material-symbols-outlined" style="font-size:48px; color:#ccc;">search_off</span>
+                            <span class="material-symbols-outlined">search_off</span>
                             <p>검색 결과가 없습니다.</p>
                         </div>`;
                 } else {
                     listContainer.innerHTML = `
                         <div class="empty-state">
-                            <span class="material-symbols-outlined" style="font-size:48px; color:#ccc;">inventory_2</span>
+                            <span class="material-symbols-outlined">inventory_2</span>
                             <p>등록된 키트가 없습니다.</p>
                         </div>`;
                 }

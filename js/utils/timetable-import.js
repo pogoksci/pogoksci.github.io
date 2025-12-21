@@ -3,40 +3,10 @@
 
     // --- Configuration ---
     // Subject Aliases: Map from Excel Name -> DB Subject Name (Exact or Base)
-    const SUBJECT_ALIASES = {
-        '통사': '통합사회',
-        '통사1': '통합사회1',
-        '통합': '통합사회',
-        '생과': '생활과 과학',
-        '생명': '생명과학',
-        '물리': '물리학',
-        '물I': '물리학I',
-        '물리학1': '물리학I',
-        '화학1': '화학I',
-        '생명1': '생명과학I',
-        '지구1': '지구과학I',
-        '물II': '물리학II',
-        '물리학2': '물리학II',
-        '화학2': '화학II',
-        '생명2': '생명과학II',
-        '지구2': '지구과학II',
-        '실험': '과학탐구실험',
-        '탐구': '과학탐구실험',
-        '융합': '융합과학',
-        // Roman Numerals
-        '물리학I': '물리학I',
-        '화학I': '화학I',
-        '생명I': '생명과학I', 
-        '생명과학I': '생명과학I',
-        '지구I': '지구과학I',
-        '지구과학I': '지구과학I',
-        '물리학II': '물리학II',
-        '화학II': '화학II',
-        '생명II': '생명과학II', 
-        '생명과학II': '생명과학II',
-        '지구II': '지구과학II',
-        '지구과학II': '지구과학II'
-    };
+    // --- Configuration ---
+    // Subject Aliases: Map from Excel Name -> DB Subject Name (Exact or Base)
+    // Now loaded from js/utils/subject-aliases.js
+    const getSubjectAliases = () => globalThis.App?.SubjectAliases || {};
 
     // --- Main Import Function ---
     TimetableImporter.processFile = async function (file, semesterId, existingTeachers, existingSubjects) {
@@ -61,7 +31,7 @@
     };
 
     function analyzeTimetableData(rows, dbTeachers, dbSubjects) {
-        const teacherScheduleMap = {}; 
+        const teacherScheduleMap = {};
         const report = {
             foundTeachers: [],
             missingTeachers: [],
@@ -76,19 +46,19 @@
         for (let r = 0; r < rows.length; r++) {
             for (let c = 0; c < rows[r].length; c++) {
                 const cellVal = (rows[r][c] || '').toString().trim();
-                
+
                 if (cellVal in teacherNameMap) {
                     const teacherName = cellVal;
                     const teacherId = teacherNameMap[teacherName];
-                    
-                    if (report.foundTeachers.includes(teacherName)) continue; 
+
+                    if (report.foundTeachers.includes(teacherName)) continue;
                     report.foundTeachers.push(teacherName);
 
                     parseTeacherBlock(rows, r, c, teacherId, teacherScheduleMap, report, dbSubjects);
                 }
             }
         }
-        
+
         // Convert Set to Array for easier display
         report.unknownSubjects = Array.from(report.unknownSubjects);
         return { map: teacherScheduleMap, report: report };
@@ -96,7 +66,7 @@
 
     function parseTeacherBlock(rows, startRow, startCol, teacherId, scheduleMap, report, dbSubjects) {
         const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-        
+
         for (let i = 0; i < 7; i++) { // 1 to 7 periods
             const currentRow = startRow + 1 + i;
             if (currentRow >= rows.length) break;
@@ -108,16 +78,16 @@
                 if (cellContent) {
                     report.totalCells++;
                     const { parsed, errorReason, rawSubject } = parseCellContent(cellContent, dbSubjects);
-                    
+
                     if (parsed) {
                         if (!scheduleMap[teacherId]) scheduleMap[teacherId] = [];
-                        
+
                         scheduleMap[teacherId].push({
                             day: DAYS[d],
                             period: i + 1,
-                            grade: parsed.grade,   
-                            class_group: parsed.class_group, 
-                            subject_id: parsed.subject_id 
+                            grade: parsed.grade,
+                            class_group: parsed.class_group,
+                            subject_id: parsed.subject_id
                         });
                     } else {
                         report.skippedCells++;
@@ -139,11 +109,11 @@
         }
 
         const grade = parseInt(match[1]);
-        const classNum = parseInt(match[2]); 
-        let rawSubject = match[3].trim(); 
+        const classNum = parseInt(match[2]);
+        let rawSubject = match[3].trim();
 
         const hasKorean = /[가-힣]/.test(rawSubject);
-        
+
         let subjectName = null;
         if (hasKorean) {
             subjectName = rawSubject.replace(/^[A-Za-z_]+/, '').trim();
@@ -153,9 +123,9 @@
         }
 
         const subjectId = findSubjectId(subjectName, dbSubjects);
-        
+
         if (!subjectId) {
-             return { parsed: null, errorReason: 'unknown_subject', rawSubject: subjectName };
+            return { parsed: null, errorReason: 'unknown_subject', rawSubject: subjectName };
         }
 
         const classGroup = classNum.toString();
@@ -172,13 +142,14 @@
 
     function findSubjectId(rawName, dbSubjects) {
         if (!rawName) return null;
-        
+
         // 1. Normalize
         const norm = rawName.replace(/\s+/g, ''); // Remove spaces
-        
+
         // 2. Alias Check
-        if (SUBJECT_ALIASES[norm]) {
-            const aliasTarget = SUBJECT_ALIASES[norm];
+        const aliases = getSubjectAliases();
+        if (aliases[norm]) {
+            const aliasTarget = aliases[norm];
             const found = dbSubjects.find(s => s.name.replace(/\s+/g, '') === aliasTarget.replace(/\s+/g, ''));
             if (found) return found.id;
         }
@@ -195,7 +166,7 @@
         if (starts) return starts.id;
 
         // 5. Reverse StartsWith (raw "물리학I", db "물리학") -> unlikely in this school context, usually DB is fuller.
-        
+
         return null;
     }
 
