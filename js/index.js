@@ -46,6 +46,7 @@
     "./js/pages/lab-timetable.js",
     "./js/pages/lab-timetable-viewer.js",
     "./js/pages/lab-usage-log.js",
+    "./js/pages/lab-usage-view.js",
   ];
   const componentModules = [
     "./js/components/sort-dropdown.js", // 🔹 여기 추가됨

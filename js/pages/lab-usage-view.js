@@ -12,49 +12,56 @@
 
     // Pagination State
     let currentPage = 1;
-    let pageSize = 30; // Default
+    let pageSize = 10; // Default
 
     LabUsageView.init = async function () {
         console.log("🔍 Lab Usage View Init");
         const supabase = globalThis.App?.supabase;
         if (!supabase) return;
 
-        // 1. Initial Data Loading
+        // 1. Default Dates: School Year (Mar 1st ~ Feb End) - Run this FIRST
+        try {
+            const now = new Date();
+            let schoolYear = now.getFullYear();
+            if (now.getMonth() < 2) schoolYear--; // If Jan or Feb, school year is previous year
+
+            const firstDay = new Date(schoolYear, 2, 1); // March 1st
+            const lastDay = new Date(schoolYear + 1, 2, 0); // Last day of Feb (handles leap years)
+
+            const startEl = document.getElementById('filter-start-date');
+            const endEl = document.getElementById('filter-end-date');
+            if (startEl) startEl.value = formatDate(firstDay);
+            if (endEl) endEl.value = formatDate(lastDay);
+        } catch (e) {
+            console.error("❌ Failed to set default dates:", e);
+        }
+
+        // 2. Initial Data Loading (Dropdowns, etc)
         await loadInitialData();
         setupFilters();
 
-        // 2. Default Dates: School Year (Mar 1st ~ Feb End)
-        const now = new Date();
-        let schoolYear = now.getFullYear();
-        if (now.getMonth() < 2) schoolYear--; // If Jan or Feb, school year is previous year
-
-        const firstDay = new Date(schoolYear, 2, 1); // March 1st
-        const lastDay = new Date(schoolYear + 1, 1, 28); // Feb 28th (Approx)
-
-        document.getElementById('filter-start-date').value = formatDate(firstDay);
-        document.getElementById('filter-end-date').value = formatDate(lastDay);
-
-        // 3. Initial Search (Auto-run)
+        // 3. Initial Search (Auto-run) - Done after dates and filters are ready
         await search();
 
         // 4. Bind Export
-        document.getElementById('btn-export-excel').onclick = exportToExcel;
+        const btnExport = document.getElementById('btn-export-excel');
+        if (btnExport) btnExport.onclick = exportToExcel;
     };
 
     async function loadInitialData() {
         const supabase = globalThis.App?.supabase;
 
         const [rooms, subjects, teachers] = await Promise.all([
-            supabase.from('lab_rooms').select('*').order('name'),
-            supabase.from('subjects').select('*').order('name'),
-            supabase.from('teachers').select('*').order('name')
+            supabase.from('lab_rooms').select('*').order('sort_order'),
+            supabase.from('lab_subjects').select('*').order('name'),
+            supabase.from('lab_teachers').select('*').order('name')
         ]);
 
         allRooms = rooms.data || [];
         allSubjects = subjects.data || [];
         allTeachers = teachers.data || [];
 
-        allRooms.forEach(r => roomMap[r.id] = r.name);
+        allRooms.forEach(r => roomMap[r.id] = r.room_name);
         allSubjects.forEach(s => subjectMap[s.id] = s.name);
         allTeachers.forEach(t => teacherMap[t.id] = t.name);
 
@@ -64,16 +71,34 @@
         const selTech = document.getElementById('filter-teacher');
 
         if (selRoom) {
-            selRoom.innerHTML = '<option value="">전체 과학실</option>' +
-                allRooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            selRoom.innerHTML = '<option value="">전체</option>' +
+                allRooms.map(r => `<option value="${r.id}">${r.room_name}</option>`).join('');
         }
         if (selSubj) {
-            selSubj.innerHTML = '<option value="">전체 과목</option>' +
-                allSubjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            // Deduplicate by name for cleaner filter
+            const uniqueSub = [];
+            const seenSub = new Set();
+            allSubjects.forEach(s => {
+                if (!seenSub.has(s.name)) {
+                    seenSub.add(s.name);
+                    uniqueSub.push(s);
+                }
+            });
+            selSubj.innerHTML = '<option value="">전체</option>' +
+                uniqueSub.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         }
         if (selTech) {
-            selTech.innerHTML = '<option value="">전체 교사</option>' +
-                allTeachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            // Deduplicate by name for cleaner filter
+            const uniqueTech = [];
+            const seenTech = new Set();
+            allTeachers.forEach(t => {
+                if (!seenTech.has(t.name)) {
+                    seenTech.add(t.name);
+                    uniqueTech.push(t);
+                }
+            });
+            selTech.innerHTML = '<option value="">전체</option>' +
+                uniqueTech.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
         }
     }
 
@@ -91,7 +116,7 @@
 
         const selPageSize = document.getElementById('filter-page-size');
         if (selPageSize) {
-            selPageSize.value = "30"; // Sync with default state
+            selPageSize.value = "10"; // Sync with default state
             selPageSize.onchange = () => {
                 pageSize = selPageSize.value === 'all' ? 999999 : parseInt(selPageSize.value);
                 currentPage = 1;
@@ -157,7 +182,7 @@
         countTxt.textContent = `조회 결과: ${data ? data.length : 0}건`;
 
         if (!data || data.length === 0) {
-            empty.style.display = 'block';
+            empty.style.display = 'flex';
             if (pageInfo) pageInfo.textContent = "0 / 0";
             return;
         }
