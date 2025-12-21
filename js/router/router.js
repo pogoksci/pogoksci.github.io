@@ -24,6 +24,9 @@
     labSettings: "pages/lab-settings.html",
     labTimetable: "pages/lab-timetable.html",
     labTimetableViewer: "pages/lab-timetable-viewer.html",
+    labUsageLog: "pages/lab-usage-log.html",
+    labUsageViewer: "pages/lab-usage-log.html", // Reuse layout
+    labUsageView: "pages/lab-usage-view.html",
     export: "pages/export.html",
   };
 
@@ -63,6 +66,15 @@
         break;
       case "labTimetableViewer":
         if (App?.TimetableViewer?.init) await App.TimetableViewer.init();
+        break;
+      case "labUsageLog":
+        if (App?.LabUsageLog?.init) await App.LabUsageLog.init({ readOnly: false });
+        break;
+      case "labUsageViewer":
+        if (App?.LabUsageLog?.init) await App.LabUsageLog.init({ readOnly: true });
+        break;
+      case "labUsageView":
+        if (App?.LabUsageView?.init) await App.LabUsageView.init();
         break;
       case "wasteList":
         if (App.Waste?.bindListPage) App.Waste.bindListPage();

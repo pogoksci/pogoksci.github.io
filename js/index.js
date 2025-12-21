@@ -39,10 +39,13 @@
     "./js/pages/kit-form.js",
     "./js/ui/export-page.js",
     "./js/pages/lab-settings.js",
+    "./data/subject-config.js", // ✅ 과목 설정 데이터
     "./js/utils/subject-aliases.js", // ✅ 과목 별칭 (timetable-import보다 먼저 로드)
     "./js/utils/timetable-import.js",
+
     "./js/pages/lab-timetable.js",
     "./js/pages/lab-timetable-viewer.js",
+    "./js/pages/lab-usage-log.js",
   ];
   const componentModules = [
     "./js/components/sort-dropdown.js", // 🔹 여기 추가됨

@@ -18,9 +18,15 @@
   };
 
   // ------------------------------------------------------------
-  // 2️⃣ 전역 네임스페이스 보장
+  // 2️⃣ 전역 네임스페이스 보장 및 중복 방지
   // ------------------------------------------------------------
   globalThis.App = globalThis.App || {};
+
+  // 이미 초기화된 경우 중복 생성 방지
+  if (globalThis.App.supabase) {
+    console.log("ℹ️ Supabase 클라이언트가 이미 초기화되어 있습니다.");
+    return;
+  }
 
   // Supabase SDK가 전역에 존재하는지 검사
   if (typeof supabase === "undefined" || !supabase.createClient) {

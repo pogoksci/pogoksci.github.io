@@ -91,9 +91,11 @@
 
     const menuLablog = document.getElementById("menu-lablog-btn");
     if (menuLablog) {
-      menuLablog.addEventListener("click", (e) => {
+      menuLablog.addEventListener("click", async (e) => {
         e.preventDefault();
-        alert("서비스 준비중입니다.");
+        document.body.classList.remove("home-active");
+        await App.Router.go("labUsageLog");
+        closeStartMenu();
       });
     }
 
@@ -195,6 +197,16 @@
         e.preventDefault();
         document.body.classList.remove("home-active");
         await App.Router.go("export");
+        closeStartMenu();
+      });
+    }
+
+    const menuLablogViewer = document.getElementById("menu-lablog-viewer-btn");
+    if (menuLablogViewer) {
+      menuLablogViewer.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        await App.Router.go("labUsageView");
         closeStartMenu();
       });
     }
@@ -338,10 +350,16 @@
     const menuLablog = document.getElementById("menu-lablog-btn");
     if (menuLablog) {
       if (['admin', 'teacher'].includes(role)) {
-        menuLablog.style.display = 'flex'; // block -> flex for alignment
+        menuLablog.style.display = 'flex';
       } else {
         menuLablog.style.display = 'none';
       }
+    }
+
+    // 3-1. 기록 조회 (Lablog Viewer): 모두에게 보임
+    const menuLablogViewer = document.getElementById("menu-lablog-viewer-btn");
+    if (menuLablogViewer) {
+      menuLablogViewer.style.display = 'flex';
     }
 
     // 4. 유저 ID 및 Auth Footer 표시 업데이트
