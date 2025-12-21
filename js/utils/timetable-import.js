@@ -143,29 +143,18 @@
     function findSubjectId(rawName, dbSubjects) {
         if (!rawName) return null;
 
-        // 1. Normalize
-        const norm = rawName.replace(/\s+/g, ''); // Remove spaces
+        // 1. Normalize input name
+        const normalize = globalThis.App?.normalizeSubject || (n => n.replace(/\s+/g, ''));
+        const normInput = normalize(rawName);
 
-        // 2. Alias Check
-        const aliases = getSubjectAliases();
-        if (aliases[norm]) {
-            const aliasTarget = aliases[norm];
-            const found = dbSubjects.find(s => s.name.replace(/\s+/g, '') === aliasTarget.replace(/\s+/g, ''));
-            if (found) return found.id;
-        }
+        // 2. Try to find match in DB by normalizing both sides
+        // This handles cases like input "물리I" and DB "물리학1" matching to "물리학I"
+        const found = dbSubjects.find(s => normalize(s.name) === normInput);
+        if (found) return found.id;
 
-        // 3. Exact/Contains Match in DB
-        // Search DB for name that contains rawName or vice versa?
-        // "통합사회" vs "통합사회1"
-        // Prefer Exact first.
-        const exact = dbSubjects.find(s => s.name.replace(/\s+/g, '') === norm);
-        if (exact) return exact.id;
-
-        // 4. StartsWith (e.g. "물리학I" matches "물리학")
-        const starts = dbSubjects.find(s => s.name.replace(/\s+/g, '').startsWith(norm));
+        // 3. StartsWith (fallback)
+        const starts = dbSubjects.find(s => normalize(s.name).startsWith(normInput));
         if (starts) return starts.id;
-
-        // 5. Reverse StartsWith (raw "물리학I", db "물리학") -> unlikely in this school context, usually DB is fuller.
 
         return null;
     }
