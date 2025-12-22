@@ -12,9 +12,8 @@
     async function loadList(retryCount = 0) {
         const supabase = getSupabase();
         const container = document.getElementById("equipment-cabinet-list-container");
-        const status = document.getElementById("status-message-equipment-list");
 
-        if (!container || !status) {
+        if (!container) {
             if (retryCount < 5) { // Increased retries
                 setTimeout(() => loadList(retryCount + 1), 200); // Increased delay
                 return;
@@ -30,30 +29,37 @@
             });
         }
 
-        status.style.display = "block";
-        status.textContent = "등록된 교구·물품장을 불러오는 중...";
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-outlined">hourglass_empty</span>
+                <p>등록된 교구·물품장을 불러오는 중...</p>
+            </div>`;
 
         try {
             const { data, error } = await supabase
                 .from("EquipmentCabinet")
-                .select("id,cabinet_name,area_id:lab_rooms(id,room_name),door_vertical_count,photo_url_320,photo_url_160")
+                .select("id,cabinet_name,area_id:lab_rooms!fk_equipment_lab_rooms(id,room_name),door_vertical_count,photo_url_320,photo_url_160")
                 .order("id", { ascending: true });
 
             if (error) throw error;
 
             if (!data || data.length === 0) {
-                status.textContent = "등록된 교구·물품장이 없습니다.";
-                status.style.display = "block";
-                container.innerHTML = "";
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-symbols-outlined">inventory</span>
+                        <p>등록된 교구·물품장이 없습니다.</p>
+                    </div>`;
                 return;
             }
 
-            status.style.display = "none";
             renderCards(data);
 
         } catch (err) {
-            status.textContent = "목록을 불러올 수 없습니다.";
-            status.style.display = "block";
+            container.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-outlined">error</span>
+                    <p>목록을 불러올 수 없습니다.</p>
+                </div>`;
             console.error(err);
         }
     }
@@ -157,7 +163,7 @@
             // API.callEdge 삭제 기능을 supabase.functions.invoke로 대체
             const supabase = getSupabase();
             const { error } = await supabase.functions.invoke('equipment-cabinet', {
-                body: { method: 'DELETE', id: id }
+                body: { method: 'DELETE', cabinet_id: id }
             });
 
             if (error) throw error;

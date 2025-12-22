@@ -202,7 +202,7 @@
         concentration_value, concentration_unit, status,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, chem_name_kor_mod, substance_name_mod, molecular_formula_mod, Synonyms ( synonyms_name, synonyms_eng ), ReplacedRns!ReplacedRns_substance_id_fkey ( replaced_rn ) ),
-        Cabinet ( cabinet_name, area_id:lab_rooms ( id, room_name ) )
+        Cabinet ( cabinet_name, area_id:lab_rooms!fk_cabinet_lab_rooms ( id, room_name ) )
       `)
       .order("created_at", { ascending: false });
 

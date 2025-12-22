@@ -81,7 +81,7 @@
           MSDS ( section_number, content ),
           HazardClassifications (*)
         ),
-        Cabinet ( id, cabinet_name, area_id, door_horizontal_count, area_id:lab_rooms ( id, room_name ) )
+        Cabinet ( id, cabinet_name, area_id, door_horizontal_count, area_id:lab_rooms!fk_cabinet_lab_rooms ( id, room_name ) )
         `)
         .eq("id", inventoryId)
         .single();

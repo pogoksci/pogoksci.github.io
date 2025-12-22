@@ -72,9 +72,64 @@
     }
   }
 
-  // -------------------------------------------------
-  // 🧪 약품 입고 폼 초기화
-  // -------------------------------------------------
+  // ------------------------------------------------------------
+
+  // 🏷️ 장소 선택 버튼 동적 로드 (lab_rooms) - Shared by Cabinet & Equipment
+  // ------------------------------------------------------------
+
+  async function loadLabRooms(targetGroupId, initialValue, areaOtherGroup) {
+    const supabase = App.supabase;
+    const groupEl = document.getElementById(targetGroupId);
+    if (!groupEl) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("lab_rooms")
+        .select("id, room_name")
+        .order("id", { ascending: true });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        alert("⚠️ 과학실/준비실 정보가 설정되지 않았습니다.\n[설정 > 과학실 설정]에서 장소를 먼저 등록해주세요.");
+        if (targetGroupId === "equipment-area-button-group") {
+          App.includeHTML("pages/equipment-cabinet-list.html");
+        } else {
+          App.includeHTML("pages/location-list.html");
+        }
+        return;
+      }
+
+      groupEl.innerHTML = data.map(room =>
+        `<button type="button" class="btn-group-item" data-value="${room.id}">${room.room_name}</button>`
+      ).join("");
+
+      const colCount = Math.min(data.length, 4);
+      groupEl.style.display = "grid";
+      groupEl.style.gridTemplateColumns = `repeat(${colCount}, 1fr)`;
+      groupEl.style.gap = "12px";
+
+      setupButtonGroup(targetGroupId, (btn) => {
+        const id = btn.dataset.value;
+        const name = btn.textContent.trim();
+        set("area_id", id);
+        set("area_buttons", name);
+        set("area_custom_name", null);
+        if (areaOtherGroup) areaOtherGroup.style.display = "none";
+      });
+
+      if (initialValue) {
+        const targetBtn = Array.from(groupEl.children).find(b => String(b.dataset.value) === String(initialValue));
+        if (targetBtn) {
+          targetBtn.classList.add("active");
+          set("area_id", initialValue);
+        }
+      }
+    } catch (err) {
+      console.error("❌ 과학실 정보 로드 실패:", err);
+    }
+  }
+
   async function initInventoryForm(mode = "create", detail = null) {
     window.scrollTo(0, 0); // Force scroll to top
     await App.includeHTML("pages/inventory-form.html", "form-container");
@@ -1061,7 +1116,7 @@
     // ------------------------------------------------------------
     // 제목 & 버튼 제어
     // ------------------------------------------------------------
-    const title = document.querySelector("#cabinet-creation-form h2");
+    const title = document.querySelector(".layout-header h2");
     const submitBtn = document.getElementById("cabinet-submit-button");
     const saveBtn = document.getElementById("cabinet-save-btn");
     const cancelBtn = document.getElementById("cancel-form-btn");
@@ -1069,7 +1124,7 @@
     if (title)
       title.textContent =
         mode === "edit"
-          ? `${detail?.cabinet_name || "시약장"} 정보 수정`
+          ? "시약장 정보" // ✅ "정보 수정" -> "정보"
           : "시약장 등록";
 
     if (mode === "edit") {
@@ -1097,82 +1152,16 @@
     }
 
     if (cancelBtn)
-      cancelBtn.onclick = () => App.includeHTML("pages/location-list.html");
-
-    // ------------------------------------------------------------
-    // 1️⃣ 장소 버튼 그룹 (기타 처리)
-    // ------------------------------------------------------------
-    // ------------------------------------------------------------
-    // 🏷️ 1️⃣ 장소 선택 버튼 동적 로드 (lab_rooms)
-    // ------------------------------------------------------------
-    async function loadLabRooms(targetGroupId, initialValue, areaOtherGroup) {
-      const supabase = App.supabase;
-      const groupEl = document.getElementById(targetGroupId);
-      if (!groupEl) return;
-
-      try {
-        const { data, error } = await supabase
-          .from("lab_rooms")
-          .select("id, room_name")
-          .order("id", { ascending: true });
-
-        if (error) throw error;
-
-        // 🚨 장소가 하나도 없으면 경고 후 이동
-        if (!data || data.length === 0) {
-          alert("⚠️ 과학실/준비실 정보가 설정되지 않았습니다.\n[설정 > 과학실 설정]에서 장소를 먼저 등록해주세요.");
-
-          if (targetGroupId === "equipment-area-button-group") {
-            App.includeHTML("pages/equipment-cabinet-list.html");
-          } else {
-            App.includeHTML("pages/location-list.html");
-          }
-          return;
-        }
-
-        // 버튼 생성 (Value = ID, Text = Name)
-        groupEl.innerHTML = data.map(room =>
-          `<button type="button" class="btn-group-item" data-value="${room.id}">${room.room_name}</button>`
-        ).join("");
-
-        // 📏 그리드 레이아웃 동적 조정
-        const colCount = Math.min(data.length, 4);
-        groupEl.style.display = "grid";
-        groupEl.style.gridTemplateColumns = `repeat(${colCount}, 1fr)`;
-        groupEl.style.gap = "12px";
-
-        // 버튼 이벤트 바인딩
-        setupButtonGroup(targetGroupId, (btn) => {
-          const id = btn.dataset.value;
-          const name = btn.textContent.trim();
-          set("area_id", id);
-          set("area_buttons", name); // Display purpose
-          set("area_custom_name", null);
-
-          if (areaOtherGroup) areaOtherGroup.style.display = "none";
-        });
-
-        // 초기값 선택 (Edit 모드 등) - Value is ID (String or Number conversion needed)
-        if (initialValue) {
-          const targetBtn = Array.from(groupEl.children).find(b => String(b.dataset.value) === String(initialValue));
-          if (targetBtn) {
-            targetBtn.classList.add("active");
-            set("area_id", initialValue);
-          }
-        }
-
-      } catch (err) {
-        console.error("❌ 과학실 정보 로드 실패:", err);
-        alert("과학실 정보를 불러올 수 없습니다.");
-      }
-    }
+      cancelBtn.onclick = () => App.Router.go("cabinets");
 
     // ------------------------------------------------------------
     // 1️⃣ 장소 버튼 그룹 (DB 로드)
     // ------------------------------------------------------------
+
     const areaGroup = document.getElementById("area-button-group");
     // const areaOtherGroup 는 더이상 사용 안 함 (숨김 처리)
     const areaOtherGroup = document.getElementById("area-other-group");
+    const areaOtherInput = document.getElementById("area-other-input"); // ✅ DEFINED
 
     if (areaGroup) {
       if (areaOtherGroup) areaOtherGroup.style.display = 'none'; // 항상 숨김
@@ -1428,24 +1417,8 @@
     if (mode === "edit" && detail) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          // 🏷 장소 복원
-          const areaName = detail.area_id?.area_name;
-          const areaBtns = document.querySelectorAll("#area-button-group button");
-          let areaMatched = false;
-          areaBtns.forEach((btn) => {
-            if (btn.textContent.trim() === areaName) {
-              btn.classList.add("active");
-              areaMatched = true;
-            }
-          });
-          if (!areaMatched && areaOtherGroup) {
-            areaOtherGroup.style.display = "block";
-            areaOtherInput.value = areaName || "";
-
-            // ✅ 기타 버튼도 눌린 상태로 표시
-            const areaOtherBtn = document.querySelector("#area-button-group button[data-value='기타']");
-            if (areaOtherBtn) areaOtherBtn.classList.add("active");
-          }
+          // 🏷 장소 복원 (loadLabRooms가 ID 기반으로 자동 처리하므로 제거)
+          // (중복 로직 제거로 ReferenceError 해결)
 
           // 🏷 시약장 이름 복원
           const cabBtns = document.querySelectorAll("#cabinet_name_buttons button");
@@ -1539,21 +1512,21 @@
     if (detail) {
       Object.entries(detail).forEach(([k, v]) => set(k, v));
       set("cabinetId", detail.id);
-      set("area_id", detail.area_id?.id || null);
+      set("area_id", detail.area_id?.id || detail.area_id || null);
       set("area_custom_name", detail.area_id?.area_name || null);
       set("cabinet_name", detail.cabinet_name);
       set("door_vertical_count", detail.door_vertical_count);
     }
 
     // 🏷 타이틀 & 버튼 제어
-    const title = document.querySelector("#equipment-cabinet-creation-form h2");
+    const title = document.querySelector(".layout-header h2");
     const submitBtn = document.getElementById("equipment-submit-btn");
     const saveBtn = document.getElementById("equipment-save-btn");
     const cancelBtn = document.getElementById("equipment-cancel-btn");
 
     if (title)
       title.textContent = mode === "edit"
-        ? `${detail?.cabinet_name || "교구·물품장"} 수정`
+        ? `${detail?.cabinet_name || "교구·물품장"} 정보`
         : "교구·물품장 등록";
 
     if (mode === "edit") {
@@ -1577,12 +1550,7 @@
     }
 
     if (cancelBtn)
-      cancelBtn.onclick = async () => {
-        await App.includeHTML("pages/equipment-cabinet-list.html");
-        if (App.EquipmentCabinet && typeof App.EquipmentCabinet.loadList === "function") {
-          App.EquipmentCabinet.loadList();
-        }
-      };
+      cancelBtn.onclick = () => App.Router.go("equipmentCabinets");
 
     // ------------------------------------------------------------
     // 1️⃣ 장소 버튼
@@ -1592,81 +1560,16 @@
     // ------------------------------------------------------------
     const areaGroup = document.getElementById("equipment-area-button-group");
     const areaOtherGroup = document.getElementById("equipment-area-other-group");
-    // const areaOtherInput ... remove
+    const areaOtherInput = document.getElementById("equipment-area-other-input");
 
     if (areaGroup) {
       if (areaOtherGroup) areaOtherGroup.style.display = 'none';
 
-      const currentAreaName = (mode === "edit" && detail?.area_id?.area_name)
-        ? detail.area_id.area_name
+      const currentAreaId = (mode === "edit")
+        ? (detail?.area_id?.id || detail?.area_id)
         : null;
 
-      // 재사용 가능한 loadLabRooms 호출
-      // (initCabinetForm 내부에 정의되어 있으므로 스코프 문제 가능성 -> loadLabRooms를 initCabinetForm 밖으로 빼야 함)
-      // 하지만 이 파일 구조상 initEquipmentCabinetForm과 initCabinetForm은 형제 함수이므로
-      // loadLabRooms를 상위에 정의해야 함.
-      // 일단 아래에서 정의한 loadLabRooms를 참조하려면 호이스팅이 필요하거나 위치를 상위로 옮겨야 함.
-      // => [PLAN] loadLabRooms 함수를 forms.js 최상단(모듈 스코프)이나 로컬 헬퍼로 분리.
-
-      // 현재 이 replace 블록은 initEquipmentCabinetForm 내부임.
-      // loadLabRooms가 initCabinetForm 내부에 있으면 접근 불가.
-      // 따라서, loadLabRooms를 initEquipmentCabinetForm 직전이나 모듈 상단에 정의해야 함.
-      // 이전 replace_file_content에서 initCabinetForm 내부에 넣었으므로, 여기서 다시 접근 불가할 수 있음.
-      // ==> 해결책: loadLabRooms를 initEquipmentCabinetForm 내부에도 복사하거나(중복), 
-      // ==> 더 좋은 방법: 두 함수 밖으로 빼는 것.
-
-      // 이번 턴에서는 일단 **복제**해서 구현하고, 추후 리팩토링 혹은 
-      // replace_file_content를 사용하여 loadLabRooms를 밖으로 빼는 작업을 수행.
-      // 하지만 replace_file_content는 순차적이므로, 이전 호출로 이미 initCabinetForm 내부에 박힘.
-      // 따라서 여기서는 **동일한 로직을 인라인으로 구현**하거나 복사본 함수를 만듦.
-      // 안전하게 "loadEquipmentLabRooms" 라는 이름으로 내부 정의해서 사용.
-
-      async function loadEquipmentLabRooms(targetGroupId, initialValue) {
-        const supabase = App.supabase;
-        const groupEl = document.getElementById(targetGroupId);
-        if (!groupEl) return;
-
-        try {
-          const { data, error } = await supabase
-            .from("lab_rooms")
-            .select("room_name")
-            .order("id", { ascending: true });
-
-          if (error) throw error;
-
-          if (!data || data.length === 0) {
-            alert("⚠️ 과학실/준비실 정보가 설정되지 않았습니다.\n[설정 > 과학실 설정]에서 장소를 먼저 등록해주세요.");
-            App.includeHTML("pages/equipment-cabinet-list.html");
-            return;
-          }
-
-          groupEl.innerHTML = data.map(room =>
-            `<button type="button" class="btn-group-item" data-value="${room.room_name}">${room.room_name}</button>`
-          ).join("");
-
-          // 📏 그리드 레이아웃 동적 조정
-          const colCount = Math.min(data.length, 4);
-          groupEl.style.display = "grid";
-          groupEl.style.gridTemplateColumns = `repeat(${colCount}, 1fr)`;
-          groupEl.style.gap = "10px";
-
-          setupButtonGroup(targetGroupId, (btn) => {
-            const value = btn.dataset.value?.trim() || btn.textContent.trim();
-            set("area_buttons", value);
-            set("area_custom_name", null);
-          });
-
-          if (initialValue) {
-            const targetBtn = Array.from(groupEl.children).find(b => b.dataset.value === initialValue || b.textContent.trim() === initialValue);
-            if (targetBtn) targetBtn.classList.add("active");
-          }
-
-        } catch (err) {
-          console.error("❌ 과학실 정보 로드 실패:", err);
-        }
-      }
-
-      loadEquipmentLabRooms("equipment-area-button-group", currentAreaName);
+      loadLabRooms("equipment-area-button-group", currentAreaId, areaOtherGroup);
     }
 
     // ------------------------------------------------------------
@@ -1901,9 +1804,9 @@
       areaBtns.forEach(b => {
         if (b.textContent.trim() === areaVal) { b.classList.add("active"); areaFound = true; }
       });
-      if (!areaFound && areaOtherGroup) {
+      if (!areaFound && areaOtherGroup && mode !== "edit") {
         areaOtherGroup.style.display = "block";
-        areaOtherInput.value = areaVal || "";
+        if (areaOtherInput) areaOtherInput.value = areaVal || "";
         const other = document.getElementById("equipment-area-other-btn");
         if (other) other.classList.add("active");
       }
@@ -1992,18 +1895,13 @@
     if (doorText === "상중하도어") doorInt = 3;
 
     const finalPayload = {
-      area_name: payload.area_name, // ✅ Edge Function expects area_name to lookup/create Area
-
-      // I need to check `makePayload` in utils.js if I want to be sure, but assuming it works for standard fields.
-      // Wait, `makePayload` might rely on specific field names.
-      // Let's assume manual construction for safety or rely on what `cabinet.js` did.
-      // `cabinet.js` calls `makePayload(state)`.
-
-      cabinet_name: payload.cabinet_name, // handled by makePayload "cabinet_name" logic? 
-      // `makePayload` usually combines button + custom.
-
+      area_id: state.area_id || payload.area_id, // ✅ ID is required for creation
+      area_name: payload.area_name,
+      cabinet_name: payload.cabinet_name,
       photo_url_320: payload.photo_url_320,
       photo_url_160: payload.photo_url_160,
+      photo_320_base64: payload.photo_320_base64, // ✅ pass base64 to Edge Function
+      photo_160_base64: payload.photo_160_base64, // ✅ pass base64 to Edge Function
       door_vertical_count: doorInt
     };
 
@@ -2268,6 +2166,7 @@
     initInventoryForm,
     initEquipmentCabinetForm, // ✅ 교구·물품장 폼 초기화 추가
     handleSave,
+    handleEquipmentSave, // ✅ 추가
   };
 
   console.log("✅ App.Forms 모듈 초기화 완료 (도어 자동 표시 버전)");

@@ -117,7 +117,7 @@
         if (App.Cabinet?.loadList) App.Cabinet.loadList();
         break;
       case "equipmentCabinets":
-        if (App.EquipmentCabinet?.init) App.EquipmentCabinet.init();
+        if (App.EquipmentCabinet?.loadList) App.EquipmentCabinet.loadList();
         break;
       case "dataSync":
         if (App.DataSync?.init) App.DataSync.init();

@@ -108,7 +108,7 @@
             substance_name, cas_rn, chem_name_kor, chem_name_kor_mod, molecular_formula, molecular_formula_mod, molecular_mass,
             Properties ( name, property )
         ),
-        Cabinet ( cabinet_name, area_id:lab_rooms ( id, room_name ) )
+        Cabinet ( cabinet_name, area_id:lab_rooms!fk_cabinet_lab_rooms ( id, room_name ) )
       `)
             .order("id", { ascending: true });
 

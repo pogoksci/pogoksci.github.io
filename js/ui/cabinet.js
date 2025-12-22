@@ -15,9 +15,8 @@
   async function loadList(retryCount = 0) {
     const supabase = getSupabase();
     const container = document.getElementById("cabinet-list-container");
-    const status = document.getElementById("status-message-list");
 
-    if (!container || !status) {
+    if (!container) {
       if (retryCount < 3) {
         console.warn(
           `⚠️ loadList(): DOM 요소를 찾지 못했습니다. ${retryCount + 1}/3 재시도 중...`
@@ -37,7 +36,11 @@
     }
 
     console.log("✅ loadList(): DOM 탐색 성공 — 시약장 목록 불러오기 시작");
-    status.textContent = "등록된 시약장을 불러오는 중...";
+    container.innerHTML = `
+        <div class="empty-state">
+            <span class="material-symbols-outlined">hourglass_empty</span>
+            <p>등록된 시약장을 불러오는 중...</p>
+        </div>`;
 
     try {
       console.log("🔍 loadList(): Supabase Query Start...");
@@ -49,7 +52,7 @@
       const { data, error } = await supabase
         .from("Cabinet")
         .select(
-          "id,cabinet_name,area_id:lab_rooms(id,room_name),door_vertical_count,door_horizontal_count,shelf_height,storage_columns,photo_url_320,photo_url_160"
+          "id,cabinet_name,area_id:lab_rooms!fk_cabinet_lab_rooms(id,room_name),door_vertical_count,door_horizontal_count,shelf_height,storage_columns,photo_url_320,photo_url_160"
         )
         .order("id", { ascending: true });
 
@@ -58,16 +61,22 @@
       if (error) throw error;
       if (!data?.length) {
         console.warn("⚠️ loadList(): Data is empty array.");
-        status.textContent = "등록된 시약장이 없습니다.";
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-outlined">science</span>
+                <p>등록된 시약장이 없습니다.</p>
+            </div>`;
         return;
       }
-
-      status.style.display = "none";
 
       renderCabinetCards(data);
 
     } catch (err) {
-      status.textContent = "시약장 목록을 불러올 수 없습니다.";
+      container.innerHTML = `
+          <div class="empty-state">
+              <span class="material-symbols-outlined">error</span>
+              <p>시약장 목록을 불러올 수 없습니다.</p>
+          </div>`;
       console.error("❌ loadList() 오류:", err);
     }
   }

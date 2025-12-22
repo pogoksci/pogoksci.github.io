@@ -155,10 +155,18 @@
     let cabinetTable = "Cabinet";
     if (state.mode === "EQUIPMENT") cabinetTable = "EquipmentCabinet";
 
+    let cabinetRelation = `${cabinetTable}!inner(id)`;
+    // 🚑 Cabinet 테이블인 경우, 중복 관계 오류(PGRST201)를 방지하기 위해 명시적 FK 지정
+    if (cabinetTable === "Cabinet") {
+      cabinetRelation = `Cabinet!fk_cabinet_lab_rooms!inner(id)`;
+    } else if (cabinetTable === "EquipmentCabinet") {
+      cabinetRelation = `EquipmentCabinet!fk_equipment_lab_rooms!inner(id)`;
+    }
+
     // Cabinet이 하나라도 있는 Area만 조회 (!inner join)
     const { data, error } = await supabase
       .from("lab_rooms") // ✅ Area -> lab_rooms
-      .select(`id, area_name:room_name, ${cabinetTable}!inner(id)`) // ✅ room_name -> area_name (alias)
+      .select(`id, area_name:room_name, ${cabinetRelation}`) // ✅ room_name -> area_name (alias)
       .order("room_name"); // Order by room_name
 
     console.log("StorageSelector: loadAreas called. Data:", data, "Error:", error);
