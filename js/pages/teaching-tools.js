@@ -386,7 +386,7 @@
             const row5Value = document.getElementById('detail-row-5-value');
             if (row5Value) {
                 const prop = tool.proportion !== null && tool.proportion !== undefined ? tool.proportion : '-';
-                row5Value.textContent = (prop !== '-') ? `${prop}%` : '-';
+                row5Value.textContent = (prop !== '-') ? `${(prop * 100).toFixed(1)}%` : '-';
             }
 
             // 6. Essential/Standard (Row 6) - 필수/기준

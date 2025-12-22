@@ -177,8 +177,8 @@
             propInput.value = '0.0';
             return;
         }
-        const p = (stock / req) * 100;
-        propInput.value = p.toFixed(1);
+        const p = stock / req;
+        propInput.value = p.toFixed(3); // Display as ratio with 3 decimals
     }
 
     // --- Dynamic UI Logic ---

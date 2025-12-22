@@ -129,6 +129,15 @@
             return s.trim();
         },
 
+        // Helper to parse numbers from strings with commas, or actual numbers
+        parseSafeInt: function (val) {
+            if (val === undefined || val === null || val === "") return 0;
+            if (typeof val === "number") return Math.floor(val);
+            const s = String(val).replace(/,/g, "").trim();
+            const n = parseInt(s);
+            return isNaN(n) ? 0 : n;
+        },
+
         // Helper to fetch System Data (Try XLSX first, then CSV)
         fetchSystemData: async function (baseName) {
             // 1. Try XLSX
@@ -605,16 +614,13 @@
 
             // 1. Mapping & Data Preparation
             // 기준량, 보유량 숫자 변환
-            let standardAmount = row["기준량"] ? parseInt(row["기준량"].replace(/,/g, "")) : 0;
-            if (isNaN(standardAmount)) standardAmount = 0;
-
-            let stock = row["보유량"] ? parseInt(row["보유량"].replace(/,/g, "")) : 0;
-            if (isNaN(stock)) stock = 0;
+            let standardAmount = this.parseSafeInt(row["기준량"]);
+            let stock = this.parseSafeInt(row["보유량"]);
 
             // 보유율 계산
             let proportion = 0;
             if (standardAmount > 0) {
-                proportion = (stock / standardAmount) * 100;
+                proportion = stock / standardAmount;
             }
 
             const payload = {
@@ -625,16 +631,16 @@
                 tools_name: this.clean(row["교구명"]),        // 교구명
                 specification: this.clean(row["규격"]),      // 규격
                 using_class: this.clean(row["사용학년"]),     // 사용학년
-                recommended: this.clean(row["소요기준"]),     // 소요기준
-                standard_amount: standardAmount,           // 기준량
-                stock: stock,                              // 보유량
-                requirement: this.clean(row["필수구분"]),     // 필수구분
-                out_of_standard: this.clean(row["기준내외"]), // 기준내외
+                standard_amount: this.clean(row["소요기준"]),    // 소요기준 (String: "N명당 1")
+                requirement: standardAmount,                // 기준량 (Numeric)
+                stock: stock,                               // 보유량 (Numeric)
+                recommended: this.clean(row["필수구분"]),    // 필수구분 (String: "필수"/"권장")
+                out_of_standard: this.clean(row["기준내외"]), // 기준내외 (String: "기준내"/"기준외")
 
                 // Fixed values & Calculated
                 tools_section: "교구",
                 purchase_date: "2024-03-01",
-                proportion: parseFloat(proportion.toFixed(2)) // 소수점 2자리
+                proportion: parseFloat(proportion.toFixed(4)) // Increased precision for ratio
             };
 
             // 2. Insert/Upsert into tools table
@@ -738,16 +744,13 @@
             const toolsNo = this.clean(row["순번"]);
 
             // 기준량, 보유량 숫자 변환
-            let standardAmount = row["기준"] ? parseInt(row["기준"].replace(/,/g, "")) : 0;
-            if (isNaN(standardAmount)) standardAmount = 0;
-
-            let stock = row["보유"] ? parseInt(row["보유"].replace(/,/g, "")) : 0;
-            if (isNaN(stock)) stock = 0;
+            let standardAmount = this.parseSafeInt(row["기준"]);
+            let stock = this.parseSafeInt(row["보유"]);
 
             // 보유율 계산
             let proportion = 0;
             if (standardAmount > 0) {
-                proportion = (stock / standardAmount) * 100;
+                proportion = stock / standardAmount;
             }
 
             // CSV Header Checking (based on generic expectations or previous files)
@@ -767,20 +770,20 @@
                 tools_name: this.clean(row["품명"] || row["설비명"] || row["교구명"]), // Try typical names
                 specification: this.clean(row["규격"]),
 
-                standard_amount: standardAmount,
+                standard_amount: this.clean(row["소요기준"] || ""),
+                requirement: standardAmount,
                 stock: stock,
 
                 // Fields that might not exist in Equipment CSV, fill safely
                 tools_code: this.clean(row["코드"] || ""),
                 stock_period: this.clean(row["과목"] || ""), // 설비는 과목이 없을 수 있음
                 using_class: this.clean(row["사용학년"] || ""),
-                recommended: this.clean(row["소요기준"] || ""),
-                requirement: this.clean(row["필수구분"] || ""),
+                recommended: this.clean(row["필수구분"] || ""),
                 out_of_standard: this.clean(row["기준내외"] || ""),
 
                 tools_section: "설비", // Fixed section
                 purchase_date: "2024-03-01",
-                proportion: parseFloat(proportion.toFixed(2))
+                proportion: parseFloat(proportion.toFixed(4))
             };
 
             // Name check
@@ -927,7 +930,7 @@
                 kit_name: expKit.kit_name,
                 kit_class: expKit.kit_class,
                 kit_person: expKit.kit_person, // Fetching from DB as requested
-                quantity: row["quantity"] ? parseInt(row["quantity"]) : 0,
+                quantity: this.parseSafeInt(row["quantity"]),
                 purchase_date: this.clean(row["purchase_date"]),
                 image_url: imageUrl,
                 status: '보유중' // Default status
