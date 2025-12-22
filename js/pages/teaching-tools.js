@@ -193,9 +193,7 @@
 
             // Stock Status
             let statusTag = "";
-            if (item.stock <= 0) {
-                statusTag = `<span class="kit-tag" style="background:#ffebee; color:#c62828; padding:2px 6px; border-radius:4px; font-size:12px;">품절</span>`;
-            }
+            // if (item.stock <= 0) { ... } Removed as requested
 
             // Code/No Display
             const displayNo = item.tools_no ? `No.${item.tools_no}` : '';
@@ -447,8 +445,8 @@
 
         const initialQuantity = tool.stock - totalChange;
 
-        // Determine Initial Date (buy_date or created_at)
-        const initialDate = tool.buy_date || (tool.created_at ? tool.created_at.split('T')[0] : '');
+        // Determine Initial Date (purchase_date or created_at)
+        const initialDate = tool.purchase_date || (tool.created_at ? tool.created_at.split('T')[0] : '');
 
         const initialLog = {
             id: 'initial',

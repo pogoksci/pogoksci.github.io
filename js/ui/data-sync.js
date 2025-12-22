@@ -674,16 +674,46 @@
             if (btn) btn.disabled = true;
 
             try {
-                this.log("🚀 설비 마이그레이션 시작 (전체 범위)");
+                this.log("🚀 설비 마이그레이션 시작 (데이터 분석 중...)");
+
+                // 0. Pre-fetch Data for ID generation/matching
+                // Fetch ALL tools to determine absolute Max No and build safe map
+                const supabase = App.supabase;
+                const { data: existingTools, error } = await supabase
+                    .from('tools')
+                    .select('tools_no, tools_code, tools_category'); // Removed filter to get true maxNo
+
+                if (error) throw error;
+
+                // Map: `${Code}|${Category}` -> No
+                // This prevents "Safety" overwriting "General" if they share codes.
+                const codeMap = new Map();
+                let maxNo = 0;
+
+                existingTools.forEach(t => {
+                    const no = t.tools_no;
+                    if (no > maxNo) maxNo = no;
+
+                    if (t.tools_code && t.tools_category) {
+                        const key = `${t.tools_code}|${t.tools_category}`;
+                        codeMap.set(key, no);
+                    }
+                });
+
+                this.log(`ℹ️ 기존 데이터 로드 완료 (Max No: ${maxNo}, 매핑: ${codeMap.size}개)`);
+
+                const context = { codeMap, maxNo };
 
                 // 1. Process Safety Equipment
                 if (safetyInput.files[0]) {
-                    await this.processEquipmentFile(safetyInput.files[0], "안전설비");
+                    this.log("➡️ 안전설비 처리 시작...");
+                    await this.processEquipmentFile(safetyInput.files[0], "안전설비", context);
                 }
 
                 // 2. Process General Equipment
                 if (generalInput.files[0]) {
-                    await this.processEquipmentFile(generalInput.files[0], "일반설비");
+                    this.log("➡️ 일반설비 처리 시작...");
+                    await this.processEquipmentFile(generalInput.files[0], "일반설비", context);
                 }
 
                 this.log("✨ 모든 설비 데이터 처리 완료", "success");
@@ -695,8 +725,8 @@
             }
         },
 
-        processEquipmentFile: async function (file, type) {
-            this.log(`📂 ${type} 파일 파싱 중... (${file.name})`);
+        processEquipmentFile: async function (file, categoryName, context) {
+            this.log(`📂 ${categoryName} 파일 파싱 중... (${file.name})`);
             try {
                 await this.loadSheetJS();
                 const reader = new FileReader();
@@ -714,55 +744,55 @@
                     reader.readAsArrayBuffer(file);
                 });
 
-                this.log(`✅ ${type} 파싱 완료 (${rows.length}개 행). 순차 처리 시작...`);
+                this.log(`✅ ${categoryName} 파싱 완료 (${rows.length}개 행). 순차 처리 시작...`);
 
                 let successCount = 0;
                 let failCount = 0;
 
-                // Start from 3rd row (index 2) as requested
+                // Start from 3rd row (index 2)
                 for (let i = 2; i < rows.length; i++) {
                     const row = rows[i];
+                    if (!row[2]) continue; // Check tools_code
+
                     try {
-                        const toolsNoVal = row[0]; // A열 (0)
-                        if (!toolsNoVal && toolsNoVal !== 0) continue;
-
-                        const toolsNo = parseInt(toolsNoVal);
-                        if (isNaN(toolsNo)) continue;
-
-
-
-                        await this.processEquipmentMigrationItem(row, type);
+                        await this.processEquipmentMigrationItem(row, categoryName, context);
                         successCount++;
                     } catch (itemErr) {
                         console.error(itemErr);
-                        const displayId = row[0] || "N/A";
-                        this.log(`❌ [${type} - No: ${displayId}] 실패: ${itemErr.message}`, "error");
+                        this.log(`❌ [${categoryName} - Row ${i + 1}] 실패: ${itemErr.message}`, "error");
                         failCount++;
                     }
                 }
-                this.log(`📊 ${type} 처리 결과 - 성공: ${successCount}, 실패: ${failCount}`);
+                this.log(`📊 ${categoryName} 처리 결과 - 성공: ${successCount}, 실패: ${failCount}`);
 
             } catch (e) {
-                throw new Error(`${type} 처리 중 오류: ${e.message}`);
+                throw new Error(`${categoryName} 처리 중 오류: ${e.message}`);
             }
         },
 
-        processEquipmentMigrationItem: async function (row, equipmentType) {
-            // row is Array [0..15] matching A..P
-            const toolsNo = this.clean(row[0]); // A: 순번
-            if (!toolsNo) throw new Error("순번이 없습니다.");
+        processEquipmentMigrationItem: async function (row, categoryName, context) {
+            const toolsCode = this.clean(row[2]); // C
+            if (!toolsCode) throw new Error("종목코드(C열)가 없습니다.");
 
-            // 1. Using Class (F, G, H, I -> 5, 6, 7, 8)
-            // Logic: (1학년, 2학년, 3학년, 특수)
+            // Determine tools_no using Composite Key
+            const key = `${toolsCode}|${categoryName}`;
+            let toolsNo = context.codeMap.get(key);
+
+            if (!toolsNo) {
+                // New Item (Combination of Code + Category is new)
+                context.maxNo++;
+                toolsNo = context.maxNo;
+                context.codeMap.set(key, toolsNo); // Update map
+            }
+
+            // Using Class (F, G, H, I -> 5, 6, 7, 8)
             const g1 = this.clean(row[5]);
             const g2 = this.clean(row[6]);
             const g3 = this.clean(row[7]);
             const sp = this.clean(row[8]);
 
             let usingClassStr = null;
-            if (g1 === "N" && g2 === "N" && g3 === "N" && sp === "N") {
-                usingClassStr = null;
-            } else if (g1 === "Y" && g2 === "Y" && g3 === "Y" && sp === "N") {
+            if (g1 === "Y" && g2 === "Y" && g3 === "Y" && sp === "N") {
                 usingClassStr = "전학년";
             } else {
                 const classes = [];
@@ -770,62 +800,53 @@
                 if (g2 === "Y") classes.push("2학년");
                 if (g3 === "Y") classes.push("3학년");
                 if (sp === "Y") classes.push("특수");
-                usingClassStr = classes.length > 0 ? classes.join(", ") : null;
+
+                if (classes.length === 0) usingClassStr = null;
+                else usingClassStr = classes.join(", ");
             }
 
-            // 2. Recommended String (J, K, L -> 9, 10, 11)
-            // Example: "1", "실험(실)당", "1" -> "1 실험(실)당 1"
+            // Standard Amount (J, K, L -> 9, 10, 11)
             const r1 = this.clean(row[9]);
             const r2 = this.clean(row[10]);
             const r3 = this.clean(row[11]);
-            let recText = null;
-            if (r1 && r2 && r3) {
-                recText = `${r1} ${r2} ${r3}`;
-            } else if (r1 || r2 || r3) {
-                recText = [r1, r2, r3].filter(Boolean).join(" ");
-            }
+            let standardAmountStr = [r1, r2, r3].filter(Boolean).join(" ");
 
-            // 3. Mapping Numbers
-            const standardAmountVal = this.parseSafeInt(row[13]); // N: 소요수량
-            const stockVal = this.parseSafeInt(row[14]);          // O: 보유량
+            // Numbers
+            const requirement = this.parseSafeInt(row[13]); // N
+            const stock = this.parseSafeInt(row[14]);       // O
 
-            // 4. Proportion (Ratio, can be > 1)
+            // Proportion
             let proportion = 0;
-            if (standardAmountVal > 0) {
-                proportion = stockVal / standardAmountVal;
+            if (requirement > 0) {
+                proportion = stock / requirement;
             }
 
-            // 5. Build Payload
-            // Mapping to DB schema:
-            // - standard_amount: The text description (recText)
-            // - requirement: The numeric requirement (standardAmountVal)
-            // - recommended: The essential/recommended status (row[14])
             const payload = {
-                tools_no: parseInt(toolsNo),
-                tools_code: this.clean(row[2]),      // C
+                tools_no: toolsNo,
+                tools_code: toolsCode,
                 tools_name: this.clean(row[3]),      // D
                 specification: this.clean(row[4]),   // E
-                using_class: usingClassStr,          // F-I
-                recommended: this.clean(row[12]),    // M: 필수구분 ("필수"/"권장") -> recommended (Text)
-                standard_amount: recText,            // J-L: 소요기준 (Text Description) -> standard_amount (Text)
-                stock: stockVal,                     // O: 보유량 (Numeric)
-                requirement: standardAmountVal,      // N: 소요수량 (Numeric) -> requirement (Integer)
+                using_class: usingClassStr,
+                standard_amount: standardAmountStr,
+                recommended: this.clean(row[12]),    // M
+                requirement: requirement,
+                stock: stock,
                 out_of_standard: this.clean(row[15]), // P
 
                 tools_section: "설비",
+                tools_category: categoryName, // '안전설비' or '일반설비'
+                stock_period: "과학(2025)",
                 purchase_date: "2024-03-01",
                 proportion: parseFloat(proportion.toFixed(4)),
                 updated_at: new Date()
             };
 
             const supabase = App.supabase;
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from("tools")
                 .upsert(payload, { onConflict: "tools_no" });
 
             if (error) throw error;
-
-            // this.log(`   ✅ 저장 성공: ${payload.tools_name}`); // Too verbose?
         },
 
         // 7. User Kit Migration
