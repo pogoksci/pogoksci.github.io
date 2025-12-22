@@ -118,14 +118,13 @@
         },
 
         clean: function (val) {
-            if (val === undefined || val === null) return null; // undefined check added
+            if (val === undefined || val === null) return null;
             let s = String(val).trim();
             if (s === "" || s === "EMPTY") return null;
             if (s.startsWith("'")) {
                 s = s.substring(1);
             }
-            // Remove " ( ) characters (Excel formatting prevention)
-            s = s.replace(/["()]/g, "");
+            // Logic to remove " ( ) removed to preserve original formatting
             return s.trim();
         },
 
@@ -666,26 +665,31 @@
         handleEquipmentMigration: async function (btn) {
             const safetyInput = document.getElementById("equipment-safety-file-input");
             const generalInput = document.getElementById("equipment-general-file-input");
+            const startIdInput = document.getElementById("equipment-migration-start-id");
+            const endIdInput = document.getElementById("equipment-migration-end-id");
 
             if (!safetyInput || !generalInput) return;
-            // 둘 중 하나라도 있으면 진행
             if (!safetyInput.files[0] && !generalInput.files[0]) {
                 return alert("최소한 하나의 파일(안전설비 또는 일반설비)을 선택해주세요.");
             }
 
+            // Extract Range
+            const startId = startIdInput.value ? parseInt(startIdInput.value) : null;
+            const endId = endIdInput.value ? parseInt(endIdInput.value) : startId;
+
             if (btn) btn.disabled = true;
 
             try {
-                this.log("🚀 설비 마이그레이션 시작 (전체 범위)");
+                this.log(`🚀 설비 마이그레이션 시작 (범위: ${startId || '전체'} ~ ${endId || '전체'})`);
 
                 // 1. Process Safety Equipment
                 if (safetyInput.files[0]) {
-                    await this.processEquipmentFile(safetyInput.files[0], "안전설비");
+                    await this.processEquipmentFile(safetyInput.files[0], "안전설비", startId, endId);
                 }
 
                 // 2. Process General Equipment
                 if (generalInput.files[0]) {
-                    await this.processEquipmentFile(generalInput.files[0], "일반설비");
+                    await this.processEquipmentFile(generalInput.files[0], "일반설비", startId, endId);
                 }
 
                 this.log("✨ 모든 설비 데이터 처리 완료", "success");
@@ -697,27 +701,49 @@
             }
         },
 
-        processEquipmentFile: async function (file, type) {
+        processEquipmentFile: async function (file, type, startId = null, endId = null) {
             this.log(`📂 ${type} 파일 파싱 중... (${file.name})`);
             try {
-                // Unified Parse
-                const rows = await this.parseFile(file);
+                await this.loadSheetJS();
+                const reader = new FileReader();
+                const rows = await new Promise((resolve, reject) => {
+                    reader.onload = (e) => {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                            const arrayRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+                            resolve(arrayRows);
+                        } catch (err) { reject(err); }
+                    };
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(file);
+                });
 
                 this.log(`✅ ${type} 파싱 완료 (${rows.length}개 행). 순차 처리 시작...`);
 
                 let successCount = 0;
                 let failCount = 0;
 
-                for (const row of rows) {
+                // Start from 3rd row (index 2) as requested
+                for (let i = 2; i < rows.length; i++) {
+                    const row = rows[i];
                     try {
-                        // 순번(tools_no)가 없는 행은 건너뜀
-                        if (!row["순번"] && !row["순번"] !== 0) continue; // Check validity more carefully
+                        const toolsNoVal = row[0]; // A열 (0)
+                        if (!toolsNoVal && toolsNoVal !== 0) continue;
+
+                        const toolsNo = parseInt(toolsNoVal);
+                        if (isNaN(toolsNo)) continue;
+
+                        // Range Filter
+                        if (startId !== null && (toolsNo < startId || toolsNo > endId)) continue;
 
                         await this.processEquipmentMigrationItem(row, type);
                         successCount++;
                     } catch (itemErr) {
                         console.error(itemErr);
-                        this.log(`❌ [${type} - 순번: ${row["순번"]}] 실패: ${itemErr.message}`, "error");
+                        const displayId = row[0] || "N/A";
+                        this.log(`❌ [${type} - No: ${displayId}] 실패: ${itemErr.message}`, "error");
                         failCount++;
                     }
                 }
@@ -729,71 +755,75 @@
         },
 
         processEquipmentMigrationItem: async function (row, equipmentType) {
-            // equipmentType: "안전설비" or "일반설비"
-            // Note: tools_section을 "설비"로 통일하고, 비고나 other fields에 세부타입을 넣을지, 
-            // 아니면 tools_section 자체를 구분할지? 
-            // 교구 로직에서는 tools_section="교구". 
-            // 여기선 tools_section="설비"로 하고 tools_category(과목영역)에 equipmentType을 넣거나 하는 게 좋을듯 하나,
-            // CSV에 "영역" 같은 컬럼이 있는지 확인 필요. 
-            // 데이터가 없으므로 일반적인 매핑을 따름.
-            // "안전설비" -> tools_section="안전설비"? 
-            // 일단 User 요청은 '설비 정보 마이그레이션' 임.
-            // Teaching Tools logic uses "교구".
-            // Let's use "설비" as section, and mapping columns as best effort.
+            // row is Array [0..15] matching A..P
+            const toolsNo = this.clean(row[0]); // A: 순번
+            if (!toolsNo) throw new Error("순번이 없습니다.");
 
-            const toolsNo = this.clean(row["순번"]);
+            // 1. Using Class (F, G, H, I -> 5, 6, 7, 8)
+            // Logic: (1학년, 2학년, 3학년, 특수)
+            const g1 = this.clean(row[5]);
+            const g2 = this.clean(row[6]);
+            const g3 = this.clean(row[7]);
+            const sp = this.clean(row[8]);
 
-            // 기준량, 보유량 숫자 변환
-            let standardAmount = this.parseSafeInt(row["기준"]);
-            let stock = this.parseSafeInt(row["보유"]);
-
-            // 보유율 계산
-            let proportion = 0;
-            if (standardAmount > 0) {
-                proportion = stock / standardAmount;
+            let usingClassStr = null;
+            if (g1 === "N" && g2 === "N" && g3 === "N" && sp === "N") {
+                usingClassStr = null;
+            } else if (g1 === "Y" && g2 === "Y" && g3 === "Y" && sp === "N") {
+                usingClassStr = "전학년";
+            } else {
+                const classes = [];
+                if (g1 === "Y") classes.push("1학년");
+                if (g2 === "Y") classes.push("2학년");
+                if (g3 === "Y") classes.push("3학년");
+                if (sp === "Y") classes.push("특수");
+                usingClassStr = classes.length > 0 ? classes.join(", ") : null;
             }
 
-            // CSV Header Checking (based on generic expectations or previous files)
-            // 순번, 설비명, 규격, 단위, 기준, 보유, 상태, 비고 ... (Example)
-            // But relying on user provided naming or similar to Teaching Tools.
-            // Let's assume headers: 순번, 설비명, 규격, ...
-            // Update: Teaching Tools had: 과목, 과목영역, 교구코드, 교구명, 규격, 사용학년, 소요기준, 기준량, 보유량, 필수구분, 기준내외
-            // Equipment might be simpler: 순번, 설비명, 규격, 단위, 기준, 보유, 상태, ... (Guessing)
-            // Safety Equipment often has: 순번, 품명, 규격, 단위, 기준...
+            // 2. Recommended String (J, K, L -> 9, 10, 11)
+            // Example: "1", "실험(실)당", "1" -> "1 실험(실)당 1"
+            const r1 = this.clean(row[9]);
+            const r2 = this.clean(row[10]);
+            const r3 = this.clean(row[11]);
+            let recText = null;
+            if (r1 && r2 && r3) {
+                recText = `${r1} ${r2} ${r3}`;
+            } else if (r1 || r2 || r3) {
+                recText = [r1, r2, r3].filter(Boolean).join(" ");
+            }
 
+            // 3. Mapping Numbers
+            const standardAmountVal = this.parseSafeInt(row[13]); // N: 소요수량
+            const stockVal = this.parseSafeInt(row[14]);          // O: 보유량
+
+            // 4. Proportion (Ratio, can be > 1)
+            let proportion = 0;
+            if (standardAmountVal > 0) {
+                proportion = stockVal / standardAmountVal;
+            }
+
+            // 5. Build Payload
+            // Mapping to DB schema:
+            // - standard_amount: The text description (recText)
+            // - requirement: The numeric requirement (standardAmountVal)
+            // - recommended: The essential/recommended status (row[14])
             const payload = {
                 tools_no: parseInt(toolsNo),
-                // tools_category: equipmentType, // '안전설비' or '일반설비'
-                // Or maybe map "구분" column if exists?
-                tools_category: this.clean(row["구분"]) || equipmentType,
+                tools_code: this.clean(row[2]),      // C
+                tools_name: this.clean(row[3]),      // D
+                specification: this.clean(row[4]),   // E
+                using_class: usingClassStr,          // F-I
+                recommended: recText,                // J-L
+                standard_amount: standardAmountVal,  // N
+                stock: stockVal,                     // O
+                requirement: this.clean(row[12]),    // M
+                out_of_standard: this.clean(row[15]), // P
 
-                tools_name: this.clean(row["품명"] || row["설비명"] || row["교구명"]), // Try typical names
-                specification: this.clean(row["규격"]),
-
-                standard_amount: this.clean(row["소요기준"] || ""),
-                requirement: standardAmount,
-                stock: stock,
-
-                // Fields that might not exist in Equipment CSV, fill safely
-                tools_code: this.clean(row["코드"] || ""),
-                stock_period: this.clean(row["과목"] || ""), // 설비는 과목이 없을 수 있음
-                using_class: this.clean(row["사용학년"] || ""),
-                recommended: this.clean(row["필수구분"] || ""),
-                out_of_standard: this.clean(row["기준내외"] || ""),
-
-                tools_section: "설비", // Fixed section
+                tools_section: "설비",
                 purchase_date: "2024-03-01",
-                proportion: parseFloat(proportion.toFixed(4))
+                proportion: parseFloat(proportion.toFixed(4)),
+                updated_at: new Date()
             };
-
-            // Name check
-            if (!payload.tools_name) {
-                // If name missing, try one more generic like 'Name'
-                payload.tools_name = this.clean(row["Name"]);
-                if (!payload.tools_name) {
-                    throw new Error("설비명(품명/교구명)을 찾을 수 없습니다.");
-                }
-            }
 
             const supabase = App.supabase;
             const { data, error } = await supabase
