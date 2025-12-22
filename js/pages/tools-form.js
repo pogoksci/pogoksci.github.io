@@ -31,6 +31,7 @@
         resetForm();
 
         if (currentMode === 'edit') {
+            document.querySelector('#tools-form-title').textContent = "교구/설비 정보";
             await loadData(id);
         } else {
             // New Registration: Auto Generate No
@@ -280,20 +281,58 @@
 
     let streamObj = null;
     async function startCamera() {
-        try {
-            streamObj = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' }
-            });
-            previewImg.style.display = 'none';
-            videoStream.srcObject = streamObj;
-            videoStream.style.display = 'block';
-
-            togglePhotoButtons(true);
-        } catch (err) {
-            console.error("Camera Error", err);
-            // Fallback to input capture
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert("이 브라우저에서는 카메라를 사용할 수 없습니다. (보안 연결 HTTPS 필요)");
             document.getElementById('tools-camera-input').click();
+            return;
         }
+
+        try {
+            // Priority 1: Try Environment Camera (Mobile Rear)
+            try {
+                streamObj = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+            } catch (mobileErr) {
+                // Priority 2: Fallback to any available video device (Desktop/Laptop)
+                streamObj = await navigator.mediaDevices.getUserMedia({
+                    video: true
+                });
+            }
+        } catch (err) {
+            console.warn("Camera init failed:", err);
+
+            // Analyze the error
+            let msg = "카메라를 실행할 수 없습니다.\n파일 선택창을 엽니다.";
+
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                msg = "카메라 접근 권한이 거부되었습니다.\n브라우저 설정에서 카메라 권한을 허용해주세요.";
+            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                // Double check with enumerateDevices (optional but helps confirm)
+                const devices = await navigator.mediaDevices.enumerateDevices().catch(() => []);
+                const hasVideo = devices.some(d => d.kind === 'videoinput');
+                if (!hasVideo) {
+                    msg = "연결된 카메라를 찾을 수 없습니다.\n하드웨어 연결을 확인해주세요.";
+                } else {
+                    msg = "카메라 장치를 찾았으나 접근할 수 없습니다.\n다른 앱이 사용 중인지 확인해주세요.";
+                }
+            } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                msg = "카메라를 읽을 수 없습니다.\n다른 프로그램(Zoom 등)에서 사용 중일 수 있습니다.";
+            }
+
+            alert(msg);
+
+            // Finally fallback
+            document.getElementById('tools-camera-input').click();
+            return;
+        }
+
+        // Success
+        previewImg.style.display = 'none';
+        videoStream.srcObject = streamObj;
+        videoStream.style.display = 'block';
+
+        togglePhotoButtons(true);
     }
 
     function stopCamera() {
@@ -351,7 +390,7 @@
 
     // --- Load Data (Edit Mode) ---
     async function loadData(id) {
-        document.querySelector('#tools-form-title').textContent = "교구/설비 정보 수정";
+        document.querySelector('#tools-form-title').textContent = "교구/설비 정보";
 
         try {
             const { data, error } = await supabase.from('tools').select('*').eq('id', id).single();

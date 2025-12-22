@@ -169,7 +169,7 @@
       .select(`id, area_name:room_name, ${cabinetRelation}`) // ✅ room_name -> area_name (alias)
       .order("room_name"); // Order by room_name
 
-    console.log("StorageSelector: loadAreas called. Data:", data, "Error:", error);
+    // console.log("StorageSelector: loadAreas called. Data:", data, "Error:", error);
 
     // Race Condition Check: If a new init started, abort
     if (state.initTimestamp !== initTimestamp) {

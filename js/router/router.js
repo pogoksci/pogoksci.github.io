@@ -95,7 +95,7 @@
         if (App.TeachingTools?.loadDetail && params.id) await App.TeachingTools.loadDetail(params.id);
         break;
       case "toolsForm":
-        if (App.TeachingTools?.initForm) App.TeachingTools.initForm(params.id);
+        if (App.ToolsForm?.init) App.ToolsForm.init(params.id);
         break;
       case "kitForm":
         // Handled by script in html usually

@@ -219,14 +219,7 @@
                     수량: ${item.stock}개
                 </div>
                 
-                <div class="inventory-card__actions" style="display: flex; gap: 5px;">
-                    <button class="icon-btn edit-tool-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="수정">
-                        <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
-                    </button>
-                    <button class="icon-btn delete-tool-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="삭제">
-                        <span class="material-symbols-outlined" style="font-size: 20px; color: #999;">delete</span>
-                    </button>
-                </div>
+
             </div>
         </div>
       `;
@@ -234,25 +227,7 @@
 
             // Bind Events
 
-            const editBtn = card.querySelector('.edit-tool-btn');
-            editBtn.onclick = (e) => {
-                e.stopPropagation();
-                App.Router.go('toolsForm', { id: item.id });
-            };
 
-            const deleteBtn = card.querySelector('.delete-tool-btn');
-            deleteBtn.onclick = async (e) => {
-                e.stopPropagation();
-                if (confirm('정말 삭제하시겠습니까?')) {
-                    try {
-                        const { error } = await supabase.from('tools').delete().eq('id', item.id);
-                        if (error) throw error;
-                        loadList(); // Reload
-                    } catch (err) {
-                        alert("삭제 실패: " + err.message);
-                    }
-                }
-            };
         });
     }
 

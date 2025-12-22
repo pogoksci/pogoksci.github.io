@@ -122,7 +122,7 @@ body.home-active {
 label {
   display: block;
 
-  margin-bottom: 0;
+  margin-bottom: 12px;
 
   font-weight: bold;
 
@@ -662,7 +662,7 @@ button:disabled {
 }
 
 .location-step {
-  margin-bottom: 15px;
+  margin-bottom: 18px;
 }
 
 .location-step:last-child {
