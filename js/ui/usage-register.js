@@ -108,7 +108,7 @@
             substance_name, cas_rn, chem_name_kor, chem_name_kor_mod, molecular_formula, molecular_formula_mod, molecular_mass,
             Properties ( name, property )
         ),
-        Cabinet ( cabinet_name, Area ( area_name ) )
+        Cabinet ( cabinet_name, area_id:lab_rooms ( id, room_name ) )
       `)
             .order("id", { ascending: true });
 
@@ -140,8 +140,8 @@
                 return rows.sort((a, b) => collateEn(a.Substance?.molecular_formula, b.Substance?.molecular_formula));
             case "storage_location": // 위치
                 return rows.sort((a, b) => {
-                    const locA = (a.Cabinet?.Area?.area_name || "") + (a.Cabinet?.cabinet_name || "");
-                    const locB = (b.Cabinet?.Area?.area_name || "") + (b.Cabinet?.cabinet_name || "");
+                    const locA = (a.Cabinet?.area_id?.room_name || "") + (a.Cabinet?.cabinet_name || "");
+                    const locB = (b.Cabinet?.area_id?.room_name || "") + (b.Cabinet?.cabinet_name || "");
                     return collateKo(locA, locB);
                 });
             case "created_at_desc": // 등록순서
@@ -250,7 +250,7 @@
         }
 
         // 위치 텍스트
-        const area = item.Cabinet?.Area?.area_name || "";
+        const area = item.Cabinet?.area_id?.room_name || "";
         const cabinetName = item.Cabinet?.cabinet_name || "";
         const doorVertical = item.door_vertical || "";
         const doorHorizontal = item.door_horizontal || "";

@@ -37,8 +37,9 @@
       case "storage_location": // 위치
         return rows.sort((a, b) => {
           // Area -> Cabinet -> Location Text 순 정렬
-          const locA = (a.Cabinet?.Area?.area_name || "") + (a.Cabinet?.cabinet_name || "") + (a.location_text || "");
-          const locB = (b.Cabinet?.Area?.area_name || "") + (b.Cabinet?.cabinet_name || "") + (b.location_text || "");
+          // ✅ [수정됨] Area.area_name -> area_id.room_name
+          const locA = (a.Cabinet?.area_id?.room_name || "") + (a.Cabinet?.cabinet_name || "") + (a.location_text || "");
+          const locB = (b.Cabinet?.area_id?.room_name || "") + (b.Cabinet?.cabinet_name || "") + (b.location_text || "");
           return collateKo(locA, locB);
         });
       case "created_at_desc": // 등록순서 (최신순)
@@ -47,6 +48,9 @@
     }
   }
 
+  // ------------------------------------------------------------
+  // 2️⃣ 목록 렌더링
+  // ------------------------------------------------------------
   // ------------------------------------------------------------
   // 2️⃣ 목록 렌더링
   // ------------------------------------------------------------
@@ -69,7 +73,8 @@
       grouped = mapped.reduce((acc, item) => {
         let key = "기타";
         if (currentSort === "storage_location") {
-          const area = item.Cabinet?.Area?.area_name || "미지정 구역";
+          // ✅ Area.area_name -> area_id.room_name
+          const area = item.Cabinet?.area_id?.room_name || "미지정 구역";
           const cabinet = item.Cabinet?.cabinet_name ? `『${item.Cabinet.cabinet_name}』` : "";
           key = `${area} ${cabinet}`.trim();
         } else {
@@ -81,27 +86,21 @@
         return acc;
       }, {});
     } else {
-      // 그룹화 없음 (전체 목록을 하나의 그룹으로 취급하거나 평면 리스트로 렌더링)
-      // 여기서는 기존 구조 유지를 위해 하나의 더미 그룹에 넣음
       grouped = { "": mapped };
     }
 
     const sections = Object.entries(grouped)
       .sort(([a], [b]) => {
-        // "미분류" 또는 "미지정 구역"은 항상 마지막으로 보냄
         const isLast = (str) => str === "미분류" || str.startsWith("미지정 구역");
         const aLast = isLast(a);
         const bLast = isLast(b);
 
         if (aLast && !bLast) return 1;
         if (!aLast && bLast) return -1;
-
-        // 그 외에는 가나다순 정렬
         return String(a).localeCompare(String(b), "ko");
       })
       .map(([groupTitle, items]) => {
         let header = "";
-        // 그룹화된 경우에만 헤더 표시
         if (isGroupedSort && groupTitle) {
           header = `
             <div class="section-header-wrapper">
@@ -164,17 +163,9 @@
     container.querySelectorAll(".inventory-card").forEach((card) => {
       const id = Number(card.dataset.id);
       card.addEventListener("click", async () => {
-        // ✅ Router를 통해 이동 (뒤로가기 지원)
         await App.Router.go("inventoryDetail", { id });
       });
     });
-
-    // ------------------------------------------------------------
-    // ⚡ 한 줄 맞춤 (Fit-to-Width) 로직
-    // ------------------------------------------------------------
-    // ------------------------------------------------------------
-    // ⚡ 한 줄 맞춤 (Fit-to-Width) 로직 제거됨 (4줄 레이아웃으로 변경)
-    // ------------------------------------------------------------
   }
 
   // ------------------------------------------------------------
@@ -211,11 +202,9 @@
         concentration_value, concentration_unit, status,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, chem_name_kor_mod, substance_name_mod, molecular_formula_mod, Synonyms ( synonyms_name, synonyms_eng ), ReplacedRns!ReplacedRns_substance_id_fkey ( replaced_rn ) ),
-        Cabinet ( cabinet_name, Area ( area_name ) )
+        Cabinet ( cabinet_name, area_id:lab_rooms ( id, room_name ) )
       `)
       .order("created_at", { ascending: false });
-
-
 
     if (error) {
       console.error("❌ 목록 조회 오류:", error);
@@ -224,7 +213,8 @@
     }
 
     const mapped = (data || []).map((row, index) => {
-      const area = row.Cabinet?.Area?.area_name || "";
+      // ✅ Area -> lab_rooms
+      const area = row.Cabinet?.area_id?.room_name || "";
       const cabinetName = row.Cabinet?.cabinet_name || "";
       const doorVertical = row.door_vertical || "";
       const doorHorizontal = row.door_horizontal || "";

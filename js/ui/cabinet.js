@@ -40,15 +40,24 @@
     status.textContent = "등록된 시약장을 불러오는 중...";
 
     try {
+      console.log("🔍 loadList(): Supabase Query Start...");
+
+      // 1. Auth Check
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("👤 loadList(): Current User:", user);
+
       const { data, error } = await supabase
         .from("Cabinet")
         .select(
-          "id,cabinet_name,area_id(id,area_name),door_vertical_count,door_horizontal_count,shelf_height,storage_columns,photo_url_320,photo_url_160"
+          "id,cabinet_name,area_id:lab_rooms(id,room_name),door_vertical_count,door_horizontal_count,shelf_height,storage_columns,photo_url_320,photo_url_160"
         )
         .order("id", { ascending: true });
 
+      console.log("🔍 loadList(): Query Result:", { data, error });
+
       if (error) throw error;
       if (!data?.length) {
+        console.warn("⚠️ loadList(): Data is empty array.");
         status.textContent = "등록된 시약장이 없습니다.";
         return;
       }
@@ -68,11 +77,17 @@
   // ------------------------------------------------------------
   function renderCabinetCards(cabinets) {
     const container = document.getElementById("cabinet-list-container");
-    if (!container) return;
+    if (!container) {
+      console.error("❌ renderCabinetCards: Container not found!");
+      return;
+    }
+
+    console.log(`🎨 Rendering ${cabinets.length} cabinets...`);
 
     container.innerHTML = cabinets.map((cab) => {
       const photo = cab.photo_url_320 || cab.photo_url_160 || null;
-      const areaName = cab.area_id?.area_name || "위치 없음";
+      // ✅ [수정됨] area_id(Area) -> area_id(lab_rooms)로 변경되면서 속성명도 room_name으로 변경
+      const areaName = cab.area_id?.room_name || "위치 없음";
       return `
           <div class="cabinet-card">
             <div class="card-info">
@@ -116,7 +131,7 @@
       const { data: detail, error } = await supabase
         .from("Cabinet")
         .select(
-          "id,cabinet_name,area_id(id,area_name),photo_url_320,photo_url_160,door_vertical_count,door_horizontal_count,shelf_height,storage_columns"
+          "id,cabinet_name,area_id:lab_rooms(id,room_name),photo_url_320,photo_url_160,door_vertical_count,door_horizontal_count,shelf_height,storage_columns"
         )
         .eq("id", id)
         .maybeSingle();
@@ -138,15 +153,28 @@
   // ------------------------------------------------------------
   async function createCabinet(payload) {
     const API = getAPI();
+    const supabase = getSupabase();
+
+    // ✅ 토큰 확보 (RLS를 위해 필수)
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || API.SUPABASE_ANON_KEY;
+
     // ⬇️ [수정됨] DB 직접 insert 대신 Edge Function 호출
     await API.callEdge(API.EDGE.CABINET, {
       method: 'POST',
+      token, // ✅ User Token 전달
       body: payload
     });
   }
   // 사용자가 폼을 수정하고 저장 클릭 시, DB에 수정사항 반영 (editCabinet과 역할이 다름)
   async function updateCabinet(id, payload) {
     const API = getAPI();
+    const supabase = getSupabase();
+
+    // ✅ 토큰 확보
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || API.SUPABASE_ANON_KEY;
+
     // ⬇️ [수정됨] DB 직접 update 대신 Edge Function 호출
     const patchPayload = {
       ...payload,
@@ -154,6 +182,7 @@
     };
     await API.callEdge(API.EDGE.CABINET, {
       method: 'PATCH',
+      token, // ✅ User Token 전달
       body: patchPayload
     });
   }
@@ -206,10 +235,10 @@
     createForm, // ⬅️ '새 시약장 등록' 버튼이 호출할 함수
   };
 
-  // ✅ 페이지 로드 완료 후 자동 실행
-  document.addEventListener("DOMContentLoaded", () => {
-    App.Cabinet?.loadList?.();
-  });
+  // ✅ 페이지 로드 완료 후 자동 실행 (Router에서 처리하므로 중복 제거)
+  // document.addEventListener("DOMContentLoaded", () => {
+  //   App.Cabinet?.loadList?.();
+  // });
 
   console.log("✅ App.Cabinet 모듈 로드 완료");
 })();

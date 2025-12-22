@@ -52,7 +52,8 @@
       const state = dump();
       const payload = await makePayload(state);
       if (!payload.cabinet_name) return alert("시약장 이름을 입력하거나 선택하세요.");
-      if (!payload.area_name) return alert("시약장 위치를 선택하세요.");
+      // ✅ [Area -> lab_rooms] area_id로 검증
+      if (!payload.area_id) return alert("시약장 위치를 선택하세요.");
       if (!state.door_vertical_split) return alert("외부 도어의 상하분리 형태를 선택하세요.");
 
       if (state.mode === "create") {
@@ -1112,7 +1113,7 @@
       try {
         const { data, error } = await supabase
           .from("lab_rooms")
-          .select("room_name")
+          .select("id, room_name")
           .order("id", { ascending: true });
 
         if (error) throw error;
@@ -1120,7 +1121,6 @@
         // 🚨 장소가 하나도 없으면 경고 후 이동
         if (!data || data.length === 0) {
           alert("⚠️ 과학실/준비실 정보가 설정되지 않았습니다.\n[설정 > 과학실 설정]에서 장소를 먼저 등록해주세요.");
-          // history.back() 또는 설정 페이지로 이동 (여기선 안전하게 목록으로)
 
           if (targetGroupId === "equipment-area-button-group") {
             App.includeHTML("pages/equipment-cabinet-list.html");
@@ -1130,33 +1130,35 @@
           return;
         }
 
-        // 버튼 생성
+        // 버튼 생성 (Value = ID, Text = Name)
         groupEl.innerHTML = data.map(room =>
-          `<button type="button" class="btn-group-item" data-value="${room.room_name}">${room.room_name}</button>`
+          `<button type="button" class="btn-group-item" data-value="${room.id}">${room.room_name}</button>`
         ).join("");
 
-        // 📏 그리드 레이아웃 동적 조정 (최대 4개, 4개 이하면 꽉 차게)
-        // 요청사항: "최대 4개인데 버튼이 3개이면 버튼의 폭을 키워서 1줄을 꽉채워야지."
+        // 📏 그리드 레이아웃 동적 조정
         const colCount = Math.min(data.length, 4);
         groupEl.style.display = "grid";
         groupEl.style.gridTemplateColumns = `repeat(${colCount}, 1fr)`;
         groupEl.style.gap = "12px";
 
-        // 기타 버튼 로직 제거 (요청사항) - DB에 있는 장소만 선택 가능
-
         // 버튼 이벤트 바인딩
         setupButtonGroup(targetGroupId, (btn) => {
-          const value = btn.dataset.value?.trim() || btn.textContent.trim();
-          set("area_buttons", value);
-          set("area_custom_name", null); // 커스텀 네임 사용 안 함
+          const id = btn.dataset.value;
+          const name = btn.textContent.trim();
+          set("area_id", id);
+          set("area_buttons", name); // Display purpose
+          set("area_custom_name", null);
 
           if (areaOtherGroup) areaOtherGroup.style.display = "none";
         });
 
-        // 초기값 선택 (Edit 모드 등)
+        // 초기값 선택 (Edit 모드 등) - Value is ID (String or Number conversion needed)
         if (initialValue) {
-          const targetBtn = Array.from(groupEl.children).find(b => b.dataset.value === initialValue || b.textContent.trim() === initialValue);
-          if (targetBtn) targetBtn.classList.add("active");
+          const targetBtn = Array.from(groupEl.children).find(b => String(b.dataset.value) === String(initialValue));
+          if (targetBtn) {
+            targetBtn.classList.add("active");
+            set("area_id", initialValue);
+          }
         }
 
       } catch (err) {
@@ -1175,12 +1177,12 @@
     if (areaGroup) {
       if (areaOtherGroup) areaOtherGroup.style.display = 'none'; // 항상 숨김
 
-      const currentAreaName = (mode === "edit" && detail?.area_id?.area_name)
-        ? detail.area_id.area_name
+      const currentAreaId = (mode === "edit" && detail?.area_id?.id)
+        ? detail.area_id.id
         : null;
 
-      // 비동기 로드 실행
-      loadLabRooms("area-button-group", currentAreaName, areaOtherGroup);
+      // 비동기 로드 실행 (ID 기반)
+      loadLabRooms("area-button-group", currentAreaId, areaOtherGroup);
     }
 
     // ------------------------------------------------------------

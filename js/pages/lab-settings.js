@@ -143,43 +143,52 @@
                 const inputNames = [];
                 const duplicateInInput = new Set();
 
-                // 1. Collect data and check for internal duplicates
-                inputs.forEach((input, index) => {
-                    const roomName = input.value.trim();
-                    if (!roomName) return;
-
-                    if (inputNames.includes(roomName)) {
-                        duplicateInInput.add(roomName);
-                    }
-                    inputNames.push(roomName);
-
-                    const room = {
-                        room_name: roomName,
-                        sort_order: index + 1
-                    };
-                    if (input.dataset.id) {
-                        room.id = parseInt(input.dataset.id);
-                    }
-                    upsertData.push(room);
-                });
-
-                if (duplicateInInput.size > 0) {
-                    alert(`입력란에 중복된 이름이 있습니다: ${Array.from(duplicateInInput).join(', ')}`);
-                    return;
-                }
-
-                if (upsertData.length === 0) {
-                    alert('저장할 과학실 정보가 없습니다.');
-                    return;
-                }
-
                 try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    const userId = user?.id;
+
+                    console.log("💾 Saving Labs. User:", userId);
+
+                    // 1. Collect data and check for internal duplicates
+                    inputs.forEach((input, index) => {
+                        const roomName = input.value.trim();
+                        if (!roomName) return;
+
+                        if (inputNames.includes(roomName)) {
+                            duplicateInInput.add(roomName);
+                        }
+                        inputNames.push(roomName);
+
+                        const room = {
+                            room_name: roomName,
+                            sort_order: index + 1,
+                            user_id: userId // ✅ Add user_id
+                        };
+                        if (input.dataset.id) {
+                            room.id = parseInt(input.dataset.id);
+                        }
+                        upsertData.push(room);
+                    });
+
+                    console.log("💾 Upsert Candidates:", upsertData);
+
+                    if (upsertData.length === 0) {
+                        alert('저장할 과학실 정보가 없습니다.');
+                        return;
+                    }
+
+                    if (duplicateInInput.size > 0) {
+                        alert(`입력된 과학실 이름 중 중복이 있습니다: ${Array.from(duplicateInInput).join(', ')}\n중복된 이름은 저장되지 않습니다.`);
+                    }
+
                     // 2. Check for duplicates in DB
                     const { data: existingRooms, error: fetchError } = await supabase
                         .from('lab_rooms')
                         .select('id, room_name');
 
                     if (fetchError) throw fetchError;
+
+                    console.log("💾 Existing Rooms:", existingRooms);
 
                     const itemsToInsert = [];
                     const itemsToUpdate = [];
@@ -191,26 +200,35 @@
                         // Check for duplicates in DB (Name exists but ID is different)
                         const match = existingRooms.find(existing => {
                             const normalizedExistingName = existing.room_name.normalize('NFC').trim();
-                            // ID mismatch means it's a conflict with ANOTHER record
-                            // If newItem has no ID (insert), any match is a conflict
-                            // If newItem has ID (update), match with different ID is conflict
                             return normalizedExistingName === normalizedNewName && existing.id !== newItem.id;
                         });
 
-                        if (match) {
+                        if (match || duplicateInInput.has(newItem.room_name)) {
                             skippedNames.push(newItem.room_name);
                         } else {
+                            // Logic Update: If ID exists, check if it truly exists in DB
                             if (newItem.id) {
-                                // Check if content actually changed
                                 const original = existingRooms.find(r => r.id === newItem.id);
-                                if (original && original.room_name !== newItem.room_name) {
-                                    itemsToUpdate.push(newItem);
+                                if (original) {
+                                    // It exists, check for changes
+                                    if (original.room_name !== newItem.room_name) {
+                                        itemsToUpdate.push(newItem);
+                                    }
+                                } else {
+                                    // ⚠️ Key Fix: ID exists in Input but NOT in DB (Stale ID). Treat as NEW Insert.
+                                    // Remove the ID so Supabase assigns a new one
+                                    const { id, ...newItemWithoutId } = newItem;
+                                    itemsToInsert.push(newItemWithoutId);
+                                    console.log("⚠️ Stale ID detected. Treating as new insert:", newItem.room_name);
                                 }
                             } else {
+                                // No ID, standard insert
                                 itemsToInsert.push(newItem);
                             }
                         }
                     });
+
+                    console.log("💾 Action Plan - Insert:", itemsToInsert.length, "Update:", itemsToUpdate.length);
 
                     // Execute Inserts
                     if (itemsToInsert.length > 0) {
@@ -989,7 +1007,7 @@
 
                 setRestoreStatus('✅ 복원이 완료되었습니다. 페이지를 새로고침하여 확인하세요.', 'success');
                 alert('복원이 성공적으로 완료되었습니다.');
-                
+
                 // Optional: Reload Current Tab
                 await loadLabRooms();
                 await updateTabStatus();
@@ -999,9 +1017,9 @@
             } catch (err) {
                 console.error('Restore failed:', err);
                 setRestoreStatus('복원 실패: ' + err.message, 'error');
-                
+
                 if (err.message.includes('foreign key constraint') || err.code === '23503') {
-                     alert('복원 실패: 다른 데이터(재고 등)가 이 설정을 참조하고 있어 삭제할 수 없습니다.\n관련 데이터를 먼저 정리해야 합니다.');
+                    alert('복원 실패: 다른 데이터(재고 등)가 이 설정을 참조하고 있어 삭제할 수 없습니다.\n관련 데이터를 먼저 정리해야 합니다.');
                 }
             }
         }

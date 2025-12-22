@@ -81,7 +81,7 @@
           MSDS ( section_number, content ),
           HazardClassifications (*)
         ),
-        Cabinet ( id, cabinet_name, area_id, door_horizontal_count, Area ( id, area_name ) )
+        Cabinet ( id, cabinet_name, area_id, door_horizontal_count, area_id:lab_rooms ( id, room_name ) )
         `)
         .eq("id", inventoryId)
         .single();
@@ -133,13 +133,13 @@
       const btnGoUsage = document.getElementById("btn-go-usage");
       if (btnGoUsage) {
         btnGoUsage.onclick = async () => {
-             // Navigate to usageRegister with inventory info
-             // Assuming usageRegister handles 'detail' or 'inventoryId'
-             if (getApp().Router?.go) {
-                 await getApp().Router.go("usageRegister", { inventoryId: data.id, detail: data });
-             } else {
-                 alert("수불 등록 화면으로 이동할 수 없습니다.");
-             }
+          // Navigate to usageRegister with inventory info
+          // Assuming usageRegister handles 'detail' or 'inventoryId'
+          if (getApp().Router?.go) {
+            await getApp().Router.go("usageRegister", { inventoryId: data.id, detail: data });
+          } else {
+            alert("수불 등록 화면으로 이동할 수 없습니다.");
+          }
         };
       }
       document.getElementById("detail-cas").textContent = data.Substance?.cas_rn || "-";
@@ -153,7 +153,8 @@
       document.getElementById("detail-quantity").textContent = `${amount}${unit}`;
 
       // Location Formatting
-      const area = data.Cabinet?.Area?.area_name || "";
+      // ✅ [수정됨] Area -> area_id:lab_rooms, room_name
+      const area = data.Cabinet?.area_id?.room_name || "";
       const cab = data.Cabinet?.cabinet_name || "";
       const v = data.door_vertical || "";
       const h = data.door_horizontal || "";
@@ -667,7 +668,7 @@
 
           console.log("Delete Success:", data);
           alert("삭제되었습니다.");
-          
+
           if (getApp().Router?.go) {
             await getApp().Router.go("inventory");
           } else if (getApp().Inventory?.showListPage) {

@@ -36,7 +36,7 @@
         try {
             const { data, error } = await supabase
                 .from("EquipmentCabinet")
-                .select("id,cabinet_name,area_id(id,area_name),door_vertical_count,photo_url_320,photo_url_160")
+                .select("id,cabinet_name,area_id:lab_rooms(id,room_name),door_vertical_count,photo_url_320,photo_url_160")
                 .order("id", { ascending: true });
 
             if (error) throw error;
@@ -67,7 +67,8 @@
 
         container.innerHTML = list.map((item) => {
             const photo = item.photo_url_320 || item.photo_url_160 || null;
-            const areaName = item.area_id?.area_name || "위치 없음";
+            // ✅ Area -> lab_rooms
+            const areaName = item.area_id?.room_name || "위치 없음";
             return `
       <div class="cabinet-card">
         <div class="card-info">

@@ -63,7 +63,7 @@
     });
   }
 
-  function makePayload(state) {
+  async function makePayload(state) {
     const verticalMap = { "상중하도어": 3, "상하도어": 2, "단일도어": 1, "단일도어(상하분리없음)": 1 };
     const horizontalMap = { "좌우분리도어": 2, "단일도어": 1 };
 
@@ -71,8 +71,10 @@
     // '기타' 입력값 > '등록' 시 클릭한 버튼 값 > '수정' 시 폼에 저장된 초기 이름 값
     const cabinetName = state.cabinet_custom_name || state.cabinet_name_buttons || state.cabinet_name;
 
-    // 2. 장소 이름 결정
-    // '기타' 입력값 > '등록'/'수정' 시 클릭한 버튼 값 > '수정' 시 폼에 저장된 초기 이름 값
+    // 2. 장소 이름/ID 결정
+    // forms.js에서 set("area_id", id)를 통해 ID를 우선 저장함.
+    const areaId = state.area_id;
+    // 하위 호환성/표시용 이름
     const areaName = state.area_buttons || state.area_custom_name || state.area_name;
 
     // 3. ⬇️ [수정됨] 폼 값을 DB 값으로 변환
@@ -94,15 +96,37 @@
       : (state.storage_columns || null); // 2. 'edit' 모드의 초기 값 (숫자)
 
     console.log("🧪 makePayload() area pick =>", {
-      area_custom_name: state.area_custom_name,
+      area_id: areaId,
       area_buttons: state.area_buttons,
-      area_name: state.area_name,
+      area_name: areaName,
     });
+
+    // ✅ user_id 추가 (명시적 소유권 할당)
+    let userId = null;
+    if (globalThis.App && globalThis.App.supabase && globalThis.App.supabase.auth) {
+      try {
+        // Note: This is async, but makePayload usage in forms.js is awaited.
+        // So it IS safe to make it async.
+        const { data: { user } } = await globalThis.App.supabase.auth.getUser();
+        if (user) {
+          userId = user.id;
+        }
+      } catch (error) {
+        console.error("Error fetching user in makePayload:", error);
+      }
+    }
 
     // 3. 최종 반환 (Edge Function 입력 구조에 맞춤)
     return {
       cabinet_name: cabinetName,
-      area_name: areaName,
+      area_id: areaId, // ✅ area_name -> area_id (FK to lab_rooms)
+      // area_name: areaName, // 제거 (DB에 컬럼 없음)
+
+      // ✅ user_id 전달 (Backend가 Service Role일 경우 대비)
+      // Note: We need to get it via async call or from session state if available synchronously.
+      // Ideally, the Edge Function extracts it from the token.
+      // But adding it here makes it explicit.
+      user_id: userId,
 
       // ⬇️[수정됨] 위에서 계산된 최종 값을 사용
       door_vertical_count: doorVertical,

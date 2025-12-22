@@ -61,6 +61,19 @@
       });
     }
 
+    // 0-1) 과학실 안전 토글 (Safety Toggle)
+    const safetyToggle = document.getElementById("menu-safety-toggle");
+    const submenuSafety = document.getElementById("submenu-safety");
+    if (safetyToggle && submenuSafety) {
+      safetyToggle.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation(); // 메뉴 닫힘 방지
+        const isHidden = submenuSafety.style.display === "none";
+        submenuSafety.style.display = isHidden ? "block" : "none";
+        safetyToggle.classList.toggle("expanded", isHidden);
+      });
+    }
+
     // 1-1) Navbar 모드 전환 (Merged Mode)
     function switchMode(mode) {
       // Toggle Navbar Items

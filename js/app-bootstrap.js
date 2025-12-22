@@ -77,10 +77,10 @@
 
       } else if (file.includes("location-list.html")) {
         console.log("📦 시약장 목록 HTML 로드 완료");
-        App.Cabinet?.loadList?.();
-        App.Fab?.setVisibility(true, "새 시약장 등록", () => {
-          App.Cabinet?.createForm?.();
-        });
+        // 중복 호출 방지: Router.js와 Cabinet.js에서 처리함
+        // App.Cabinet?.loadList?.();
+        // App.Fab?.setVisibility... (Cabinet.js에서 처리)
+
 
       } else if (file.includes("cabinet-form.html")) {
         console.log("🧩 시약장 등록 폼 HTML 로드 완료");

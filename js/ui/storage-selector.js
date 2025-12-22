@@ -157,9 +157,9 @@
 
     // Cabinet이 하나라도 있는 Area만 조회 (!inner join)
     const { data, error } = await supabase
-      .from("Area")
-      .select(`id, area_name, ${cabinetTable}!inner(id)`)
-      .order("area_name");
+      .from("lab_rooms") // ✅ Area -> lab_rooms
+      .select(`id, area_name:room_name, ${cabinetTable}!inner(id)`) // ✅ room_name -> area_name (alias)
+      .order("room_name"); // Order by room_name
 
     console.log("StorageSelector: loadAreas called. Data:", data, "Error:", error);
 
