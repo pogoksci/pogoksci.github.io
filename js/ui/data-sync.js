@@ -665,31 +665,25 @@
         handleEquipmentMigration: async function (btn) {
             const safetyInput = document.getElementById("equipment-safety-file-input");
             const generalInput = document.getElementById("equipment-general-file-input");
-            const startIdInput = document.getElementById("equipment-migration-start-id");
-            const endIdInput = document.getElementById("equipment-migration-end-id");
 
             if (!safetyInput || !generalInput) return;
             if (!safetyInput.files[0] && !generalInput.files[0]) {
                 return alert("최소한 하나의 파일(안전설비 또는 일반설비)을 선택해주세요.");
             }
 
-            // Extract Range
-            const startId = startIdInput.value ? parseInt(startIdInput.value) : null;
-            const endId = endIdInput.value ? parseInt(endIdInput.value) : startId;
-
             if (btn) btn.disabled = true;
 
             try {
-                this.log(`🚀 설비 마이그레이션 시작 (범위: ${startId || '전체'} ~ ${endId || '전체'})`);
+                this.log("🚀 설비 마이그레이션 시작 (전체 범위)");
 
                 // 1. Process Safety Equipment
                 if (safetyInput.files[0]) {
-                    await this.processEquipmentFile(safetyInput.files[0], "안전설비", startId, endId);
+                    await this.processEquipmentFile(safetyInput.files[0], "안전설비");
                 }
 
                 // 2. Process General Equipment
                 if (generalInput.files[0]) {
-                    await this.processEquipmentFile(generalInput.files[0], "일반설비", startId, endId);
+                    await this.processEquipmentFile(generalInput.files[0], "일반설비");
                 }
 
                 this.log("✨ 모든 설비 데이터 처리 완료", "success");
@@ -701,7 +695,7 @@
             }
         },
 
-        processEquipmentFile: async function (file, type, startId = null, endId = null) {
+        processEquipmentFile: async function (file, type) {
             this.log(`📂 ${type} 파일 파싱 중... (${file.name})`);
             try {
                 await this.loadSheetJS();
@@ -735,8 +729,7 @@
                         const toolsNo = parseInt(toolsNoVal);
                         if (isNaN(toolsNo)) continue;
 
-                        // Range Filter
-                        if (startId !== null && (toolsNo < startId || toolsNo > endId)) continue;
+
 
                         await this.processEquipmentMigrationItem(row, type);
                         successCount++;
@@ -813,10 +806,10 @@
                 tools_name: this.clean(row[3]),      // D
                 specification: this.clean(row[4]),   // E
                 using_class: usingClassStr,          // F-I
-                recommended: recText,                // J-L
-                standard_amount: standardAmountVal,  // N
-                stock: stockVal,                     // O
-                requirement: this.clean(row[12]),    // M
+                recommended: this.clean(row[12]),    // M: 필수구분 ("필수"/"권장") -> recommended (Text)
+                standard_amount: recText,            // J-L: 소요기준 (Text Description) -> standard_amount (Text)
+                stock: stockVal,                     // O: 보유량 (Numeric)
+                requirement: standardAmountVal,      // N: 소요수량 (Numeric) -> requirement (Integer)
                 out_of_standard: this.clean(row[15]), // P
 
                 tools_section: "설비",
