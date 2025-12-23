@@ -496,11 +496,31 @@
             this.log(`✅ [ID: ${row.id}] 등록 성공 (New ID: ${result.inventoryId})`);
         },
 
-        // Helper: Fetch Blob
-        fetchBlob: async function (url) {
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-            return await res.blob();
+        // Helper: Fetch Blob with Exponential Backoff Retry
+        fetchBlob: async function (url, retries = 3, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(url);
+                    if (res.ok) return await res.blob();
+
+                    // Only retry on typical transient server errors (504, 502, 503) or rate limits (429)
+                    if ([504, 502, 503, 429].includes(res.status)) {
+                        this.log(`      ⏳ [재시도 ${i + 1}/${retries}] 서버 응답 지연 (${res.status}). ${delay / 1000}초 후 다시 시도...`);
+                    } else {
+                        // For 404, 403, 400 etc., no point in retrying
+                        throw new Error(`Fetch failed: ${res.status}`);
+                    }
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                    this.log(`      ⏳ [재시도 ${i + 1}/${retries}] 네트워크 오류. ${delay / 1000}초 후 다시 시도...`);
+                }
+
+                if (i < retries - 1) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2; // Exponential backoff
+                }
+            }
+            throw new Error(`Fetch failed after ${retries} attempts`);
         },
 
         // Helper: Resize Image
