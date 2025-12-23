@@ -382,25 +382,40 @@
 
         const casList = catalogItem.kit_cas.split(',').map(s => s.trim()).filter(s => s);
 
-        // Fetch Korean names
-        const { data: chemData } = await supabase
-            .from('kit_chemicals')
-            .select('cas_no, name_ko, name_en, msds_data, formula, molecular_weight')
-            .in('cas_no', casList);
+        // Fetch data for each CAS individually to ensure loose matching works for everyone
+        // This bypasses potential issues with .in() strict matching or array formatting
+        const results = await Promise.all(casList.map(async (cas) => {
+            // 1. Try kit_chemicals with loose match
+            const { data: kitData } = await supabase
+                .from('kit_chemicals')
+                .select('cas_no, name_ko, name_en, msds_data, formula, molecular_weight')
+                .ilike('cas_no', `%${cas}%`)
+                .limit(1);
+
+            if (kitData && kitData.length > 0) {
+                return { requestCas: cas, ...kitData[0] };
+            }
+
+            // 2. Fallback check (optional, but requested to focus on kit_chemicals ko name)
+            return { requestCas: cas, name_ko: null };
+        }));
 
         const map = new Map();
-        if (chemData) {
-            chemData.forEach(c => {
-                map.set(c.cas_no, c);
-            });
-        }
+        results.forEach(res => {
+            if (res.name_ko || res.name_en) {
+                map.set(res.requestCas, res);
+            }
+        });
 
         // Create buttons
         const buttons = casList.map(cas => {
-            const btn = document.createElement('div'); // Use div for better control, styled as btn
+            const btn = document.createElement('div');
             btn.className = 'kit-component-btn';
             const chem = map.get(cas);
+
+            // Priority: name_ko -> name_en -> CAS
             const displayName = chem ? (chem.name_ko || chem.name_en || cas) : cas;
+
             btn.textContent = displayName;
             btn.title = cas;
             btn.onclick = () => renderInlineChemInfo(cas, chem);
@@ -634,16 +649,39 @@
                 // Don't throw error yet, try fallbacks
             }
 
+            // 1.5. If kitChemData is missing (not passed), try fetching directly from kit_chemicals
+            if (!substanceData && !kitChemData) {
+                const { data: directKitChem } = await supabase
+                    .from('kit_chemicals')
+                    .select('cas_no, name_ko, name_en, msds_data, formula, molecular_weight')
+                    .eq('cas_no', cas)
+                    .maybeSingle();
+
+                if (directKitChem) {
+                    console.log(`Fetched kit_chemicals direct for ${cas}`);
+                    kitChemData = directKitChem;
+                }
+            }
+
             // 2. Fallback: Use kit_chemicals data if Substance query failed or returned no data
-            if (!substanceData && kitChemData && kitChemData.msds_data && kitChemData.msds_data.length > 0) {
+            if (!substanceData && kitChemData) {
                 console.log(`Using kit_chemicals data for ${cas}`);
+
+                let msdsPayload = kitChemData.msds_data || [];
+                if (typeof msdsPayload === 'string') {
+                    try { msdsPayload = JSON.parse(msdsPayload); } catch (e) {
+                        console.warn('Failed to parse MSDS JSON', e);
+                        msdsPayload = [];
+                    }
+                }
+
                 substanceData = {
                     cas_rn: kitChemData.cas_no || cas,
                     chem_name_kor: kitChemData.name_ko,
                     substance_name: kitChemData.name_en,
                     molecular_formula: kitChemData.formula,
                     molecular_mass: kitChemData.molecular_weight,
-                    MSDS: kitChemData.msds_data,
+                    MSDS: Array.isArray(msdsPayload) ? msdsPayload : [],
                     Properties: [] // Properties not available in kit_chemicals
                 };
             }

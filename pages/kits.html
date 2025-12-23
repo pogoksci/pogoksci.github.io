@@ -60,30 +60,24 @@
 <!-- Register Kit Modal (Refactored) -->
 <div id="modal-register-kit" class="modal-overlay" style="display: none;">
     <div class="modal-content">
-        <h3 class="modal-header">키트 등록</h3>
+        <h3 class="modal-header" id="kit-form-title">키트 등록</h3>
 
         <form id="form-register-kit" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="kit-class-select">분류</label>
-                    <select id="kit-class-select" class="form-input" required>
-                        <option value="" disabled selected>분류를 선택하세요</option>
-                        <option value="all">전체</option>
-                        <option value="물리학">물리학</option>
-                        <option value="화학">화학</option>
-                        <option value="생명과학">생명과학</option>
-                        <option value="지구과학">지구과학</option>
-                        <option value="융합과학">융합과학</option>
-                        <option value="기타">기타</option>
-                    </select>
-
-                    <div id="kit-class-checkboxes" style="display: none; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
-                        <label><input type="checkbox" value="물리학"> 물리학</label>
-                        <label><input type="checkbox" value="화학"> 화학</label>
-                        <label><input type="checkbox" value="생명과학"> 생명과학</label>
-                        <label><input type="checkbox" value="지구과학"> 지구과학</label>
-                        <label><input type="checkbox" value="융합과학"> 융합과학</label>
-                        <label><input type="checkbox" value="기타"> 기타</label>
+                    <div class="form-group">
+                        <label>분류 (복수 선택 가능)</label>
+                        <div class="button-group" id="kit-class-buttons">
+                            <button type="button" class="class-toggle-btn active" data-value="all">전체</button>
+                            <button type="button" class="class-toggle-btn" data-value="물리학">물리학</button>
+                            <button type="button" class="class-toggle-btn" data-value="화학">화학</button>
+                            <button type="button" class="class-toggle-btn" data-value="생명과학">생명과학</button>
+                            <button type="button" class="class-toggle-btn" data-value="지구과학">지구과학</button>
+                            <button type="button" class="class-toggle-btn" data-value="융합과학">융합과학</button>
+                            <button type="button" class="class-toggle-btn" data-value="기타">기타</button>
+                        </div>
+                        <!-- Hidden input to store selected value for form submission -->
+                        <input type="hidden" id="kit-class-value" value="all">
                     </div>
                 </div>
 
@@ -97,6 +91,12 @@
                 <div class="form-group">
                     <label for="kit-quantity">수량</label>
                     <input type="number" id="kit-quantity" class="form-input" value="1" min="1" required>
+                </div>
+
+                <!-- Location Selector (Added) -->
+                <div class="form-group">
+                    <label>보관 장소</label>
+                    <div id="kit-storage-selector"></div>
                 </div>
 
                 <div class="form-group">

@@ -5,7 +5,7 @@
     let currentId = null;
 
     // DOM Elements Cache
-    let form, classSelect, nameSelect, classCheckboxesDiv, customInputs,
+    let form, kitClassButtonsDiv, kitClassValueInput, nameSelect, customInputs,
         checkCustom, customNameInput, casInputContainer, btnAddCas,
         quantityInput, dateInput,
         previewImg, videoStream, canvas, photoContainer,
@@ -43,7 +43,9 @@
                     }
                 }
             } else {
-                document.querySelector('#kit-form-title').textContent = "키트 정보 수정";
+                document.querySelector('#kit-form-title').textContent = "키트 정보";
+                const customWrapper = document.getElementById('custom-kit-checkbox-wrapper');
+                if (customWrapper) customWrapper.style.display = 'none';
             }
 
             // ✅ 2. Load Catalog (Async)
@@ -60,6 +62,9 @@
             // ✅ 3. Load Edit Data (if needed)
             if (currentMode === 'edit') {
                 await loadData(id);
+            } else {
+                // For create mode, after catalog is loaded, populate name select based on default 'all'
+                updateNameList();
             }
 
         } catch (err) {
@@ -70,9 +75,10 @@
 
     function cacheElements() {
         form = document.getElementById('kit-form');
-        classSelect = document.getElementById('kit-class-select');
+        // New UI Elements
+        kitClassButtonsDiv = document.getElementById('kit-class-buttons');
+        kitClassValueInput = document.getElementById('kit-class-value');
         nameSelect = document.getElementById('kit-name-select');
-        classCheckboxesDiv = document.getElementById('kit-class-checkboxes');
 
         checkCustom = document.getElementById('check-custom-kit');
         customInputs = document.getElementById('custom-kit-inputs');
@@ -99,22 +105,23 @@
         // Reset Custom Inputs
         customInputs.style.display = 'none';
 
-        // Reset Selects
-        classSelect.innerHTML = `
-            <option value="" disabled selected>분류를 선택하세요</option>
-            <option value="all">전체</option>
-            <option value="물리학">물리학</option>
-            <option value="화학">화학</option>
-            <option value="생명과학">생명과학</option>
-            <option value="지구과학">지구과학</option>
-            <option value="융합과학">융합과학</option>
-            <option value="기타">기타</option>
-        `;
-        nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
-        nameSelect.disabled = true;
+        // Reset Class Buttons (Default: All)
+        const buttons = kitClassButtonsDiv.querySelectorAll('.class-toggle-btn');
+        buttons.forEach(btn => {
+            if (btn.dataset.value === 'all') {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        kitClassValueInput.value = 'all';
 
-        if (classCheckboxesDiv) classCheckboxesDiv.style.display = 'none';
-        classSelect.style.display = 'block';
+        // Reset Name Select
+        nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
+        nameSelect.disabled = true; // Wait for user interaction or load logic?
+        // Actually, with 'all' default, we should populate names immediately?
+        // Let's populate for 'all' immediately if cached, or wait for catalog load.
+        // updateNameSelect(['all']);
     }
 
     let currentPhotoBase64 = null; // Store processed base64
@@ -152,11 +159,43 @@
     }
 
     function bindEvents() {
-        // Class Select Change
-        classSelect.addEventListener('change', (e) => {
-            const val = e.target.value;
-            if (val && !checkCustom.checked) {
-                updateNameSelect(val);
+        // Class Buttons Click
+        kitClassButtonsDiv.addEventListener('click', (e) => {
+            if (e.target.classList.contains('class-toggle-btn')) {
+                const btn = e.target;
+                const val = btn.dataset.value;
+
+                if (val === 'all') {
+                    // Activate All -> Deactivate others
+                    const buttons = kitClassButtonsDiv.querySelectorAll('.class-toggle-btn');
+                    buttons.forEach(b => {
+                        if (b.dataset.value === 'all') {
+                            b.classList.add('active');
+                        } else {
+                            b.classList.remove('active');
+                        }
+                    });
+                } else {
+                    // Specific Category Clicked
+                    // 1. Deactivate 'all'
+                    const allBtn = kitClassButtonsDiv.querySelector('.class-toggle-btn[data-value="all"]');
+                    if (allBtn) {
+                        allBtn.classList.remove('active');
+                    }
+
+                    // 2. Toggle clicked button
+                    btn.classList.toggle('active');
+
+                    // 3. If no buttons active, reactivate 'all'
+                    const activeBtns = kitClassButtonsDiv.querySelectorAll('.class-toggle-btn.active');
+                    if (activeBtns.length === 0) {
+                        const allBtn = kitClassButtonsDiv.querySelector('.class-toggle-btn[data-value="all"]');
+                        if (allBtn) allBtn.classList.add('active');
+                    }
+                }
+
+                // Update Name Select based on new active set
+                updateNameList();
             }
         });
 
@@ -168,12 +207,7 @@
                 nameSelect.innerHTML = '<option value="" disabled selected>직접 입력 모드</option>';
             } else {
                 customInputs.style.display = 'none';
-                if (classSelect.value && classSelect.value !== 'all') {
-                    updateNameSelect(classSelect.value);
-                } else {
-                    nameSelect.disabled = true;
-                    nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
-                }
+                updateNameList(); // Re-populate based on buttons
             }
         });
 
@@ -191,7 +225,6 @@
         document.getElementById('btn-kit-camera').addEventListener('click', () => {
             if (isCameraActive) {
                 if (videoStream.style.display === 'none') {
-                    // Retake logic if needed, but usually handled by UI state
                     startCamera();
                 } else {
                     takeKitPhoto();
@@ -200,6 +233,7 @@
                 startCamera();
             }
         });
+
         document.getElementById('btn-kit-confirm').addEventListener('click', takeKitPhoto);
         document.getElementById('btn-cancel-camera').addEventListener('click', stopCamera);
         cameraInput.addEventListener('change', handleFileSelect);
@@ -217,6 +251,19 @@
         });
     }
 
+    function updateNameList() {
+        if (checkCustom.checked) return;
+
+        const activeBtns = Array.from(kitClassButtonsDiv.querySelectorAll('.class-toggle-btn.active'));
+        const selectedValues = activeBtns.map(b => b.dataset.value);
+
+        // Update Hidden Input (for reference or saving)
+        kitClassValueInput.value = selectedValues.join(',');
+
+        // Filter Catalog
+        updateNameSelect(selectedValues);
+    }
+
     async function loadData(id) {
         try {
             const { data: kit, error } = await supabase.from('user_kits').select('*').eq('id', id).single();
@@ -224,33 +271,59 @@
             if (!kit) throw new Error("키트 정보를 찾을 수 없습니다.");
 
             // Populate Form
-            // 1. Classification
-            // In Edit Mode, we allow multi-select classification via checkboxes
-            classSelect.style.display = 'none';
-            classCheckboxesDiv.style.display = 'grid';
-            classSelect.required = false;
+            // 1. Classification (Multi-Select Buttons)
+            const currentClasses = (kit.kit_class || '미분류').split(',').map(s => s.trim());
+            const buttons = kitClassButtonsDiv.querySelectorAll('.class-toggle-btn');
 
-            const currentClasses = (kit.kit_class || '').split(',').map(s => s.trim());
-            classCheckboxesDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                cb.checked = currentClasses.includes(cb.value);
+            // Logic: If 'all' in user data (unlikely strict match) or just specific classes
+            // We should match dataset values.
+
+            // First reset all
+            buttons.forEach(b => {
+                b.classList.remove('active');
             });
 
+            let hasActive = false;
+            buttons.forEach(btn => {
+                if (currentClasses.includes(btn.dataset.value)) {
+                    btn.classList.add('active');
+                    hasActive = true;
+                }
+            });
+
+            // If no specific class matched, maybe fall back to 'all' or 'other'?
+            if (!hasActive) {
+                const allBtn = kitClassButtonsDiv.querySelector('.class-toggle-btn[data-value="all"]');
+                if (allBtn) {
+                    allBtn.classList.add('active');
+                }
+            }
+
+            // Update hidden input
+            updateNameList(); // This also triggers updateNameSelect
+
             // 2. Name
-            // Try to find in catalog
-            const catalogItem = catalog.find(c => c.kit_name === kit.kit_name);
-            if (catalogItem) {
-                // Determine class context for select update?
-                // Just update 'all' then select logic might be tricky if we want to filter relevant ones.
-                // Let's just populate Select with this single item or all items? 
-                // Existing logic in keys.js: updateNameSelect('all', catalogItem.id);
-                updateNameSelect('all', catalogItem.id);
-            } else {
-                // Custom or not in catalog
-                nameSelect.innerHTML = `<option value="${kit.kit_name}" selected>${kit.kit_name}</option>`;
-                // Should we check 'custom'? 
-                // Since user might have custom kit, but checkCustom box is mostly for NEW creation logic.
-                // Editing Name for existing kit is restricted in dropdown?
-                // kit-register EF supports kit_name update.
+            // updateNameList calling updateNameSelect will populate options
+            // We need to SELECT the current kit name
+
+            // Wait for simple sync population? updateNameSelect logic below relies on window.catalog which is loaded.
+
+            let foundOption = false;
+            for (let i = 0; i < nameSelect.options.length; i++) {
+                if (nameSelect.options[i].text === kit.kit_name) {
+                    nameSelect.selectedIndex = i;
+                    foundOption = true;
+                    break;
+                }
+            }
+
+            if (!foundOption) {
+                // Append custom option if not in filtered list
+                const opt = document.createElement('option');
+                opt.value = kit.kit_name;
+                opt.text = kit.kit_name;
+                opt.selected = true;
+                nameSelect.appendChild(opt);
             }
 
             // 3. Details
@@ -262,9 +335,7 @@
                 previewImg.src = kit.image_url;
                 previewImg.style.display = 'block';
                 photoContainer.querySelector('.placeholder-text').style.display = 'none';
-                currentPhotoBase64 = null; // Should we download it? No, keeping null implies no change unless user updates.
-                // NOTE: If user doesn't change photo, we should submit null or existing URL logic in handleSubmit.
-                // Current logic in handleSubmit reconstructs payload.
+                currentPhotoBase64 = null;
             }
 
             // 5. Location
@@ -290,16 +361,31 @@
         }
     }
 
-    function updateNameSelect(selectedClass, selectedKitId = null) {
+    function updateNameSelect(selectedClasses, selectedKitId = null) {
         if (!nameSelect) return;
         nameSelect.disabled = false;
         nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요</option>';
 
+        // Ensure array
+        if (!Array.isArray(selectedClasses)) {
+            selectedClasses = [selectedClasses];
+        }
+
         let filtered = [];
-        if (selectedClass === 'all') {
+        if (selectedClasses.includes('all')) {
             filtered = window.catalog || [];
+            nameSelect.innerHTML = '<option value="" disabled selected>키트를 선택하세요 (전체)</option>';
         } else {
-            filtered = (window.catalog || []).filter(k => k.kit_class && k.kit_class.includes(selectedClass));
+            const catalog = window.catalog || [];
+            // Filter: Item matches ANY of the selected classes
+            // catalog item kit_class is usually a string "Physics" or "Physics,Chemistry"
+            filtered = catalog.filter(k => {
+                if (!k.kit_class) return false;
+                const itemClasses = k.kit_class.split(',').map(s => s.trim());
+                // Check intersection
+                return selectedClasses.some(sel => itemClasses.includes(sel));
+            });
+            nameSelect.innerHTML = `<option value="" disabled selected>${selectedClasses.join(', ')} 키트 선택</option>`;
         }
 
         filtered = filtered.filter(k => k && k.kit_name);
@@ -342,11 +428,7 @@
                     try {
                         const resized = await App.Camera.processImage(e.target.result);
                         if (resized) {
-                            currentPhotoBase64 = resized.base64_320; // Kits use 320 for now? Or keep 320 logic.
-                            // Kit table usually has `image_url` not split? 
-                            // tools-form uploads raw blob usually. 
-                            // But `kit-register` EF expects `photo_base64`.
-                            // Let's use 320 version as standard.
+                            currentPhotoBase64 = resized.base64_320;
                             showPreview(resized.base64_320);
                         }
                     } catch (err) { console.error(err); }
@@ -382,7 +464,7 @@
             const btnCamera = document.getElementById('btn-kit-camera');
             if (btnCamera) {
                 btnCamera.innerHTML = '<span class="material-symbols-outlined">camera</span> 촬영하기';
-                btnCamera.style.display = 'none'; // tools-form style: hide main camera btn, show confirm
+                btnCamera.style.display = 'none';
             }
 
             document.getElementById('btn-kit-file').style.display = 'none';
@@ -464,46 +546,41 @@
         e.preventDefault();
 
         // 1. Classification & Name
-        let kitClass = '';
-        if (currentMode === 'edit') {
-            const checked = Array.from(classCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
-                .map(cb => cb.value);
-            kitClass = checked.join(', ');
-        } else {
-            if (classSelect.value === 'all') {
-                const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-                kitClass = selectedOption ? (selectedOption.dataset.class || '기타') : '기타';
-            } else {
-                kitClass = classSelect.value;
-            }
-        }
+        // Retrieve from hidden input which is kept in sync by updateNameList
+        let kitClass = kitClassValueInput.value || '기타';
 
         let finalKitName = '';
         let customCas = null;
         const isCustom = checkCustom && checkCustom.checked;
 
-        if (currentMode === 'edit') {
+        if (isCustom) {
+            const customNameInput = document.getElementById('custom-kit-name');
+            finalKitName = customNameInput.value.trim();
+            if (!finalKitName) return alert("키트 이름을 입력하세요.");
+
+            const casInputs = document.querySelectorAll('.cas-input');
+            const casList = Array.from(casInputs).map(input => input.value.trim()).filter(val => val);
+            if (casList.length > 0) customCas = casList.join(', ');
+        } else {
+            const selectedOption = nameSelect.options[nameSelect.selectedIndex];
+            if (!selectedOption || selectedOption.disabled || !selectedOption.value) {
+                // In Edit mode, nameSelect matches kit_name. 
+                // However, nameSelect might be empty if catalog filter mismatch?
+                // But loadData ensures current name is added.
+                // Just check value.
+                if (!nameSelect.value) return alert("키트를 선택하세요.");
+            }
+
             if (nameSelect.selectedIndex >= 0) {
-                const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-                finalKitName = selectedOption.dataset.name || selectedOption.value;
+                const opt = nameSelect.options[nameSelect.selectedIndex];
+                finalKitName = opt.dataset.name || opt.value || opt.text;
+                // If user chose from catalog, class might need to be specific? 
+                // Whatever is in kitClass from buttons is what user INTENDS to set for this kit instance.
             } else {
                 finalKitName = nameSelect.value;
             }
-        } else {
-            if (isCustom) {
-                const customNameInput = document.getElementById('custom-kit-name');
-                finalKitName = customNameInput.value.trim();
-                if (!finalKitName) return alert("키트 이름을 입력하세요.");
-
-                const casInputs = document.querySelectorAll('.cas-input');
-                const casList = Array.from(casInputs).map(input => input.value.trim()).filter(val => val);
-                if (casList.length > 0) customCas = casList.join(', ');
-            } else {
-                const selectedOption = nameSelect.options[nameSelect.selectedIndex];
-                if (!selectedOption || selectedOption.disabled) return alert("키트를 선택하세요.");
-                finalKitName = selectedOption.dataset.name;
-            }
         }
+
 
         const quantity = parseInt(quantityInput.value, 10);
         const purchaseDate = dateInput.value;

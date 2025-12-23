@@ -98,7 +98,7 @@
         if (App.ToolsForm?.init) App.ToolsForm.init(params.id);
         break;
       case "kitForm":
-        // Handled by script in html usually
+        if (App.KitForm?.init) App.KitForm.init(params.id);
         break;
       case "login":
         if (App?.Auth?.bindLoginForm) App.Auth.bindLoginForm();

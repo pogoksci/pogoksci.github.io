@@ -393,10 +393,16 @@
     // 기존 로직: 1,2,3 -> "1번", "2번"...
     // 교구장도 동일한 로직을 사용하겠습니다.
 
-    const options = Array.from({ length: count }, (_, i) => ({
-      label: `${i + 1}층`,
-      value: i + 1,
-    }));
+    const options = Array.from({ length: count }, (_, i) => {
+      let label = `${i + 1}층`;
+      if (count === 1) {
+        label = "단일도어";
+      }
+      return {
+        label: label,
+        value: i + 1,
+      };
+    });
 
     const group = createButtonGroup(
       options,

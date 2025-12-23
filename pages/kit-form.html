@@ -13,27 +13,18 @@
             </h3>
 
             <div class="form-group">
-                <label>분류</label>
-                <select id="kit-class-select" class="form-input" required>
-                    <option value="" disabled selected>분류를 선택하세요</option>
-                    <option value="all">전체</option>
-                    <option value="물리학">물리학</option>
-                    <option value="화학">화학</option>
-                    <option value="생명과학">생명과학</option>
-                    <option value="지구과학">지구과학</option>
-                    <option value="융합과학">융합과학</option>
-                    <option value="기타">기타</option>
-                </select>
-                <!-- Edit Mode Checkboxes (Hidden by default, toggled via JS) -->
-                <div id="kit-class-checkboxes" class="kit-class-checkboxes"
-                    style="display:none; flex-wrap:wrap; gap:10px; margin-top:5px;">
-                    <label><input type="checkbox" value="물리학"> 물리학</label>
-                    <label><input type="checkbox" value="화학"> 화학</label>
-                    <label><input type="checkbox" value="생명과학"> 생명과학</label>
-                    <label><input type="checkbox" value="지구과학"> 지구과학</label>
-                    <label><input type="checkbox" value="융합과학"> 융합과학</label>
-                    <label><input type="checkbox" value="기타"> 기타</label>
+                <label>분류 (복수 선택 가능)</label>
+                <div class="button-group" id="kit-class-buttons">
+                    <button type="button" class="class-toggle-btn active" data-value="all">전체</button>
+                    <button type="button" class="class-toggle-btn" data-value="물리학">물리학</button>
+                    <button type="button" class="class-toggle-btn" data-value="화학">화학</button>
+                    <button type="button" class="class-toggle-btn" data-value="생명과학">생명과학</button>
+                    <button type="button" class="class-toggle-btn" data-value="지구과학">지구과학</button>
+                    <button type="button" class="class-toggle-btn" data-value="융합과학">융합과학</button>
+                    <button type="button" class="class-toggle-btn" data-value="기타">기타</button>
                 </div>
+                <!-- Hidden input to store selected value for form submission -->
+                <input type="hidden" id="kit-class-value" value="all">
             </div>
 
             <div class="form-group" id="kit-name-group">
