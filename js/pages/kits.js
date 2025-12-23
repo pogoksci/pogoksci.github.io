@@ -609,7 +609,7 @@
                         Properties ( name, property ),
                         MSDS ( section_number, content )
                     `)
-                    .eq('cas_rn', cas)
+                    .ilike('cas_rn', `%${cas}%`) // Use ilike for robustness
                     .limit(1);
 
                 if (result.data && result.data.length > 0) {
@@ -644,14 +644,29 @@
                     }
                 }
 
+                let msdsSections = [];
+                let experimentalProps = [];
+
+                if (msdsPayload && typeof msdsPayload === 'object' && !Array.isArray(msdsPayload)) {
+                    // New structure: { sections: [], experimental_properties: [] }
+                    msdsSections = msdsPayload.sections || [];
+                    experimentalProps = msdsPayload.experimental_properties || [];
+                } else {
+                    // Old structure: []
+                    msdsSections = Array.isArray(msdsPayload) ? msdsPayload : [];
+                }
+
                 substanceData = {
                     cas_rn: kitChemData.cas_no || cas,
                     chem_name_kor: kitChemData.name_ko,
                     substance_name: kitChemData.name_en,
                     molecular_formula: kitChemData.formula,
                     molecular_mass: kitChemData.molecular_weight,
-                    MSDS: Array.isArray(msdsPayload) ? msdsPayload : [],
-                    Properties: [] // Properties not available in kit_chemicals
+                    MSDS: msdsSections,
+                    Properties: experimentalProps.map(p => ({
+                        name: p.name,
+                        property: p.property
+                    }))
                 };
             }
 
@@ -699,6 +714,28 @@
             const korName = substance.chem_name_kor || substance.substance_name || cas;
             title.textContent = `${korName} (${cas})`;
 
+            const formatWithUnit = (val, unit = "") => {
+                if (val === null || val === undefined || val === "" || val === "-") return "-";
+                const n = Number(val);
+                if (!Number.isFinite(n)) return String(val);
+                return `${n}${unit}`;
+            };
+            const formatTemp = (val) => formatWithUnit(val, " C");
+            const formatDensity = (val) => {
+                if (val === null || val === undefined || val === "" || val === "-") return "-";
+                const raw = String(val).trim();
+                if (!raw) return "-";
+                if (raw.includes("@")) {
+                    const [valuePart, ...rest] = raw.split("@");
+                    const value = valuePart.trim();
+                    const temp = rest.join("@").trim();
+                    return temp ? `${value} <span style="font-size: 10px;">@ ${temp}</span>` : value || "-";
+                }
+                const n = Number(raw);
+                if (Number.isFinite(n)) return `${n} g/mL`;
+                return raw;
+            };
+
             const propsList = substance.Properties || [];
             const getPropVal = (nameKey) => {
                 const found = propsList.find((p) => p.name && p.name.toLowerCase().includes(nameKey.toLowerCase()));
@@ -718,14 +755,14 @@
                     
                     <div class="msds-row">
                         <div class="msds-header">끓는점</div>
-                        <div class="msds-content">${getPropVal('Boiling Point')}</div>
+                        <div class="msds-content">${formatTemp(getPropVal('Boiling Point'))}</div>
                         <div class="msds-header">녹는점</div>
-                        <div class="msds-content">${getPropVal('Melting Point')}</div>
+                        <div class="msds-content">${formatTemp(getPropVal('Melting Point'))}</div>
                     </div>
 
                     <div class="msds-row">
                         <div class="msds-header">밀도</div>
-                        <div class="msds-content">${getPropVal('Density')}</div>
+                        <div class="msds-content">${formatDensity(getPropVal('Density'))}</div>
                     </div>
                 </div>
             `;
