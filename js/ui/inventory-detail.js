@@ -841,7 +841,12 @@
             const sdfUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/SDF?record_type=3d`;
             const resp = await fetch(sdfUrl);
             if (!resp.ok) {
-              show3dFallback("3D 데이터 다운로드 실패");
+              if (resp.status === 404) {
+                show3dFallback("3D 구조 데이터 없음");
+              } else {
+                show3dFallback("3D 데이터 다운로드 실패");
+                console.warn(`3D Download Failed: ${resp.status}`);
+              }
               return;
             }
             const sdfData = await resp.text();
