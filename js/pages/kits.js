@@ -234,15 +234,6 @@
                             <div class="inv-quantity" style="font-size: 14px; color: #555;">
                                 수량: ${kit.quantity}개
                             </div>
-                            
-                            <div class="inventory-card__actions" style="display: flex; gap: 5px;">
-                                <button class="icon-btn edit-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="수정">
-                                    <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
-                                </button>
-                                <button class="icon-btn delete-kit-btn" data-id="${kit.id}" style="border:none; background:none; cursor:pointer; padding:4px;" title="삭제">
-                                    <span class="material-symbols-outlined" style="font-size: 20px; color: #999;">delete</span>
-                                </button>
-                            </div>
                         </div>
                     </div>
                 `;
@@ -251,28 +242,6 @@
                 card.addEventListener('click', () => {
                     App.Router.go('kitDetail', { id: kit.id });
                 });
-
-                // Edit Button
-                const editBtn = card.querySelector('.edit-kit-btn');
-                if (editBtn) {
-                    editBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        if (window.openEditKitModal) {
-                            window.openEditKitModal(kit);
-                        }
-                    });
-                }
-
-                // Delete Button
-                const deleteBtn = card.querySelector('.delete-kit-btn');
-                if (deleteBtn) {
-                    deleteBtn.addEventListener('click', async (e) => {
-                        e.stopPropagation();
-                        if (confirm('정말 삭제하시겠습니까?')) {
-                            await deleteKit(kit.id);
-                        }
-                    });
-                }
 
                 listContainer.appendChild(card);
             });

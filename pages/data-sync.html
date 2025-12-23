@@ -74,8 +74,15 @@
                             </div>
                             <div class="form-group" style="flex: 1">
                                 <label style="display: block; margin-bottom: 5px; font-weight: 500">3. 끝 ID (선택)</label>
-                                <input type="number" id="migration-end-id" class="form-control" placeholder="미입력 시 1개만"
-                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="number" id="migration-end-id" class="form-control"
+                                        placeholder="미입력 시 1개만"
+                                        style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px">
+                                    <label
+                                        style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer; white-space: nowrap;">
+                                        <input type="checkbox" id="migration-until-end"> 끝까지
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
@@ -113,9 +120,15 @@
                             </div>
                             <div class="form-group" style="flex: 1">
                                 <label style="display: block; margin-bottom: 5px; font-weight: 500">3. 끝 No (선택)</label>
-                                <input type="number" id="user-kit-migration-end-id" class="form-control"
-                                    placeholder="미입력 시 1개만"
-                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="number" id="user-kit-migration-end-id" class="form-control"
+                                        placeholder="미입력 시 1개만"
+                                        style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px">
+                                    <label
+                                        style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer; white-space: nowrap;">
+                                        <input type="checkbox" id="user-kit-until-end"> 끝까지
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
@@ -156,9 +169,15 @@
                             <div class="form-group" style="flex: 1">
                                 <label style="display: block; margin-bottom: 5px; font-weight: 500">3. 끝 tools_no
                                     (선택)</label>
-                                <input type="number" id="tools-migration-end-id" class="form-control"
-                                    placeholder="미입력 시 1개만"
-                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="number" id="tools-migration-end-id" class="form-control"
+                                        placeholder="미입력 시 1개만"
+                                        style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px">
+                                    <label
+                                        style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer; white-space: nowrap;">
+                                        <input type="checkbox" id="tools-until-end"> 끝까지
+                                    </label>
+                                </div>
                             </div>
                         </div>
 

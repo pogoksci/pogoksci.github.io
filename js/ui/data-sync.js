@@ -298,7 +298,9 @@
             if (!fileInput || !fileInput.files[0]) return alert("파일을 선택해주세요.");
             const startId = parseInt(startIdInput.value);
             if (isNaN(startId)) return alert("시작 ID를 입력해주세요.");
-            const endId = endIdInput.value ? parseInt(endIdInput.value) : startId;
+
+            const untilEnd = document.getElementById("migration-until-end")?.checked;
+            const endId = untilEnd ? 999999 : (endIdInput.value ? parseInt(endIdInput.value) : startId);
 
             if (startId > endId) return alert("시작 ID가 끝 ID보다 클 수 없습니다.");
 
@@ -459,7 +461,7 @@
                     classification: this.clean(row.classification),
                     manufacturer: this.clean(row.manufacturer),
                     status: this.clean(row.status) || "사용중",
-                    purchase_date: this.clean(row.purchase_date), // YYYY-MM-DD
+                    purchase_date: "2024-03-01", // User request: fixed to 2024-03-01
                     bottle_mass: this.calculateBottleMass(row.initial_amount, row.bottle_type),  // Auto-calculated logic
 
                     // Concentrations
@@ -571,7 +573,9 @@
             if (!fileInput || !fileInput.files[0]) return alert("파일을 선택해주세요.");
             const startId = parseInt(startIdInput.value);
             if (isNaN(startId)) return alert("시작 tools_no를 입력해주세요.");
-            const endId = endIdInput.value ? parseInt(endIdInput.value) : startId;
+
+            const untilEnd = document.getElementById("tools-until-end")?.checked;
+            const endId = untilEnd ? 999999 : (endIdInput.value ? parseInt(endIdInput.value) : startId);
 
             if (startId > endId) return alert("시작 tools_no가 끝 tools_no보다 클 수 없습니다.");
 
@@ -878,7 +882,9 @@
             if (!fileInput || !fileInput.files[0]) return alert("파일을 선택해주세요.");
             const startId = parseInt(startIdInput.value);
             if (isNaN(startId)) return alert("시작 No를 입력해주세요.");
-            const endId = endIdInput.value ? parseInt(endIdInput.value) : startId;
+
+            const untilEnd = document.getElementById("user-kit-until-end")?.checked;
+            const endId = untilEnd ? 999999 : (endIdInput.value ? parseInt(endIdInput.value) : startId);
 
             if (startId > endId) return alert("시작 No가 끝 No보다 클 수 없습니다.");
 
