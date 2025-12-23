@@ -434,28 +434,42 @@
 
         if (!selectedItem) return;
 
-        // Calculate Initial Amount: Current + Sum(All Usage)
+        // Calculate Total Usage: Sum(Logs excluding '최초 등록')
         let totalUsage = 0;
         if (data) {
-            data.forEach(l => totalUsage += (l.amount || 0));
+            data.forEach(l => {
+                if (l.subject !== '최초 등록') totalUsage += (l.amount || 0);
+            });
         }
 
         // Handle floating point precision
         totalUsage = parseFloat(totalUsage.toFixed(2));
-        const initialAmount = parseFloat((selectedItem.current_amount + totalUsage).toFixed(2));
-        const createdAt = selectedItem.created_at ? selectedItem.created_at.split('T')[0] : (new Date().toISOString().split('T')[0]);
 
-        const initialLog = {
-            is_initial: true,
-            usage_date: createdAt,
-            subject: '최초 등록',
-            period: '-',
-            amount: initialAmount,
-            unit: selectedItem.unit
-        };
+        // Check for real 'Initial Registration' log
+        const realInitialLog = data ? data.find(l => l.subject === '최초 등록') : null;
+        const otherLogs = data ? data.filter(l => l.subject !== '최초 등록') : [];
 
-        let allLogs = [initialLog];
-        if (data) allLogs = [...allLogs, ...data];
+        let allLogs = [];
+        if (realInitialLog) {
+            // Use real log, set is_initial for styling
+            realInitialLog.is_initial = true;
+            allLogs = [realInitialLog, ...otherLogs];
+        } else {
+            // Create Virtual Initial Log
+            const initialAmount = parseFloat((selectedItem.current_amount + totalUsage).toFixed(2));
+            // Use purchase_date if available (from migration), else created_at
+            const initialDate = selectedItem.purchase_date || (selectedItem.created_at ? selectedItem.created_at.split('T')[0] : (new Date().toISOString().split('T')[0]));
+
+            const initialLog = {
+                is_initial: true,
+                usage_date: initialDate,
+                subject: '최초 등록',
+                period: '-',
+                amount: initialAmount,
+                unit: selectedItem.unit
+            };
+            allLogs = [initialLog, ...otherLogs];
+        }
 
         if (allLogs.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">기록이 없습니다.</td></tr>';
@@ -468,14 +482,20 @@
             const stockDisplay = isLast ? `${selectedItem.current_amount} ${selectedItem.unit}` : '';
 
             if (log.is_initial) {
+                // For real logs (with id), allow edit/delete
+                const btnHtml = log.id ? `
+                    <button class="btn-mini btn-edit" onclick="App.UsageRegister.editLog(${log.id})">수정</button>
+                    <button class="btn-mini btn-delete" onclick="App.UsageRegister.deleteLog(${log.id}, ${log.amount})">삭제</button>
+                ` : '-';
+
                 return `
                 <tr class="initial-row" style="background:#fcfcfc; color:#555;">
                     <td class="col-date">${log.usage_date}</td>
                     <td class="col-subject" style="font-weight:bold;">${log.subject}</td>
-                    <td class="col-period">-</td>
+                    <td class="col-period">${log.period || '-'}</td>
                     <td class="col-amount">${log.amount} ${log.unit}</td>
                     <td class="col-stock" style="font-weight:bold; color:#00a0b2;">${stockDisplay}</td>
-                    <td>-</td>
+                    <td>${btnHtml}</td>
                 </tr>`;
             } else {
                 return `
