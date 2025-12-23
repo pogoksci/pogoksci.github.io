@@ -519,6 +519,21 @@
             });
         },
 
+        // Helper: Parse Excel Date Serial
+        parseExcelDate: function (val) {
+            if (!val) return null;
+            if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}$/)) return val;
+            const serial = parseFloat(val);
+            if (!isNaN(serial) && serial > 20000) {
+                const date = new Date(Math.round((serial - 25569) * 86400 * 1000));
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+            return val; // Return original if not serial, let valid strings pass or fail
+        },
+
         // Helper: Bottle Mass Calculation (from forms.js)
         calculateBottleMass: function (volume, type) {
             if (!volume || !type) return null;
@@ -888,6 +903,7 @@
 
                 this.log(`🎯 대상 데이터: ${targets.length}개. 순차 처리 시작...`);
 
+                // 3. Process each item sequentially
                 let successCount = 0;
                 let failCount = 0;
 
@@ -912,14 +928,22 @@
         },
 
         processUserKitMigrationItem: async function (row) {
-            const no = parseInt(row["no"]);
-            const kitId = parseInt(row["kit_id"]);
+            const keys = Object.keys(row);
+            // User specified order: no(A), kit_id(B), photo(C), kit_person(D), quantity(E), purchase_date(F)
+
+            let no = parseInt(row["no"]);
+            if (isNaN(no)) no = parseInt(row[keys[0]]); // Fallback to Col A
+
+            let kitId = parseInt(row["kit_id"]);
+            if (isNaN(kitId)) kitId = parseInt(row[keys[1]]); // Fallback to Col B
 
             this.log(`🔄 [No: ${no}] Kit ID: ${kitId} 처리 중...`);
             const supabase = App.supabase;
 
             // 1. Fetch Experiment Kit Info
-            // kit_person is fetched from DB, NOT CSV.
+            // Only need catalog info, not used for direct insert anymore, 
+            // but needed to pass 'kit_cas' to sync properly if EF expects it.
+            // Actually EF uses 'kit_name'/'kit_class'/'kit_cas' from payload.
             const { data: expKit, error: expErr } = await supabase
                 .from('experiment_kit')
                 .select('*')
@@ -927,61 +951,143 @@
                 .single();
 
             if (expErr || !expKit) {
+                // If ID lookup fails, maybe it's because kitId is still wrong?
+                // But we log it above.
                 throw new Error(`실험 키트(ID: ${kitId}) 정보를 찾을 수 없습니다.`);
             }
 
-            // 2. Process Photo
-            let imageUrl = null;
-            const photoName = this.clean(row["photo"]);
+            // 2. Prepare Photo (Base64 only, let EF handle upload)
+            let photoBase64 = null;
+            const photoName = this.clean(row["photo"] || row[keys[2]]); // Col C
             if (photoName) {
                 try {
-                    const oldPhotoUrl = `https://muprmzkvrjacqatqxayf.supabase.co/storage/v1/object/public/kit-photos/old_kit/${photoName}`;
+                    // User confirmed folder is 'old-kit', not 'old_kit'
+                    const oldPhotoUrl = `https://muprmzkvrjacqatqxayf.supabase.co/storage/v1/object/public/kit-photos/old-kit/${encodeURIComponent(photoName)}`;
                     const blob = await this.fetchBlob(oldPhotoUrl);
-
                     if (blob) {
-                        const base64_320 = await this.resizeImage(blob, 320);
-
-                        // Upload
-                        const ts = Date.now();
-                        const rnd = Math.random().toString(36).substr(2, 5);
-
-                        const path320 = `user_kits/${ts}_${rnd}_320.jpg`;
-                        const blob320 = App.Utils.base64ToBlob(base64_320);
-                        const { error: err320 } = await supabase.storage.from("kit-photos").upload(path320, blob320);
-                        if (err320) throw err320;
-                        const { data: data320 } = supabase.storage.from("kit-photos").getPublicUrl(path320);
-                        imageUrl = data320.publicUrl;
-
-                        // 160 size (optional, but requested in Plan)
-                        const base64_160 = await this.resizeImage(blob, 160);
-                        const path160 = `user_kits/${ts}_${rnd}_160.jpg`;
-                        const blob160 = App.Utils.base64ToBlob(base64_160);
-                        await supabase.storage.from("kit-photos").upload(path160, blob160);
-
-                        this.log(`   📸 사진 업로드 완료`);
+                        // kit-register typically expects a Data URL (data:image/jpeg;base64,...)
+                        // resizeImage returns exactly that.
+                        photoBase64 = await this.resizeImage(blob, 320);
+                        this.log(`   📸 사진 데이터 준비 완료`);
                     }
                 } catch (e) {
-                    this.log(`   ⚠️ 사진 처리 실패 (${photoName}): ${e.message}`);
+                    this.log(`   ⚠️ 사진 다운로드 실패 (${photoName}): ${e.message}`);
                 }
             }
 
-            // 3. Insert into user_kits
-            // Columns: kit_name, kit_class, kit_person (from experiment_kit)
-            //          quantity, purchase_date (from CSV)
-            //          image_url, status
+            // Extract kit_person from CSV (User request: 4th column / Col D)
+            const kitPerson = this.clean(row["kit_person"] || row["인원"] || row["person"] || row[keys[3]] || "");
 
+            // Extract Quantity (Col E)
+            const qtyVal = row["quantity"] || row[keys[4]];
+            const finalQty = this.parseSafeInt(qtyVal);
+
+            // Extract Purchase Date (Col F)
+            const pDateVal = row["purchase_date"] || row[keys[5]];
+            const finalPDate = this.parseExcelDate(pDateVal);
+
+            // 3. Invoke Edge Function (kit-register)
+            // Payload must match what kit-form.js sends.
+            // mode: 'create'
             const payload = {
+                mode: 'create',
+                kit_id: kitId, // Explicitly pass Catalog ID from Col B
                 kit_name: expKit.kit_name,
                 kit_class: expKit.kit_class,
-                kit_person: expKit.kit_person, // Fetching from DB as requested
-                quantity: this.parseSafeInt(row["quantity"]),
-                purchase_date: this.clean(row["purchase_date"]),
-                image_url: imageUrl,
-                status: '보유중' // Default status
+                kit_cas: expKit.kit_cas, // Pass CAS to ensure chemicals are linked
+                kit_person: kitPerson, // Pass CSV value from Col D
+                quantity: finalQty, // From Col E
+                purchase_date: finalPDate, // From Col F
+                photo_base64: photoBase64, // From Col C (URL fetch)
+                status: '보유중'
             };
 
-            const { error: insErr } = await supabase.from('user_kits').insert(payload);
-            if (insErr) throw insErr;
+            // DEBUG: Log EF Response
+            const { data, error } = await supabase.functions.invoke('kit-register', {
+                body: payload
+            });
+
+            if (error) {
+                // Parse error message if possible
+                let msg = error.message;
+                if (error instanceof Error && error.context && error.context.json) {
+                    const body = await error.context.json();
+                    msg = body.error || msg;
+                }
+                throw new Error(`Edge Function Error: ${msg}`);
+            }
+
+            console.log("✅ EF Response:", data);
+
+            // 4. PATCH: Find the ID and update kit_id
+            let newId = null;
+
+            // Strategy A: Check EF Response
+            if (data) {
+                if (data.id) newId = data.id;
+                else if (data.data?.id) newId = data.data.id;
+                else if (data.kit?.id) newId = data.kit.id; // Common pattern
+                else if (data.data?.kit?.id) newId = data.data.kit.id;
+            }
+
+            // Strategy B: Fallback Search (Latest record with same name)
+            if (!newId) {
+                console.warn("⚠️ ID not found in EF response. Trying fallback search...");
+                const { data: latest, error: searchErr } = await supabase
+                    .from('user_kits')
+                    .select('id, kit_id') // Check kit_id existence here too
+                    .eq('kit_name', expKit.kit_name)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                if (latest) {
+                    newId = latest.id;
+                    console.log(`🔎 Found created kit via search: ID ${newId}`);
+                }
+            }
+
+            // Execute Patch
+            if (newId) {
+                const { error: patchErr } = await supabase
+                    .from('user_kits')
+                    .update({ kit_id: kitId })
+                    .eq('id', newId);
+
+                if (patchErr) {
+                    console.warn(`⚠️ Failed to patch kit_id for User Kit ${newId}:`, patchErr);
+                } else {
+                    console.log(`🔧 Patched kit_id (${kitId}) for User Kit ${newId}`);
+                }
+            } else {
+                console.error("❌ Could not determine User Kit ID to patch.");
+            }
+
+            // 5. Chemical Sync (kit-casimport)
+            if (expKit.kit_cas) {
+                this.log(`   🧪 화학물질 동기화 진행 (CAS: ${expKit.kit_cas})`);
+                const casList = expKit.kit_cas.split(/[\n,;]+/).map(s => s.trim()).filter(s => s);
+
+                for (const cas of casList) {
+                    try {
+                        // Invoke kit-casimport
+                        const { data: casData, error: casError } = await supabase.functions.invoke('kit-casimport', {
+                            body: { cas_rn: cas }
+                        });
+                        if (casError) {
+                            console.warn(`   ⚠️ CAS Sync Fail (${cas}):`, casError);
+                        } else {
+                            // console.log(`   ✅ CAS Synced: ${cas}`);
+                        }
+                    } catch (ce) {
+                        console.error(ce);
+                    }
+                }
+                if (casList.length > 0) {
+                    this.log(`   ⚗️ ${casList.length}개 물질 MSDS 정보 동기화 완료`);
+                }
+            }
+
 
             this.log(`✅ [No: ${no}] 등록 완료 (${expKit.kit_name})`);
         },

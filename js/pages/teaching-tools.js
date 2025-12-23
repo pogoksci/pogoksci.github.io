@@ -15,7 +15,7 @@
     // ----------------------------------------------------------------
     async function init() {
         console.log("🧩 App.TeachingTools.init() called");
-        state = { tools: [], filterName: "", sortBy: "aid_class" };
+        state = { tools: [], filterName: "", sortBy: "category_code", filterSection: "All" };
 
         bindEvents();
         setupStockModal(); // Initialize Stock Modal
@@ -43,11 +43,83 @@
             });
         }
 
-        // 4) 등록 FAB (Go to Form Page)
+        // 4) Section Filter Buttons
+        const btnAll = document.getElementById("btn-filter-all");
+        const btnAid = document.getElementById("btn-filter-aid");
+        const btnFact = document.getElementById("btn-filter-facility");
+
+        if (btnAll && btnAid && btnFact) {
+            btnAll.addEventListener("click", () => toggleSectionFilter("All"));
+            btnAid.addEventListener("click", () => toggleSectionFilter("교구"));
+            btnFact.addEventListener("click", () => toggleSectionFilter("설비"));
+        }
+
+        // 5) 등록 FAB (Go to Form Page)
         if (App.Fab) {
             App.Fab.setVisibility(true, '<span class="material-symbols-outlined">add</span> 교구/설비 등록', () => {
                 App.Router.go("toolsForm");
             });
+        }
+
+        // Initialize Filter Buttons State
+        updateFilterButtons();
+    }
+
+    function toggleSectionFilter(section) {
+        // If clicking same button, do nothing? Or maybe toggle off (except 'All' usually stays)?
+        // User requested: "All button default... aid/facility..."
+        // If I click 'Aid', it selects Aid.
+        // If I click 'All', it selects All.
+        if (state.filterSection === section) return; // Already selected
+
+        state.filterSection = section;
+
+        // Special Sort Logic for 'All'
+        if (section === 'All') {
+            state.sortBy = 'category_code';
+        } else {
+            // Optional: Reset sort or keep current? 
+            // "All button shows by category tools_code".
+            // Aid button: user didn't specify sort. Keep current? Or default to section_code?
+            // Prompt says: "Teaching Aid menu... All button default... shows category/code".
+            // Does not explicitly say to change sort for Aid/Facility.
+            // But 'category_code' works for them too if desired.
+            // Let's just set it for All as requested.
+        }
+
+        updateFilterButtons();
+        renderList();
+
+        // Scroll to Top
+        window.scrollTo(0, 0);
+        const mainContent = document.getElementById('aid-list');
+        if (mainContent) mainContent.scrollTop = 0;
+    }
+
+    function updateFilterButtons() {
+        const btnAll = document.getElementById("btn-filter-all");
+        const btnAid = document.getElementById("btn-filter-aid");
+        const btnFact = document.getElementById("btn-filter-facility");
+        if (!btnAll || !btnAid || !btnFact) return;
+
+        // Reset Styles
+        const defaultStyle = "flex: 1; padding: 10px; border: 1px solid #ddd; background: #fff; color: #666; font-weight: bold; cursor: pointer; transition: all 0.2s; border-radius: 6px;";
+        // Active Style
+        const activeStyle = "background: #e3f2fd; color: #1565c0; border-color: #2196f3;";
+
+        btnAll.style.cssText = defaultStyle;
+        btnAid.style.cssText = defaultStyle;
+        btnFact.style.cssText = defaultStyle;
+
+        if (state.filterSection === "All") {
+            btnAll.style.cssText += activeStyle;
+            btnAll.style.borderColor = "#2196f3";
+        } else if (state.filterSection === "교구") {
+            btnAid.style.cssText += activeStyle;
+            btnAid.style.borderColor = "#2196f3";
+        } else if (state.filterSection === "설비") {
+            btnFact.style.cssText += activeStyle;
+            btnFact.style.borderColor = "#2196f3";
         }
     }
 
@@ -100,11 +172,9 @@
                 if (!(name.includes(term) || code.includes(term) || no.includes(term))) return false;
             }
 
-            // 2. Implicit Section Filter based on SortBy
-            if (state.sortBy.startsWith('aid_')) {
-                return (item.tools_section || "").trim() === '교구';
-            } else if (state.sortBy.startsWith('facility_')) {
-                return (item.tools_section || "").trim() === '설비';
+            // 2. New Button Filter
+            if (state.filterSection && state.filterSection !== 'All') {
+                if ((item.tools_section || "").trim() !== state.filterSection) return false;
             }
 
             return true;
@@ -132,16 +202,38 @@
             return;
         }
 
-        const shouldGroup = (state.sortBy === 'aid_class' || state.sortBy === 'facility_class');
+        const shouldGroup = (state.sortBy === 'category_name' || state.sortBy === 'section_code' || state.sortBy === 'category_code');
         let currentCategory = null;
 
         list.forEach(item => {
             // Header Logic
             if (shouldGroup) {
-                const cat = item.tools_category || "미분류";
+                // If section_code, verify if we group by "Section"? Or Category?
+                // Existing logic: "Category"
+                // If section_code: Sort by Section -> Code.
+                // Group by Section makes sense if mixed.
+                // But prompt: "tools_section 별로 tools_code 순서..."
+                // Users usually want headers for these groups.
+                // Let's Group by:
+                // - category_name -> Category
+                // - section_code -> Section
+                // - category_code -> Category (New for "All" view)
+
+                let cat = "";
+                if (state.sortBy === 'category_name' || state.sortBy === 'category_code') cat = item.tools_category || "미분류";
+                else if (state.sortBy === 'section_code') cat = item.tools_section || "기타";
+
                 if (cat !== currentCategory) {
                     currentCategory = cat;
-                    const count = list.filter(i => (i.tools_category || "미분류") === cat).length;
+                    // Count items in this group (visual count)
+                    // Note: Filtering logic above already filtered list.
+                    // Counting logic needs to match grouping key.
+                    let count = 0;
+                    if (state.sortBy === 'category_name' || state.sortBy === 'category_code') {
+                        count = list.filter(i => (i.tools_category || "미분류") === cat).length;
+                    } else {
+                        count = list.filter(i => (i.tools_section || "기타") === cat).length;
+                    }
 
                     const wrapper = document.createElement("div");
                     wrapper.className = "section-header-wrapper";
@@ -232,10 +324,40 @@
     }
 
     function sortList(list, sortBy) {
-        if (sortBy === 'no_asc') {
-            return list.sort((a, b) => (a.tools_no || 0) - (b.tools_no || 0));
+        if (sortBy === 'category_code') {
+            // Sort by Category, then Code
+            return list.sort((a, b) => {
+                const catA = a.tools_category || "";
+                const catB = b.tools_category || "";
+                if (catA !== catB) return catA.localeCompare(catB);
+
+                // Code (Ascending, Natural)
+                const codeA = (a.tools_code || "").trim();
+                const codeB = (b.tools_code || "").trim();
+                return codeA.localeCompare(codeB, undefined, { numeric: true, sensitivity: 'base' });
+            });
         }
-        else if (sortBy === 'aid_class' || sortBy === 'facility_class') {
+        else if (sortBy === 'section_code') {
+            return list.sort((a, b) => {
+                // 1. Section (Ascending) - Default to '교구'
+                const secA = (a.tools_section || "교구").trim();
+                const secB = (b.tools_section || "교구").trim();
+
+                // Compare Sections
+                const secDiff = secA.localeCompare(secB);
+                if (secDiff !== 0) return secDiff;
+
+                // 2. No (Ascending, Numeric)
+                const noA = (a.tools_no || 0);
+                const noB = (b.tools_no || 0);
+                return noA - noB;
+            });
+        }
+        else if (sortBy === 'all_name') {
+            // Sort by Name only
+            return list.sort((a, b) => (a.tools_name || "").localeCompare(b.tools_name || ""));
+        }
+        else if (sortBy === 'category_name') {
             // Sort by Category, then Name
             return list.sort((a, b) => {
                 const catA = a.tools_category || "";
@@ -244,10 +366,6 @@
                 return (a.tools_name || "").localeCompare(b.tools_name || "");
             });
         }
-        else if (sortBy === 'aid_all' || sortBy === 'facility_all' || sortBy === 'name_asc') {
-            // Sort by Name only
-            return list.sort((a, b) => (a.tools_name || "").localeCompare(b.tools_name || ""));
-        }
         else if (sortBy === 'location') {
             return list.sort((a, b) => {
                 const locA = formatLocation(a.location);
@@ -255,6 +373,7 @@
                 return locA.localeCompare(locB);
             });
         }
+
         return list;
     }
 
@@ -264,8 +383,8 @@
                 toggleId: 'aid-sort-toggle',
                 menuId: 'aid-sort-menu',
                 labelId: 'aid-sort-label',
-                defaultLabel: '교구이름(분류)',
-                defaultValue: 'aid_class',
+                defaultLabel: '섹션 코드순',
+                defaultValue: 'section_code',
                 onChange: (value) => {
                     state.sortBy = value;
                     renderList();

@@ -13,7 +13,7 @@
   // ✅ 전역 앱 환경 설정
   const APP_CONFIG = {
     APPNAME: "SciManager",   // 앱 이름
-    SCHOOL: "GOE학교",     // 학교명
+    SCHOOL: "포곡고등학교",     // 학교명
     VERSION: "v0.11.11",     // 버전
   };
 

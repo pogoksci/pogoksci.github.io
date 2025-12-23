@@ -105,7 +105,7 @@
     }
 
     // ---------------------------------------------------
-    // ✅ Navbar 로드 후, 스플래시 텍스트를 최종 상태(GOE학교)로 변경
+    // ✅ Navbar 로드 후, 스플래시 텍스트를 최종 상태(학교명)로 변경
     // ---------------------------------------------------
     const { APPNAME, SCHOOL } = globalThis.APP_CONFIG || {};
     const titleEl = document.getElementById("app-title");
@@ -113,7 +113,7 @@
 
     if (titleEl && APPNAME) titleEl.textContent = APPNAME;
     if (schoolEl && SCHOOL) schoolEl.textContent = SCHOOL;
-    console.log("🔄 Splash 화면 텍스트 업데이트 완료 (GOE학교)");
+    console.log("🔄 Splash 화면 텍스트 업데이트 완료 (학교명)");
 
     // Main 화면 로드 (로그인 여부와 상관없이 메인 로드)
     await App.includeHTML("pages/main.html", "form-container");
