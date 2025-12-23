@@ -39,6 +39,19 @@
       background-color: #fff;
       padding: 40px 20px;
       box-sizing: border-box;
+      position: relative;
+      /* Added for absolute positioning of children */
+    }
+
+    /* Copyright Notice */
+    .copyright-notice {
+      position: absolute;
+      bottom: 72px;
+      /* 60px Navbar + 12px Gap */
+      left: 15px;
+      font-size: 11px;
+      color: #999;
+      font-family: 'Noto Sans KR', sans-serif;
     }
 
     #splash-screen .main-logo {
@@ -103,6 +116,9 @@
 
     <!-- 학교 이름: APP_CONFIG.SCHOOL -->
     <p id="school-name" class="school-name">로딩 중</p>
+
+    <!-- 저작권 문구 -->
+    <div class="copyright-notice">© 2025 murmurgene. All rights reserved.</div>
   </div>
 
   <!-- 메인 컨텐츠 -->

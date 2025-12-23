@@ -495,97 +495,24 @@
 
             // 5. Invoke Edge Function
             // 5. Invoke Edge Function OR Local Fallback
-            if (casRn) {
-                // A. Normal Flow (CAS exists)
-                const result = await fetch("https://muprmzkvrjacqatqxayf.supabase.co/functions/v1/casimport", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${App.API?.SUPABASE_ANON_KEY || supabase.supabaseKey}`
-                    },
-                    body: JSON.stringify({
-                        type: "inventory",
-                        ...payload
-                    })
-                }).then(r => r.json());
+            // 5. Invoke Edge Function (Handles both Real CAS and Placeholders)
+            const resolvedCas = casRn || `NC-${row.id}`;
+            payload.cas_rns = [resolvedCas];
 
-                if (result.error) throw new Error(result.error);
-                this.log(`✅ [ID: ${row.id}] 등록 성공 (New ID: ${result.inventoryId})`);
+            const result = await fetch("https://muprmzkvrjacqatqxayf.supabase.co/functions/v1/casimport", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${App.API?.SUPABASE_ANON_KEY || supabase.supabaseKey}`
+                },
+                body: JSON.stringify({
+                    type: "inventory",
+                    ...payload
+                })
+            }).then(r => r.json());
 
-            } else {
-                // B. Fallback Flow (No CAS)
-                this.log(`⚠️ CAS 없음. Placeholder 생성 및 로컬 등록 진행...`);
-
-                // B-1. Create/Get Placeholder Substance
-                const placeholderCas = `NC-${row.id}`; // Shortened to fit varchar(12)
-                let substanceId = null;
-
-                // Check existing
-                const { data: existSub } = await supabase
-                    .from("Substance")
-                    .select("id")
-                    .eq("cas_rn", placeholderCas)
-                    .maybeSingle();
-
-                if (existSub) {
-                    substanceId = existSub.id;
-                } else {
-                    // Create new
-                    const { data: newSub, error: subErr } = await supabase
-                        .from("Substance")
-                        .insert({
-                            cas_rn: placeholderCas,
-                            chem_name_kor: name,
-                            substance_name: "Unknown (No CAS)",
-                            // Add other fields as null/default
-                        })
-                        .select("id")
-                        .single();
-
-                    if (subErr) throw new Error(`Placeholder Substance 생성 실패: ${subErr.message}`);
-                    substanceId = newSub.id;
-                }
-
-                // B-2. Prepare Inventory Insert Payload
-                const invData = payload.inventoryDetails;
-                const insertPayload = {
-                    substance_id: substanceId,
-                    bottle_identifier: `${placeholderCas}-${Date.now()}`,
-                    initial_amount: invData.purchase_volume, // purchase_volume mapped to initial_amount
-                    current_amount: invData.current_amount,
-                    unit: invData.unit,
-                    cabinet_id: invData.cabinet_id,
-                    door_vertical: invData.door_vertical,
-                    door_horizontal: invData.door_horizontal,
-                    internal_shelf_level: invData.internal_shelf_level,
-                    storage_column: invData.storage_column,
-                    state: invData.state,
-                    bottle_type: invData.bottle_type,
-                    classification: invData.classification,
-                    manufacturer: invData.manufacturer,
-                    status: invData.status,
-                    purchase_date: invData.purchase_date,
-                    bottle_mass: invData.bottle_mass,
-                    concentration_value: invData.concentration_value,
-                    concentration_unit: invData.concentration_unit,
-                    valence: invData.valence,
-                    photo_url_320: invData.photo_url_320,
-                    photo_url_160: invData.photo_url_160,
-                    msds_pdf_url: invData.msds_pdf_url,
-                    msds_pdf_hash: invData.msds_pdf_hash
-                };
-
-                // B-3. Insert Inventory
-                const { data: invResult, error: invErr } = await supabase
-                    .from("Inventory")
-                    .insert(insertPayload)
-                    .select("id")
-                    .single();
-
-                if (invErr) throw new Error(`Inventory 로컬 등록 실패: ${invErr.message}`);
-
-                this.log(`✅ [ID: ${row.id}] 로컬 등록 성공 (Placeholder: ${placeholderCas})`);
-            }
+            if (result.error) throw new Error(result.error);
+            this.log(`✅ [ID: ${row.id}] 등록 성공 (New ID: ${result.inventoryId || result.substance?.id || "Unknown"})`);
         },
 
         // Helper: Fetch Blob with Exponential Backoff Retry

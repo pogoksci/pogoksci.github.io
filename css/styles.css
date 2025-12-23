@@ -1614,7 +1614,8 @@ body.loaded #splash-screen {
 #navbar-container {
   position: relative;
 
-  z-index: 200;
+  z-index: 20000;
+  /* Ensure Navbar is above Splash Screen (9999) */
 
   opacity: 1;
 }
