@@ -357,12 +357,25 @@
             this.log(`🔄 [ID: ${row.id}] 처리 중...`);
             const supabase = App.supabase;
 
-            // 1. Clean Data
-            let casRn = this.clean(row.cas_rn);
-            // Note: Already handled by clean(), but ensure strict check logic if needed.
-            // row.cas_rn might be "'7647-01-0". clean() removes leading quote.
+            // 1. Clean Data & Robust CAS Lookup
+            const casKeys = ["cas_rn", "cas_nos", "CAS No", "CAS번호", "CAS", "cas"]; // data-sync.js columnMapping keys + others
+            let casRn = null;
+            for (const key of casKeys) {
+                casRn = this.clean(row[key]);
+                if (casRn) break;
+            }
 
-            if (!casRn) throw new Error("CAS 번호가 없습니다.");
+            // Identify Name for Logging
+            const nameKeys = ["chem_name", "물질명", "화학물질명", "name", "품명", "product_name"];
+            let name = "이름없음";
+            for (const key of nameKeys) {
+                if (row[key]) {
+                    name = row[key];
+                    break;
+                }
+            }
+
+            // if (!casRn) throw new Error(`CAS 번호가 없습니다. (물질명: ${name})`); // Disabled for Fallback logic
 
             // 2. Photo Processing
             let photoUrl320 = null;
@@ -478,22 +491,98 @@
             };
 
             // 5. Invoke Edge Function
-            // 5. Invoke Edge Function
-            const result = await fetch("https://muprmzkvrjacqatqxayf.supabase.co/functions/v1/casimport", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${App.API?.SUPABASE_ANON_KEY || supabase.supabaseKey}`
-                },
-                body: JSON.stringify({
-                    type: "inventory",
-                    ...payload
-                })
-            }).then(r => r.json());
+            // 5. Invoke Edge Function OR Local Fallback
+            if (casRn) {
+                // A. Normal Flow (CAS exists)
+                const result = await fetch("https://muprmzkvrjacqatqxayf.supabase.co/functions/v1/casimport", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${App.API?.SUPABASE_ANON_KEY || supabase.supabaseKey}`
+                    },
+                    body: JSON.stringify({
+                        type: "inventory",
+                        ...payload
+                    })
+                }).then(r => r.json());
 
-            if (result.error) throw new Error(result.error);
+                if (result.error) throw new Error(result.error);
+                this.log(`✅ [ID: ${row.id}] 등록 성공 (New ID: ${result.inventoryId})`);
 
-            this.log(`✅ [ID: ${row.id}] 등록 성공 (New ID: ${result.inventoryId})`);
+            } else {
+                // B. Fallback Flow (No CAS)
+                this.log(`⚠️ CAS 없음. Placeholder 생성 및 로컬 등록 진행...`);
+
+                // B-1. Create/Get Placeholder Substance
+                const placeholderCas = `NOCAS-MIG-${row.id}`;
+                let substanceId = null;
+
+                // Check existing
+                const { data: existSub } = await supabase
+                    .from("Substance")
+                    .select("id")
+                    .eq("cas_rn", placeholderCas)
+                    .maybeSingle();
+
+                if (existSub) {
+                    substanceId = existSub.id;
+                } else {
+                    // Create new
+                    const { data: newSub, error: subErr } = await supabase
+                        .from("Substance")
+                        .insert({
+                            cas_rn: placeholderCas,
+                            chem_name_kor: name,
+                            substance_name: "Unknown (No CAS)",
+                            // Add other fields as null/default
+                        })
+                        .select("id")
+                        .single();
+
+                    if (subErr) throw new Error(`Placeholder Substance 생성 실패: ${subErr.message}`);
+                    substanceId = newSub.id;
+                }
+
+                // B-2. Prepare Inventory Insert Payload
+                const invData = payload.inventoryDetails;
+                const insertPayload = {
+                    substance_id: substanceId,
+                    bottle_identifier: `${placeholderCas}-${Date.now()}`,
+                    initial_amount: invData.purchase_volume, // purchase_volume mapped to initial_amount
+                    current_amount: invData.current_amount,
+                    unit: invData.unit,
+                    cabinet_id: invData.cabinet_id,
+                    door_vertical: invData.door_vertical,
+                    door_horizontal: invData.door_horizontal,
+                    internal_shelf_level: invData.internal_shelf_level,
+                    storage_column: invData.storage_column,
+                    state: invData.state,
+                    bottle_type: invData.bottle_type,
+                    classification: invData.classification,
+                    manufacturer: invData.manufacturer,
+                    status: invData.status,
+                    purchase_date: invData.purchase_date,
+                    bottle_mass: invData.bottle_mass,
+                    concentration_value: invData.concentration_value,
+                    concentration_unit: invData.concentration_unit,
+                    valence: invData.valence,
+                    photo_url_320: invData.photo_url_320,
+                    photo_url_160: invData.photo_url_160,
+                    msds_pdf_url: invData.msds_pdf_url,
+                    msds_pdf_hash: invData.msds_pdf_hash
+                };
+
+                // B-3. Insert Inventory
+                const { data: invResult, error: invErr } = await supabase
+                    .from("Inventory")
+                    .insert(insertPayload)
+                    .select("id")
+                    .single();
+
+                if (invErr) throw new Error(`Inventory 로컬 등록 실패: ${invErr.message}`);
+
+                this.log(`✅ [ID: ${row.id}] 로컬 등록 성공 (Placeholder: ${placeholderCas})`);
+            }
         },
 
         // Helper: Fetch Blob with Exponential Backoff Retry
