@@ -398,7 +398,7 @@
                         const path320 = `inventory/${ts}_${rnd}_320.jpg`;
                         const blob320 = App.Utils.base64ToBlob(base64_320);
 
-                        const { error: err320 } = await supabase.storage.from("reagent-photos").upload(path320, blob320);
+                        const { error: err320 } = await this.uploadWithRetry("reagent-photos", path320, blob320);
                         if (err320) throw err320;
                         const { data: data320 } = supabase.storage.from("reagent-photos").getPublicUrl(path320);
                         photoUrl320 = data320.publicUrl;
@@ -406,10 +406,13 @@
                         // Upload 160
                         const path160 = `inventory/${ts}_${rnd}_160.jpg`;
                         const blob160 = App.Utils.base64ToBlob(base64_160);
-                        const { error: err160 } = await supabase.storage.from("reagent-photos").upload(path160, blob160);
-                        if (!err160) {
+
+                        try {
+                            await this.uploadWithRetry("reagent-photos", path160, blob160);
                             const { data: data160 } = supabase.storage.from("reagent-photos").getPublicUrl(path160);
                             photoUrl160 = data160.publicUrl;
+                        } catch (e160) {
+                            console.warn("160px upload failed, skipping", e160);
                         }
                         this.log(`   📸 사진 마이그레이션 완료`);
                     }
@@ -444,7 +447,7 @@
                             const cleanName = pdfName.replace(/[^a-zA-Z0-9.-]/g, "_");
                             const path = `msds/${ts}_${cleanName}`;
 
-                            const { error: pdfErr } = await supabase.storage.from("msds-pdf").upload(path, blob);
+                            const { error: pdfErr } = await this.uploadWithRetry("msds-pdf", path, blob);
                             if (pdfErr) throw pdfErr;
 
                             const { data: pdfData } = supabase.storage.from("msds-pdf").getPublicUrl(path);
@@ -514,7 +517,7 @@
                 this.log(`⚠️ CAS 없음. Placeholder 생성 및 로컬 등록 진행...`);
 
                 // B-1. Create/Get Placeholder Substance
-                const placeholderCas = `NOCAS-MIG-${row.id}`;
+                const placeholderCas = `NC-${row.id}`; // Shortened to fit varchar(12)
                 let substanceId = null;
 
                 // Check existing
@@ -610,6 +613,32 @@
                 }
             }
             throw new Error(`Fetch failed after ${retries} attempts`);
+        },
+
+        // Helper: Upload with Retry
+        uploadWithRetry: async function (bucket, path, blob, retries = 3, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const { data, error } = await App.supabase.storage.from(bucket).upload(path, blob);
+                    if (error) throw error;
+                    return data;
+                } catch (err) {
+                    // Retry on network errors or 5xx/429
+                    // Supabase JS often wraps fetch errors.
+                    const isRetryable =
+                        err.message?.includes("Unexpected token") || // Often HTML 504 response
+                        err.message?.includes("fetch") ||
+                        err.status === 504 ||
+                        err.status === 503 ||
+                        err.status === 429;
+
+                    if (i === retries - 1 || !isRetryable) throw err;
+
+                    this.log(`      ⏳ [Upload 재시도 ${i + 1}/${retries}] ${err.message || "Timeout"}. 대기 후...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
         },
 
         // Helper: Resize Image
