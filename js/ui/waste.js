@@ -84,6 +84,13 @@
             });
         }
 
+        // 📊 [Modified] 기간 중 폐수 발생량 계산 및 표시 (단순 합계)
+        const totalAmount = filteredData.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+        const summaryEl = document.getElementById("waste-period-summary");
+        if (summaryEl) {
+            summaryEl.innerText = `기간 중 폐수 발생량: ${totalAmount.toLocaleString()} g`;
+        }
+
         if (filteredData.length === 0) {
             if (filteredData.length === 0) {
                 // Check if filtering was applied (date filtering is always active if default dates are set, but let's check input values)
@@ -498,9 +505,189 @@
     // ------------------------------------------------------------
     // 3️⃣ 페이지 바인딩
     // ------------------------------------------------------------
+
+    // 🖨️ 보고서 출력
+    async function printReport() {
+        const useRecentDisposal = document.getElementById("use-recent-disposal-date")?.checked;
+        const startDate = document.getElementById("waste-start-date").value;
+        const endDate = document.getElementById("waste-end-date").value;
+
+        // 데이터 로드 (필터링 로직 재사용을 위해 독립적 쿼리 수행)
+        const { data } = await supabase.from("WasteLog").select("*").order("date", { ascending: true });
+        let filteredData = data || [];
+
+        // 필터링 적용
+        if (useRecentDisposal) {
+            // 최근 처리일 로직이 필요하므로, 화면과 동일하게 계산
+            const { data: disposalHistory } = await supabase.from("WasteDisposal").select("classification, date");
+            const lastDisposalMap = {};
+            if (disposalHistory) {
+                disposalHistory.forEach(d => {
+                    if (!lastDisposalMap[d.classification] || d.date > lastDisposalMap[d.classification]) {
+                        lastDisposalMap[d.classification] = d.date;
+                    }
+                });
+            }
+            filteredData = filteredData.filter(item => {
+                const lastDate = lastDisposalMap[item.classification] || "2000-01-01";
+                return item.date >= lastDate;
+                // endDate 필터도 적용? 화면 로직은 endDate가 있으면 적용함.
+            });
+            if (endDate) filteredData = filteredData.filter(item => item.date <= endDate);
+
+        } else {
+            if (startDate) filteredData = filteredData.filter(item => item.date >= startDate);
+            if (endDate) filteredData = filteredData.filter(item => item.date <= endDate);
+        }
+
+        // 분류별 그룹화 (5대 분류 고정)
+        // DB에 저장된 실제 분류값: 산, 알칼리, 유기물, 무기물, 기타
+        const classifications = ['산', '알칼리', '유기물', '무기물', '기타'];
+        // 보고서 출력용 표시 명칭 매핑
+        const reportClassNames = {
+            '산': '산(Acid)',
+            '알칼리': '알칼리(Alkali)',
+            '유기물': '유기계(유기물)',
+            '무기물': '무기계(무기물)',
+            '기타': '기타(Others)'
+        };
+
+        const grouped = {};
+        classifications.forEach(c => grouped[c] = []);
+
+        filteredData.forEach(item => {
+            const key = item.classification || "기타";
+            if (grouped[key]) grouped[key].push(item);
+            else {
+                // 혹시라도 "유기계" 등으로 저장된 레거시 데이터가 있다면 매핑 시도
+                if (key.includes("유기")) grouped['유기물'].push(item);
+                else if (key.includes("무기")) grouped['무기물'].push(item);
+                else grouped["기타"].push(item);
+            }
+        });
+
+        // HTML 생성
+        let reportHtml = "";
+        const periodText = useRecentDisposal
+            ? `(최근 위탁처리 후 ~ ${endDate})`
+            : `(${startDate} ~ ${endDate})`;
+
+        classifications.forEach((cls) => {
+            const items = grouped[cls];
+            const displayTitle = reportClassNames[cls] || cls;
+
+            // 데이터가 없어도 페이지는 생성 (User asked for 5 pages total)
+            // 잔량(누적) 계산
+            let runningTotal = 0;
+            const rowsHtml = items.map((item, index) => {
+                const amount = Number(item.amount) || 0;
+                runningTotal += amount;
+                const status = item.disposal_id ? "위탁처리됨" : "-";
+
+                return `
+                <tr>
+                    <td style="text-align: center;">${index + 1}</td>
+                    <td style="text-align: center;">${item.date}</td>
+                    <td style="text-align: center;">${item.classification}</td>
+                    <td style="text-align: right;">${amount.toLocaleString()}</td>
+                    <td style="text-align: right;">${runningTotal.toLocaleString()}</td>
+                    <td style="text-align: center;">${status}</td>
+                    <td>${item.remarks || ""}</td>
+                </tr>`;
+            }).join("");
+
+            reportHtml += `
+            <div class="page">
+                <div class="report-header">
+                    <h1>폐수 수거(처리) 내역서</h1>
+                    <div class="meta-info">
+                        <span>분류: <strong>${displayTitle}</strong></span>
+                        <span>기간: ${periodText}</span>
+                    </div>
+                </div>
+                
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">연번</th>
+                            <th style="width: 100px;">일자</th>
+                            <th style="width: 120px;">분류</th>
+                            <th style="width: 100px;">폐기량(g)</th>
+                            <th style="width: 100px;">잔량(g)</th>
+                            <th style="width: 100px;">상태</th>
+                            <th>비고</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml || '<tr><td colspan="7" style="text-align: center; padding: 20px;">해당 기간 내 내역이 없습니다.</td></tr>'}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align: center; font-weight: bold;">합 계</td>
+                            <td style="text-align: right; font-weight: bold;">${runningTotal.toLocaleString()}</td>
+                            <td colspan="3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <div class="footer">
+                    <p>위와 같이 폐수를 수거(처리)하였음을 확인합니다.</p>
+                    <p class="date">${new Date().toLocaleDateString()}</p>
+                    <p class="signature">담당자: ________________ (인)</p>
+                </div>
+            </div>`;
+        });
+
+        // 새 창 열기
+        const printWindow = window.open("", "_blank");
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>폐수 처리 내역서</title>
+                <style>
+                    @page { size: A4; margin: 20mm; }
+                    body { font-family: "Malgun Gothic", sans-serif; margin: 0; padding: 0; background: #fff; }
+                    .page { 
+                        width: 210mm; min-height: 296mm; 
+                        padding: 20mm; box-sizing: border-box; 
+                        margin: 0 auto; 
+                        page-break-after: always; /* 강제 페이지 넘김 */
+                        position: relative;
+                    }
+                    .report-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                    .report-header h1 { margin: 0 0 10px 0; font-size: 24px; }
+                    .meta-info { display: flex; justify-content: space-between; font-size: 14px; }
+                    
+                    .report-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+                    .report-table th, .report-table td { border: 1px solid #444; padding: 8px; }
+                    .report-table th { background: #f0f0f0; text-align: center; }
+                    
+                    .footer { margin-top: 50px; text-align: center; }
+                    .footer p { margin: 10px 0; font-size: 14px; }
+                    .signature { margin-top: 30px; }
+                    
+                    @media print {
+                        body { -webkit-print-color-adjust: exact; }
+                        .page { margin: 0; border: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${reportHtml}
+                <script>
+                    window.onload = function() { window.print(); }
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    }
+
     function bindListPage() {
         const searchBtn = document.getElementById("waste-search-btn");
         if (searchBtn) searchBtn.onclick = loadList;
+
+        const printBtn = document.getElementById("waste-print-btn");
+        if (printBtn) printBtn.onclick = printReport;
 
         const newBtn = document.getElementById("new-waste-btn");
         if (newBtn) {
