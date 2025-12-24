@@ -267,15 +267,20 @@
         syncReagentInfo: async function (btn) {
             if (btn) btn.disabled = true;
             try {
-                this.log("🚀 약품 정보 동기화(업데이트) 시작 (RPC)...");
+                this.log("🚀 약품 정보 동기화(업데이트) 시작 (Server-side)...");
                 this.log("ℹ️ SubstanceRef의 최신 정보를 바탕으로 등록된 약품의 정보를 수정합니다.");
 
-                const { error } = await App.supabase.rpc('sync_reagent_info_from_ref');
+                const { data, error } = await App.supabase.functions.invoke('system-admin', {
+                    body: {
+                        action: 'sync_reagent_info'
+                    }
+                });
 
                 if (error) throw error;
+                if (data?.error) throw new Error(data.error);
 
-                this.log("🎉 약품 정보 업데이트 완료!", "success");
-                alert("약품 정보가 최신 참조 데이터로 업데이트되었습니다.");
+                this.log(`🎉 약품 정보 업데이트 완료! (수정된 물질: ${data.data.count}개)`, "success");
+                alert(`약품 정보가 최신 참조 데이터로 업데이트되었습니다. (${data.data.count}건)`);
 
             } catch (err) {
                 this.log(`❌ 오류 발생: ${err.message}`, "error");
