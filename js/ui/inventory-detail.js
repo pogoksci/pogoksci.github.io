@@ -132,14 +132,20 @@
 
       const btnGoUsage = document.getElementById("btn-go-usage");
       if (btnGoUsage) {
-        btnGoUsage.onclick = async () => {
-          // Navigate to usageRegister with inventory info
-          if (getApp().Router?.go) {
-            await getApp().Router.go("usageRegister", { inventoryId: data.id, detail: data });
-          } else {
-            alert("수불 등록 화면으로 이동할 수 없습니다.");
-          }
-        };
+        // ✅ Permission Check: Hide for Guest/Student
+        if (getApp().Auth && typeof getApp().Auth.canWrite === 'function' && !getApp().Auth.canWrite()) {
+          btnGoUsage.style.display = "none";
+        } else {
+          btnGoUsage.style.display = ""; // Ensure visible for authorized users
+          btnGoUsage.onclick = async () => {
+            // Navigate to usageRegister with inventory info
+            if (getApp().Router?.go) {
+              await getApp().Router.go("usageRegister", { inventoryId: data.id, detail: data });
+            } else {
+              alert("수불 등록 화면으로 이동할 수 없습니다.");
+            }
+          };
+        }
       }
 
       const rawCas = data.Substance?.cas_rn || "";
