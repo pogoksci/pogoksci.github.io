@@ -5,6 +5,7 @@
     let catalog = []; // Full list from experiment_kit table
     let currentSort = 'name_class';
     let currentSearch = '';
+    let currentFilteredData = []; // ✅ State for printing
 
     // Constants for MSDS
     const msdsTitles = [
@@ -90,7 +91,7 @@
                 });
             }
 
-            // 4. Setup Refresh
+            // 5. Setup Refresh
             const refreshBtn = document.getElementById('kit-refresh-btn');
             if (refreshBtn) {
                 refreshBtn.addEventListener('click', () => {
@@ -98,11 +99,24 @@
                 });
             }
 
-            // 5. Load Data
+            // 6. Setup Print
+            const printBtn = document.getElementById('kit-print-btn');
+            if (printBtn) {
+                if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
+                    printBtn.style.display = 'none';
+                } else {
+                    printBtn.style.display = '';
+                    printBtn.addEventListener('click', () => {
+                        this.printReport();
+                    });
+                }
+            }
+
+            // 7. Load Data
             await loadCatalog();
             await this.loadUserKits();
 
-            // 6. Setup Modals
+            // 8. Setup Modals
             setupRegisterModal();
             setupStockModal();
         },
@@ -138,7 +152,6 @@
                 return;
             }
 
-            // Apply Search
             let filteredData = data;
             if (currentSearch) {
                 filteredData = data.filter(kit => {
@@ -147,6 +160,7 @@
                     return name.includes(currentSearch) || kClass.includes(currentSearch);
                 });
             }
+            currentFilteredData = filteredData; // ✅ Update state for print
 
             if (!filteredData || filteredData.length === 0) {
                 if (currentSearch) {
@@ -305,7 +319,94 @@
             // 4. Load Chemicals & Logs
             await loadChemicals(kit);
             await loadUsageLogs(kit);
+            await loadUsageLogs(kit);
             setupDetailFab(kit);
+        },
+
+        printReport() {
+            if (!currentFilteredData || currentFilteredData.length === 0) {
+                alert("출력할 데이터가 없습니다.");
+                return;
+            }
+
+            const printWindow = window.open("", "_blank");
+            if (!printWindow) {
+                alert("팝업 차단을 해제해주세요.");
+                return;
+            }
+
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+            let rowsHtml = "";
+            currentFilteredData.forEach((kit, index) => {
+                const name = kit.kit_name || "-";
+                const kClass = kit.kit_class || "-";
+                const loc = formatLocation(kit.location) || "-";
+                const qty = kit.quantity || 0;
+
+                rowsHtml += `
+                <tr>
+                    <td style="text-align: center;">${index + 1}</td>
+                    <td style="text-align: center;">${kClass}</td>
+                    <td>${name}</td>
+                    <td>${loc}</td>
+                    <td style="text-align: center;">${qty}</td>
+                </tr>
+                `;
+            });
+
+            const htmlContent = `
+            <!DOCTYPE html>
+            <html lang="ko">
+            <head>
+                <meta charset="UTF-8">
+                <title>실험 키트 보유 목록 보고서</title>
+                <style>
+                    body { font-family: "Noto Sans KR", sans-serif; padding: 20px; }
+                    h1 { text-align: center; margin-bottom: 10px; font-size: 24px; }
+                    .meta { text-align: right; margin-bottom: 20px; font-size: 14px; color: #555; }
+                    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; vertical-align: middle; }
+                    th { background-color: #f2f2f2; text-align: center; font-weight: bold; }
+                    @media print {
+                        @page { margin: 15mm; }
+                        body { padding: 0; }
+                        th { background-color: #eee !important; -webkit-print-color-adjust: exact; }
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>실험 키트 보유 목록 보고서</h1>
+                <div class="meta">
+                    출력일: ${dateStr} | 총 ${currentFilteredData.length}건
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="5%">No.</th>
+                            <th width="15%">분류</th>
+                            <th width="35%">키트명</th>
+                            <th width="35%">보관 장소</th>
+                            <th width="10%">수량</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    };
+                </script>
+            </body>
+            </html>
+            `;
+
+            printWindow.document.open();
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
         }
     };
 

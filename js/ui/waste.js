@@ -687,7 +687,14 @@
         if (searchBtn) searchBtn.onclick = loadList;
 
         const printBtn = document.getElementById("waste-print-btn");
-        if (printBtn) printBtn.onclick = printReport;
+        if (printBtn) {
+            if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
+                printBtn.style.display = "none";
+            } else {
+                printBtn.style.display = "";
+                printBtn.onclick = printReport;
+            }
+        }
 
         const newBtn = document.getElementById("new-waste-btn");
         if (newBtn) {

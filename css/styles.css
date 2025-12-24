@@ -1,4 +1,4 @@
-﻿@import url('pages/lab-settings-modal.css');
+﻿@import url("pages/lab-settings-modal.css");
 /* =================================================================
 
    疫꿸퀡???????(Body, Form ??
@@ -1467,7 +1467,7 @@ FAB
   overflow: hidden;
 }
 
-.hazard-acc-item+.hazard-acc-item {
+.hazard-acc-item + .hazard-acc-item {
   border-top: 1px solid #e6eaee;
 }
 
@@ -1823,8 +1823,12 @@ body.home-active #splash-screen {
 
 /* Refresh 甕곌쑵??*/
 #refresh-btn,
+#print-report-btn,
+#stock-report-btn,
 #kit-refresh-btn,
-#aid-refresh-btn {
+#kit-print-btn,
+#aid-refresh-btn,
+#aid-print-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1845,14 +1849,22 @@ body.home-active #splash-screen {
 }
 
 #refresh-btn:hover,
+#print-report-btn:hover,
+#stock-report-btn:hover,
 #kit-refresh-btn:hover,
-#aid-refresh-btn:hover {
+#kit-print-btn:hover,
+#aid-refresh-btn:hover,
+#aid-print-btn:hover {
   background-color: #e8f4ff;
 
   border-color: #66afe9;
 }
 
-#refresh-btn .material-symbols-outlined {
+#refresh-btn .material-symbols-outlined,
+#print-report-btn .material-symbols-outlined,
+#stock-report-btn .material-symbols-outlined,
+#kit-print-btn .material-symbols-outlined,
+#aid-print-btn .material-symbols-outlined {
   font-size: 20px;
 
   color: #444;
@@ -1998,6 +2010,13 @@ body.home-active #splash-screen {
   font-size: 18px;
 
   color: #555;
+}
+
+/* FAB Button Override (Low z-index to be below modal) */
+/* FAB Button Override (Low z-index to be below modal) */
+#fab-button, .fab {
+  z-index: 2000 !important;
+  position: fixed !important;
 }
 
 /* Fade-in ?醫딅빍筌롫뗄???*/
@@ -3734,10 +3753,14 @@ input[type="date"] {
 /* ?쒕∼?ㅼ슫 諛?踰꾪듉 ?믪씠 議곗젅 */
 #sort-toggle,
 #refresh-btn,
+#print-report-btn,
+#stock-report-btn,
 #kit-sort-toggle,
 #kit-refresh-btn,
+#kit-print-btn,
 #aid-sort-toggle,
-#aid-refresh-btn {
+#aid-refresh-btn,
+#aid-print-btn {
   height: 30px !important;
   font-size: 13px;
   /* ?고듃 ?ш린 ?쎄컙 異뺤냼 */
@@ -3747,10 +3770,14 @@ input[type="date"] {
 
 #sort-toggle .material-symbols-outlined,
 #refresh-btn .material-symbols-outlined,
+#print-report-btn .material-symbols-outlined,
+#stock-report-btn .material-symbols-outlined,
 #kit-sort-toggle .material-symbols-outlined,
 #kit-refresh-btn .material-symbols-outlined,
+#kit-print-btn .material-symbols-outlined,
 #aid-sort-toggle .material-symbols-outlined,
-#aid-refresh-btn .material-symbols-outlined {
+#aid-refresh-btn .material-symbols-outlined,
+#aid-print-btn .material-symbols-outlined {
   font-size: 18px;
   /* ?꾩씠肄??ш린 議곗젙 */
 }
@@ -4938,7 +4965,7 @@ input[type="date"] {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 3000;
+  z-index: 9000 !important;
   /* Highest priority */
   opacity: 1;
   /* Reset logic handled by JS display property usually */

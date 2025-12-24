@@ -11,6 +11,7 @@
   const getSupabase = () => getApp().supabase; // ✅ App.supabase 인스턴스 사용
   let currentSort = "category_name_kor"; // 기본 정렬: 한글순(분류)
   let allInventoryData = []; // ✅ 전체 데이터 저장용 (검색 필터링)
+  let currentFilteredData = []; // ✅ 현재 화면에 보이는 데이터 (출력용)
 
 
   // ------------------------------------------------------------
@@ -385,6 +386,7 @@
     }
 
     const sorted = sortData(filtered, currentSort);
+    currentFilteredData = sorted; // ✅ 출력용 데이터 업데이트
     renderList(sorted, container);
   }
 
@@ -530,11 +532,486 @@
   }
 
   // ------------------------------------------------------------
+  // 7️⃣ 보고서 출력 (Print)
+  // ------------------------------------------------------------
+  function printReport() {
+    if (!currentFilteredData || currentFilteredData.length === 0) {
+      alert("출력할 데이터가 없습니다.");
+      return;
+    }
+
+    // 1. 새 창 열기
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("팝업 차단을 해제해주세요.");
+      return;
+    }
+
+    // 2. HTML 작성
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+    let rowsHtml = "";
+    currentFilteredData.forEach((item, index) => {
+        // null 체크 및 안전한 문자열 변환
+        const nameKor = item.name_kor || "-";
+        const nameEng = item.name_eng || "";
+        const casRn = item.cas_rn || "-";
+        const formula = item.formula || "-";
+        const location = item.location_text || "-";
+        const amount = item.current_text || "-";
+        const classification = item.classification || "-";
+
+        rowsHtml += `
+        <tr>
+            <td style="text-align: center;">${item.id}</td>
+            <td>
+                <div class="name-kor">${nameKor}</div>
+                ${nameEng ? `<div class="name-eng">${nameEng}</div>` : ""}
+            </td>
+            <td style="text-align: center;">${casRn}</td>
+            <td style="text-align: center;">${formula}</td>
+            <td>${location}</td>
+            <td style="text-align: center;">${amount}</td>
+            <td style="text-align: center;">${classification}</td>
+        </tr>
+        `;
+    });
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <title>약품 보유 목록 보고서</title>
+        <style>
+            body { font-family: "Noto Sans KR", sans-serif; padding: 20px; }
+            h1 { text-align: center; margin-bottom: 10px; font-size: 24px; }
+            .meta { text-align: right; margin-bottom: 20px; font-size: 14px; color: #555; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th, td { border: 1px solid #ddd; padding: 8px; vertical-align: middle; }
+            th { background-color: #f2f2f2; text-align: center; font-weight: bold; }
+            .name-kor { font-weight: bold; font-size: 13px; }
+            .name-eng { font-size: 11px; color: #666; margin-top: 2px; }
+            @media print {
+                @page { margin: 15mm; }
+                body { padding: 0; }
+                th { background-color: #eee !important; -webkit-print-color-adjust: exact; }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>약품 보유 목록 보고서</h1>
+        <div class="meta">
+            출력일: ${dateStr} | 총 ${currentFilteredData.length}건
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th width="5%">No.</th>
+                    <th width="25%">약품명</th>
+                    <th width="12%">CAS No.</th>
+                    <th width="13%">화학식</th>
+                    <th width="25%">위치</th>
+                    <th width="10%">보유량</th>
+                    <th width="10%">분류</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rowsHtml}
+            </tbody>
+        </table>
+        <script>
+            window.onload = function() {
+                window.print();
+            };
+        </script>
+    </body>
+    </html>
+    `;
+
+    // 3. 쓰기 및 출력
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  }
+
+
+
+  // ------------------------------------------------------------
+  // 8️⃣ 수불부 보고서 (Stock Transaction Report)
+  // ------------------------------------------------------------
+
+  function openStockReportModal() {
+      const modal = document.getElementById("modal-stock-report");
+      const form = document.getElementById("form-stock-report");
+      if (!modal || !form) return;
+
+      // Disable all FABs (Dimmed) while modal is open
+      const fabs = document.querySelectorAll(".fab");
+      fabs.forEach(fab => {
+          fab.style.opacity = "0.3";
+          fab.style.pointerEvents = "none";
+          fab.style.filter = "grayscale(100%)";
+          fab.style.zIndex = "1000"; 
+      });
+      
+      if (App.Fab && typeof App.Fab.setDisabled === 'function') {
+          App.Fab.setDisabled(true);
+      }
+
+      // Portal Strategy: Move modal to body to break stacking context constraints
+      const originalParent = modal.parentNode;
+      const placeholder = document.createComment("modal-portal-placeholder");
+      if (originalParent) {
+          originalParent.replaceChild(placeholder, modal);
+      }
+      document.body.appendChild(modal);
+
+      modal.style.display = "flex";
+
+      const cleanup = () => {
+          modal.style.display = "none";
+          
+          // Restore Modal to original location
+          if (placeholder && placeholder.isConnected) {
+              placeholder.replaceWith(modal);
+          } else {
+              modal.remove(); // If placeholder is gone (navigation), remove zombie modal
+          }
+
+          // Re-enable all FABs
+          const fabs = document.querySelectorAll(".fab");
+          fabs.forEach(fab => {
+             fab.style.opacity = "";
+             fab.style.pointerEvents = "";
+             fab.style.filter = "";
+             fab.style.zIndex = ""; 
+          });
+          if (App.Fab && typeof App.Fab.setDisabled === 'function') {
+              App.Fab.setDisabled(false);
+          }
+      };
+
+      // Form Submit
+      form.onsubmit = async (e) => {
+          e.preventDefault();
+          const startDate = document.getElementById("report-start-date").value;
+          const endDate = document.getElementById("report-end-date").value;
+          const target = form.elements["report-target"].value; 
+          const layout = form.elements["report-layout"].value;
+
+          if (!startDate || !endDate) return alert("기간을 입력해주세요.");
+
+          cleanup(); // Close and restore
+          await generateStockReport({ startDate, endDate, target, layout });
+      };
+
+      // Close Button
+      const closeBtn = document.getElementById("btn-close-report-modal");
+      if (closeBtn) {
+          closeBtn.onclick = cleanup;
+      }
+  }
+
+  function setReportPeriod(type) {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth(); // 0-11
+      const startDateEl = document.getElementById("report-start-date");
+      const endDateEl = document.getElementById("report-end-date");
+      if (!startDateEl || !endDateEl) return;
+
+      let start, end;
+
+      // School Year Logic: Mar 1 ~ Next Feb 28
+      // If currently Jan or Feb, we are in the previous academic year.
+      const academicYear = (currentMonth < 2) ? currentYear - 1 : currentYear;
+
+      if (type === 'cur_year') {
+          start = `${academicYear}-03-01`;
+          end = `${academicYear + 1}-02-28`;
+      } else if (type === 'last_year') {
+          start = `${academicYear - 1}-03-01`;
+          end = `${academicYear}-02-28`;
+      } else if (type === '1st_sem') {
+          start = `${academicYear}-03-01`;
+          end = `${academicYear}-08-31`; // Approx
+      } else if (type === '2nd_sem') {
+          start = `${academicYear}-09-01`;
+          end = `${academicYear + 1}-02-28`;
+      }
+
+      startDateEl.value = start;
+      endDateEl.value = end;
+  }
+
+  async function generateStockReport({ startDate, endDate, target, layout }) {
+      // 1. Fetch Data
+      let itemsToProcess = (currentFilteredData && currentFilteredData.length > 0) 
+                           ? currentFilteredData 
+                           : allInventoryData;
+
+      if (itemsToProcess.length === 0) return alert("출력할 약품 데이터가 없습니다.");
+
+      const supabase = getSupabase();
+
+      // 2. Fetch All Usage Logs for these items
+      const ids = itemsToProcess.map(i => i.id);
+      
+      const { data: logs, error } = await supabase
+          .from("UsageLog")
+          .select("*")
+          .in("inventory_id", ids)
+          .order("usage_date", { ascending: true })
+          .order("created_at", { ascending: true });
+
+      if (error) {
+          console.error(error);
+          return alert("기록을 불러오는데 실패했습니다.");
+      }
+
+      // 3. Process Per Item
+      const reportItems = [];
+
+      itemsToProcess.forEach(item => {
+          const itemLogs = logs.filter(l => l.inventory_id === item.id);
+          
+          // Split Logs based on usage_date
+          const beforeLogs = itemLogs.filter(l => {
+              const d = l.usage_date;
+              return d < startDate; // startDate is "YYYY-MM-DD"
+          });
+          const periodLogs = itemLogs.filter(l => {
+              const d = l.usage_date;
+              return d >= startDate && d <= endDate;
+          });
+
+          // Calculate Brought Forward (기초 재고)
+          let broughtForward = 0;
+          // Additive subjects: 최초 등록, 구입, 수량 조정(증가)
+          // All others are subtractive usages
+          const additive = ["최초 등록", "구입", "수량 조정(증가)", "이월", "잔량 조정(증가)"];
+          
+          beforeLogs.forEach(l => {
+              const amt = l.amount || 0;
+              if (additive.includes(l.subject)) {
+                  broughtForward += amt;
+              } else {
+                  broughtForward -= amt;
+              }
+          });
+
+          // Balance Check for Printing
+          const hasTransaction = periodLogs.length > 0;
+          // broughtForward might be 0 if it's a new item or if it was fully consumed before period.
+          // But we also check item.current_amount for "all" target.
+          const hasBalance = Math.abs(broughtForward) > 0.001 || item.current_amount > 0;
+          
+          let shouldPrint = false;
+          if (target === 'usage_only') {
+              shouldPrint = hasTransaction;
+          } else { // 'all'
+              shouldPrint = hasTransaction || hasBalance;
+          }
+
+          if (shouldPrint) {
+              reportItems.push({
+                  info: item,
+                  broughtForward,
+                  logs: periodLogs
+              });
+          }
+      });
+
+      if (reportItems.length === 0) return alert("해당 조건에 맞는 데이터가 없습니다.");
+
+      // 4. Generate HTML
+      renderStockReportHtml(reportItems, { startDate, endDate, layout });
+  }
+
+  function renderStockReportHtml(items, { startDate, endDate, layout }) {
+      const printWindow = window.open("", "_blank");
+      
+      const styles = `
+          @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+          body { font-family: "Noto Sans KR", sans-serif; padding: 10mm; font-size: 11px; background: white; }
+          .page-break { page-break-after: always; display: block; clear: both; }
+          .item-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000; }
+          .item-table th, .item-table td { border: 1px solid #000; padding: 4px; text-align: center; }
+          .item-table th { background: #f0f0f0; }
+          .header { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 10px; margin-top: 0; }
+          .item-header { background: #e0e0e0; padding: 5px; font-weight: bold; border: 1px solid #000; border-bottom: none; display: flex; justify-content: space-between; }
+          
+          @media print {
+              body { padding: 5mm; }
+              .page-break { page-break-after: always; }
+              /* Ensure the grid fits on one page */
+              .report-grid { height: 92vh !important; }
+          }
+      `;
+
+      let bodyContent = "";
+
+      if (layout === '1_per_page') {
+          items.forEach(item => {
+              bodyContent += '<div class="page-break">';
+              bodyContent += buildSingleItemTable(item);
+              bodyContent += '</div>';
+          });
+      } else if (layout === '4_per_page') {
+          // Chunk into 4
+          for (let i = 0; i < items.length; i += 4) {
+              const slice = items.slice(i, i + 4);
+              const isFirstPage = (i === 0);
+              const gridHeight = "88vh";
+              
+              // If not first page, add a spacer to match the header height
+              if (!isFirstPage) {
+                  bodyContent += `<div class="header" style="visibility: hidden; margin-bottom: 10px;">수불대장</div>`;
+              }
+              
+              bodyContent += `<div class="page-break report-grid" style="display:grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; height: ${gridHeight}; gap: 10px; padding: 5px; box-sizing: border-box;">`;
+              slice.forEach(item => {
+                   bodyContent += '<div style="overflow: hidden; display: flex; flex-direction: column;">';
+                   bodyContent += buildSingleItemTable(item);
+                   bodyContent += '</div>';
+              });
+              bodyContent += '</div>';
+          }
+      } else { // continuous (feed)
+          items.forEach(item => {
+              bodyContent += buildSingleItemTable(item);
+              bodyContent += '<br>';
+          });
+      }
+
+      const html = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>수불대장</title>
+              <style>${styles}</style>
+          </head>
+          <body>
+              <h1 class="header">수불대장 (${startDate} ~ ${endDate})</h1>
+              ${bodyContent}
+              <script>
+                  window.onload = function(){ 
+                      setTimeout(() => { window.print(); }, 500);
+                  }
+              </script>
+          </body>
+          </html>
+      `;
+      
+      printWindow.document.write(html);
+      printWindow.document.close();
+  }
+
+  function buildSingleItemTable(data) {
+      const { info, broughtForward, logs } = data;
+      const unit = info.unit || "";
+      const nameKor = info.name_kor || "이름 없음";
+      
+      let rows = "";
+      
+      // 1. Brought Forward Row - Only show if non-zero
+      let currentBalance = broughtForward;
+      if (Math.abs(currentBalance) > 0.001) {
+          rows += `
+              <tr style="background: #fafafa; color: #555;">
+                  <td colspan="2">전기 이월 (Brought Forward)</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>${currentBalance.toFixed(2)}</td>
+                  <td>-</td>
+              </tr>
+          `;
+      }
+
+      // 2. Logs
+      const additive = ["최초 등록", "구입", "수량 조정(증가)", "이월", "잔량 조정(증가)"];
+      
+      logs.forEach(log => {
+          const amt = log.amount || 0;
+          const isIncome = additive.includes(log.subject);
+          
+          if (isIncome) currentBalance += amt;
+          else currentBalance -= amt;
+          
+          const date = log.usage_date || "-";
+          // If subject is '최초 등록' or period is '기타', simplify the text
+          let subjectStr = log.subject;
+          if (log.subject !== "최초 등록" && log.period && log.period !== '-' && log.period !== '기타') {
+              subjectStr = `${log.subject} (${log.period})`;
+          }
+          
+          rows += `
+              <tr>
+                  <td>${date}</td>
+                  <td style="text-align:left;">${subjectStr}</td>
+                  <td>${isIncome ? amt : ""}</td>
+                  <td>${!isIncome ? amt : ""}</td>
+                  <td>${currentBalance.toFixed(2)}</td>
+                  <td></td>
+              </tr>
+          `;
+      });
+      
+      return `
+          <div style="border: 2px solid #000; padding: 5px; height: 100%; box-sizing: border-box; overflow: hidden;">
+              <div class="item-header" style="border:none; background:none; border-bottom:1px solid #000; margin-bottom:5px;">
+                  <span style="font-size: 1.1em;">(No.${info.id}) ${nameKor}</span>
+                  <span style="white-space: nowrap; margin-left: 10px;">CAS: ${info.cas_rn || '-'} / 단위: ${unit}</span>
+              </div>
+              <table class="item-table" style="margin:0; border:none;">
+                  <thead>
+                      <tr>
+                          <th width="23%">날짜</th>
+                          <th width="32%">내용</th>
+                          <th width="10%">입고</th>
+                          <th width="10%">출고</th>
+                          <th width="15%">잔고</th>
+                          <th width="10%">확인</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      ${rows}
+                  </tbody>
+              </table>
+          </div>
+      `;
+  }
+
+  // ------------------------------------------------------------
   // 6️⃣ 정렬 & 버튼 UI
   // ------------------------------------------------------------
   function bindListPage() {
     // ✅ 페이지 진입 시 정렬 상태 초기화 (메뉴 이동 후 복귀 시 초기화 보장)
     currentSort = "category_name_kor";
+    
+    // 수불부 버튼 바인딩
+    const stockBtn = document.getElementById("stock-report-btn");
+    if (stockBtn) {
+        if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
+            stockBtn.style.display = "none";
+        } else {
+            stockBtn.style.display = "";
+            stockBtn.onclick = () => openStockReportModal();
+        }
+    }
+    
+    // 보고서 버튼 바인딩 (기존)
+    const printBtn = document.getElementById("print-report-btn");
+    if (printBtn) {
+        if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
+            printBtn.style.display = "none";
+        } else {
+            printBtn.style.display = "";
+            printBtn.onclick = () => printReport();
+        }
+    }
 
     // ✅ SortDropdown 초기화
     if (App.SortDropdown && App.SortDropdown.init) {
@@ -567,6 +1044,8 @@
     } else {
       console.error("❌ App.SortDropdown 모듈이 로드되지 않았습니다.");
     }
+
+
 
     // ✅ 검색 입력 이벤트
     const searchInput = document.getElementById("inventory-search-input");
@@ -613,5 +1092,8 @@
     createInventory,
     updateInventory,
     deleteInventory,
+    printReport,
+    openStockReportModal,
+    setReportPeriod,
   };
 })();

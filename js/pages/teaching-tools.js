@@ -8,6 +8,7 @@
         tools: [],
         filterName: "",
         sortBy: "no_asc", // no_asc, name_asc, location
+        filteredList: [], // ✅ State for printing
     };
 
     // ----------------------------------------------------------------
@@ -41,6 +42,20 @@
             refreshBtn.addEventListener("click", async () => {
                 await loadList();
             });
+        }
+
+        // 3.5) 출력
+        // 3.5) 출력
+        const printBtn = document.getElementById("aid-print-btn");
+        if (printBtn) {
+            if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
+                printBtn.style.display = "none";
+            } else {
+                printBtn.style.display = "";
+                printBtn.addEventListener("click", () => {
+                    printReport();
+                });
+            }
         }
 
         // 4) Section Filter Buttons
@@ -180,7 +195,10 @@
             return true;
         });
 
+
+
         list = sortList(list, state.sortBy);
+        state.filteredList = list; // ✅ Update state for print
 
         // Group by Section (Teaching Aid vs Facility) if needed?
         // Or just list them. Let's just list them for now but maybe show section badge.
@@ -321,15 +339,135 @@
 
 
         });
+
     }
+
+    function printReport() {
+        if (!state.filteredList || state.filteredList.length === 0) {
+            alert("출력할 데이터가 없습니다.");
+            return;
+        }
+
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) {
+            alert("팝업 차단을 해제해주세요.");
+            return;
+        }
+
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+        let rowsHtml = "";
+        state.filteredList.forEach((item, index) => {
+            const code = item.tools_code || "-";
+            const section = item.tools_section || "-";
+            const category = item.tools_category || "-";
+            const name = item.tools_name || "-";
+            const loc = formatLocation(item.location) || "-";
+            const stock = item.stock || 0;
+            const std = item.requirement || "-"; // Required amount
+
+            rowsHtml += `
+            <tr>
+                <td style="text-align: center;">${code}</td>
+                <td style="text-align: center;">${section} / ${category}</td>
+                <td>${name}</td>
+                <td style="text-align: center;">${std}</td>
+                <td style="text-align: center;">${stock}</td>
+                <td>${loc}</td>
+            </tr>
+            `;
+        });
+
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="ko">
+        <head>
+            <meta charset="UTF-8">
+            <title>교구/설비 보유 목록 보고서</title>
+            <style>
+                body { font-family: "Noto Sans KR", sans-serif; padding: 20px; }
+                h1 { text-align: center; margin-bottom: 10px; font-size: 24px; }
+                .meta { text-align: right; margin-bottom: 20px; font-size: 14px; color: #555; }
+                table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                th, td { border: 1px solid #ddd; padding: 8px; vertical-align: middle; }
+                th { background-color: #f2f2f2; text-align: center; font-weight: bold; }
+                @media print {
+                    @page { margin: 15mm; }
+                    body { padding: 0; }
+                    th { background-color: #eee !important; -webkit-print-color-adjust: exact; }
+                }
+            </style>
+        </head>
+        <body>
+            <h1>교구/설비 보유 목록 보고서</h1>
+            <div class="meta">
+                출력일: ${dateStr} | 총 ${state.filteredList.length}건
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="10%">코드</th>
+                        <th width="15%">구분</th>
+                        <th width="30%">품명</th>
+                        <th width="10%">기준</th>
+                        <th width="10%">보유</th>
+                        <th width="25%">위치</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+            <script>
+                window.onload = function() {
+                    window.print();
+                };
+            </script>
+        </body>
+        </html>
+        `;
+
+        printWindow.document.open();
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+    }
+
+    // Custom Category Order
+    const categoryOrder = [
+        "안전장구",
+        "공통-기자재",
+        "공통-일반교구",
+        "공통-측정교구",
+        "물리학",
+        "화학",
+        "생명과학",
+        "지구과학",
+        "안전설비",
+        "일반설비"
+    ];
 
     function sortList(list, sortBy) {
         if (sortBy === 'category_code') {
-            // Sort by Category, then Code
+            // Sort by Custom Category Order, then Code
             return list.sort((a, b) => {
                 const catA = a.tools_category || "";
                 const catB = b.tools_category || "";
-                if (catA !== catB) return catA.localeCompare(catB);
+                
+                if (catA !== catB) {
+                    const idxA = categoryOrder.indexOf(catA);
+                    const idxB = categoryOrder.indexOf(catB);
+                    
+                    // If both are in the priority list
+                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    // If only A is in list, comes first
+                    if (idxA !== -1) return -1;
+                    // If only B is in list, comes first
+                    if (idxB !== -1) return 1;
+                    
+                    // If neither, fallback to alphabetical
+                    return catA.localeCompare(catB);
+                }
 
                 // Code (Ascending, Natural)
                 const codeA = (a.tools_code || "").trim();

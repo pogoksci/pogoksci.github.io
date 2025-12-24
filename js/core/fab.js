@@ -146,6 +146,22 @@
         if (fab) fab.style.display = "flex";
     }
 
+    function setDisabled(disabled) {
+        const fabs = document.querySelectorAll(".fab");
+        
+        fabs.forEach(fab => {
+            if (disabled) {
+                fab.style.opacity = "0.5";
+                fab.style.pointerEvents = "none";
+                fab.style.filter = "grayscale(100%)";
+            } else {
+                fab.style.opacity = "";
+                fab.style.pointerEvents = "";
+                fab.style.filter = "";
+            }
+        });
+    }
+
     // App 전역 객체가 없으면 생성
     globalThis.App = globalThis.App || {};
 
@@ -154,6 +170,7 @@
         setVisibility: setVisibility,
         setMenu: setMenu,
         hide: hide,
-        show: show
+        show: show,
+        setDisabled: setDisabled
     };
 })();
