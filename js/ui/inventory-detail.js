@@ -117,8 +117,8 @@
       const engName = data.Substance?.substance_name_mod || data.Substance?.substance_name || "";
       const formula = data.Substance?.molecular_formula_mod || data.Substance?.molecular_formula || "-";
 
-      document.getElementById("detail-name-kor").textContent = korName;
-      document.getElementById("detail-name-eng").textContent = engName !== korName ? engName : "";
+      document.getElementById("detail-name-kor").innerHTML = korName;
+      document.getElementById("detail-name-eng").innerHTML = engName !== korName ? engName : "";
 
       const photoDiv = document.getElementById("detail-photo");
       const photoUrl = data.photo_url_320 || data.photo_url_160 || "";
