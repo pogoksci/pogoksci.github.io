@@ -1,7 +1,7 @@
 <!-- /pages/inventory-form.html -->
 <div class="layout-container">
     <div class="layout-header no-actions">
-        <h2 id="inventory-form-title" style="margin: 0; font-size: 20px; font-weight: 700; color: #333;">약품 입고 정보 입력
+        <h2 id="inventory-form-title" style="margin: 0; font-size: 20px; font-weight: 700; color: #333;">약품 등록
         </h2>
     </div>
 
@@ -10,6 +10,12 @@
             <div class="form-group">
                 <label for="cas_rn">CAS <span class="required-mark">*</span></label>
                 <input type="text" id="cas_rn" name="cas_rn" placeholder="CAS Registry Number (예: 7647-01-0)" required>
+            </div>
+
+            <div class="form-group" id="chemical_name_group">
+                <label for="chemical_name_ko">약품명 (한글)</label>
+                <input type="text" id="chemical_name_ko" name="chemical_name_ko"
+                    placeholder="약품명을 입력하세요 (이름이 없는 경우에만 활성화됩니다)">
             </div>
 
             <div class="form-group">
@@ -21,7 +27,8 @@
             <div class="form-group" style="position: relative;">
                 <label>단위 <span class="required-mark">*</span></label>
                 <!-- Hidden input for native validation -->
-                <input type="text" id="unit_hidden" required style="position: absolute; opacity: 0; width: 1px; height: 1px; bottom: 0; left: 50%;">
+                <input type="text" id="unit_hidden" required
+                    style="position: absolute; opacity: 0; width: 1px; height: 1px; bottom: 0; left: 50%;">
                 <div class="button-group" id="unit_buttons">
                     <button type="button" data-value="g">g</button>
                     <button type="button" data-value="mL">mL</button>
@@ -32,7 +39,8 @@
             <div class="form-group" style="position: relative;">
                 <label>시약병 형태 <span class="required-mark">*</span></label>
                 <!-- Hidden input for native validation -->
-                <input type="text" id="bottle_type_hidden" required style="position: absolute; opacity: 0; width: 1px; height: 1px; bottom: 0; left: 50%;">
+                <input type="text" id="bottle_type_hidden" required
+                    style="position: absolute; opacity: 0; width: 1px; height: 1px; bottom: 0; left: 50%;">
                 <div class="button-group" id="bottle_type_buttons">
                     <button type="button" data-value="갈색유리">갈색유리</button>
                     <button type="button" data-value="투명유리">투명유리</button>

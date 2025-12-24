@@ -142,11 +142,11 @@
     const statusMsg = document.getElementById("statusMessage");
 
     if (title) {
-      title.textContent = mode === "edit" ? "약품 정보 수정" : "약품 입고 정보 입력";
+      title.textContent = mode === "edit" ? "약품 정보" : "약품 등록";
     }
 
     if (submitBtn) {
-      submitBtn.textContent = mode === "edit" ? "수정 완료" : "약품 입고 정보 저장";
+      submitBtn.textContent = mode === "edit" ? "수정 완료" : "약품 등록 저장";
     }
 
     // ✅ State 복원 (Edit 모드)
@@ -195,7 +195,29 @@
           set("chemical_formula", detail.Substance.chemical_formula);
 
           // Populate Inputs from DB or API data
-          if (detail.Substance.chemical_name_ko) setInput("chemical_name_ko", detail.Substance.chemical_name_ko);
+          const korName = detail.Substance.chem_name_kor_mod || detail.Substance.chem_name_kor || "";
+          const nameInput = document.getElementById("chemical_name_ko");
+          if (nameInput) {
+            nameInput.value = korName;
+            // If name is missing, allow editing. Otherwise, readonly unless we want to allow override.
+            // User said: "substance_name이 없는 약품의 경우는 '약품 정보 수정'에서 substance_name을 수정할 수 있게 해줘."
+            if (!korName) {
+              nameInput.readOnly = false;
+              nameInput.style.backgroundColor = "";
+            } else {
+              nameInput.readOnly = true;
+              nameInput.style.backgroundColor = "#f0f0f0";
+              nameInput.onclick = () => {
+                const change = confirm("⚠️ 이미 등록된 약품명입니다. 이름을 수정하시겠습니까?\n(수정 시 이 물질을 사용하는 모든 재고의 이름이 함께 변경됩니다)");
+                if (change) {
+                  nameInput.readOnly = false;
+                  nameInput.style.backgroundColor = "";
+                  nameInput.onclick = null;
+                  nameInput.focus();
+                }
+              };
+            }
+          }
         } else {
           setInput("cas_rn", "");
         }
@@ -1083,6 +1105,28 @@
           } else {
             if (typeof App.Inventory.updateInventory !== 'function') throw new Error("App.Inventory.updateInventory missing");
             await App.Inventory.updateInventory(detail.id, payload);
+
+            // ✅ Update Substance Name via Edge Function (to bypass RLS)
+            const newName = document.getElementById("chemical_name_ko")?.value.trim();
+            const oldName = (detail.Substance.chem_name_kor_mod || detail.Substance.chem_name_kor || "").trim();
+            if (newName && newName !== oldName && detail.Substance.id) {
+              console.log(`📝 Calling system-admin to update Substance(${detail.Substance.id}) name to: ${newName}`);
+              const { data: subData, error: subError } = await supabase.functions.invoke("system-admin", {
+                body: {
+                  action: "update_substance",
+                  substance_id: detail.Substance.id,
+                  chem_name_kor_mod: newName
+                },
+              });
+
+              if (subError || (subData && subData.error)) {
+                console.error("❌ Substance update failed:", subError || subData.error);
+                alert("약품 재고 정보는 저장되었으나, 약품명 변경에는 실패했습니다 (관리자 권한 필요)");
+              } else {
+                console.log("✅ Substance name updated successfully.");
+              }
+            }
+
             alert("✅ 수정 완료");
           }
           App.Router.go("inventory");

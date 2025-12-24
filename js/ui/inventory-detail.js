@@ -72,7 +72,7 @@
         converted_concentration_value_2, converted_concentration_unit_2,
         school_hazardous_chemical, school_accident_precaution_chemical, special_health_checkup_hazardous_factor,
         toxic_substance, permitted_substance, restricted_substance, prohibited_substance,
-        bottle_mass, bottle_identifier,
+        bottle_mass, bottle_identifier, bottle_type,
         Substance (
           id, substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, chem_name_kor_mod, substance_name_mod, molecular_formula_mod, svg_image, has_molfile,
           school_hazardous_chemical_standard, school_accident_precaution_chemical_standard, special_health_checkup_hazardous_factor_standard,
@@ -134,7 +134,6 @@
       if (btnGoUsage) {
         btnGoUsage.onclick = async () => {
           // Navigate to usageRegister with inventory info
-          // Assuming usageRegister handles 'detail' or 'inventoryId'
           if (getApp().Router?.go) {
             await getApp().Router.go("usageRegister", { inventoryId: data.id, detail: data });
           } else {
@@ -142,7 +141,12 @@
           }
         };
       }
-      document.getElementById("detail-cas").textContent = data.Substance?.cas_rn || "-";
+
+      const rawCas = data.Substance?.cas_rn || "";
+      const isValidCas = /^\d+-\d+-\d$/.test(rawCas.trim());
+      const displayCas = isValidCas ? rawCas : (rawCas ? "CAS없음" : "-");
+
+      document.getElementById("detail-cas").textContent = displayCas;
       document.getElementById("detail-formula").innerHTML = formula;
       document.getElementById("detail-class").textContent = data.classification || "-";
       document.getElementById("detail-state").textContent = data.state || "-";

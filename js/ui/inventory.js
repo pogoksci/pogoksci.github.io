@@ -257,6 +257,11 @@
 
       locationText = locationText.trim() || "위치 정보 없음";
 
+      // ✅ CAS Validation
+      const rawCas = row.Substance?.cas_rn || "";
+      const isValidCas = /^\d+-\d+-\d$/.test(rawCas.trim());
+      const displayCas = isValidCas ? rawCas : (rawCas ? "CAS없음" : "");
+
       // ✅ Override Logic
       const substanceName = row.Substance?.substance_name_mod || row.Substance?.substance_name || "";
       const chemNameKor = row.Substance?.chem_name_kor_mod || row.Substance?.chem_name_kor || "";
@@ -268,7 +273,7 @@
       if (substanceName) displayLabelHtml += `<span class="name-eng">${substanceName}</span>`;
 
       if (!displayLabelHtml) {
-        displayLabelHtml = `<span class="name-kor">${row.Substance?.cas_rn || `Inventory #${row.id}`}</span>`;
+        displayLabelHtml = `<span class="name-kor">${displayCas || `Inventory #${row.id}`}</span>`;
       }
 
       const concentrationValue = row.concentration_value;
