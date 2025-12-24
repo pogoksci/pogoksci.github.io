@@ -25,15 +25,17 @@
 
     switch (key) {
       case "category_name_kor": // 한글명(분류)
-        return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateKo(a.name_kor, b.name_kor));
+        return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateKo(a.name_kor, b.name_kor) || (a.id - b.id));
       case "category_name_eng": // 영문명(분류)
-        return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateEn(a.name_eng, b.name_eng));
+        return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateEn(a.name_eng, b.name_eng) || (a.id - b.id));
       case "name_kor": // 한글명(전체)
-        return rows.sort((a, b) => collateKo(a.name_kor, b.name_kor));
+        return rows.sort((a, b) => collateKo(a.name_kor, b.name_kor) || (a.id - b.id)); // Optional: added ID sort for consistency
       case "name_eng": // 영문명(전체)
-        return rows.sort((a, b) => collateEn(a.name_eng, b.name_eng));
+        return rows.sort((a, b) => collateEn(a.name_eng, b.name_eng) || (a.id - b.id)); // Optional: added ID sort for consistency
       case "formula": // 화학식
         return rows.sort((a, b) => collateEn(a.formula, b.formula));
+      case "id_asc": // 전체(번호순)
+        return rows.sort((a, b) => a.id - b.id);
       case "storage_location": // 위치
         return rows.sort((a, b) => {
           // Area -> Cabinet -> Location Text 순 정렬
@@ -199,7 +201,7 @@
       .from("Inventory")
       .select(`
         id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
-        concentration_value, concentration_unit, status,
+        concentration_value, concentration_unit, status, edited_name_kor,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, chem_name_kor_mod, substance_name_mod, molecular_formula_mod, Synonyms ( synonyms_name, synonyms_eng ), ReplacedRns!ReplacedRns_substance_id_fkey ( replaced_rn ) ),
         Cabinet ( cabinet_name, area_id:lab_rooms!fk_cabinet_lab_rooms ( id, room_name ) )
@@ -264,7 +266,7 @@
 
       // ✅ Override Logic
       const substanceName = row.Substance?.substance_name_mod || row.Substance?.substance_name || "";
-      const chemNameKor = row.Substance?.chem_name_kor_mod || row.Substance?.chem_name_kor || "";
+      const chemNameKor = row.edited_name_kor || row.Substance?.chem_name_kor_mod || row.Substance?.chem_name_kor || "";
       const molecularFormula = row.Substance?.molecular_formula_mod || row.Substance?.molecular_formula || "-";
 
       // HTML 구조로 변경 (JS에서 처리하기 위해)
@@ -358,11 +360,11 @@
           item.cas_rn,
           item.name_eng, // substance_name
           item.formula,
-          item.name_kor, // chem_name_kor
+          item.name_kor, // edited_name_kor OR sub.chem_name_kor_mod OR sub.chem_name_kor
           item.synonyms_name,
           item.synonyms_eng,
           item.classification,
-          item.replaced_rn, // ✅ Replaced RN 검색 추가
+          item.replaced_rn,
         ];
         return targetFields.some((field) =>
           String(field || "").toLowerCase().replace(/\s+/g, "").includes(query)
@@ -541,6 +543,7 @@
         category_name_eng: "영문명(분류)",
         name_kor: "한글명(전체)",
         name_eng: "영문명(전체)",
+        id_asc: "전체(번호순)",
         formula: "화학식",
         storage_location: "위치",
         created_at_desc: "등록순서",

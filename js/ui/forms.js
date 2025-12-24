@@ -149,6 +149,12 @@
       submitBtn.textContent = mode === "edit" ? "수정 완료" : "약품 등록 저장";
     }
 
+    // ✅ 약품명 그룹 제어 (등록 시 숨김, 수정 시 표시)
+    const chemNameGroup = document.getElementById("chemical_name_group");
+    if (chemNameGroup) {
+      chemNameGroup.style.display = mode === "edit" ? "block" : "none";
+    }
+
     // ✅ State 복원 (Edit 모드)
     if (detail) {
       set("inventoryId", detail.id);
@@ -171,252 +177,187 @@
       set("msds_pdf_url", detail.msds_pdf_url); // ✅ URL 복원
       set("msds_pdf_hash", detail.msds_pdf_hash); // ✅ Hash 복원 (수정 시 유지되도록)
 
-      requestAnimationFrame(() => {
-        // 1. Inputs
-        const setInput = (id, val) => {
-          const el = document.getElementById(id);
-          if (el) el.value = val || "";
-        };
-        if (detail.Substance?.cas_rn) {
-          const casEl = document.getElementById("cas_rn");
-          if (casEl) {
-            casEl.value = detail.Substance.cas_rn;
-            casEl.readOnly = true;
-            casEl.style.backgroundColor = "#f0f0f0";
-            // Remove previous listeners if any (clone node or assume fresh form)
-            // Since form is re-injected, listener is fresh.
-            casEl.onclick = () => {
-              alert("⚠️ CAS 번호는 수정할 수 없습니다.\n약품 종류가 변경되었다면 [새 약품 등록]을 이용해주세요.");
-            };
-          }
-          // Form Population
-          setInput("cas_rn", detail.Substance.cas_rn);
-          // Store chemical_formula for Valence Calc
-          set("chemical_formula", detail.Substance.chemical_formula);
-
-          // Populate Inputs from DB or API data
-          const korName = detail.Substance.chem_name_kor_mod || detail.Substance.chem_name_kor || "";
-          const nameInput = document.getElementById("chemical_name_ko");
-          if (nameInput) {
-            nameInput.value = korName;
-            // If name is missing, allow editing. Otherwise, readonly unless we want to allow override.
-            // User said: "substance_name이 없는 약품의 경우는 '약품 정보 수정'에서 substance_name을 수정할 수 있게 해줘."
-            if (!korName) {
-              nameInput.readOnly = false;
-              nameInput.style.backgroundColor = "";
-            } else {
-              nameInput.readOnly = true;
-              nameInput.style.backgroundColor = "#f0f0f0";
-              nameInput.onclick = () => {
-                const change = confirm("⚠️ 이미 등록된 약품명입니다. 이름을 수정하시겠습니까?\n(수정 시 이 물질을 사용하는 모든 재고의 이름이 함께 변경됩니다)");
-                if (change) {
-                  nameInput.readOnly = false;
-                  nameInput.style.backgroundColor = "";
-                  nameInput.onclick = null;
-                  nameInput.focus();
-                }
-              };
-            }
-          }
-        } else {
-          setInput("cas_rn", "");
+      // 1. Inputs
+      const setInput = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val || "";
+      };
+      if (detail.Substance?.cas_rn) {
+        const casEl = document.getElementById("cas_rn");
+        if (casEl) {
+          casEl.value = detail.Substance.cas_rn;
+          casEl.readOnly = true;
+          casEl.style.backgroundColor = "#f0f0f0";
+          casEl.onclick = () => {
+            alert("⚠️ CAS 번호는 수정할 수 없습니다.");
+          };
         }
-        setInput("purchase_volume", detail.current_amount); // CHANGED: initial_amount -> current_amount
-        setInput("concentration_value", detail.concentration_value);
-        setInput("purchase_date", detail.purchase_date);
-        setInput("valence_input", detail.valence); // ✅ Valence Input
+        setInput("cas_rn", detail.Substance.cas_rn);
+        set("chemical_formula", detail.Substance.chemical_formula);
 
+        const korName = detail.edited_name_kor || detail.Substance?.chem_name_kor_mod || detail.Substance?.chem_name_kor || "";
+        const nameInput = document.getElementById("chemical_name_ko");
+        if (nameInput) {
+          nameInput.value = korName;
+          // 🔒 Safeguard: Locked by default
+          nameInput.readOnly = true;
+          nameInput.style.backgroundColor = "#f0f0f0";
+          nameInput.style.cursor = "pointer";
+          nameInput.title = "클릭하여 수정 잠금 해제";
 
-        // 2. Buttons
-        // We need to wait for setupButtonGroup to run? No, DOM is there.
-        // But we need to ensure 'active' class is added.
-        // The groups array is defined below, let's use a helper or manual loop.
-
-        const setBtnGroup = (groupId, val) => {
-          console.log(`[setBtnGroup] Group: ${groupId}, Value to match: "${val}"`);
-          const group = document.getElementById(groupId);
-          if (!group) {
-            console.warn(`[setBtnGroup] Group element not found for ID: ${groupId}`);
-            return false;
-          }
-          let matched = false;
-          // Normalize value for comparison (trim)
-          const normalize = (s) => String(s || "").trim();
-          const targetVal = normalize(val);
-
-          Array.from(group.children).forEach(btn => {
-            const btnVal = normalize(btn.dataset.value);
-            console.log(`  - Button: "${btn.textContent}" (data-value: "${btnVal}")`);
-            if (btnVal === targetVal) {
-              btn.classList.add("active");
-              matched = true;
-              console.log(`    -> Matched! Setting active.`);
-            } else {
-              btn.classList.remove("active");
-            }
-          });
-          if (!matched) {
-            console.log(`[setBtnGroup] No match found for group "${groupId}" with value "${val}"`);
-          }
-          return matched;
-        };
-
-        setBtnGroup("unit_buttons", detail.unit);
-        if (detail.unit) {
-          const h = document.getElementById("unit_hidden");
-          if (h) h.value = detail.unit;
-        }
-
-        // Bottle Type Restoration (Simple direct map)
-        const rawBottleVal = detail.bottle_type || detail.bottle_identifier;
-
-        const bottleMap = {
-          "Brown Glass": "갈색유리", "Clear Glass": "투명유리",
-          "Brown": "갈색유리", "Clear": "투명유리",
-          "Brown Plastic": "갈색플라스틱", "White Plastic": "흰색플라스틱",
-          "Semi-transparent Plastic": "반투명플라스틱",
-          "PE": "반투명플라스틱", // PE는 보통 반투명
-          "PP": "흰색플라스틱",   // PP는 보통 흰색 (불투명)
-          "Metal": "금속", "Stainless": "스텐",
-          "Aluminum": "알루미늄", "Others": "기타"
-        };
-
-        const finalBottleVal = bottleMap[rawBottleVal] || rawBottleVal;
-        setBtnGroup("bottle_type_buttons", finalBottleVal);
-        if (finalBottleVal) {
-          const h = document.getElementById("bottle_type_hidden");
-          if (h) h.value = finalBottleVal;
-        }
-
-        setBtnGroup("classification_buttons", detail.classification);
-        setBtnGroup("state_buttons", detail.state); // CHANGED: status -> state
-        setBtnGroup("concentration_unit_buttons", detail.concentration_unit);
-        // ✅ Valence Visibility Override
-        if (detail.concentration_unit === "N") {
-          const vGroup = document.getElementById("valence_group");
-          if (vGroup) vGroup.style.display = "block";
-        }
-
-        // Manufacturer special handling
-        const manVal = detail.manufacturer;
-        const manufacturerMatched = setBtnGroup("manufacturer_buttons", manVal);
-
-        if (!manufacturerMatched && manVal) {
-          // Assume custom/other
-          const otherBtn = document.querySelector("#manufacturer_buttons button[data-value='기타']");
-          if (otherBtn) otherBtn.classList.add("active");
-
-          const otherGroup = document.getElementById("other_manufacturer_group");
-          if (otherGroup) otherGroup.style.display = "block";
-          const manInput = document.getElementById("manufacturer_other");
-          if (manInput) manInput.value = manVal;
-          // Update state to reflect custom mode?
-          set("manufacturer", null); // "기타" -> null so makePayload uses custom value
-          set("manufacturer_custom", manVal);
-        }
-
-        // 3. Photo
-        if (detail.photo_url_320 || detail.photo_url_160) {
-          const url = detail.photo_url_320 || detail.photo_url_160;
-          const img = document.getElementById("preview-img");
-          const placeholder = document.querySelector("#photo-preview .placeholder-text");
-          if (img) {
-            img.src = url;
-            img.style.display = "block";
-          }
-          if (placeholder) placeholder.style.display = "none";
-        }
-
-        // 4. MSDS PDF UI (Edit Mode)
-        const msdsInput = document.getElementById("msds-pdf-input");
-        if (msdsInput && detail.msds_pdf_url) {
-          // Hide input
-          const container = msdsInput.closest(".form-group");
-          const inputGroup = container.querySelectorAll("input, p");
-          inputGroup.forEach(el => el.style.display = "none");
-
-          // Create File Display UI
-          let fileDisplay = container.querySelector(".msds-file-display");
-          if (!fileDisplay) {
-            fileDisplay = document.createElement("div");
-            fileDisplay.className = "msds-file-display";
-            fileDisplay.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px;";
-            container.appendChild(fileDisplay);
-          }
-
-          // Extract filename from URL (decode URI component)
-          const fileName = decodeURIComponent(detail.msds_pdf_url.split("/").pop()).split("_").slice(2).join("_") || "MSDS_File.pdf";
-
-          fileDisplay.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
-              <span class="material-symbols-outlined" style="color: #e74c3c;">picture_as_pdf</span>
-              <a href="${detail.msds_pdf_url}" target="_blank" style="text-decoration: none; color: #333; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
-                ${fileName}
-              </a>
-            </div>
-            <button type="button" class="btn-delete-msds" style="background: none; border: none; cursor: pointer; color: #888;">
-              <span class="material-symbols-outlined">delete</span>
-            </button>
-          `;
-
-          // Bind Delete Action
-          const delBtn = fileDisplay.querySelector(".btn-delete-msds");
-          delBtn.onclick = async () => {
-            if (!confirm("MSDS 파일을 삭제하시겠습니까? (복구할 수 없습니다)")) return;
-
-            try {
-              const supabase = App.supabase;
-              const hash = detail.msds_pdf_hash;
-              let safeToDeleteFile = true;
-
-              // Check Reference Count if hash exists
-              if (hash) {
-                const { count, error } = await supabase
-                  .from("Inventory")
-                  .select("id", { count: "exact", head: true })
-                  .eq("msds_pdf_hash", hash);
-
-                if (!error && count > 1) {
-                  safeToDeleteFile = false; // Used by others
-                  console.log(`ℹ️ MSDS file is used by ${count} items. Skipping bucket delete.`);
-                }
+          nameInput.onclick = () => {
+            if (nameInput.readOnly) {
+              if (confirm("화합물의 이름을 수정하는 것은 권장하지 않습니다.\n그래도 수정하시겠습니까?")) {
+                nameInput.readOnly = false;
+                nameInput.style.backgroundColor = "";
+                nameInput.style.cursor = "text";
+                nameInput.onclick = null; // Remove handler after unlock
+                nameInput.focus();
               }
-
-              // 1. Delete from Bucket (if safe)
-              if (safeToDeleteFile) {
-                // Extract path from public URL
-                const urlObj = new URL(detail.msds_pdf_url);
-                const path = urlObj.pathname.split("/public/msds-pdf/")[1];
-                if (path) {
-                  const { error: storeErr } = await supabase.storage.from("msds-pdf").remove([decodeURIComponent(path)]);
-                  if (storeErr) console.warn("Bucket delete warning:", storeErr);
-                }
-              }
-
-              // 2. Update DB (Set null)
-              const { error: dbErr } = await supabase
-                .from("Inventory")
-                .update({ msds_pdf_url: null, msds_pdf_hash: null })
-                .eq("id", detail.id);
-
-              if (dbErr) throw dbErr;
-
-              // 3. Update UI
-              alert("삭제되었습니다.");
-              fileDisplay.remove();
-              inputGroup.forEach(el => el.style.display = ""); // Show input again
-
-              // Update local state to reflect deletion (so payload doesn't resurrect it)
-              set("msds_pdf_url", null);
-              set("msds_pdf_hash", null); // Assuming you might have logic that reads this from detail
-
-            } catch (err) {
-              console.error("Delete failed:", err);
-              alert("파일 삭제 중 오류가 발생했습니다.");
             }
           };
         }
-      });
+      } else {
+        setInput("cas_rn", "");
+      }
+      setInput("purchase_volume", detail.current_amount);
+      setInput("concentration_value", detail.concentration_value);
+      setInput("purchase_date", detail.purchase_date);
+      setInput("valence_input", detail.valence);
+
+      // 2. Buttons
+      const setBtnGroup = (groupId, val) => {
+        const group = document.getElementById(groupId);
+        if (!group) return false;
+        let matched = false;
+        const normalize = (s) => String(s || "").trim();
+        const targetVal = normalize(val);
+
+        Array.from(group.children).forEach(btn => {
+          const btnVal = normalize(btn.dataset.value);
+          if (btnVal === targetVal) {
+            btn.classList.add("active");
+            matched = true;
+          } else {
+            btn.classList.remove("active");
+          }
+        });
+        return matched;
+      };
+
+      setBtnGroup("unit_buttons", detail.unit);
+      if (detail.unit) {
+        const h = document.getElementById("unit_hidden");
+        if (h) h.value = detail.unit;
+      }
+
+      const rawBottleVal = detail.bottle_type || detail.bottle_identifier;
+      const bottleMap = {
+        "Brown Glass": "갈색유리", "Clear Glass": "투명유리",
+        "Brown": "갈색유리", "Clear": "투명유리",
+        "Brown Plastic": "갈색플라스틱", "White Plastic": "흰색플라스틱",
+        "Semi-transparent Plastic": "반투명플라스틱",
+        "PE": "반투명플라스틱", "PP": "흰색플라스틱",
+        "Metal": "금속", "Stainless": "스텐",
+        "Aluminum": "알루미늄", "Others": "기타"
+      };
+
+      const finalBottleVal = bottleMap[rawBottleVal] || rawBottleVal;
+      setBtnGroup("bottle_type_buttons", finalBottleVal);
+      if (finalBottleVal) {
+        const h = document.getElementById("bottle_type_hidden");
+        if (h) h.value = finalBottleVal;
+      }
+
+      setBtnGroup("classification_buttons", detail.classification);
+      setBtnGroup("state_buttons", detail.state);
+      setBtnGroup("concentration_unit_buttons", detail.concentration_unit);
+      if (detail.concentration_unit === "N") {
+        const vGroup = document.getElementById("valence_group");
+        if (vGroup) vGroup.style.display = "block";
+      }
+
+      // Manufacturer special handling
+      const manVal = detail.manufacturer;
+      const manufacturerMatched = setBtnGroup("manufacturer_buttons", manVal);
+      if (!manufacturerMatched && manVal) {
+        const otherBtn = document.querySelector("#manufacturer_buttons button[data-value='기타']");
+        if (otherBtn) otherBtn.classList.add("active");
+        const otherGroup = document.getElementById("other_manufacturer_group");
+        if (otherGroup) otherGroup.style.display = "block";
+        const manInput = document.getElementById("manufacturer_other");
+        if (manInput) manInput.value = manVal;
+        set("manufacturer", null);
+        set("manufacturer_custom", manVal);
+      }
+
+      // 3. Photo
+      if (detail.photo_url_320 || detail.photo_url_160) {
+        const url = detail.photo_url_320 || detail.photo_url_160;
+        const img = document.getElementById("preview-img");
+        const placeholder = document.querySelector("#photo-preview .placeholder-text");
+        if (img) {
+          img.src = url;
+          img.style.display = "block";
+        }
+        if (placeholder) placeholder.style.display = "none";
+      }
+
+      // 4. MSDS PDF UI (Edit Mode)
+      const msdsInput = document.getElementById("msds-pdf-input");
+      if (msdsInput && detail.msds_pdf_url) {
+        const container = msdsInput.closest(".form-group");
+        const inputGroup = container.querySelectorAll("input, p");
+        inputGroup.forEach(el => el.style.display = "none");
+
+        let fileDisplay = container.querySelector(".msds-file-display");
+        if (!fileDisplay) {
+          fileDisplay = document.createElement("div");
+          fileDisplay.className = "msds-file-display";
+          fileDisplay.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px;";
+          container.appendChild(fileDisplay);
+        }
+
+        const fileName = decodeURIComponent(detail.msds_pdf_url.split("/").pop()).split("_").slice(2).join("_") || "MSDS_File.pdf";
+        fileDisplay.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+            <span class="material-symbols-outlined" style="color: #d32f2f;">picture_as_pdf</span>
+            <span style="font-size: 13px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${fileName}</span>
+          </div>
+          <button type="button" class="btn-msds-delete" style="background: none; border: none; padding: 4px; color: #666; cursor: pointer; display: flex; align-items: center; margin-left: 10px;">
+            <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
+          </button>
+        `;
+
+        fileDisplay.querySelector(".btn-msds-delete").onclick = async () => {
+          if (!confirm("PDF 파일을 삭제하시겠습니까? (서버에서도 즉시 삭제됩니다)")) return;
+          try {
+            const { count } = await supabase.from("Inventory").select("*", { count: "exact", head: true }).eq("msds_pdf_hash", detail.msds_pdf_hash).neq("id", detail.id);
+            let safeToDeleteFile = true;
+            if (count > 0) safeToDeleteFile = false;
+
+            if (safeToDeleteFile) {
+              const urlObj = new URL(detail.msds_pdf_url);
+              const path = urlObj.pathname.split("/public/msds-pdf/")[1];
+              if (path) {
+                const { error: storeErr } = await supabase.storage.from("msds-pdf").remove([decodeURIComponent(path)]);
+                if (storeErr) console.warn("Bucket delete warning:", storeErr);
+              }
+            }
+
+            const { error: dbErr } = await supabase.from("Inventory").update({ msds_pdf_url: null, msds_pdf_hash: null }).eq("id", detail.id);
+            if (dbErr) throw dbErr;
+            alert("삭제되었습니다.");
+            fileDisplay.remove();
+            inputGroup.forEach(el => el.style.display = "");
+            set("msds_pdf_url", null);
+            set("msds_pdf_hash", null);
+          } catch (err) {
+            console.error("Delete failed:", err);
+            alert("파일 삭제 중 오류가 발생했습니다.");
+          }
+        };
+      }
     }
 
     // ------------------------------------------------------------
@@ -744,11 +685,6 @@
     if (cameraConfirmBtn) {
       cameraConfirmBtn.onclick = () => {
         takePhoto();
-      };
-    }
-
-    if (cameraConfirmBtn) {
-      cameraConfirmBtn.onclick = () => {
         stopCamera();
       };
     }
@@ -786,12 +722,28 @@
     if (form) {
       form.onsubmit = async (e) => {
         e.preventDefault();
+
+        // 🛑 Manual Validation for Button Groups
+        set("unit", document.getElementById("unit_hidden")?.value || "");
+        set("bottle_type", document.getElementById("bottle_type_hidden")?.value || "");
+
+        const vUnit = get("unit");
+        const vBottle = get("bottle_type");
+        if (!vUnit || !vBottle) {
+          alert("⚠️ 필수 항목을 선택해주세요:\n- 단위\n- 시약병 형태");
+          // Scroll to the first missing one manually if needed
+          const targetId = !vUnit ? "unit_buttons" : "bottle_type_buttons";
+          document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+
         // Collect Input Values manually for non-button inputs
         set("cas_rn", document.getElementById("cas_rn").value);
         set("purchase_volume", document.getElementById("purchase_volume").value);
         set("concentration_value", document.getElementById("concentration_value").value);
         set("purchase_date", document.getElementById("purchase_date").value);
         set("valence", document.getElementById("valence_input").value);
+        set("edited_name_kor", document.getElementById("chemical_name_ko")?.value || "");
 
         if (App.StorageSelector) {
           const loc = App.StorageSelector.getSelection();
@@ -841,7 +793,8 @@
             concentration_unit: get("concentration_unit"),
             manufacturer: get("manufacturer") || get("manufacturer_custom"),
             purchase_date: get("purchase_date") || null,
-            valence: get("valence") ? Number(get("valence")) : null
+            valence: get("valence") ? Number(get("valence")) : null,
+            edited_name_kor: get("edited_name_kor") || null
           });
 
           // Correction: In initInventoryForm (line 100), we set "status" from detail.status.
@@ -1103,31 +1056,19 @@
             const { data: userData } = await supabase.auth.getUser(); // Dummy for now
             alert("✅ 등록 완료");
           } else {
+            // 🧹 Safety: Ensure Substance fields are NOT in payload (Prevent Global Update)
+            delete payload.chem_name_kor;
+            delete payload.chem_name_kor_mod;
+            delete payload.substance_name;
+            delete payload.cas_rn;
+
+            console.log("🛠️ [Inventory Update] Payload:", payload);
+            console.log("🛠️ [Inventory Update] Saving Local Name Only (edited_name_kor):", payload.edited_name_kor);
+
             if (typeof App.Inventory.updateInventory !== 'function') throw new Error("App.Inventory.updateInventory missing");
             await App.Inventory.updateInventory(detail.id, payload);
 
-            // ✅ Update Substance Name via Edge Function (to bypass RLS)
-            const newName = document.getElementById("chemical_name_ko")?.value.trim();
-            const oldName = (detail.Substance.chem_name_kor_mod || detail.Substance.chem_name_kor || "").trim();
-            if (newName && newName !== oldName && detail.Substance.id) {
-              console.log(`📝 Calling system-admin to update Substance(${detail.Substance.id}) name to: ${newName}`);
-              const { data: subData, error: subError } = await supabase.functions.invoke("system-admin", {
-                body: {
-                  action: "update_substance",
-                  substance_id: detail.Substance.id,
-                  chem_name_kor_mod: newName
-                },
-              });
-
-              if (subError || (subData && subData.error)) {
-                console.error("❌ Substance update failed:", subError || subData.error);
-                alert("약품 재고 정보는 저장되었으나, 약품명 변경에는 실패했습니다 (관리자 권한 필요)");
-              } else {
-                console.log("✅ Substance name updated successfully.");
-              }
-            }
-
-            alert("✅ 수정 완료");
+            alert("✅ 수정 완료 (개별 이름만 저장됨)");
           }
           App.Router.go("inventory");
         } catch (err) {

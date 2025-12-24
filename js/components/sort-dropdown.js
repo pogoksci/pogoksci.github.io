@@ -55,7 +55,10 @@
       // ✅ 기존 리스너 제거 (Clone Node)
       const newToggle = toggle.cloneNode(true);
       toggle.parentNode.replaceChild(newToggle, toggle);
-      
+
+      // ✅ [Fix] Clone 후 label 요소 다시 찾기 (참조 끊김 방지)
+      const newLabel = newToggle.querySelector(`#${labelId}`) || document.getElementById(labelId);
+
       newToggle.addEventListener("click", (e) => {
         // console.log("🖱️ Sort Toggle Clicked");
         e.stopPropagation();
@@ -69,9 +72,11 @@
           const value = item.dataset.value || "";
           const textNode = Array.from(item.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
           const text = textNode ? textNode.textContent.trim() : item.textContent.trim();
-          
-          label.textContent = text;
-          label.dataset.value = value;
+
+          if (newLabel) {
+            newLabel.textContent = text;
+            newLabel.dataset.value = value;
+          }
           menu.classList.remove("open");
 
           if (typeof onChange === "function") {
@@ -89,10 +94,10 @@
 
       // ✅ 새로고침 버튼
       if (refreshBtn) {
-         // Prevent multiple bindings
+        // Prevent multiple bindings
         const newRefresh = refreshBtn.cloneNode(true);
         refreshBtn.parentNode.replaceChild(newRefresh, refreshBtn);
-        
+
         newRefresh.addEventListener("click", (e) => {
           e.stopPropagation();
           if (typeof onRefresh === "function") onRefresh();

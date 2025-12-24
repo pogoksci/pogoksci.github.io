@@ -26,8 +26,8 @@
 
             <div class="form-group" style="position: relative;">
                 <label>단위 <span class="required-mark">*</span></label>
-                <!-- Hidden input for native validation -->
-                <input type="text" id="unit_hidden" required
+                <!-- Hidden input for state tracking (no required to avoid scroll issues) -->
+                <input type="text" id="unit_hidden"
                     style="position: absolute; opacity: 0; width: 1px; height: 1px; bottom: 0; left: 50%;">
                 <div class="button-group" id="unit_buttons">
                     <button type="button" data-value="g">g</button>
@@ -38,8 +38,8 @@
 
             <div class="form-group" style="position: relative;">
                 <label>시약병 형태 <span class="required-mark">*</span></label>
-                <!-- Hidden input for native validation -->
-                <input type="text" id="bottle_type_hidden" required
+                <!-- Hidden input for state tracking (no required to avoid scroll issues) -->
+                <input type="text" id="bottle_type_hidden"
                     style="position: absolute; opacity: 0; width: 1px; height: 1px; bottom: 0; left: 50%;">
                 <div class="button-group" id="bottle_type_buttons">
                     <button type="button" data-value="갈색유리">갈색유리</button>

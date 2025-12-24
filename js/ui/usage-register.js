@@ -24,16 +24,30 @@
 
         // 정렬 드롭다운 초기화
         if (App.SortDropdown && App.SortDropdown.init) {
+            // Add new label mapping
+            const labelMap = {
+                category_name_kor: "한글명(분류)",
+                category_name_eng: "영문명(분류)",
+                name_kor: "한글명(전체)",
+                name_eng: "영문명(전체)",
+                id_asc: "전체(번호순)",
+                formula: "화학식",
+                storage_location: "위치",
+                created_at_desc: "등록순서",
+                exhausted: "소모완료약품"
+            };
             App.SortDropdown.init({
                 onChange: (val) => {
                     currentSort = val;
+                    // Fix: Ensure filters (search) are re-applied
+                    // Just calling filterAndRenderList does filtering
                     filterAndRenderList(document.getElementById("usage-search-input")?.value || "");
                 },
                 onRefresh: () => {
                     loadInventoryList();
                 },
-                defaultLabel: "한글명(분류)",
-                defaultValue: "category_name_kor"
+                defaultLabel: labelMap[currentSort] || "한글명(분류)",
+                defaultValue: currentSort
             });
         }
 
@@ -101,7 +115,7 @@
             .select(`
         id, current_amount, unit, status, classification, created_at,
         concentration_value, concentration_unit,
-        bottle_mass,
+        bottle_mass, edited_name_kor,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         photo_url_320, photo_url_160,
         Substance ( 
@@ -129,15 +143,17 @@
 
         switch (key) {
             case "category_name_kor": // 한글명(분류)
-                return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateKo(a.Substance?.chem_name_kor, b.Substance?.chem_name_kor));
+                return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateKo(a.edited_name_kor || a.Substance?.chem_name_kor, b.edited_name_kor || b.Substance?.chem_name_kor) || (a.id - b.id));
             case "category_name_eng": // 영문명(분류)
-                return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateEn(a.Substance?.substance_name, b.Substance?.substance_name));
+                return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateEn(a.Substance?.substance_name, b.Substance?.substance_name) || (a.id - b.id));
             case "name_kor": // 한글명(전체)
-                return rows.sort((a, b) => collateKo(a.Substance?.chem_name_kor, b.Substance?.chem_name_kor));
+                return rows.sort((a, b) => collateKo(a.edited_name_kor || a.Substance?.chem_name_kor, b.edited_name_kor || b.Substance?.chem_name_kor) || (a.id - b.id));
             case "name_eng": // 영문명(전체)
-                return rows.sort((a, b) => collateEn(a.Substance?.substance_name, b.Substance?.substance_name));
+                return rows.sort((a, b) => collateEn(a.Substance?.substance_name, b.Substance?.substance_name) || (a.id - b.id));
             case "formula": // 화학식
                 return rows.sort((a, b) => collateEn(a.Substance?.molecular_formula, b.Substance?.molecular_formula));
+            case "id_asc": // 전체(번호순)
+                return rows.sort((a, b) => a.id - b.id);
             case "storage_location": // 위치
                 return rows.sort((a, b) => {
                     const locA = (a.Cabinet?.area_id?.room_name || "") + (a.Cabinet?.cabinet_name || "");
@@ -185,11 +201,13 @@
         filtered = filtered.filter(item => {
             const nameKor = item.Substance?.chem_name_kor || "";
             const nameKorMod = item.Substance?.chem_name_kor_mod || "";
+            const nameEdited = item.edited_name_kor || "";
             const nameEng = item.Substance?.substance_name || "";
             const cas = item.Substance?.cas_rn || "";
 
             return nameKor.includes(lowerQuery) ||
                 nameKorMod.includes(lowerQuery) ||
+                nameEdited.includes(lowerQuery) ||
                 nameEng.toLowerCase().includes(lowerQuery) ||
                 cas.includes(lowerQuery);
         });
@@ -241,7 +259,7 @@
     // - 목록(isDetail=false): 사진 없음, 2줄 요약 (기존 방식)
     // - 상세(isDetail=true): 사진 포함, 4줄 상세 (inventory.js 방식)
     function renderItemCard(item, isDetail = false) {
-        const name = item.Substance?.chem_name_kor_mod || item.Substance?.chem_name_kor || "이름 없음";
+        const name = item.edited_name_kor || item.Substance?.chem_name_kor_mod || item.Substance?.chem_name_kor || "이름 없음";
 
         // 농도 텍스트
         let concStr = "-";
