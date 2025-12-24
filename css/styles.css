@@ -1039,7 +1039,7 @@ button:disabled {
 
   box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
 
-  z-index: 9999;
+  z-index: 10001; /* Higher than splash screen */
 
   backdrop-filter: blur(10px);
 
@@ -1633,11 +1633,13 @@ body.home-active #splash-screen {
 
   width: 100%;
 
-  height: 100vh;
+  height: 100%;
+
+  height: 100dvh;
 
   background-color: #fff;
 
-  padding: 40px 20px;
+  padding: 40px 20px 100px 20px; /* Counter-bias for navbar */
 
   box-sizing: border-box;
 
