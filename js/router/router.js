@@ -110,6 +110,9 @@
       case "inventoryDetail":
         if (App.Inventory?.loadDetail && params.id) await App.Inventory.loadDetail(params.id);
         break;
+      case "addInventory":
+        if (App.Forms?.initInventoryForm) await App.Forms.initInventoryForm(params.mode, params.detail);
+        break;
       case "usageRegister":
         if (App.UsageRegister?.init) App.UsageRegister.init(params);
         break;

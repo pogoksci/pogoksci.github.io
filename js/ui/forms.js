@@ -137,7 +137,7 @@
     set("mode", mode);
 
     // 🏷 타이틀 & 버튼 제어
-    const title = document.querySelector("#inventory-form h1");
+    const title = document.getElementById("inventory-form-title");
     const submitBtn = document.getElementById("inventory-submit-button");
     const statusMsg = document.getElementById("statusMessage");
 
@@ -153,8 +153,6 @@
     if (detail) {
       set("inventoryId", detail.id);
       set("cas_rn", detail.Substance?.cas_rn);
-      set("purchase_volume", detail.purchase_volume);
-      set("unit", detail.unit);
       set("purchase_volume", detail.purchase_volume);
       set("unit", detail.unit);
       set("bottle_type", detail.bottle_type);
@@ -202,7 +200,6 @@
           setInput("cas_rn", "");
         }
         setInput("purchase_volume", detail.current_amount); // CHANGED: initial_amount -> current_amount
-        setInput("concentration_value", detail.concentration_value);
         setInput("concentration_value", detail.concentration_value);
         setInput("purchase_date", detail.purchase_date);
         setInput("valence_input", detail.valence); // ✅ Valence Input
@@ -747,9 +744,9 @@
       const defaultLoc = {};
       if (mode === "edit" && detail) {
         Object.assign(defaultLoc, {
-          area_id: detail.Cabinet?.Area?.id,
-          area_name: detail.Cabinet?.Area?.area_name,
-          cabinet_id: detail.Cabinet?.id || detail.cabinet_id,
+          area_id: detail.Cabinet?.area_id?.id,
+          area_name: detail.Cabinet?.area_id?.room_name,
+          cabinet_id: detail.Cabinet?.id,
           cabinet_name: detail.Cabinet?.cabinet_name,
           door_vertical: detail.door_vertical,
           door_horizontal: detail.door_horizontal,
@@ -928,6 +925,7 @@
           // Cleanup payload for Inventory Table (remove Cabinet-specific fields)
           delete payload.cabinet_name;
           delete payload.area_name;
+          delete payload.area_id; // ✅ Inventory 테이블에 없는 컬럼 삭제
           delete payload.door_vertical_count;
           delete payload.door_horizontal_count;
           delete payload.shelf_height;

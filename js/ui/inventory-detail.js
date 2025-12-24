@@ -223,8 +223,18 @@
       let cachedCid = null;
       const loadPubChemCid = async () => {
         if (cachedCid) return cachedCid;
-        const casRn = data.Substance?.cas_rn;
+        let casRn = data.Substance?.cas_rn;
         if (!casRn) return null;
+
+        casRn = String(casRn).trim();
+        // Defensive Logic: Check if it looks like a valid CAS RN (digits-digits-digit)
+        // This prevents calling PubChem API with junk data like '-154'
+        const casRegex = /^\d+-\d+-\d$/;
+        if (!casRegex.test(casRn)) {
+          console.warn(`[InventoryDetail] Invalid CAS format skipped for PubChem: [${casRn}]`);
+          return null;
+        }
+
         try {
           const res = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${casRn}/cids/JSON`);
           if (!res.ok) return null;
@@ -880,6 +890,10 @@
       if (data.Substance?.cas_rn) {
         const checkUpdate = async () => {
           try {
+            const casRn = String(data.Substance.cas_rn).trim();
+            const casRegex = /^\d+-\d+-\d$/;
+            if (!casRegex.test(casRn)) return;
+
             const app = getApp();
             const fnBase = app.projectFunctionsBaseUrl || (app.supabaseUrl ? `${app.supabaseUrl}/functions/v1` : "");
             if (!fnBase) return;

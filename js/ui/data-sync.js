@@ -279,6 +279,20 @@
                 if (error) throw error;
                 if (data?.error) throw new Error(data.error);
 
+                this.log(`ℹ️ 참조 데이터 총: ${data.data.refTotal || 0}개`);
+                this.log(`ℹ️ 매칭된 약품: ${data.data.subMatched || 0}개`);
+
+                if (data.data.mismatchSamples && data.data.mismatchSamples.length > 0) {
+                    this.log(`⚠️ 매칭 실패 샘플 (Substance CAS): ${data.data.mismatchSamples.join(", ")}`);
+                }
+
+                if (data.data.refSample) {
+                    this.log(`🔍 [Ref Sample] Keys: ${data.data.refSample.keys.join(", ")}, First CAS: [${data.data.refSample.firstCas}]`);
+                }
+                if (data.data.subSample) {
+                    this.log(`🔍 [Sub Sample] Keys: ${data.data.subSample.keys.join(", ")}, First CAS: [${data.data.subSample.firstCas}]`);
+                }
+
                 this.log(`🎉 약품 정보 업데이트 완료! (수정된 물질: ${data.data.count}개)`, "success");
                 alert(`약품 정보가 최신 참조 데이터로 업데이트되었습니다. (${data.data.count}건)`);
 
