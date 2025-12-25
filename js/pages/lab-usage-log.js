@@ -332,8 +332,20 @@
         async function fetchLogs() {
             const start = weekDates[0].toISOString().split('T')[0];
             const end = weekDates[6].toISOString().split('T')[0];
-            const { data } = await supabase.from('lab_usage_log').select('*').eq('lab_room_id', currentRoomId).gte('usage_date', start).lte('usage_date', end);
-            return data || [];
+            const { data } = await supabase.from('lab_usage_log')
+                .select('*')
+                .eq('lab_room_id', currentRoomId)
+                .gte('usage_date', start)
+                .lte('usage_date', end)
+                // Filter: Show only Approved (or null for legacy data without status)
+                // Using .or() for (remarks.eq.승인, remarks.is.null) is complex in chaining depending on SDK version.
+                // Simple approach: Fetch all, then filter in memory (safer for complex OR logic if volume isn't huge),
+                // OR use a specific query. Let's start with inclusive filter or memory filter since dataset is small.
+                // Actually, let's just fetch and filter in memory to be safe against syntax errors with mixed AND/OR.
+                ;
+
+            // Client-side filtering to ensure only Approved/Legacy are shown
+            return (data || []).filter(item => !item.remarks || item.remarks === '승인');
         }
 
         function renderGrid(templates, logs, weekSemesterMap) {

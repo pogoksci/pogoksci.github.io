@@ -166,7 +166,11 @@
             return;
         }
 
-        lastSearchResult = data || [];
+        // Post-filter: Only show '승인' or empty (legacy)
+        const rawData = data || [];
+        const filteredData = rawData.filter(item => !item.remarks || item.remarks === '승인');
+
+        lastSearchResult = filteredData;
         currentPage = 1; // Reset to first page on search
         renderTable(lastSearchResult);
     }

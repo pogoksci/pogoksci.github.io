@@ -110,15 +110,7 @@
       });
     }
 
-    const menuLablog = document.getElementById("menu-lablog-btn");
-    if (menuLablog) {
-      menuLablog.addEventListener("click", async (e) => {
-        e.preventDefault();
-        document.body.classList.remove("home-active");
-        await App.Router.go("labUsageLog");
-        closeStartMenu();
-      });
-    }
+    // 3. New 'Science Lab Usage' Group logic handles this now (see below)
 
     // New Lab Settings Menu
     const menuLabSettings = document.getElementById("menu-lab-settings");
@@ -222,12 +214,55 @@
       });
     }
 
+    // 3. 과학실 사용 (Lab Usage) Group
+    const labUsageToggle = document.getElementById("menu-lab-usage-toggle");
+    const submenuLabUsage = document.getElementById("submenu-lab-usage");
+    if (labUsageToggle && submenuLabUsage) {
+      labUsageToggle.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const isHidden = submenuLabUsage.style.display === "none";
+        submenuLabUsage.style.display = isHidden ? "block" : "none";
+        labUsageToggle.classList.toggle("expanded", isHidden);
+      });
+    }
+
+    const menuLablog = document.getElementById("menu-lablog-btn");
+    if (menuLablog) {
+      menuLablog.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        await App.Router.go("labUsageLog");
+        closeStartMenu();
+      });
+    }
+
     const menuLablogViewer = document.getElementById("menu-lablog-viewer-btn");
     if (menuLablogViewer) {
       menuLablogViewer.addEventListener("click", async (e) => {
         e.preventDefault();
         document.body.classList.remove("home-active");
         await App.Router.go("labUsageView");
+        closeStartMenu();
+      });
+    }
+
+    const menuLunchLabReserve = document.getElementById("menu-lunchlab-reserve-btn");
+    if (menuLunchLabReserve) {
+      menuLunchLabReserve.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        await App.Router.go("lunchLabReserve");
+        closeStartMenu();
+      });
+    }
+
+    const menuLunchLabInquiry = document.getElementById("menu-lunchlab-inquiry-btn");
+    if (menuLunchLabInquiry) {
+      menuLunchLabInquiry.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        await App.Router.go("lunchLabInquiry");
         closeStartMenu();
       });
     }
@@ -368,19 +403,39 @@
     }
 
     // 3. 기록 및 예약 (Lablog): Admin, Teacher만 보임
-    const menuLablog = document.getElementById("menu-lablog-btn");
-    if (menuLablog) {
-      if (['admin', 'teacher'].includes(role)) {
-        menuLablog.style.display = 'flex';
-      } else {
-        menuLablog.style.display = 'none';
-      }
-    }
+    //    -> Replaced by new Logic below
 
     // 3-1. 기록 조회 (Lablog Viewer): 모두에게 보임
+    //    -> Replaced by new Logic below
+
+    // [New Logic] 3. 과학실 사용 메뉴 그룹 (Lab Usage Group)
+    const labUsageToggle = document.getElementById("menu-lab-usage-toggle");
+    const submenuLabUsage = document.getElementById("submenu-lab-usage");
+
+    const menuLablog = document.getElementById("menu-lablog-btn");
     const menuLablogViewer = document.getElementById("menu-lablog-viewer-btn");
-    if (menuLablogViewer) {
-      menuLablogViewer.style.display = 'flex';
+    const menuLunchLabReserve = document.getElementById("menu-lunchlab-reserve-btn");
+    const menuLunchLabInquiry = document.getElementById("menu-lunchlab-inquiry-btn");
+
+    if (labUsageToggle) {
+      if (user) { // Any logged in user
+        labUsageToggle.style.display = 'flex';
+
+        const isTeacherOrAdmin = ['admin', 'teacher'].includes(role);
+
+        // 3-1, 3-2 (기존 메뉴): Teacher, Admin Only
+        if (menuLablog) menuLablog.style.display = isTeacherOrAdmin ? 'flex' : 'none';
+        if (menuLablogViewer) menuLablogViewer.style.display = isTeacherOrAdmin ? 'flex' : 'none';
+
+        // 3-3, 3-4 (런치랩): All Logged In Users
+        if (menuLunchLabReserve) menuLunchLabReserve.style.display = 'flex';
+        if (menuLunchLabInquiry) menuLunchLabInquiry.style.display = 'flex';
+
+      } else {
+        // Guest: Hide all
+        labUsageToggle.style.display = 'none';
+        if (submenuLabUsage) submenuLabUsage.style.display = 'none';
+      }
     }
 
     // 🔒 3-2. 수불(Usage) 메뉴 (Navbar): Admin만 보임

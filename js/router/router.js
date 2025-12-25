@@ -27,6 +27,8 @@
     labUsageLog: "pages/lab-usage-log.html",
     labUsageViewer: "pages/lab-usage-log.html", // Reuse layout
     labUsageView: "pages/lab-usage-view.html",
+    lunchLabReserve: "pages/lunch-lab-reserve.html",
+    lunchLabInquiry: "pages/lunch-lab-view.html",
     export: "pages/export.html",
   };
 
@@ -75,6 +77,12 @@
         break;
       case "labUsageView":
         if (App?.LabUsageView?.init) await App.LabUsageView.init();
+        break;
+      case "lunchLabReserve":
+        if (App?.LunchLabReserve?.init) await App.LunchLabReserve.init();
+        break;
+      case "lunchLabInquiry":
+        if (App?.LunchLabInquiry?.init) await App.LunchLabInquiry.init();
         break;
       case "wasteList":
         if (App.Waste?.bindListPage) App.Waste.bindListPage();
