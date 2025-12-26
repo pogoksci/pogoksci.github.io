@@ -82,7 +82,7 @@
         if (App?.LunchLabReserve?.init) await App.LunchLabReserve.init();
         break;
       case "lunchLabInquiry":
-        if (App?.LunchLabInquiry?.init) await App.LunchLabInquiry.init();
+        if (App?.LunchLabView?.init) await App.LunchLabView.init();
         break;
       case "wasteList":
         if (App.Waste?.bindListPage) App.Waste.bindListPage();

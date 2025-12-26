@@ -19,14 +19,19 @@
         // 2. Bind Events
         bindEvents();
 
-        // 3. Set Default Date (Tomorrow)
+        // 3. Set Default Date (Today + 7 days)
         const dateInput = document.getElementById('lunch-date');
         if (dateInput) {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            dateInput.value = tomorrow.toISOString().split('T')[0];
-            // min date = tomorrow
-            dateInput.min = tomorrow.toISOString().split('T')[0];
+            const today = new Date();
+            const targetDate = new Date(today);
+            targetDate.setDate(today.getDate() + 7);
+
+            // If target is weekend, move to Monday (Optional, but user said 'exclude weekend')
+            // Simple logic: just +7 for now as 'available from'
+
+            const minStr = targetDate.toISOString().split('T')[0];
+            dateInput.value = minStr;
+            dateInput.min = minStr; // Prevent selection in UI
         }
     };
 
@@ -53,11 +58,7 @@
                 roomSel.innerHTML = '<option value="">과학실을 선택하세요</option>' +
                     allRooms.map(r => `<option value="${r.id}">${r.room_name}</option>`).join('');
             }
-            if (teacherSel) {
-                teacherSel.innerHTML = '<option value="">담당 교사를 선택하세요</option>' +
-                    allTeachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-            }
-
+            // Teacher select is removed, no need to populate
         } catch (err) {
             console.error("❌ Failed to load initial data:", err);
             alert("데이터를 불러오는 중 오류가 발생했습니다.");
@@ -110,7 +111,7 @@
         const date = document.getElementById('lunch-date').value;
         const roomId = document.getElementById('lunch-room').value;
         const type = document.getElementById('lunch-activity-type').value;
-        const teacherId = document.getElementById('lunch-teacher').value;
+        const teacherName = document.getElementById('lunch-teacher-name').value.trim();
 
         const appNum = document.getElementById('applicant-number').value.trim();
         const appName = document.getElementById('applicant-name').value.trim();
@@ -118,8 +119,23 @@
         const pCount = document.getElementById('participant-count').value;
 
         // 2. Validation
-        if (!date || !roomId || !type || !teacherId || !appNum || !appName || !pCount) {
+        if (!date || !roomId || !type || !teacherName || !appNum || !appName || !pCount || !appPhone) {
             alert("모든 필수 항목을 입력해주세요.");
+            return;
+        }
+
+        // 7-Day Restriction Check
+        const selectedDate = new Date(date);
+        const today = new Date();
+        // Clear time components for fair comparison
+        today.setHours(0, 0, 0, 0);
+        selectedDate.setHours(0, 0, 0, 0);
+
+        const diffTime = selectedDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 7) {
+            alert("예약은 최소 일주일 전부터 가능합니다.\n(예: 오늘이 금요일이면 다음 주 금요일부터 예약 가능)");
             return;
         }
 
@@ -145,8 +161,6 @@
             contentDetail = detailInput.value.trim();
         }
 
-        const teacherName = allTeachers.find(t => String(t.id) === String(teacherId))?.name || '미지정';
-
         // 3. Format Data
         // Content Format: [신청자: 20101 홍길동 (010-1234-5678) / 인원: 5명 / 담당: 김교사] 내용...
         // Note: New schema has specific columns, but we will ALSO save to content for backward compatibility visibility.
@@ -171,7 +185,8 @@
             applicant_name: `${appNum} ${appName}`,
             phone_number: appPhone,
             participant_count: parseInt(pCount),
-            teacher_id: teacherId
+            // teacher_id: teacherId // Removed as we use free text name now
+            teacher_id: null
         };
 
         if (clubId) payload.club_id = clubId;

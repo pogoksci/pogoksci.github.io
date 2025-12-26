@@ -1,168 +1,250 @@
 // /js/pages/lunch-lab-view.js
 (function () {
-    const LunchLabInquiry = {};
-
-    let roomMap = {};
-    let lastSearchResult = [];
+    const LunchLabView = {};
 
     // State
-    const PERIOD_LUNCH = '99';
+    let selectedDate = new Date();
+    let weekDates = [];
+    let currentRoomId = ""; // "" means ALL rooms
+    let allRooms = [];
+    let roomMap = {};
 
-    LunchLabInquiry.init = async function () {
-        console.log("🔍 Lunch Lab Inquiry Init");
+    const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
-        // 1. Load Rooms Map
-        await loadRooms();
+    LunchLabView.init = async function () {
+        console.log("🍱 Lunch Lab View Init (Calendar Mode)");
 
-        // 2. Bind Filter Events
-        const btnSearch = document.getElementById('btn-search-lunch');
-        if (btnSearch) {
-            btnSearch.onclick = search;
+        // 1. Reset State
+        selectedDate = new Date();
+        weekDates = []; // reset
+
+        // 2. Bind Elements & Setup UI FIRST (Always render UI)
+        try {
+            const monthSel = document.getElementById('lunch-month-select');
+
+            // Listeners
+            if (monthSel) monthSel.onchange = (e) => {
+                const m = parseInt(e.target.value);
+                const y = selectedDate.getFullYear();
+                selectedDate = new Date(y, m - 1, 1);
+                updateWeekLabel();
+                refresh();
+            };
+
+            const btnPrev = document.getElementById('btn-prev-week');
+            if (btnPrev) btnPrev.onclick = () => { selectedDate.setDate(selectedDate.getDate() - 7); updateWeekLabel(); refresh(); };
+
+            const btnNext = document.getElementById('btn-next-week');
+            if (btnNext) btnNext.onclick = () => { selectedDate.setDate(selectedDate.getDate() + 7); updateWeekLabel(); refresh(); };
+
+            const btnToday = document.getElementById('btn-today');
+            if (btnToday) btnToday.onclick = () => { selectedDate = new Date(); updateWeekLabel(); refresh(); };
+
+            // Initial UI Logic
+            initMonthSelect();
+            updateWeekLabel(); // Determines weekDates
+
+            // Render Empty Grid first (so headers appear)
+            // We'll call refresh() which does header rendering, but safely
+            await refresh();
+
+        } catch (e) {
+            console.error("UI Setup failed:", e);
         }
 
-        // 3. Set Default Date Range (This week)
-        const startEl = document.getElementById('filter-date-start');
-        const endEl = document.getElementById('filter-date-end');
-        if (startEl && endEl) {
-            const today = new Date();
-            const nextWeek = new Date();
-            nextWeek.setDate(today.getDate() + 7);
-
-            startEl.value = today.toISOString().split('T')[0];
-            endEl.value = nextWeek.toISOString().split('T')[0];
+        // 3. Load Dependencies (Supabase) & Data
+        const supabase = globalThis.App?.supabase;
+        if (!supabase) {
+            console.warn("Supabase not found. UI initialized without data.");
+            return;
         }
 
-        // 4. Initial Search
-        await search();
+        // 4. Load Data (Parallel)
+        try {
+            // refresh() was called above, but maybe called again with data? 
+            // actually refresh() usually fetches data. 
+            // Let's just load rooms here. refresh() inside will check supabase.
+            await loadRooms();
+            // Re-fetch with rooms populated
+            await refresh();
+        } catch (err) {
+            console.error("Data load failed:", err);
+        }
     };
 
     async function loadRooms() {
         const supabase = globalThis.App?.supabase;
-        const { data } = await supabase.from('lab_rooms').select('id, room_name');
-        if (data) {
-            data.forEach(r => roomMap[r.id] = r.room_name);
+        const { data } = await supabase.from('lab_rooms').select('*').order('sort_order');
+        allRooms = data || [];
+        roomMap = {};
+        allRooms.forEach(r => roomMap[r.id] = r.room_name);
+
+        const sel = document.getElementById('lunch-room-select');
+        if (sel) {
+            sel.innerHTML = '<option value="">전체 과학실</option>' +
+                allRooms.map(r => `<option value="${r.id}">${r.room_name}</option>`).join('');
         }
     }
 
-    async function search() {
-        const supabase = globalThis.App?.supabase;
-        const status = document.getElementById('filter-status').value;
-        const start = document.getElementById('filter-date-start').value;
-        const end = document.getElementById('filter-date-end').value;
+    function initMonthSelect() {
+        const sel = document.getElementById('lunch-month-select');
+        if (!sel) return;
+        const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+        // Sort for school year? 3,4...1,2. But simple 1-12 is fine for now or match user pref.
+        // Let's stick to 1-12 or similar to lab-usage-log if requested. Lab usage log does 3..2.
+        // For simplicity here, let's do 1..12 unless user specified school year order.
+        // Let's follow lab-usage-log style: 3..12, 1, 2
+        const schoolMonths = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2];
+        sel.innerHTML = schoolMonths.map(m => `<option value="${m}">${m}월</option>`).join('');
+        sel.value = selectedDate.getMonth() + 1;
+    }
 
-        // Query: Only Lunch Period ('99')
+    function updateWeekLabel() {
+        const label = document.getElementById('current-week-label');
+        const day = selectedDate.getDay();
+        const diffToMon = (day === 0 ? -6 : 1 - day);
+        const mon = new Date(selectedDate);
+        mon.setDate(selectedDate.getDate() + diffToMon);
+
+        weekDates = [];
+        // User requested Mon-Fri only
+        for (let i = 0; i < 5; i++) {
+            const d = new Date(mon);
+            d.setDate(mon.getDate() + i);
+            weekDates.push(d);
+        }
+
+        if (label) {
+            const fmt = (d) => `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+            // Show Mon ~ Fri
+            label.textContent = `${fmt(weekDates[0])} ~ ${fmt(weekDates[4])}`;
+        }
+    }
+
+    async function refresh() {
+        const supabase = globalThis.App?.supabase;
+
+        // Safety Check
+        if (!weekDates || weekDates.length === 0) {
+            console.warn("Refresh called but weekDates is empty. Skipping.");
+            return;
+        }
+
+        // Render Header Dates
+        const headRow = document.getElementById('usage-grid-header');
+        if (headRow) {
+            headRow.innerHTML = '<th style="width: 60px; text-align:center;">과학실</th>'; // Changed width to 60px
+            weekDates.forEach(d => {
+                const day = d.getDay();
+
+                const isToday = d.toDateString() === new Date().toDateString();
+                const th = document.createElement('th');
+                if (isToday) th.classList.add('is-today');
+                th.innerHTML = `<span class="date-num">${d.getDate()}</span><span class="day-text">${DAY_LABELS[day]}요일</span>`;
+                headRow.appendChild(th);
+            });
+        }
+
+        // Fetch Data
+        const start = weekDates[0].toISOString().split('T')[0];
+        const end = weekDates[weekDates.length - 1].toISOString().split('T')[0];
+
         let query = supabase.from('lab_usage_log')
             .select('*')
-            .eq('period', PERIOD_LUNCH)
-            .order('usage_date', { ascending: false });
+            .eq('period', '99') // Lunch
+            .gte('usage_date', start)
+            .lte('usage_date', end);
 
-        if (status && status !== 'all') {
-            query = query.eq('remarks', status); // remarks stores status
-        }
-        if (start) query = query.gte('usage_date', start);
-        if (end) query = query.lte('usage_date', end);
+        // Remove Room Filter Logic (Show all rooms)
 
         const { data, error } = await query;
         if (error) {
-            console.error("Search failed:", error);
-            alert("조회 실패: " + error.message);
+            console.error(error);
+            // Even on error, render empty body to show grid structure
+            renderBody([]);
             return;
         }
 
-        lastSearchResult = data || [];
-        renderTable(lastSearchResult);
+        renderBody(data || []);
     }
 
-    function renderTable(list) {
-        const tbody = document.getElementById('lunch-list-body');
-        const empty = document.getElementById('lunch-list-empty');
+    function renderBody(logs) {
+        const body = document.getElementById('usage-grid-body');
+        if (!body) return;
+        body.innerHTML = '';
 
-        if (!tbody) return;
-        tbody.innerHTML = '';
-
-        if (!list || list.length === 0) {
-            empty.style.display = 'flex';
-            return;
-        }
-        empty.style.display = 'none';
-
-        const userRole = globalThis.App?.Auth?.user?.role;
-        const canManage = ['admin', 'teacher'].includes(userRole);
-
-        list.forEach(item => {
+        // Iterate over ALL ROOMS to create rows
+        allRooms.forEach(room => {
             const tr = document.createElement('tr');
 
-            // Status Badge Color
-            let badgeClass = 'secondary';
-            if (item.remarks === '승인') badgeClass = 'success';
-            else if (item.remarks === '거절') badgeClass = 'danger';
-            else if (item.remarks === '보류') badgeClass = 'warning';
-            else if (item.remarks === '신청중') badgeClass = 'primary'; // blue
+            // Room Name Column
+            const tdRoom = document.createElement('td');
+            tdRoom.className = 'period-col'; // Reuse style for simplicity
+            tdRoom.textContent = room.room_name;
+            tr.appendChild(tdRoom);
 
-            // Parse Content (Backward compatibility: show raw if simple, show parsed if complex)
-            // But requirement said just put everything in content.
-            // Let's display content as is, maybe truncating or styling.
+            weekDates.forEach(date => {
+                const dateStr = date.toISOString().split('T')[0];
+                const td = document.createElement('td');
 
-            tr.innerHTML = `
-                <td>${item.usage_date}</td>
-                <td>${roomMap[item.lab_room_id] || '-'}</td>
-                <td>${item.activity_type}</td>
-                <td style="white-space: pre-wrap; font-size: 0.9em;">${statusColorFilter(item.content)}</td>
-                <td><span class="badge badge-${badgeClass}">${item.remarks || '신청중'}</span></td>
-                <td>
-                    ${canManage ? renderActionButtons(item) : '-'}
-                </td>
-            `;
-            tbody.appendChild(tr);
+                // Filter logs for this Room AND this Date
+                const cellLogs = logs.filter(l => l.usage_date === dateStr && l.lab_room_id === room.id);
+
+                const container = document.createElement('div');
+                container.className = 'activity-container';
+
+                cellLogs.forEach(log => {
+                    const item = document.createElement('div');
+
+                    // Status mapping
+                    let statusClass = 'status-pending';
+                    if (log.remarks === '승인') statusClass = 'status-approved';
+                    if (log.remarks === '거절') statusClass = 'status-rejected';
+
+                    item.className = `activity-item ${statusClass}`;
+
+                    // No need to show Room Name inside the card anymore since it's the row header
+                    // Show Applicant or Activity Type instead?
+                    // User request didn't specify, but "Activity" or "Applicant" is useful.
+                    // Let's keep it simple: Content or Activity Type.
+
+                    // Update content: Removed Room Name from card header
+                    item.innerHTML = `
+                        <div class="act-content" title="${log.content || ''}" style="margin-top:0;">
+                             ${log.content || (log.activity_type + ' 활동')}
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                            <span class="badge-status" style="background:${getStatusColor(log.remarks)}; color:#fff;">${log.remarks || '신청중'}</span>
+                        </div>
+                    `;
+
+                    item.onclick = () => alertDetail(log);
+
+                    container.appendChild(item);
+                });
+
+                td.appendChild(container);
+                tr.appendChild(td);
+            });
+
+            body.appendChild(tr);
         });
     }
 
-    function statusColorFilter(text) {
-        // Optional: Highlight key parts if needed, or just return text
-        if (!text) return '';
-        // Make "[...]" bold
-        return text.replace(/\[(.*?)\]/g, '<strong>[$1]</strong>');
+    function getStatusColor(status) {
+        if (status === '승인') return '#4caf50'; // Green
+        if (status === '거절') return '#f44336'; // Red
+        return '#ff9800'; // Orange (Pending)
     }
 
-    function renderActionButtons(item) {
-        // If approved/rejected, maybe show fewer buttons or allow rollback?
-        // Let's allow changing to any status except current
-
-        const current = item.remarks || '신청중';
-        let html = '<div style="display:flex; gap: 4px; flex-wrap: wrap;">';
-
-        if (current !== '승인') {
-            html += `<button class="btn-xs btn-success" onclick="App.LunchLabInquiry.updateStatus(${item.id}, '승인')">승인</button>`;
-        }
-        if (current !== '보류') {
-            html += `<button class="btn-xs btn-warning" onclick="App.LunchLabInquiry.updateStatus(${item.id}, '보류')">보류</button>`;
-        }
-        if (current !== '거절') {
-            html += `<button class="btn-xs btn-danger" onclick="App.LunchLabInquiry.updateStatus(${item.id}, '거절')">거절</button>`;
-        }
-
-        html += '</div>';
-        return html;
+    function alertDetail(log) {
+        // Simple alert for detail for now, or we can make a modal if requested.
+        // User didn't explicitly ask for detail view, just the calendar view.
+        // Showing content is enough.
+        const roomName = roomMap[log.lab_room_id] || '-';
+        alert(`[${roomName}] ${log.usage_date}\n\n상태: ${log.remarks || '신청중'}\n\n내용:\n${log.content}`);
     }
-
-    LunchLabInquiry.updateStatus = async function (id, newStatus) {
-        if (!confirm(`상태를 '${newStatus}'(으)로 변경하시겠습니까?`)) return;
-
-        const supabase = globalThis.App?.supabase;
-        const { error } = await supabase
-            .from('lab_usage_log')
-            .update({ remarks: newStatus })
-            .eq('id', id);
-
-        if (error) {
-            console.error("Update failed:", error);
-            alert("상태 변경 실패: " + error.message);
-        } else {
-            // Refresh
-            search();
-        }
-    };
 
     globalThis.App = globalThis.App || {};
-    globalThis.App.LunchLabInquiry = LunchLabInquiry;
+    globalThis.App.LunchLabView = LunchLabView;
 })();
