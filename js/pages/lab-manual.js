@@ -4,53 +4,94 @@
     let MANUAL_DATA = [];
 
     LabManual.init = async function () {
-        console.log("📖 Lab Manual Init");
-        const mainContent = document.getElementById('lab-manual-container');
-        if (!mainContent) {
-            console.error("❌ lab-manual-container not found!");
-            return;
-        }
+        try {
+            console.log("📖 Lab Manual Init");
+            const mainContent = document.getElementById('lab-manual-container');
+            if (!mainContent) {
+                console.error("❌ lab-manual-container not found!");
+                return;
+            }
 
-        // 1. Force Body Scroll Unlock
-        document.body.style.overflowY = "auto";
-        document.body.style.height = "auto";
-        document.body.style.overscrollBehaviorY = "auto";
+            // 1. Force Body Scroll Unlock
+            document.body.style.overflowY = "auto";
+            document.body.style.height = "auto";
+            document.body.style.overscrollBehaviorY = "auto";
 
-        // Show Loading State
-        mainContent.innerHTML = '<div style="padding:40px; text-align:center;">데이터를 불러오는 중입니다...</div>';
+            // Show Loading State
+            mainContent.innerHTML = '<div style="padding:40px; text-align:center;">데이터를 불러오는 중입니다...</div>';
 
-        // 2. Fetch Data from DB
-        await fetchContentFromDB();
+            if (!App.supabase) {
+                throw new Error("Supabase Client is not initialized.");
+            }
 
-        mainContent.innerHTML = `
-            <div style="
-                height: 100vh; 
-                overflow-y: auto; 
-                -webkit-overflow-scrolling: touch; 
-                padding: 20px; 
-                box-sizing: border-box; 
-                padding-bottom: 120px;
-            ">
-                <div style="max-width: 1000px; margin: 0 auto;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-                        <h1 style="margin:0; font-weight: 700; color: #333;">🧪 과학실 사용 설명서</h1>
-                        <button id="btn-sync-manual" style="display:none; padding:8px 16px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">
-                            🔄 최신 콘텐츠 동기화
-                        </button>
-                    </div>
-                    <p style="color:#666; margin-bottom:30px;">과학실 시설 현황과 안전 장비 위치를 확인하세요.</p>
-                    <div style="display:flex; flex-direction:column; gap:40px;">
-                        ${renderManuals()}
+            // 2. Fetch Data from DB
+            await fetchContentFromDB();
+
+            mainContent.innerHTML = `
+                <div style="
+                    height: 100vh; 
+                    overflow-y: auto; 
+                    -webkit-overflow-scrolling: touch; 
+                    padding: 20px; 
+                    box-sizing: border-box; 
+                    padding-bottom: 120px;
+                ">
+                    <div style="max-width: 1000px; margin: 0 auto;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+                            <h1 style="margin:0; font-weight: 700; color: #333;">🧪 과학실 사용 설명서</h1>
+                            <button id="btn-sync-manual" style="display:none; padding:8px 16px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">
+                                🔄 최신 콘텐츠 동기화
+                            </button>
+                        </div>
+                        <p style="color:#666; margin-bottom:30px;">과학실 시설 현황과 안전 장비 위치를 확인하세요.</p>
+                        <div style="display:flex; flex-direction:column; gap:40px;">
+                            ${renderManuals()}
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        checkAdminRole();
+            checkAdminRole();
+        } catch (err) {
+            console.error("LabManual Init Error:", err);
+            const mainContent = document.getElementById('lab-manual-container');
+            if (mainContent) mainContent.innerHTML = `<div style="padding:20px; color:red;">오류가 발생했습니다: ${err.message}</div>`;
+            alert("오류 발생: " + err.message);
+        }
     };
 
+    function checkAdminRole() {
+        if (App.Auth && App.Auth.isAdmin && App.Auth.isAdmin()) {
+            const btn = document.getElementById('btn-sync-manual');
+            if (btn) {
+                btn.style.display = 'block';
+                btn.onclick = triggerContentSync;
+            }
+        }
+    }
+
+    async function triggerContentSync() {
+        if (!confirm("구글 사이트(원본)의 최신 내용으로 동기화하시겠습니까?\\n기존 DB 데이터는 업데이트됩니다.")) return;
+        const btn = document.getElementById('btn-sync-manual');
+        btn.disabled = true;
+        btn.textContent = "동기화 중...";
+
+        const { data, error } = await App.supabase.functions.invoke('sync-content', {
+            body: { target: 'manual' }
+        });
+
+        if (error) {
+            alert("동기화 실패: " + error.message);
+            btn.textContent = "🔄 최신 콘텐츠 동기화";
+            btn.disabled = false;
+        } else {
+            alert(data.message || "동기화 완료!");
+            location.reload();
+        }
+    }
+
     async function fetchContentFromDB() {
-        const { data, error } = await supabase
+        const { data, error } = await App.supabase
             .from('lab_manual_content')
             .select('*')
             .order('display_order', { ascending: true });
