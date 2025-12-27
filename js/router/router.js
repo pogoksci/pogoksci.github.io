@@ -47,8 +47,8 @@
 
     // 1. History Push
     if (!options.skipPush) {
-      const url = `?page=${pageKey}`;
-      history.pushState({ pageKey, params }, "", url);
+      // Clean URL Mode: Don't change the address bar URL, but push state for back-button support
+      history.pushState({ pageKey, params }, "", null);
     }
     currentState = { pageKey, params };
 
