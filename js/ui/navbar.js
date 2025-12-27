@@ -267,6 +267,27 @@
       });
     }
 
+    // New Safety & Manual Pages
+    const menuSafetyEdu = document.getElementById("menu-safety-edu");
+    if (menuSafetyEdu) {
+      menuSafetyEdu.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        await App.Router.go("safetyEdu");
+        closeStartMenu();
+      });
+    }
+
+    const menuLabManual = document.getElementById("menu-lab-manual");
+    if (menuLabManual) {
+      menuLabManual.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        await App.Router.go("labManual");
+        closeStartMenu();
+      });
+    }
+
     const menuHome = document.getElementById("menu-home");
     if (menuHome) {
       menuHome.addEventListener("click", (e) => {
@@ -416,6 +437,8 @@
     const menuLablogViewer = document.getElementById("menu-lablog-viewer-btn");
     const menuLunchLabReserve = document.getElementById("menu-lunchlab-reserve-btn");
     const menuLunchLabInquiry = document.getElementById("menu-lunchlab-inquiry-btn");
+    const menuSafetyEdu = document.getElementById("menu-safety-edu");
+    const menuLabManual = document.getElementById("menu-lab-manual");
 
     if (labUsageToggle) {
       if (user) { // Any logged in user
@@ -441,19 +464,19 @@
     // 🔒 3-2. 수불(Usage) 메뉴 (Navbar): Admin만 보임
     const navUsage = document.getElementById("nav-usage");
     if (navUsage) {
-       // Navbar가 보이는 상태(Management Mode)인 경우에만 제어하도록 주의
-       // 하지만 updateAuthUI는 상시 체크하므로 display 상태를 강제할 수 있음.
-       // 단, switchMode가 display:none을 건 상태라면 여기서 flex로 켜면 안됨.
-       // 따라서, 현재 display가 none이 아닐 때(=활성 모드일때)만 간섭하거나,
-       // 혹은 단순히 role check 후 hide만 수행 (show는 switchMode에 위임)
-       if (role !== 'admin') {
-           navUsage.style.display = 'none';
-       } else {
-           // Admin이면 원래대로 보여야 하는데, 현재 모드가 Management인지 알 수 없음.
-           // 안전하게: switchMode가 제어하므로 여기서는 '권한 없어서 숨김'만 처리.
-           // 하지만 '로그인' 직후에는 switchMode가 호출되지 않을 수도 있으므로 명시적 처리 필요?
-           // 일단 숨김 처리는 확실히 함.
-       }
+      // Navbar가 보이는 상태(Management Mode)인 경우에만 제어하도록 주의
+      // 하지만 updateAuthUI는 상시 체크하므로 display 상태를 강제할 수 있음.
+      // 단, switchMode가 display:none을 건 상태라면 여기서 flex로 켜면 안됨.
+      // 따라서, 현재 display가 none이 아닐 때(=활성 모드일때)만 간섭하거나,
+      // 혹은 단순히 role check 후 hide만 수행 (show는 switchMode에 위임)
+      if (role !== 'admin') {
+        navUsage.style.display = 'none';
+      } else {
+        // Admin이면 원래대로 보여야 하는데, 현재 모드가 Management인지 알 수 없음.
+        // 안전하게: switchMode가 제어하므로 여기서는 '권한 없어서 숨김'만 처리.
+        // 하지만 '로그인' 직후에는 switchMode가 호출되지 않을 수도 있으므로 명시적 처리 필요?
+        // 일단 숨김 처리는 확실히 함.
+      }
     }
 
     // 4. 유저 ID 및 Auth Footer 표시 업데이트

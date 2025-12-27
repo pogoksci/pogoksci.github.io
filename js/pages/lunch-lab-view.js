@@ -172,6 +172,8 @@
         const body = document.getElementById('usage-grid-body');
         if (!body) return;
         body.innerHTML = '';
+        const isTeacher = globalThis.App?.Auth?.isTeacher();
+        const userId = globalThis.App?.Auth?.user?.id;
 
         // Iterate over ALL ROOMS to create rows
         allRooms.forEach(room => {
@@ -197,28 +199,40 @@
                     const item = document.createElement('div');
 
                     // Status mapping
+                    const remarks = log.remarks || '신청중';
                     let statusClass = 'status-pending';
-                    if (log.remarks === '승인') statusClass = 'status-approved';
-                    if (log.remarks === '거절') statusClass = 'status-rejected';
+                    if (remarks.startsWith('승인')) statusClass = 'status-approved';
+                    if (remarks.startsWith('거절')) statusClass = 'status-rejected';
 
                     item.className = `activity-item ${statusClass}`;
 
-                    // No need to show Room Name inside the card anymore since it's the row header
-                    // Show Applicant or Activity Type instead?
-                    // User request didn't specify, but "Activity" or "Applicant" is useful.
-                    // Let's keep it simple: Content or Activity Type.
+                    // Buttons (Only for Teachers when Pending or Hold)
+                    let buttonsHtml = '';
+                    if (isTeacher && (remarks === '신청중' || remarks.startsWith('보류'))) {
+                        buttonsHtml = `
+                            <div class="teacher-actions" style="margin-top:4px; display:flex; gap:4px; justify-content:flex-end;">
+                                <button class="btn-xs btn-approve" data-id="${log.id}">승인</button>
+                                <button class="btn-xs btn-hold" data-id="${log.id}">보류</button>
+                                <button class="btn-xs btn-reject" data-id="${log.id}">거절</button>
+                            </div>
+                        `;
+                    }
 
-                    // Update content: Removed Room Name from card header
                     item.innerHTML = `
                         <div class="act-content" title="${log.content || ''}" style="margin-top:0;">
                              ${log.content || (log.activity_type + ' 활동')}
                         </div>
-                        <div style="display:flex; justify-content:space-between; margin-top:4px;">
-                            <span class="badge-status" style="background:${getStatusColor(log.remarks)}; color:#fff;">${log.remarks || '신청중'}</span>
+                        <div style="display:flex; justify-content:space-between; margin-top:4px; align-items:center;">
+                            <span class="badge-status" style="background:${getStatusColor(remarks)}; color:#fff;">${remarks}</span>
                         </div>
+                        ${buttonsHtml}
                     `;
 
-                    item.onclick = () => alertDetail(log);
+                    // Click logic: Alert detail unless button clicked
+                    item.onclick = (e) => {
+                        if (e.target.tagName === 'BUTTON') return; // Let buttons handle specific actions
+                        alertDetail(log);
+                    };
 
                     container.appendChild(item);
                 });
@@ -229,20 +243,103 @@
 
             body.appendChild(tr);
         });
+
+        // Bind Button Events (Delegation or Direct)
+        // Since we re-render often, let's just bind to body delegation if performance was an issue, but here direct is fine.
+        // Actually, innerHTML wipes, so need to bind again.
+        bindActionButtons();
+
+        // Reuse existing 'isTeacher' from top of scope
+        if (!isTeacher) {
+            document.querySelectorAll('.act-content').forEach(el => {
+                el.textContent = maskPersonalInformation(el.textContent);
+            });
+            document.querySelectorAll('.act-content').forEach(el => {
+                el.title = maskPersonalInformation(el.title);
+            });
+        }
+    }
+
+    // Privacy Masking Helper
+    function maskPersonalInformation(text) {
+        if (!text) return '';
+        let safeText = text;
+        // 1. Remove Phone Number
+        safeText = safeText.replace(/\s*\(?010-\d{3,4}-\d{4}\)?/g, '');
+        // 2. Mask ID & Name
+        safeText = safeText.replace(/신청자:\s*(\d{3})(\d{2})\s+([가-힣])([가-힣]*)/g, (match, idPre, idSuf, lastName, firstName) => {
+            const maskedName = lastName + '○'.repeat(firstName.length || 1);
+            return `신청자: ${idPre}○○ ${maskedName}`;
+        });
+        return safeText;
+    }
+
+    function bindActionButtons() {
+        document.querySelectorAll('.btn-approve').forEach(btn => {
+            btn.onclick = () => handleStatusChange(btn.dataset.id, 'approve');
+        });
+        document.querySelectorAll('.btn-hold').forEach(btn => {
+            btn.onclick = () => handleStatusChange(btn.dataset.id, 'hold');
+        });
+        document.querySelectorAll('.btn-reject').forEach(btn => {
+            btn.onclick = () => handleStatusChange(btn.dataset.id, 'reject');
+        });
+    }
+
+    async function handleStatusChange(logId, action) {
+        const supabase = globalThis.App?.supabase;
+        let newStatus = '';
+
+        if (action === 'approve') {
+            const name = prompt("담당 교사(승인자) 이름을 입력해주세요:");
+            if (!name) return; // Cancel or empty
+            newStatus = `승인:${name}`;
+        } else if (action === 'hold') {
+            const reason = prompt("보류 사유를 입력해주세요:");
+            if (!reason) return;
+            newStatus = `보류:${reason}`;
+        } else if (action === 'reject') {
+            const reason = prompt("거절 사유를 입력해주세요:");
+            if (!reason) return;
+            newStatus = `거절:${reason}`;
+        }
+
+        if (!newStatus) return;
+
+        // Optimistic Update? No, ensure DB consistency
+        try {
+            const { error } = await supabase
+                .from('lab_usage_log')
+                .update({ remarks: newStatus })
+                .eq('id', logId);
+
+            if (error) throw error;
+
+            // Refresh
+            await refresh();
+
+        } catch (err) {
+            console.error(err);
+            alert("상태 변경 실패: " + err.message);
+        }
     }
 
     function getStatusColor(status) {
-        if (status === '승인') return '#4caf50'; // Green
-        if (status === '거절') return '#f44336'; // Red
-        return '#ff9800'; // Orange (Pending)
+        if (status.startsWith('승인')) return '#4caf50'; // Green
+        if (status.startsWith('거절')) return '#f44336'; // Red
+        return '#ff9800'; // Orange (Pending) or '보류'
     }
 
     function alertDetail(log) {
-        // Simple alert for detail for now, or we can make a modal if requested.
-        // User didn't explicitly ask for detail view, just the calendar view.
-        // Showing content is enough.
+        const isTeacher = globalThis.App?.Auth?.isTeacher();
         const roomName = roomMap[log.lab_room_id] || '-';
-        alert(`[${roomName}] ${log.usage_date}\n\n상태: ${log.remarks || '신청중'}\n\n내용:\n${log.content}`);
+
+        let displayContent = log.content || '';
+        if (!isTeacher) {
+            displayContent = maskPersonalInformation(displayContent);
+        }
+
+        alert(`[${roomName}] ${log.usage_date}\n\n상태: ${log.remarks}\n\n내용:\n${displayContent}`);
     }
 
     globalThis.App = globalThis.App || {};

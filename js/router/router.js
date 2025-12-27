@@ -30,6 +30,8 @@
     lunchLabReserve: "pages/lunch-lab-reserve.html",
     lunchLabInquiry: "pages/lunch-lab-view.html",
     export: "pages/export.html",
+    safetyEdu: "pages/safety-edu.html",
+    labManual: "pages/lab-manual.html",
   };
 
   let currentState = null;
@@ -62,6 +64,12 @@
     switch (pageKey) {
       case "labSettings":
         if (App?.LabSettings?.init) await App.LabSettings.init();
+        break;
+      case "safetyEdu":
+        if (App?.SafetyEdu?.init) await App.SafetyEdu.init();
+        break;
+      case "labManual":
+        if (App?.LabManual?.init) await App.LabManual.init();
         break;
       case "labTimetable":
         if (App?.LabTimetable?.init) await App.LabTimetable.init();

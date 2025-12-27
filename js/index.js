@@ -49,6 +49,8 @@
     "./js/pages/lab-usage-view.js",
     "./js/pages/lunch-lab-reserve.js",
     "./js/pages/lunch-lab-view.js",
+    "./js/pages/safety-edu.js?v=20251227",
+    "./js/pages/lab-manual.js?v=20251227",
   ];
   const componentModules = [
     "./js/components/sort-dropdown.js", // 🔹 여기 추가됨
