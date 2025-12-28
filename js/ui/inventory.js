@@ -144,7 +144,10 @@
                       <span class="meta-value">${item.molecular_mass || '-'}</span>
                     </div>
                     <div class="meta-line3">${item.concentration_text || '-'}</div>
-                    <div class="meta-line4">${item.current_text}</div>
+                    <div class="meta-line4">
+                      ${item.current_text}
+                      ${item.is_low_stock ? `<span style="background-color: #ffcccc; color: #d63031; border: 1px solid #d63031; border-radius: 4px; padding: 0px 3px; font-size: 0.7rem; font-weight: bold; margin-left: 5px; vertical-align: middle;">구입요청</span>` : ""}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -201,7 +204,7 @@
     const { data, error } = await supabase
       .from("Inventory")
       .select(`
-        id, bottle_identifier, current_amount, unit, classification, created_at, photo_url_320, photo_url_160,
+        id, bottle_identifier, current_amount, initial_amount, unit, classification, created_at, photo_url_320, photo_url_160,
         concentration_value, concentration_unit, status, edited_name_kor,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, chem_name_kor_mod, substance_name_mod, molecular_formula_mod, Synonyms ( synonyms_name, synonyms_eng ), ReplacedRns!ReplacedRns_substance_id_fkey ( replaced_rn ) ),
@@ -291,6 +294,15 @@
           ? `${row.current_amount}${row.unit || ""}`
           : "-";
 
+      // ⚠️ Low Stock Badge (List View)
+      if (Number(row.initial_amount) > 0 && Number(row.current_amount) <= (Number(row.initial_amount) * 0.2)) {
+        // Add badge to currentText (Note: renderList handles HTML if we modify where it is used, 
+        // but currently currentText is just text in template string. We need to inject HTML in template.)
+        // Let's modify renderList logic below instead, or just return a flag.
+        // Better: Return it as a new property.
+        row.is_low_stock = true;
+      }
+
       // ✅ Synonyms 처리
       const synonymsList = row.Substance?.Synonyms || [];
       const synonymsName = synonymsList.map((s) => s.synonyms_name).filter(Boolean).join(", ");
@@ -325,6 +337,7 @@
         synonyms_name: synonymsName,
         synonyms_eng: synonymsEng,
         replaced_rn: replacedRns,
+        is_low_stock: row.is_low_stock,
       };
     });
 
@@ -553,16 +566,16 @@
 
     let rowsHtml = "";
     currentFilteredData.forEach((item, index) => {
-        // null 체크 및 안전한 문자열 변환
-        const nameKor = item.name_kor || "-";
-        const nameEng = item.name_eng || "";
-        const casRn = item.cas_rn || "-";
-        const formula = item.formula || "-";
-        const location = item.location_text || "-";
-        const amount = item.current_text || "-";
-        const classification = item.classification || "-";
+      // null 체크 및 안전한 문자열 변환
+      const nameKor = item.name_kor || "-";
+      const nameEng = item.name_eng || "";
+      const casRn = item.cas_rn || "-";
+      const formula = item.formula || "-";
+      const location = item.location_text || "-";
+      const amount = item.current_text || "-";
+      const classification = item.classification || "-";
 
-        rowsHtml += `
+      rowsHtml += `
         <tr>
             <td style="text-align: center;">${item.id}</td>
             <td>
@@ -643,197 +656,197 @@
   // ------------------------------------------------------------
 
   function openStockReportModal() {
-      const modal = document.getElementById("modal-stock-report");
-      const form = document.getElementById("form-stock-report");
-      if (!modal || !form) return;
+    const modal = document.getElementById("modal-stock-report");
+    const form = document.getElementById("form-stock-report");
+    if (!modal || !form) return;
 
-      // Disable all FABs (Dimmed) while modal is open
+    // Disable all FABs (Dimmed) while modal is open
+    const fabs = document.querySelectorAll(".fab");
+    fabs.forEach(fab => {
+      fab.style.opacity = "0.3";
+      fab.style.pointerEvents = "none";
+      fab.style.filter = "grayscale(100%)";
+      fab.style.zIndex = "1000";
+    });
+
+    if (App.Fab && typeof App.Fab.setDisabled === 'function') {
+      App.Fab.setDisabled(true);
+    }
+
+    // Portal Strategy: Move modal to body to break stacking context constraints
+    const originalParent = modal.parentNode;
+    const placeholder = document.createComment("modal-portal-placeholder");
+    if (originalParent) {
+      originalParent.replaceChild(placeholder, modal);
+    }
+    document.body.appendChild(modal);
+
+    modal.style.display = "flex";
+
+    const cleanup = () => {
+      modal.style.display = "none";
+
+      // Restore Modal to original location
+      if (placeholder && placeholder.isConnected) {
+        placeholder.replaceWith(modal);
+      } else {
+        modal.remove(); // If placeholder is gone (navigation), remove zombie modal
+      }
+
+      // Re-enable all FABs
       const fabs = document.querySelectorAll(".fab");
       fabs.forEach(fab => {
-          fab.style.opacity = "0.3";
-          fab.style.pointerEvents = "none";
-          fab.style.filter = "grayscale(100%)";
-          fab.style.zIndex = "1000"; 
+        fab.style.opacity = "";
+        fab.style.pointerEvents = "";
+        fab.style.filter = "";
+        fab.style.zIndex = "";
       });
-      
       if (App.Fab && typeof App.Fab.setDisabled === 'function') {
-          App.Fab.setDisabled(true);
+        App.Fab.setDisabled(false);
       }
+    };
 
-      // Portal Strategy: Move modal to body to break stacking context constraints
-      const originalParent = modal.parentNode;
-      const placeholder = document.createComment("modal-portal-placeholder");
-      if (originalParent) {
-          originalParent.replaceChild(placeholder, modal);
-      }
-      document.body.appendChild(modal);
+    // Form Submit
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const startDate = document.getElementById("report-start-date").value;
+      const endDate = document.getElementById("report-end-date").value;
+      const target = form.elements["report-target"].value;
+      const layout = form.elements["report-layout"].value;
 
-      modal.style.display = "flex";
+      if (!startDate || !endDate) return alert("기간을 입력해주세요.");
 
-      const cleanup = () => {
-          modal.style.display = "none";
-          
-          // Restore Modal to original location
-          if (placeholder && placeholder.isConnected) {
-              placeholder.replaceWith(modal);
-          } else {
-              modal.remove(); // If placeholder is gone (navigation), remove zombie modal
-          }
+      cleanup(); // Close and restore
+      await generateStockReport({ startDate, endDate, target, layout });
+    };
 
-          // Re-enable all FABs
-          const fabs = document.querySelectorAll(".fab");
-          fabs.forEach(fab => {
-             fab.style.opacity = "";
-             fab.style.pointerEvents = "";
-             fab.style.filter = "";
-             fab.style.zIndex = ""; 
-          });
-          if (App.Fab && typeof App.Fab.setDisabled === 'function') {
-              App.Fab.setDisabled(false);
-          }
-      };
-
-      // Form Submit
-      form.onsubmit = async (e) => {
-          e.preventDefault();
-          const startDate = document.getElementById("report-start-date").value;
-          const endDate = document.getElementById("report-end-date").value;
-          const target = form.elements["report-target"].value; 
-          const layout = form.elements["report-layout"].value;
-
-          if (!startDate || !endDate) return alert("기간을 입력해주세요.");
-
-          cleanup(); // Close and restore
-          await generateStockReport({ startDate, endDate, target, layout });
-      };
-
-      // Close Button
-      const closeBtn = document.getElementById("btn-close-report-modal");
-      if (closeBtn) {
-          closeBtn.onclick = cleanup;
-      }
+    // Close Button
+    const closeBtn = document.getElementById("btn-close-report-modal");
+    if (closeBtn) {
+      closeBtn.onclick = cleanup;
+    }
   }
 
   function setReportPeriod(type) {
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth(); // 0-11
-      const startDateEl = document.getElementById("report-start-date");
-      const endDateEl = document.getElementById("report-end-date");
-      if (!startDateEl || !endDateEl) return;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-11
+    const startDateEl = document.getElementById("report-start-date");
+    const endDateEl = document.getElementById("report-end-date");
+    if (!startDateEl || !endDateEl) return;
 
-      let start, end;
+    let start, end;
 
-      // School Year Logic: Mar 1 ~ Next Feb 28
-      // If currently Jan or Feb, we are in the previous academic year.
-      const academicYear = (currentMonth < 2) ? currentYear - 1 : currentYear;
+    // School Year Logic: Mar 1 ~ Next Feb 28
+    // If currently Jan or Feb, we are in the previous academic year.
+    const academicYear = (currentMonth < 2) ? currentYear - 1 : currentYear;
 
-      if (type === 'cur_year') {
-          start = `${academicYear}-03-01`;
-          end = `${academicYear + 1}-02-28`;
-      } else if (type === 'last_year') {
-          start = `${academicYear - 1}-03-01`;
-          end = `${academicYear}-02-28`;
-      } else if (type === '1st_sem') {
-          start = `${academicYear}-03-01`;
-          end = `${academicYear}-08-31`; // Approx
-      } else if (type === '2nd_sem') {
-          start = `${academicYear}-09-01`;
-          end = `${academicYear + 1}-02-28`;
-      }
+    if (type === 'cur_year') {
+      start = `${academicYear}-03-01`;
+      end = `${academicYear + 1}-02-28`;
+    } else if (type === 'last_year') {
+      start = `${academicYear - 1}-03-01`;
+      end = `${academicYear}-02-28`;
+    } else if (type === '1st_sem') {
+      start = `${academicYear}-03-01`;
+      end = `${academicYear}-08-31`; // Approx
+    } else if (type === '2nd_sem') {
+      start = `${academicYear}-09-01`;
+      end = `${academicYear + 1}-02-28`;
+    }
 
-      startDateEl.value = start;
-      endDateEl.value = end;
+    startDateEl.value = start;
+    endDateEl.value = end;
   }
 
   async function generateStockReport({ startDate, endDate, target, layout }) {
-      // 1. Fetch Data
-      let itemsToProcess = (currentFilteredData && currentFilteredData.length > 0) 
-                           ? currentFilteredData 
-                           : allInventoryData;
+    // 1. Fetch Data
+    let itemsToProcess = (currentFilteredData && currentFilteredData.length > 0)
+      ? currentFilteredData
+      : allInventoryData;
 
-      if (itemsToProcess.length === 0) return alert("출력할 약품 데이터가 없습니다.");
+    if (itemsToProcess.length === 0) return alert("출력할 약품 데이터가 없습니다.");
 
-      const supabase = getSupabase();
+    const supabase = getSupabase();
 
-      // 2. Fetch All Usage Logs for these items
-      const ids = itemsToProcess.map(i => i.id);
-      
-      const { data: logs, error } = await supabase
-          .from("UsageLog")
-          .select("*")
-          .in("inventory_id", ids)
-          .order("usage_date", { ascending: true })
-          .order("created_at", { ascending: true });
+    // 2. Fetch All Usage Logs for these items
+    const ids = itemsToProcess.map(i => i.id);
 
-      if (error) {
-          console.error(error);
-          return alert("기록을 불러오는데 실패했습니다.");
-      }
+    const { data: logs, error } = await supabase
+      .from("UsageLog")
+      .select("*")
+      .in("inventory_id", ids)
+      .order("usage_date", { ascending: true })
+      .order("created_at", { ascending: true });
 
-      // 3. Process Per Item
-      const reportItems = [];
+    if (error) {
+      console.error(error);
+      return alert("기록을 불러오는데 실패했습니다.");
+    }
 
-      itemsToProcess.forEach(item => {
-          const itemLogs = logs.filter(l => l.inventory_id === item.id);
-          
-          // Split Logs based on usage_date
-          const beforeLogs = itemLogs.filter(l => {
-              const d = l.usage_date;
-              return d < startDate; // startDate is "YYYY-MM-DD"
-          });
-          const periodLogs = itemLogs.filter(l => {
-              const d = l.usage_date;
-              return d >= startDate && d <= endDate;
-          });
+    // 3. Process Per Item
+    const reportItems = [];
 
-          // Calculate Brought Forward (기초 재고)
-          let broughtForward = 0;
-          // Additive subjects: 최초 등록, 구입, 수량 조정(증가)
-          // All others are subtractive usages
-          const additive = ["최초 등록", "구입", "수량 조정(증가)", "이월", "잔량 조정(증가)"];
-          
-          beforeLogs.forEach(l => {
-              const amt = l.amount || 0;
-              if (additive.includes(l.subject)) {
-                  broughtForward += amt;
-              } else {
-                  broughtForward -= amt;
-              }
-          });
+    itemsToProcess.forEach(item => {
+      const itemLogs = logs.filter(l => l.inventory_id === item.id);
 
-          // Balance Check for Printing
-          const hasTransaction = periodLogs.length > 0;
-          // broughtForward might be 0 if it's a new item or if it was fully consumed before period.
-          // But we also check item.current_amount for "all" target.
-          const hasBalance = Math.abs(broughtForward) > 0.001 || item.current_amount > 0;
-          
-          let shouldPrint = false;
-          if (target === 'usage_only') {
-              shouldPrint = hasTransaction;
-          } else { // 'all'
-              shouldPrint = hasTransaction || hasBalance;
-          }
-
-          if (shouldPrint) {
-              reportItems.push({
-                  info: item,
-                  broughtForward,
-                  logs: periodLogs
-              });
-          }
+      // Split Logs based on usage_date
+      const beforeLogs = itemLogs.filter(l => {
+        const d = l.usage_date;
+        return d < startDate; // startDate is "YYYY-MM-DD"
+      });
+      const periodLogs = itemLogs.filter(l => {
+        const d = l.usage_date;
+        return d >= startDate && d <= endDate;
       });
 
-      if (reportItems.length === 0) return alert("해당 조건에 맞는 데이터가 없습니다.");
+      // Calculate Brought Forward (기초 재고)
+      let broughtForward = 0;
+      // Additive subjects: 최초 등록, 구입, 수량 조정(증가)
+      // All others are subtractive usages
+      const additive = ["최초 등록", "구입", "수량 조정(증가)", "이월", "잔량 조정(증가)"];
 
-      // 4. Generate HTML
-      renderStockReportHtml(reportItems, { startDate, endDate, layout });
+      beforeLogs.forEach(l => {
+        const amt = l.amount || 0;
+        if (additive.includes(l.subject)) {
+          broughtForward += amt;
+        } else {
+          broughtForward -= amt;
+        }
+      });
+
+      // Balance Check for Printing
+      const hasTransaction = periodLogs.length > 0;
+      // broughtForward might be 0 if it's a new item or if it was fully consumed before period.
+      // But we also check item.current_amount for "all" target.
+      const hasBalance = Math.abs(broughtForward) > 0.001 || item.current_amount > 0;
+
+      let shouldPrint = false;
+      if (target === 'usage_only') {
+        shouldPrint = hasTransaction;
+      } else { // 'all'
+        shouldPrint = hasTransaction || hasBalance;
+      }
+
+      if (shouldPrint) {
+        reportItems.push({
+          info: item,
+          broughtForward,
+          logs: periodLogs
+        });
+      }
+    });
+
+    if (reportItems.length === 0) return alert("해당 조건에 맞는 데이터가 없습니다.");
+
+    // 4. Generate HTML
+    renderStockReportHtml(reportItems, { startDate, endDate, layout });
   }
 
   function renderStockReportHtml(items, { startDate, endDate, layout }) {
-      const printWindow = window.open("", "_blank");
-      
-      const styles = `
+    const printWindow = window.open("", "_blank");
+
+    const styles = `
           @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
           body { font-family: "Noto Sans KR", sans-serif; padding: 10mm; font-size: 11px; background: white; }
           .page-break { page-break-after: always; display: block; clear: both; }
@@ -851,42 +864,42 @@
           }
       `;
 
-      let bodyContent = "";
+    let bodyContent = "";
 
-      if (layout === '1_per_page') {
-          items.forEach(item => {
-              bodyContent += '<div class="page-break">';
-              bodyContent += buildSingleItemTable(item);
-              bodyContent += '</div>';
-          });
-      } else if (layout === '4_per_page') {
-          // Chunk into 4
-          for (let i = 0; i < items.length; i += 4) {
-              const slice = items.slice(i, i + 4);
-              const isFirstPage = (i === 0);
-              const gridHeight = "88vh";
-              
-              // If not first page, add a spacer to match the header height
-              if (!isFirstPage) {
-                  bodyContent += `<div class="header" style="visibility: hidden; margin-bottom: 10px;">수불대장</div>`;
-              }
-              
-              bodyContent += `<div class="page-break report-grid" style="display:grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; height: ${gridHeight}; gap: 10px; padding: 5px; box-sizing: border-box;">`;
-              slice.forEach(item => {
-                   bodyContent += '<div style="overflow: hidden; display: flex; flex-direction: column;">';
-                   bodyContent += buildSingleItemTable(item);
-                   bodyContent += '</div>';
-              });
-              bodyContent += '</div>';
-          }
-      } else { // continuous (feed)
-          items.forEach(item => {
-              bodyContent += buildSingleItemTable(item);
-              bodyContent += '<br>';
-          });
+    if (layout === '1_per_page') {
+      items.forEach(item => {
+        bodyContent += '<div class="page-break">';
+        bodyContent += buildSingleItemTable(item);
+        bodyContent += '</div>';
+      });
+    } else if (layout === '4_per_page') {
+      // Chunk into 4
+      for (let i = 0; i < items.length; i += 4) {
+        const slice = items.slice(i, i + 4);
+        const isFirstPage = (i === 0);
+        const gridHeight = "88vh";
+
+        // If not first page, add a spacer to match the header height
+        if (!isFirstPage) {
+          bodyContent += `<div class="header" style="visibility: hidden; margin-bottom: 10px;">수불대장</div>`;
+        }
+
+        bodyContent += `<div class="page-break report-grid" style="display:grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; height: ${gridHeight}; gap: 10px; padding: 5px; box-sizing: border-box;">`;
+        slice.forEach(item => {
+          bodyContent += '<div style="overflow: hidden; display: flex; flex-direction: column;">';
+          bodyContent += buildSingleItemTable(item);
+          bodyContent += '</div>';
+        });
+        bodyContent += '</div>';
       }
+    } else { // continuous (feed)
+      items.forEach(item => {
+        bodyContent += buildSingleItemTable(item);
+        bodyContent += '<br>';
+      });
+    }
 
-      const html = `
+    const html = `
           <!DOCTYPE html>
           <html>
           <head>
@@ -904,22 +917,22 @@
           </body>
           </html>
       `;
-      
-      printWindow.document.write(html);
-      printWindow.document.close();
+
+    printWindow.document.write(html);
+    printWindow.document.close();
   }
 
   function buildSingleItemTable(data) {
-      const { info, broughtForward, logs } = data;
-      const unit = info.unit || "";
-      const nameKor = info.name_kor || "이름 없음";
-      
-      let rows = "";
-      
-      // 1. Brought Forward Row - Only show if non-zero
-      let currentBalance = broughtForward;
-      if (Math.abs(currentBalance) > 0.001) {
-          rows += `
+    const { info, broughtForward, logs } = data;
+    const unit = info.unit || "";
+    const nameKor = info.name_kor || "이름 없음";
+
+    let rows = "";
+
+    // 1. Brought Forward Row - Only show if non-zero
+    let currentBalance = broughtForward;
+    if (Math.abs(currentBalance) > 0.001) {
+      rows += `
               <tr style="background: #fafafa; color: #555;">
                   <td colspan="2">전기 이월 (Brought Forward)</td>
                   <td>-</td>
@@ -928,26 +941,26 @@
                   <td>-</td>
               </tr>
           `;
+    }
+
+    // 2. Logs
+    const additive = ["최초 등록", "구입", "수량 조정(증가)", "이월", "잔량 조정(증가)"];
+
+    logs.forEach(log => {
+      const amt = log.amount || 0;
+      const isIncome = additive.includes(log.subject);
+
+      if (isIncome) currentBalance += amt;
+      else currentBalance -= amt;
+
+      const date = log.usage_date || "-";
+      // If subject is '최초 등록' or period is '기타', simplify the text
+      let subjectStr = log.subject;
+      if (log.subject !== "최초 등록" && log.period && log.period !== '-' && log.period !== '기타') {
+        subjectStr = `${log.subject} (${log.period})`;
       }
 
-      // 2. Logs
-      const additive = ["최초 등록", "구입", "수량 조정(증가)", "이월", "잔량 조정(증가)"];
-      
-      logs.forEach(log => {
-          const amt = log.amount || 0;
-          const isIncome = additive.includes(log.subject);
-          
-          if (isIncome) currentBalance += amt;
-          else currentBalance -= amt;
-          
-          const date = log.usage_date || "-";
-          // If subject is '최초 등록' or period is '기타', simplify the text
-          let subjectStr = log.subject;
-          if (log.subject !== "최초 등록" && log.period && log.period !== '-' && log.period !== '기타') {
-              subjectStr = `${log.subject} (${log.period})`;
-          }
-          
-          rows += `
+      rows += `
               <tr>
                   <td>${date}</td>
                   <td style="text-align:left;">${subjectStr}</td>
@@ -957,9 +970,9 @@
                   <td></td>
               </tr>
           `;
-      });
-      
-      return `
+    });
+
+    return `
           <div style="border: 2px solid #000; padding: 5px; height: 100%; box-sizing: border-box; overflow: hidden;">
               <div class="item-header" style="border:none; background:none; border-bottom:1px solid #000; margin-bottom:5px;">
                   <span style="font-size: 1.1em;">(No.${info.id}) ${nameKor}</span>
@@ -990,27 +1003,27 @@
   function bindListPage() {
     // ✅ 페이지 진입 시 정렬 상태 초기화 (메뉴 이동 후 복귀 시 초기화 보장)
     currentSort = "category_name_kor";
-    
+
     // 수불부 버튼 바인딩
     const stockBtn = document.getElementById("stock-report-btn");
     if (stockBtn) {
-        if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
-            stockBtn.style.display = "none";
-        } else {
-            stockBtn.style.display = "";
-            stockBtn.onclick = () => openStockReportModal();
-        }
+      if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
+        stockBtn.style.display = "none";
+      } else {
+        stockBtn.style.display = "";
+        stockBtn.onclick = () => openStockReportModal();
+      }
     }
-    
+
     // 보고서 버튼 바인딩 (기존)
     const printBtn = document.getElementById("print-report-btn");
     if (printBtn) {
-        if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
-            printBtn.style.display = "none";
-        } else {
-            printBtn.style.display = "";
-            printBtn.onclick = () => printReport();
-        }
+      if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
+        printBtn.style.display = "none";
+      } else {
+        printBtn.style.display = "";
+        printBtn.onclick = () => printReport();
+      }
     }
 
     // ✅ SortDropdown 초기화

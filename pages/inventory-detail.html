@@ -1,5 +1,6 @@
 <!-- /pages/inventory-detail.html -->
 <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+<script src="./js/ui/concentration-conversion.js"></script>
 
 <div class="layout-container">
   <!-- 1. Header (Universal Layout) -->
@@ -10,8 +11,16 @@
       <span id="detail-name-eng" class="eng-name"></span>
       <span id="detail-substance-id" class="substance-id-tag"
         style="margin-left: auto; color: #888; font-size: 0.9rem;"></span>
+      
+      <!-- New Button -->
+      <button id="btn-open-conc-calc" class="usage-mgmt-btn"
+        style="margin-left: 10px; background-color: #6c5ce7; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+        <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle; margin-right: 2px;">science</span>
+        농도 변환
+      </button>
+
       <button id="btn-go-usage" class="usage-mgmt-btn"
-        style="margin-left: 10px; background-color: #00A0B2; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">수불
+        style="margin-left: 5px; background-color: #00A0B2; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">수불
         관리</button>
     </div>
   </div>

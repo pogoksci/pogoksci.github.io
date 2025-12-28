@@ -148,6 +148,21 @@
         }
       }
 
+      // ---------------------------------------------------------
+      // 🧪 Smart Concentration Conversion Button
+      // ---------------------------------------------------------
+      const btnOpenConc = document.getElementById("btn-open-conc-calc");
+      if (btnOpenConc) {
+        btnOpenConc.onclick = () => {
+          if (getApp().ConcentrationConversion?.openModal) {
+            getApp().ConcentrationConversion.openModal(data);
+          } else {
+            console.warn("ConcentrationConversion module not found.");
+            alert("농도 변환 모듈을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+          }
+        };
+      }
+
       const rawCas = data.Substance?.cas_rn || "";
       const isValidCas = /^\d+-\d+-\d$/.test(rawCas.trim());
       const displayCas = isValidCas ? rawCas : (rawCas ? "CAS없음" : "-");
@@ -160,7 +175,17 @@
 
       const amount = data.current_amount != null ? data.current_amount : "-";
       const unit = data.unit || "";
-      document.getElementById("detail-quantity").textContent = `${amount}${unit}`;
+      const currentAmountVal = Number(data.current_amount || 0);
+      const initialAmountVal = Number(data.initial_amount || 0);
+
+      let amountHtml = `${amount}${unit}`;
+
+      // ⚠️ Low Stock Badge (Detail View)
+      if (initialAmountVal > 0 && currentAmountVal <= (initialAmountVal * 0.2)) {
+        amountHtml += ` <span style="background-color: #ffcccc; color: #d63031; border: 1px solid #d63031; border-radius: 4px; padding: 1px 4px; font-size: 0.75rem; font-weight: bold; margin-left: 5px;">구입요청</span>`;
+      }
+
+      document.getElementById("detail-quantity").innerHTML = amountHtml;
 
       // Location Formatting
       // ✅ [수정됨] Area -> area_id:lab_rooms, room_name
