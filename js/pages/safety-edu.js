@@ -48,7 +48,7 @@
                         
                         <div class="tabs" style="display:flex; gap:10px; margin-bottom:20px; border-bottom: 2px solid #eee; padding-bottom: 10px; overflow-x: auto;">
                             <button class="nav-tab active" data-target="video-section">안전교육 동영상 (${VIDEO_LIST.length})</button>
-                            <button class="nav-tab" data-target="manual-section">안전 매뉴얼 / 서식 (${countManualItems()})</button>
+                            <button class="nav-tab" data-target="manual-section">안전 메뉴얼 / 서식 (${countManualItems()})</button>
                         </div>
 
                         <div id="video-section" class="tab-content">
@@ -279,7 +279,7 @@
     }
 
     async function triggerContentSync() {
-        if (!confirm("구글 사이트(원본)의 최신 내용으로 동기화하시겠습니까?\n기존 DB 데이터는 업데이트됩니다.")) return;
+        if (!confirm("구글 사이트(원본)의 최신 내용으로 동기화하시겠습니까?")) return;
         const btn = document.getElementById('btn-sync-content');
         btn.disabled = true;
         btn.textContent = "동기화 중...";

@@ -71,7 +71,7 @@
     }
 
     async function triggerContentSync() {
-        if (!confirm("구글 사이트(원본)의 최신 내용으로 동기화하시겠습니까?\\n기존 DB 데이터는 업데이트됩니다.")) return;
+        if (!confirm("구글 사이트(원본)의 최신 내용으로 동기화하시겠습니까?")) return;
         const btn = document.getElementById('btn-sync-manual');
         btn.disabled = true;
         btn.textContent = "동기화 중...";
