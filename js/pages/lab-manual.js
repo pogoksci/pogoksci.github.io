@@ -71,13 +71,18 @@
     }
 
     async function triggerContentSync() {
-        if (!confirm("구글 사이트(원본)의 최신 내용으로 동기화하시겠습니까?")) return;
+        const defaultUrl = "https://sites.google.com/view/pogokscience/%EA%B3%BC%ED%95%99%EC%8B%A4-%EC%82%AC%EC%9A%A9%EC%84%A4%EB%AA%85%EC%84%9C";
+        const manualUrl = prompt("동기화할 구글 사이트 주소를 입력하세요:", defaultUrl);
+
+        if (!manualUrl) return; // Cancelled
+        if (!confirm("입력한 사이트의 최신 내용으로 동기화하시겠습니까? (시간이 다소 소요될 수 있습니다)")) return;
+
         const btn = document.getElementById('btn-sync-manual');
         btn.disabled = true;
         btn.textContent = "동기화 중...";
 
         const { data, error } = await App.supabase.functions.invoke('sync-content', {
-            body: { target: 'manual' }
+            body: { target: 'manual', url: manualUrl }
         });
 
         if (error) {
