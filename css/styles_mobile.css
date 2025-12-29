@@ -1,75 +1,237 @@
-/* =========================================================================
-   Mobile (smartphone portrait) overrides
-   Target: handset widths up to 640px. Desktop/tablet styles live in styles.css.
-======================================================================== */
+/* =================================================================
+   Mobile Overrides (Max-Width: 600px)
+   Based on styles.css, optimized for portrait smartphones.
+   ================================================================= */
 
-@media (max-width: 640px) {
-  .hazard-card {
-    padding: 10px 12px;
-  }
-
-  .hazard-table {
-    font-size: 13px;
-  }
-
-  .hazard-table thead th,
-  .hazard-table tbody td {
-    padding: 8px 6px;
-  }
+/* 1. Reset & Global Typography (Density Focus) */
+html,
+body {
+  font-size: 12px !important;
+  /* Base size reduced from 14px */
 }
 
-@media (max-width: 600px) {
-  .chem-grid {
-    flex-direction: column;
-  }
-
-  .structure-wrapper {
-    width: 100%;
-    flex: none;
-    max-width: 240px;
-    margin: 0 auto;
-  }
-
-  .chem-info .label {
-    width: 90px;
-  }
+input,
+select,
+button,
+.form-input {
+  font-size: 12px !important;
+  height: 34px !important;
+  /* Slightly reduced touch target height if needed, but safe for fingers */
 }
 
-@media (max-width: 600px) {
-  .detail-grid {
-    flex-direction: column;
-    flex-wrap: wrap;
-  }
-
-  .detail-left {
-    width: 100%;
-    max-width: 100%;
-    flex: none;
-    margin: 0 auto;
-  }
-
-  .detail-left .photo-preview-box {
-    margin: 0 auto;
-    width: 100%;
-    max-width: 360px;
-    height: auto;
-  }
+h2 {
+  font-size: 15px !important;
 }
 
-@media (max-width: 640px) {
-  .msds-row {
-    flex-direction: column;
-  }
+h3,
+.section-title {
+  font-size: 14px !important;
+}
 
-  .msds-header {
-    flex: none;
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #e5e7eb;
-    background-color: #f3f4f6;
-  }
+.section-count {
+  font-size: 11px !important;
+}
 
-  .msds-content {
-    width: 100%;
-  }
+.card-info .cabinet-specs {
+  font-size: 11px !important;
+}
+
+/* 2. Layout Container Reset (Full Bleed) */
+.layout-container {
+  width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+}
+
+.layout-content,
+.inventory-list {
+  padding: 0 10px !important;
+  /* Add 10px side padding as requested */
+}
+
+.layout-header {
+  padding: 8px 10px !important;
+  /* Tighter header padding */
+}
+
+/* 3. Full-Width Cards (List Views) */
+.inventory-card,
+.cabinet-card,
+.hazard-card {
+  margin: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-radius: 0 !important;
+  /* No radius for flat list */
+  border-bottom: 1px solid #eee !important;
+  /* Only separator */
+  box-shadow: none !important;
+  padding: 10px 0 !important;
+  /* Reduce side padding inside item too if user wants max space, or keep 10px */
+  margin-bottom: 0 !important;
+  /* Stack them directly */
+}
+
+/* Ensure no double borders if stacked */
+.inventory-card:last-child {
+  border-bottom: 1px solid #e0e0e0 !important;
+}
+
+.inventory-section-group {
+  margin: 5px 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+.inventory-section-header {
+  padding: 8px 12px !important;
+  border-radius: 0 !important;
+}
+
+/* 4. Header Actions & Filtering (Wrap Logic) */
+.header-actions {
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  justify-content: flex-start !important;
+}
+
+.header-actions>* {
+  /* Allow items to shrink/grow slightly to fit lines */
+  flex: 0 1 auto;
+}
+
+/* Date Range Picker Optimization */
+#waste-period-summary {
+  width: 100%;
+  margin-left: 0 !important;
+  margin-bottom: 5px;
+  font-size: 12px !important;
+  order: -1;
+  /* Move to top of filter bar */
+}
+
+/* Make date range picker compact */
+.header-actions div[style*="border-radius: 6px"] {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* 5. Detail Page Optimization (Vertical Stacking) */
+
+/* Info Section (Photo Top, Info Bottom) */
+.detail-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  /* Tight packing */
+}
+
+.detail-left {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  /* Center the photo box horizontally */
+  align-items: center !important;
+  padding: 15px 0 !important;
+  background-color: #fafafa;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-right {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 15px 20px !important;
+  /* Add side padding for better centering sensation */
+  box-sizing: border-box !important;
+  display: block !important;
+  margin: 0 auto !important;
+  /* Center the block itself if it were smaller, though it's 100% */
+}
+
+.detail-info-list li {
+  padding: 6px 0 !important;
+  /* Compact rows */
+}
+
+.detail-info-list .label {
+  font-size: 11px !important;
+  width: 60px !important;
+  /* Adjust label width for smaller screens */
+}
+
+.detail-info-list .value {
+  font-size: 12px !important;
+}
+
+/* Properties Section (Viewer Top, Properties Bottom) */
+.chem-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 15px !important;
+}
+
+.structure-wrapper {
+  width: 100% !important;
+  margin-bottom: 10px;
+}
+
+.structure-box {
+  width: 100% !important;
+  height: 200px !important;
+  /* Reduce height from standard if needed, or keep 240px */
+  margin: 0 auto;
+}
+
+.chem-info {
+  width: 100% !important;
+}
+
+.chem-info-row {
+  padding: 8px !important;
+}
+
+.chem-info-row .label {
+  min-width: 70px !important;
+}
+
+/* 6. Hazard Table Scroll */
+.hazard-table-wrapper {
+  display: block !important;
+  width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 15px;
+  border: 1px solid #eee;
+}
+
+.hazard-summary-table {
+  min-width: 600px;
+  /* Force minimum width to trigger scroll */
+}
+
+/* 7. Modal & Forms */
+.modal-content {
+  width: 100% !important;
+  height: 100% !important;
+  /* Full screen modals often better on mobile */
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+}
+
+.form-group-location {
+  padding: 10px !important;
+}
+
+/* Grid adjustments for location buttons */
+#location_door_vertical_group,
+#location_door_horizontal_group,
+#location_internal_shelf_group,
+#location_storage_column_group {
+  gap: 5px !important;
+  /* Tighter button gaps */
 }
