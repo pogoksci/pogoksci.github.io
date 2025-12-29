@@ -190,7 +190,15 @@
                 return acc;
             }, {});
 
-            Object.entries(grouped).forEach(([classification, group]) => {
+            // 🌈 [Modified] 분류별 고정 순서 적용 (산 -> 알칼리 -> 유기물 -> 무기물 -> 기타)
+            const fixedOrder = ['산', '알칼리', '유기물', '무기물', '기타'];
+            const extraKeys = Object.keys(grouped).filter(k => !fixedOrder.includes(k));
+            const displayKeys = [...fixedOrder, ...extraKeys];
+
+            displayKeys.forEach(classification => {
+                const group = grouped[classification];
+                if (!group) return; // 해당 분류에 데이터가 없으면 스킵
+
                 // 이 그룹에 "미처리"된 항목이 하나라도 있는지 확인
                 const hasActiveItems = group.items.some(item => !item.disposal_id);
 
@@ -736,17 +744,38 @@
 
         // 체크박스 이벤트
         if (recentCheckbox) {
-            recentCheckbox.addEventListener("change", (e) => {
+            recentCheckbox.addEventListener("change", async (e) => {
                 if (e.target.checked) {
                     startInput.disabled = true;
                     startInput.style.color = "#aaa";
                     startInput.style.backgroundColor = "#eee";
                     startInput.style.pointerEvents = "none"; // 클릭 방지
+
+                    // 최근 위탁처리일 가져와서 세팅 (UI 표시용)
+                    try {
+                        const { data } = await supabase
+                            .from("WasteDisposal")
+                            .select("date")
+                            .order("date", { ascending: false })
+                            .limit(1)
+                            .single();
+
+                        if (data && data.date) {
+                            startInput.value = data.date;
+                        }
+                    } catch (err) {
+                        console.warn("최근 처리일 조회 실패:", err);
+                    }
+                    loadList();
                 } else {
                     startInput.disabled = false;
                     startInput.style.color = "#333";
                     startInput.style.backgroundColor = "transparent";
                     startInput.style.pointerEvents = "auto";
+
+                    // 학년도 시작일로 리셋
+                    startInput.value = toDateString(academicYearStart);
+                    loadList();
                 }
             });
         }
