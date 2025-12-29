@@ -1271,76 +1271,76 @@ body.home-active #splash-screen {
 }
 
 #lab-settings-content {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 .tab-container {
-    display: flex;
-    border-bottom: 2px solid #e0e0e0;
-    margin-bottom: 20px;
-    background-color: #fff;
+  display: flex;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 20px;
+  background-color: #fff;
 }
 
 .tab-button {
-    flex: 1;
-    padding: 15px;
-    text-align: center;
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    color: #666;
-    position: relative;
-    transition: all 0.3s ease;
+  flex: 1;
+  padding: 15px;
+  text-align: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
 .tab-button.active {
-    color: #00a0b2;
-    font-weight: 700;
+  color: #00a0b2;
+  font-weight: 700;
 }
 
 .tab-button.active::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background-color: #00a0b2;
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #00a0b2;
 }
 
 .tab-content {
-    display: none;
-    padding: 10px;
-    box-sizing: border-box;
-    padding-bottom: 80px;
-    animation: fadeIn 0.3s ease;
+  display: none;
+  padding: 10px;
+  box-sizing: border-box;
+  padding-bottom: 80px;
+  animation: fadeIn 0.3s ease;
 }
 
 .tab-content.active {
-    display: block;
+  display: block;
 }
 
 .settings-section {
-    margin-bottom: 15px;
-    background-color: #fff;
-    padding: 16px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 15px;
+  background-color: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .timetable-grid {
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
 }
 
 .timetable-grid th,
 .timetable-grid td {
-    border: 1px solid #ddd;
-    text-align: center;
-    padding: 4px;
+  border: 1px solid #ddd;
+  text-align: center;
+  padding: 4px;
 }
 
 .inventory-sticky-top {
@@ -1441,9 +1441,7 @@ body.home-active #splash-screen {
 #stock-report-btn .material-symbols-outlined,
 #kit-print-btn .material-symbols-outlined,
 
----------------------------- */
-
-.custom-dropdown {
+---------------------------- */ .custom-dropdown {
   position: relative;
   display: inline-block;
   font-family: inherit;
@@ -1538,8 +1536,15 @@ body.home-active #splash-screen {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 #form-container,
@@ -4075,4 +4080,21 @@ input[type="date"] {
   padding: 10px;
   border-radius: 8px;
   background-color: #fafafa;
+}
+
+/* Inventory Card Styles (Migrated from Inline JS) */
+.inventory-card__line1 {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.inventory-card__no {
+  margin-right: 8px;
+}
+
+.name-kor {
+  font-size: 1.1em;
+  font-weight: bold;
+  margin: 0;
 }

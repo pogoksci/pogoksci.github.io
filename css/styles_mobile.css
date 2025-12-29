@@ -4,36 +4,112 @@
    ================================================================= */
 
 /* 1. Reset & Global Typography (Density Focus) */
+/* 1. Reset & Global Typography (Ultra Condensed) */
 html,
 body {
-  font-size: 12px !important;
-  /* Base size reduced from 14px */
+  font-size: 11px !important;
+  /* Reduced from 12px */
 }
 
 input,
 select,
 button,
 .form-input {
-  font-size: 12px !important;
-  height: 34px !important;
-  /* Slightly reduced touch target height if needed, but safe for fingers */
+  font-size: 11px !important;
+  height: 32px !important;
+  /* Slightly smaller height */
+}
+
+/* --- List Item Typography Overrides --- */
+/* Target both Waste (inline styles) and Inventory (classes) */
+
+/* 1. Generic overwrites for inline-styled spans (Waste, etc) */
+.inventory-card span[style],
+.inventory-card div[style] {
+  font-size: 11px !important;
+}
+
+/* 2. Titles (Korean Name) */
+.name-kor,
+.inventory-card__line2,
+.inventory-card>div>span:first-child {
+  /* Waste List Title Heuristic */
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+}
+
+/* 3. Subtitles (Eng Name, Formula) */
+.name-eng,
+.inventory-card__line3,
+.meta-line1 {
+  font-size: 11px !important;
+  color: #555 !important;
+}
+
+/* 4. Location & Specs */
+.inventory-card__location,
+.inventory-card__line4,
+.card-info .area-name,
+.location-text {
+  font-size: 10px !important;
+  letter-spacing: -0.5px !important;
+}
+
+/* 5. Icons */
+.material-symbols-outlined {
+  font-size: 16px !important;
+  /* Keep icons readable */
+}
+
+/* 6. Waste Amount / Right Side Info */
+.inventory-card>div:last-child>span,
+.inv-card-right div {
+  font-size: 11px !important;
+}
+
+/* 7. Kits & Teaching Tools Overrides (Inline Styles) */
+.inv-name {
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+}
+
+.inv-location {
+  font-size: 10px !important;
+  letter-spacing: -0.5px !important;
+}
+
+.inv-quantity {
+  font-size: 11px !important;
+}
+
+.kit-tag {
+  font-size: 10px !important;
+  padding: 1px 4px !important;
 }
 
 h2 {
-  font-size: 15px !important;
+  font-size: 14px !important;
+  /* Reduced from 15px */
 }
 
 h3,
 .section-title {
-  font-size: 14px !important;
+  font-size: 13px !important;
+  /* Reduced from 14px */
 }
 
-.section-count {
-  font-size: 11px !important;
+.card-info h3 {
+  font-size: 13px !important;
+  margin-bottom: 2px !important;
 }
 
-.card-info .cabinet-specs {
-  font-size: 11px !important;
+.section-count,
+.card-info .cabinet-specs,
+.card-info .area-name,
+.location-text {
+  font-size: 10px !important;
+  /* Reduced from 11px */
+  letter-spacing: -0.5px;
 }
 
 /* 2. Layout Container Reset (Full Bleed) */
