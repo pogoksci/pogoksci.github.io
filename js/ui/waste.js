@@ -88,7 +88,7 @@
         const totalAmount = filteredData.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
         const summaryEl = document.getElementById("waste-period-summary");
         if (summaryEl) {
-            summaryEl.innerText = `기간 중 폐수 발생량: ${totalAmount.toLocaleString()} g`;
+            summaryEl.innerHTML = `<span class="summary-label-desktop">기간 중 폐수 발생량: </span><span class="summary-label-mobile">폐수: </span><span class="summary-value">${totalAmount.toLocaleString()} g</span>`;
         }
 
         if (filteredData.length === 0) {

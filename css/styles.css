@@ -4098,3 +4098,132 @@ input[type="date"] {
   font-weight: bold;
   margin: 0;
 }
+
+/* Waste List Header Styles */
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+}
+
+.waste-period-summary {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+  margin-left: 10px;
+  white-space: nowrap;
+}
+
+.summary-label-mobile {
+  display: none;
+}
+
+.summary-label-desktop {
+  display: inline;
+}
+
+.waste-date-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #c4c4c4;
+  border-radius: 6px;
+  padding: 0 8px;
+  height: 30px;
+  box-sizing: border-box;
+  overflow: hidden;
+  margin-left: auto;
+  /* Push to right */
+}
+
+.waste-date-picker label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.waste-date-picker label input {
+  margin: 0;
+}
+
+.waste-date-picker .divider {
+  width: 1px;
+  height: 14px;
+  background: #ddd;
+}
+
+.waste-date-picker input[type="date"] {
+  border: none;
+  outline: none;
+  font-size: 11px;
+  color: #333;
+  width: 105px;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  height: 100%;
+  cursor: pointer;
+}
+
+.waste-sort-dropdown {
+  height: 30px;
+  box-sizing: border-box;
+}
+
+.waste-sort-dropdown .dropdown-toggle {
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.waste-sort-dropdown .dropdown-label {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.waste-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.waste-btn-group button {
+  height: 30px;
+  width: 30px;
+  border: 1px solid #c4c4c4;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+#waste-search-btn {
+  background: #00a0b2;
+}
+
+#waste-search-btn span {
+  font-size: 18px;
+  color: #fff;
+}
+
+#waste-print-btn {
+  background: #fff;
+  color: #555;
+}
+
+#waste-print-btn span {
+  font-size: 18px;
+}

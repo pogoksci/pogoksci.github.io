@@ -98,6 +98,92 @@ h3,
   /* Reduced from 14px */
 }
 
+/* --- Waste List Header Mobile Layout --- */
+.header-actions {
+  display: grid !important;
+  grid-template-columns: auto auto 1fr !important;
+  /* Col1: Summary, Col2: Dropdown, Col3: Buttons (right aligned) */
+  /* Actually buttons are separate. */
+  /* Let's define grid areas */
+  grid-template-areas:
+    "date date date"
+    "summ drop btns" !important;
+  gap: 6px !important;
+  align-items: center !important;
+  padding-bottom: 5px !important;
+  height: auto !important;
+}
+
+/* Row 1: Date Picker */
+.waste-date-picker {
+  grid-area: date !important;
+  width: 100% !important;
+  margin: 0 !important;
+  justify-content: space-between !important;
+}
+
+.waste-date-picker input[type="date"] {
+  width: 95px !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1 !important;
+  display: block !important;
+  cursor: pointer !important;
+  filter: invert(0.4);
+}
+
+/* Row 2: Summary + Dropdown */
+.waste-period-summary {
+  grid-area: summ !important;
+  margin: 0 !important;
+  font-size: 11px !important;
+  white-space: nowrap !important;
+}
+
+/* Toggle Labels */
+.summary-label-desktop {
+  display: none !important;
+}
+
+.summary-label-mobile {
+  display: inline !important;
+}
+
+.waste-sort-dropdown {
+  grid-area: drop !important;
+  margin: 0 !important;
+  width: auto !important;
+}
+
+.waste-sort-dropdown .dropdown-label {
+  display: block !important;
+  white-space: nowrap !important;
+  font-size: 11px !important;
+  max-width: 80px;
+  /* Prevent wide expansion */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.waste-sort-dropdown button {
+  padding: 0 4px !important;
+  height: 28px !important;
+}
+
+/* Buttons */
+.waste-btn-group {
+  grid-area: btns !important;
+  margin: 0 !important;
+  justify-self: end !important;
+  /* Push to right */
+}
+
+.waste-btn-group button {
+  width: 28px !important;
+  height: 28px !important;
+}
+
 .card-info h3 {
   font-size: 13px !important;
   margin-bottom: 2px !important;
