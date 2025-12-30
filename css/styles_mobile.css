@@ -201,15 +201,34 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* 2. Layout Container Reset (Full Bleed) */
 .layout-container {
   width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
   padding: 0 !important;
   margin: 0 !important;
   max-width: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
 }
 
 .layout-content,
 .inventory-list {
-  padding: 0 10px !important;
-  /* Add 10px side padding as requested */
+  padding: 0 10px 70px 10px !important;
+  /* 하단 패딩 40px -> 70px로 확대 */
+  flex: 1 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* 2.1 Scroll Padding Overrides (충분한 하단 여백 확보) */
+.scroll-padding-nav {
+  padding-bottom: 50px !important;
+  /* 기존 156px + 30px */
+}
+
+.scroll-padding-fab {
+  padding-bottom: 80px !important;
+  /* 기존 186px + 30px */
 }
 
 .layout-header {
@@ -296,11 +315,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   width: 100% !important;
   display: flex !important;
   justify-content: center !important;
-  /* Center the photo box horizontally */
   align-items: center !important;
   padding: 15px 0 !important;
   background-color: #fafafa;
   border-bottom: 1px solid #eee;
+  margin: 0 auto !important;
+}
+
+#detail-photo {
+  margin: 0 auto !important;
 }
 
 .detail-right {
@@ -339,6 +362,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .structure-wrapper {
   width: 100% !important;
   margin-bottom: 10px;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 .structure-box {
@@ -396,4 +421,134 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 #location_storage_column_group {
   gap: 5px !important;
   /* Tighter button gaps */
+}
+
+/* 8. Accordion Overrides */
+.accordion-header,
+.accordion-content,
+.accordion-content *,
+.msds-header,
+.msds-content,
+.msds-simple-content,
+.hazard-table-wrapper,
+.hazard-table-wrapper *,
+.hazard-acc-header,
+.hazard-acc-content,
+.hazard-acc-content *,
+.kit-log-table,
+.kit-log-table *,
+.usage-table,
+.usage-table * {
+  font-size: 11px !important;
+}
+
+/* 9. Table Layout Adjustments (Prevent button wrapping) */
+.kit-log-table,
+.usage-table {
+  width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+}
+
+/* kit-log-table: 날짜(1), 유형(2), 변동(3), 수량(4), 수정/삭제(5) */
+.kit-log-table th:nth-child(1) {
+  width: 75px !important;
+}
+
+.kit-log-table th:nth-child(2) {
+  width: 55px !important;
+}
+
+.kit-log-table th:nth-child(3) {
+  width: 45px !important;
+}
+
+.kit-log-table th:nth-child(4) {
+  width: 45px !important;
+}
+
+.kit-log-table th:nth-child(5) {
+  width: 100px !important;
+}
+
+/* usage-table: 날짜(1), 과목(2), 교시(3), 사용량(4), 재고량(5), 수정/삭제(6) */
+.usage-table th:nth-child(1) {
+  width: 75px !important;
+}
+
+.usage-table th:nth-child(2) {
+  width: 50px !important;
+}
+
+.usage-table th:nth-child(3) {
+  width: 45px !important;
+}
+
+.usage-table th:nth-child(4) {
+  width: 45px !important;
+}
+
+.usage-table th:nth-child(5) {
+  width: 45px !important;
+}
+
+.usage-table th:nth-child(6) {
+  width: 100px !important;
+}
+
+.kit-log-table th,
+.kit-log-table td,
+.usage-table th,
+.usage-table td {
+  padding: 8px 2px !important;
+  /* 가로 패딩 최소화 */
+  box-sizing: border-box !important;
+  text-align: center !important;
+}
+
+.kit-log-table td:last-child,
+.usage-table td:last-child {
+  white-space: nowrap !important;
+  /* 줄바꿈 방지 */
+  padding: 8px 0 !important;
+}
+
+.btn-mini {
+  margin-right: 2px !important;
+  /* 버튼 간격 줄임 */
+  padding: 4px 6px !important;
+  /* 버튼 크기 타이트하게 */
+}
+
+/* 10. Usage Register Optimization */
+.inventory-detail-page {
+  padding: 0 !important;
+  /* 컨테이너 자체 패딩은 0 유지 (내부 요소에서 조절) */
+}
+
+.usage-fixed-header {
+  padding: 15px 10px !important;
+  /* 좌우 여백 10px 복구 */
+}
+
+.detail-scroll-container {
+  padding-top: 0 !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  /* padding-bottom은 .scroll-padding-nav 클래스에서 처리됨 */
+}
+
+#usage-detail-section .form-container-card {
+  padding: 15px 10px !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  border-radius: 8px !important;
+}
+
+#usage-detail-section .history-container-card {
+  padding: 15px 10px !important;
+  margin-top: 0 !important;
+  /* 마진 제거 */
+  margin-bottom: 20px !important;
+  border-radius: 8px !important;
 }
