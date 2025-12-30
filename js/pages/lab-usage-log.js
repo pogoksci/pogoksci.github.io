@@ -610,7 +610,74 @@
         }
 
         async function saveWeeklyLog() {
-            // ... (rest of function)
+            if (!weekDates || weekDates.length === 0) return;
+            if (!confirm('현재 화면의 내용을 저장하시겠습니까?\n(체크된 항목만 저장되며, 기존 데이터는 덮어씌워집니다)')) return;
+
+            const supabase = globalThis.App?.supabase;
+            if (!supabase || !currentRoomId) {
+                alert('데이터베이스 연결에 문제가 있습니다.');
+                return;
+            }
+
+            try {
+                // 1. Collect Data from UI
+                const checkedEls = document.querySelectorAll('.activity-container .activity-item.checked');
+                const newRows = [];
+                const start = getYYYYMMDD(weekDates[0]);
+                const end = getYYYYMMDD(weekDates[6]);
+
+                checkedEls.forEach(el => {
+                    const raw = el.dataset.item;
+                    if (!raw) return;
+                    const d = JSON.parse(raw);
+
+                    // Find Semester for this date
+                    const usageDateObj = new Date(d.usage_date);
+                    const sem = findSemesterForDate(usageDateObj);
+
+                    const row = {
+                        lab_room_id: currentRoomId,
+                        usage_date: d.usage_date,
+                        period: parseInt(d.period),
+                        activity_type: d.activity_type,
+                        safety_education: '실시', // Default
+                        remarks: '승인',
+                        semester_id: sem ? sem.id : currentSemesterId
+                    };
+
+                    // Copy optional fields
+                    if (d.grade) row.grade = d.grade;
+                    if (d.class_number) row.class_number = d.class_number;
+                    if (d.subject_id) row.subject_id = d.subject_id;
+                    if (d.teacher_id) row.teacher_id = d.teacher_id;
+                    if (d.club_id) row.club_id = d.club_id;
+                    if (d.content) row.content = d.content;
+
+                    newRows.push(row);
+                });
+
+                // 2. Delete Existing Logs (Overwrite strategy for this room/week)
+                const { error: delError } = await supabase.from('lab_usage_log')
+                    .delete()
+                    .eq('lab_room_id', currentRoomId)
+                    .gte('usage_date', start)
+                    .lte('usage_date', end);
+
+                if (delError) throw delError;
+
+                // 3. Insert New
+                if (newRows.length > 0) {
+                    const { error: insError } = await supabase.from('lab_usage_log').insert(newRows);
+                    if (insError) throw insError;
+                }
+
+                alert('저장되었습니다.');
+                refresh();
+
+            } catch (err) {
+                console.error("Save failed:", err);
+                alert('저장 중 오류가 발생했습니다: ' + err.message);
+            }
         }
 
         function getGradeForSubject(fullName) {

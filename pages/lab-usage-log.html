@@ -2,7 +2,7 @@
     <script src="data/subject-config.js"></script>
     <div class="layout-header" style="flex-direction: column; align-items: stretch; gap: 15px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: baseline; gap: 10px;">
+            <div class="page-title-wrapper" style="display: flex; align-items: baseline; gap: 10px;">
                 <h2 style="margin: 0; font-size: 20px;">과학실 사용기록·예약</h2>
                 <span id="current-semester-display" style="font-size: 13px; color: #888; font-weight: normal;"></span>
             </div>
@@ -12,15 +12,15 @@
         </div>
 
         <!-- Weekly Navigation -->
-        <div
+        <div class="weekly-nav-container"
             style="display: flex; justify-content: center; align-items: center; gap: 20px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="month-select-wrapper" style="display: flex; align-items: center; gap: 8px;">
                 <label style="font-size: 16px; font-weight: bold; color: #333; line-height: 1;">월 선택:</label>
                 <select id="usage-month-select" class="form-select"
                     style="width: 110px; padding: 6px; font-size: 14px; height: 36px;"></select>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="date-nav-wrapper" style="display: flex; align-items: center; gap: 15px;">
                 <button id="btn-prev-week" class="btn-icon-only">
                     <span class="material-symbols-outlined">chevron_left</span>
                 </button>
@@ -44,7 +44,7 @@
             <label for="show-weekend-toggle" style="font-size: 13px; color: #555; cursor: pointer;">토요일/일요일 표시</label>
         </div>
         <div id="usage-log-grid-container"
-            style="overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            style="overflow-x: auto; overflow-y: auto; max-height: 60vh; background: white; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             <table id="usage-log-table" class="usage-grid-table">
                 <thead>
                     <tr id="usage-grid-header">
@@ -87,6 +87,12 @@
         color: #555;
         font-size: 14px;
         height: 50px;
+        position: sticky;
+        /* Sticky Header */
+        top: 0;
+        z-index: 10;
+        box-shadow: 0 1px 0 #ddd;
+        /* Bottom border for sticky header */
     }
 
     .period-col {

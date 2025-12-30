@@ -150,7 +150,12 @@
         const subjectId = document.getElementById('filter-subject').value;
         const teacherId = document.getElementById('filter-teacher').value;
 
-        let query = supabase.from('lab_usage_log').select('*');
+        // Explicitly select columns to avoid errors with potential schema cache issues or hidden columns
+        // Explicitly select columns. Compacted to avoid any whitespace issues.
+        let query = supabase.from('lab_usage_log')
+            .select('id, lab_room_id, usage_date, period, grade, class_number, subject_id, teacher_id, activity_type, content, safety_education, remarks, semester_id');
+
+        console.log("Values for search:", { startDate, endDate, roomId, grade, subjectId, teacherId });
 
         if (startDate) query = query.gte('usage_date', startDate);
         if (endDate) query = query.lte('usage_date', endDate);

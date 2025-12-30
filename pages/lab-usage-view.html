@@ -8,22 +8,27 @@
 
         <!-- Advanced Filter Bar -->
         <div class="filter-bar-card">
-            <div class="filter-row">
-                <div class="filter-group" style="flex: 2; min-width: 250px; flex-shrink: 0;">
+            <!-- Row 1: Date Period -->
+            <div class="filter-row" style="margin-bottom: 15px;">
+                <div class="filter-group" style="flex: 0 0 auto; min-width: 300px;">
                     <label>조회 기간</label>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <input type="date" id="filter-start-date" class="form-control" style="flex: 1;">
+                        <input type="date" id="filter-start-date" class="form-control" style="width: 140px;">
                         <span>~</span>
-                        <input type="date" id="filter-end-date" class="form-control" style="flex: 1;">
+                        <input type="date" id="filter-end-date" class="form-control" style="width: 140px;">
                     </div>
                 </div>
-                <div class="filter-group" style="flex: 1; min-width: 140px;">
+            </div>
+
+            <!-- Row 2: Dropdowns + Search Button -->
+            <div class="filter-row" style="align-items: flex-end;">
+                <div class="filter-group" style="flex: 1; min-width: 120px;">
                     <label>과학실</label>
                     <select id="filter-room" class="form-select">
                         <option value="">전체 과학실</option>
                     </select>
                 </div>
-                <div class="filter-group" style="width: 80px;">
+                <div class="filter-group" style="width: 90px;">
                     <label>학년</label>
                     <select id="filter-grade" class="form-select">
                         <option value="">전체</option>
@@ -32,21 +37,21 @@
                         <option value="3">3학년</option>
                     </select>
                 </div>
-                <div class="filter-group" style="flex: 1; min-width: 140px;">
+                <div class="filter-group" style="flex: 1; min-width: 120px;">
                     <label>과목</label>
                     <select id="filter-subject" class="form-select">
                         <option value="">전체 과목</option>
                     </select>
                 </div>
-                <div class="filter-group" style="flex: 1; min-width: 140px;">
+                <div class="filter-group" style="flex: 1; min-width: 120px;">
                     <label>교사</label>
                     <select id="filter-teacher" class="form-select">
                         <option value="">전체 교사</option>
                     </select>
                 </div>
-                <div class="filter-group" style="width: 100px;">
+                <div class="filter-group" style="width: 100px; gap: 0 !important;">
                     <button id="btn-apply-filters" class="btn-primary"
-                        style="padding: 0 15px; height: 38px; width: 100%; font-weight: 600; background-color: #00A0B2; border-color: #00A0B2;">
+                        style="padding: 0 15px; height: 38px; width: 100%; font-weight: 600; background-color: #00A0B2; border: none; border-radius: 8px; color: #fff; box-shadow: 0 2px 4px rgba(0, 160, 178, 0.2);">
                         조회하기
                     </button>
                 </div>
@@ -70,7 +75,7 @@
                         </select>
                     </div>
                     <button id="btn-export-excel" class="btn-primary"
-                        style="height: 32px; padding: 0 12px; font-size: 13px; gap: 6px; border-radius: 4px; background-color: #00A0B2; border-color: #00A0B2; display: flex; align-items: center; justify-content: center;">
+                        style="height: 32px; padding: 0 16px; font-size: 13px; gap: 6px; border-radius: 8px; background-color: #00A0B2; border: none; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 2px 4px rgba(0, 160, 178, 0.2);">
                         <span class="material-symbols-outlined" style="font-size: 18px;">download</span>
                         Excel 저장
                     </button>
