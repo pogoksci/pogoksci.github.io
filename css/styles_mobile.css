@@ -642,3 +642,36 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   min-width: auto !important;
   /* Allow shrinking if needed */
 }
+
+/* =================================================================
+   13. Force Light Theme Colors (Dark Mode Cleanup)
+   ================================================================= */
+.app-title {
+  color: #333 !important;
+}
+
+.school-name {
+  color: #666 !important;
+}
+
+#navbar-container,
+.navbar {
+  background-color: #fff !important;
+  border-top: 1px solid #ddd !important;
+  color: #333 !important;
+}
+
+.nav-item {
+  color: #555 !important;
+}
+
+.nav-item.active {
+  color: #00a0b2 !important;
+}
+
+/* Ensure no dark backgrounds on body/html */
+html,
+body {
+  background-color: #fff !important;
+  color: #333 !important;
+}
