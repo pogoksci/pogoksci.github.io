@@ -552,3 +552,259 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   margin-bottom: 20px !important;
   border-radius: 8px !important;
 }
+
+/* =================================================================
+   12. Standard FAB (Floating Action Button) for Mobile
+   ================================================================= */
+.fab {
+  position: fixed !important;
+  bottom: 80px !important;
+  /* Above bottom nav */
+  right: 20px !important;
+  left: auto !important;
+  width: auto !important;
+  height: 48px !important;
+  border-radius: 24px !important;
+  padding: 0 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #00897b, #2dd4bf) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 137, 123, 0.4) !important;
+  border: none !important;
+  z-index: 9000 !important;
+  /* Ensure on top */
+  font-weight: bold !important;
+  font-size: 14px !important;
+  margin: 0 !important;
+  transform: none !important;
+  /* Fix for potential transform contexts */
+}
+
+.fab .material-symbols-outlined {
+  margin-right: 8px !important;
+  font-size: 20px !important;
+}
+
+/* Specific fix for the Save Weekly Log button if it keeps the ID */
+#btn-save-usage-log {
+  width: auto !important;
+  /* Override explicit width if any */
+}
+
+
+/* =================================================================
+   11. High-End Dark Mode (Mobile Perfect Harmony)
+   ================================================================= */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --hd-bg: #0b0e14;
+    /* Deep Obsidian */
+    --hd-surface: #161b22;
+    /* Midnight Surface */
+    --hd-surface-soft: #21262d;
+    /* Subtle elevation */
+    --hd-text: #e6edf3;
+    /* Crystal White */
+    --hd-text-mute: #8b949e;
+    /* Muted Slate */
+    --hd-border: rgba(255, 255, 255, 0.08);
+    --hd-border-strong: rgba(255, 255, 255, 0.15);
+
+    /* Requested: Brighter Accent for Menu Button */
+    --hd-accent: #5eead4;
+    /* Teal 300 (Brighter) */
+
+    --hd-accent-glow: rgba(45, 212, 191, 0.15);
+    --hd-glass: rgba(15, 23, 42, 0.8);
+  }
+
+  /* 1. Global Structure */
+  html,
+  body,
+  #form-container,
+  .layout-container {
+    background-color: var(--hd-bg) !important;
+    color: var(--hd-text) !important;
+  }
+
+  .layout-content,
+  .detail-scroll-container,
+  .detail-right {
+    background-color: var(--hd-bg) !important;
+  }
+
+  /* 2. Glassmorphism Headers */
+  .layout-header,
+  .sticky-header,
+  .usage-fixed-header {
+    background-color: var(--hd-glass) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-bottom: 1px solid var(--hd-border) !important;
+    color: var(--hd-text) !important;
+    z-index: 1000 !important;
+  }
+
+  /* Force light colors in dark header */
+  .usage-fixed-header *,
+  .layout-header * {
+    color: var(--hd-text) !important;
+  }
+
+  .usage-fixed-header .name-eng,
+  .usage-fixed-header [style*="color: #666"],
+  .usage-fixed-header [style*="color: #555"] {
+    color: var(--hd-text-mute) !important;
+  }
+
+  /* 3. Cards & Surfaces */
+  .inventory-card,
+  .cabinet-card,
+  .hazard-card,
+  .form-container-card,
+  .history-container-card,
+  .inventory-section-group {
+    background-color: var(--hd-surface) !important;
+    border: 1px solid var(--hd-border) !important;
+    border-radius: 12px !important;
+    color: var(--hd-text) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* Requested: Brighter Background for Section Header */
+  .inventory-section-header {
+    background-color: #2d333b !important;
+    color: var(--hd-text) !important;
+    border-bottom: 1px solid var(--hd-border) !important;
+  }
+
+  /* List view cards */
+  .inventory-list .inventory-card {
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    border-bottom: 1px solid var(--hd-border) !important;
+  }
+
+  /* 4. Form elements */
+  .form-group,
+  .form-group-location {
+    background-color: var(--hd-surface-soft) !important;
+    border: 1px solid var(--hd-border) !important;
+    border-radius: 10px !important;
+  }
+
+  .form-group label,
+  .location-step label {
+    color: var(--hd-text-mute) !important;
+    font-size: 11px !important;
+    margin-bottom: 4px !important;
+  }
+
+  input,
+  select,
+  textarea,
+  .form-input,
+  .search-container {
+    background-color: var(--hd-bg) !important;
+    color: var(--hd-text) !important;
+    border: 1px solid var(--hd-border-strong) !important;
+    border-radius: 6px !important;
+  }
+
+  input:focus,
+  select:focus {
+    border-color: var(--hd-accent) !important;
+    box-shadow: 0 0 0 2px var(--hd-accent-glow) !important;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.5) !important;
+  }
+
+  /* 5. Bottom Navigation */
+  .navbar-container {
+    background-color: var(--hd-glass) !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    border-top: 1px solid var(--hd-border) !important;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .nav-item {
+    color: var(--hd-text-mute) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .nav-item.active {
+    color: var(--hd-accent) !important;
+    background: transparent !important;
+  }
+
+  .nav-item i,
+  .nav-item .material-symbols-outlined {
+    color: inherit !important;
+  }
+
+  .nav-item.active i,
+  .nav-item.active .material-symbols-outlined {
+    filter: drop-shadow(0 0 8px var(--hd-accent-glow)) !important;
+  }
+
+  /* 6. Typography & Small Details */
+  h1,
+  h2,
+  h3,
+  .section-title,
+  .app-title {
+    color: var(--hd-text) !important;
+  }
+
+  .name-eng,
+  .inventory-card__line3,
+  .meta-line1,
+  .school-name,
+  .inv-location,
+  .location-text,
+  .detail-info-list .label {
+    color: var(--hd-text-mute) !important;
+  }
+
+  .kit-tag {
+    background-color: var(--hd-accent-glow) !important;
+    color: var(--hd-accent) !important;
+    border: 1px solid rgba(45, 212, 191, 0.3) !important;
+  }
+
+  /* Tables */
+  .usage-table th,
+  .kit-log-table th,
+  .hazard-table th {
+    background-color: var(--hd-surface-soft) !important;
+    color: var(--hd-text) !important;
+    border-color: var(--hd-border) !important;
+    font-weight: 500 !important;
+  }
+
+  .usage-table td,
+  .kit-log-table td,
+  .hazard-table td {
+    color: var(--hd-text-mute) !important;
+    border-bottom: 1px solid var(--hd-border) !important;
+  }
+
+  /* FIX: Restore Standard Button Style (White Text on Gradient) */
+  .btn-primary,
+  .btn-submit,
+  .btn-login {
+    background: linear-gradient(135deg, #00897b, #2dd4bf) !important;
+    box-shadow: 0 4px 12px rgba(0, 137, 123, 0.3) !important;
+    border: none !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+  }
+}
