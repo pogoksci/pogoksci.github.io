@@ -541,15 +541,21 @@
         if (!confirm("정말 이 사용 기록을 삭제하시겠습니까?\n삭제된 사용량은 재고에 다시 합산됩니다.")) return;
 
         try {
-            const { data, error } = await supabase.functions.invoke('usage-manager', {
+            const { data, error: logError } = await supabase.functions.invoke('usage-manager', {
                 body: {
                     action: 'delete_usage_log',
                     log_id: logId
                 }
             });
 
-            if (error) throw error;
-            if (data?.error) throw new Error(data.error);
+            if (logError) {
+                let errMsg = logError.message || "Unknown error";
+                try {
+                    const ctx = await logError.context.json();
+                    if (ctx && ctx.error) errMsg = ctx.error;
+                } catch (e) { }
+                throw new Error(errMsg);
+            }
 
             alert("✅ 기록이 삭제되었습니다.");
 
@@ -777,7 +783,7 @@
         }
 
         try {
-            const { data, error } = await supabase.functions.invoke('usage-manager', {
+            const { data, error: invokeError } = await supabase.functions.invoke('usage-manager', {
                 body: {
                     action: 'register_usage',
                     inventory_id: selectedItem.id,
@@ -790,7 +796,19 @@
                 }
             });
 
-            if (error) throw error;
+            if (invokeError) {
+                let errMsg = invokeError.message || "Unknown error";
+                try {
+                    const ctx = await invokeError.context.json();
+                    if (ctx && ctx.error) errMsg = ctx.error;
+                } catch (e) { }
+                throw new Error(errMsg);
+            }
+
+            // Check for application-level error (200 OK but success: false)
+            if (data && data.success === false) {
+                throw new Error(data.error || "Unknown server error");
+            }
             if (data?.error) throw new Error(data.error);
 
             alert("✅ 사용량이 등록되었습니다.");

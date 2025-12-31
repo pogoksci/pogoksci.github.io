@@ -453,18 +453,18 @@
             return list.sort((a, b) => {
                 const catA = a.tools_category || "";
                 const catB = b.tools_category || "";
-                
+
                 if (catA !== catB) {
                     const idxA = categoryOrder.indexOf(catA);
                     const idxB = categoryOrder.indexOf(catB);
-                    
+
                     // If both are in the priority list
                     if (idxA !== -1 && idxB !== -1) return idxA - idxB;
                     // If only A is in list, comes first
                     if (idxA !== -1) return -1;
                     // If only B is in list, comes first
                     if (idxB !== -1) return 1;
-                    
+
                     // If neither, fallback to alphabetical
                     return catA.localeCompare(catB);
                 }
@@ -939,35 +939,27 @@
             const supabase = App.supabase;
 
             // 1. Update Tools Table
-            const { error: updateError } = await supabase
-                .from('tools')
-                .update({ stock: newQuantity })
-                .eq('id', tool.id);
-
-            if (updateError) throw updateError;
-
-            // 2. Insert Log
-            // tools_usage_log table columns: tools_id, change_amount, final_quantity, reason
-            // Note: Kits used log_type, log_date. Tools uses created_at (auto?) or specific date?
-            // Currently `tools_usage_log` usually has `created_at` default now().
-            // If we want to support Custom Date, we need to see if we can update `created_at` or if there is a `date` column.
-            // Looking at `loadUsageLogs` in previous view: it uses `created_at`.
-            // So we will try to insert `created_at` with the selected date as ISO string.
-
-            const { error: logError } = await supabase.from('tools_usage_log').insert({
-                tools_id: tool.id,
-                change_amount: change,
-                final_quantity: newQuantity,
-                reason: reason,
-                created_at: new Date(date).toISOString() // Overwrite created_at with user selected date
+            const { data: result, error: logError } = await supabase.functions.invoke('usage-manager', {
+                body: {
+                    action: 'register_tool_usage',
+                    tool_id: tool.id,
+                    user_id: App.Auth.user.id,
+                    change_amount: change,
+                    new_quantity: newQuantity,
+                    reason: reason,
+                    date: new Date(date).toISOString()
+                }
             });
 
             if (logError) {
-                console.error('Failed to log usage:', logError);
-                alert('재고는 수정되었으나 로그 저장에 실패했습니다.');
-            } else {
-                alert('저장되었습니다.');
+                console.error('Failed to register usage via Edge Function:', logError);
+                let errMsg = logError.message || "Unknown error";
+                if (logError.context && logError.context.error) errMsg = logError.context.error;
+                alert('재고 수정 및 로그 저장에 실패했습니다: ' + errMsg);
+                return;
             }
+
+            alert('저장되었습니다.');
 
             // Reload Detail
             loadDetail(tool.id);
@@ -1039,7 +1031,7 @@
 
         if (!dateInput || !typeSelect || !amountInput) return;
 
-        const newDate = dateInput.value; // Text
+        const newDate = dateInput.value;
         const polarity = parseInt(typeSelect.value);
         const newAmountAbs = parseInt(amountInput.value);
         const newReason = reasonInput.value;
@@ -1050,61 +1042,60 @@
         }
 
         const newSignedChange = polarity * newAmountAbs;
-        const diff = newSignedChange - oldSignedChange;
 
         try {
-            // 1. Update Log
-            const { error: logError } = await App.supabase
-                .from('tools_usage_log')
-                .update({
-                    created_at: new Date(newDate).toISOString(), // Handle TZ? Date input is YYYY-MM-DD. ISO will be 00:00 UTC. Ok for sorting.
+            const { data, error: logError } = await App.supabase.functions.invoke('usage-manager', {
+                body: {
+                    action: 'update_tool_log',
+                    log_id: logId,
+                    tool_id: toolId,
+                    user_id: App.Auth.user.id,
                     change_amount: newSignedChange,
-                    reason: newReason
-                    // final_quantity: we can't easily update this without fetch. Ignore for now or fetch.
-                })
-                .eq('id', logId);
+                    reason: newReason,
+                    date: new Date(newDate).toISOString()
+                }
+            });
 
-            if (logError) throw logError;
-
-            // 2. Update Stock if changed
-            if (diff !== 0) {
-                const { data: tool, error: toolError } = await App.supabase.from('tools').select('stock').eq('id', toolId).single();
-                if (toolError) throw toolError;
-
-                const newStock = tool.stock + diff;
-                await App.supabase.from('tools').update({ stock: newStock }).eq('id', toolId);
+            if (logError) {
+                let errMsg = logError.message || "Unknown error";
+                try {
+                    const ctx = await logError.context.json();
+                    if (ctx && ctx.error) errMsg = ctx.error;
+                } catch (e) { }
+                throw new Error(errMsg);
             }
 
             alert('수정되었습니다.');
             loadDetail(toolId);
-
         } catch (e) {
             console.error(e);
             alert('수정 실패: ' + e.message);
         }
     }
 
-    async function deleteToolLog(toolId, logId, oldSignedChange) {
+    async function deleteToolLog(toolId, logId) {
         if (!confirm('정말 삭제하시겠습니까? 재고가 원복됩니다.')) return;
 
         try {
-            const { error: logError } = await App.supabase
-                .from('tools_usage_log')
-                .delete()
-                .eq('id', logId);
+            const { data, error: logError } = await App.supabase.functions.invoke('usage-manager', {
+                body: {
+                    action: 'delete_tool_log',
+                    log_id: logId,
+                    tool_id: toolId
+                }
+            });
 
-            if (logError) throw logError;
-
-            // Revert Stock
-            const { data: tool, error: toolError } = await App.supabase.from('tools').select('stock').eq('id', toolId).single();
-            if (!toolError) {
-                const newStock = tool.stock - oldSignedChange;
-                await App.supabase.from('tools').update({ stock: newStock }).eq('id', toolId);
+            if (logError) {
+                let errMsg = logError.message || "Unknown error";
+                try {
+                    const ctx = await logError.context.json();
+                    if (ctx && ctx.error) errMsg = ctx.error;
+                } catch (e) { }
+                throw new Error(errMsg);
             }
 
             alert('삭제되었습니다.');
             loadDetail(toolId);
-
         } catch (e) {
             console.error(e);
             alert('삭제 실패: ' + e.message);

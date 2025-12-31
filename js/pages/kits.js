@@ -450,7 +450,7 @@
             return;
         }
 
-        const casList = catalogItem.kit_cas.split(',').map(s => s.trim()).filter(s => s);
+        const casList = catalogItem.kit_cas.split(',').map(s => s.trim().replace(/"/g, '')).filter(s => s);
 
         // Fetch data for each CAS individually to ensure loose matching works for everyone
         // This bypasses potential issues with .in() strict matching or array formatting
@@ -1123,38 +1123,23 @@
             return;
         }
 
-        const { error: updateError } = await supabase
-            .from('user_kits')
-            .update({ quantity: newQuantity })
-            .eq('id', kit.id);
-
-        if (updateError) {
-            alert('재고 업데이트 실패: ' + updateError.message);
-            return;
-        }
-
-        if (!kit || !kit.id) {
-            alert('키트 ID 정보가 없습니다.');
-            return;
-        }
-
-        const { error: logError } = await supabase
-            .from('kit_usage_log')
-            .insert({
+        const { data: result, error: logError } = await supabase.functions.invoke('usage-manager', {
+            body: {
+                action: 'register_kit_usage',
                 user_kit_id: kit.id,
-                change_amount: change,
-                log_date: date,
-                log_type: type // Send 'usage' or 'purchase' directly to match potential DB constraints? Let's try English keys if table expects them.
-                // Wait, existing code logic in loadUsageLogs handles 'usage'/'purchase' -> '사용'/'구입'.
-                // So saving 'usage'/'purchase' is safer.
-            });
+                user_id: App.Auth.user.id,
+                amount: amount,
+                date: date,
+                type: type
+            }
+        });
 
         if (logError) {
-            console.error('Failed to log usage:', logError);
-            alert('재고는 수정되었으나 로그 저장에 실패했습니다: ' + logError.message);
-        } else {
-            // Only say Saved if log also succeeded? Or partial success?
-            // alert('저장되었습니다.'); // Kept below
+            console.error('Failed to register usage via Edge Function:', logError);
+            let errMsg = logError.message;
+            if (logError.context && logError.context.error) errMsg = logError.context.error;
+            alert('재고 수정 및 로그 저장에 실패했습니다: ' + errMsg);
+            return;
         }
 
         alert('저장되었습니다.');
@@ -1180,7 +1165,7 @@
         const item = catalog.find(c => c.kit_name === kitName);
         if (!item || !item.kit_cas) return;
 
-        const casList = item.kit_cas.split(',').map(s => s.trim());
+        const casList = item.kit_cas.split(',').map(s => s.trim().replace(/"/g, ''));
 
         for (const cas of casList) {
             const { data } = await supabase
@@ -1219,7 +1204,7 @@
     async function checkAndCleanupChemicals(kitName) {
         const item = catalog.find(c => c.kit_name === kitName);
         if (!item || !item.kit_cas) return;
-        const targetCasList = item.kit_cas.split(',').map(s => s.trim());
+        const targetCasList = item.kit_cas.split(',').map(s => s.trim().replace(/"/g, ''));
 
         const { data: activeKits } = await supabase
             .from('user_kits')
@@ -1232,7 +1217,7 @@
         activeKits.forEach(k => {
             const catItem = catalog.find(c => c.kit_name === k.kit_name);
             if (catItem && catItem.kit_cas) {
-                catItem.kit_cas.split(',').forEach(cas => activeCasSet.add(cas.trim()));
+                catItem.kit_cas.split(',').forEach(cas => activeCasSet.add(cas.trim().replace(/"/g, '')));
             }
         });
 
@@ -1279,7 +1264,7 @@
         `;
     };
 
-    Kits.saveKitLog = async function (kitId, logId, oldSignedChange) {
+    Kits.saveKitLog = async function (userKitId, logId, oldChangeAmount) {
         const dateInput = document.getElementById(`edit-log-date-${logId}`);
         const typeSelect = document.getElementById(`edit-log-type-${logId}`);
         const amountInput = document.getElementById(`edit-log-amount-${logId}`);
@@ -1287,54 +1272,34 @@
         if (!dateInput || !typeSelect || !amountInput) return;
 
         const newDate = dateInput.value;
-        const newType = typeSelect.value;
-        const newAmountAbs = parseInt(amountInput.value);
+        const type = typeSelect.value;
+        const newAmount = parseInt(amountInput.value);
 
-        if (!newDate || isNaN(newAmountAbs) || newAmountAbs <= 0) {
-            alert('날짜와 수량을 올바르게 입력하세요.');
+        if (!newDate || isNaN(newAmount) || newAmount <= 0) {
+            alert('값을 확인하세요.');
             return;
         }
 
-        // Calculate new signed change
-        let newSignedChange = 0;
-        if (newType === 'usage') newSignedChange = -newAmountAbs;
-        else newSignedChange = newAmountAbs; // purchase
-
-        // Difference to apply to current quantity
-        // If old was -1 and new is -2, diff is -1. Stock should decrease by 1.
-        // If old was +5 and new is +2, diff is -3. Stock should decrease by 3.
-        const diff = newSignedChange - oldSignedChange;
-
         try {
-            // 1. Update Log
-            const { error: logError } = await supabase
-                .from('kit_usage_log')
-                .update({
-                    log_date: newDate,
-                    log_type: newType,
-                    change_amount: newSignedChange
-                })
-                .eq('id', logId);
-
-            if (logError) throw logError;
-
-            // 2. Update Stock if changed
-            if (diff !== 0) {
-                // Fetch current to be safe? Or simple increment
-                // simple increment via rpc is best but we don't have it.
-                // Fetch first
-                const { data: kit, error: kitError } = await supabase.from('user_kits').select('quantity').eq('id', kitId).single();
-                if (kitError) throw kitError;
-
-                const newQty = kit.quantity + diff;
-                if (newQty < 0) {
-                    alert('수정 결과 재고가 0보다 작아집니다. 수정할 수 없습니다.');
-                    // Revert log? Too complex. Just warn.
-                    // Actually we should have checked before updating log.
-                    // But let's assume valid edits.
-                } else {
-                    await supabase.from('user_kits').update({ quantity: newQty }).eq('id', kitId);
+            const { data, error: logError } = await App.supabase.functions.invoke('usage-manager', {
+                body: {
+                    action: 'update_kit_log',
+                    log_id: logId,
+                    user_kit_id: userKitId,
+                    user_id: App.Auth.user.id,
+                    amount: newAmount,
+                    date: new Date(newDate).toISOString(),
+                    type: type
                 }
+            });
+
+            if (logError) {
+                let errMsg = logError.message || "Unknown error";
+                try {
+                    const ctx = await logError.context.json();
+                    if (ctx && ctx.error) errMsg = ctx.error;
+                } catch (e) { }
+                throw new Error(errMsg);
             }
 
             alert('수정되었습니다.');
@@ -1346,29 +1311,29 @@
         }
     };
 
-    Kits.deleteKitLog = async function (kitId, logId, oldSignedChange) {
+    Kits.deleteKitLog = async function (userKitId, logId) {
         if (!confirm('정말 삭제하시겠습니까? 재고가 원복됩니다.')) return;
 
         try {
-            // 1. Delete Log
-            const { error: logError } = await supabase
-                .from('kit_usage_log')
-                .delete()
-                .eq('id', logId);
+            const { data, error: logError } = await App.supabase.functions.invoke('usage-manager', {
+                body: {
+                    action: 'delete_kit_log',
+                    log_id: logId,
+                    user_kit_id: userKitId
+                }
+            });
 
-            if (logError) throw logError;
-
-            // 2. Revert Stock: Subtract the old change
-            // If old was +1 (purchase), we subtract 1.
-            // If old was -1 (usage), we subtract -1 => add 1.
-            const { data: kit, error: kitError } = await supabase.from('user_kits').select('quantity').eq('id', kitId).single();
-            if (!kitError) {
-                const newQty = kit.quantity - oldSignedChange;
-                await supabase.from('user_kits').update({ quantity: newQty }).eq('id', kitId);
+            if (logError) {
+                let errMsg = logError.message || "Unknown error";
+                try {
+                    const ctx = await logError.context.json();
+                    if (ctx && ctx.error) errMsg = ctx.error;
+                } catch (e) { }
+                throw new Error(errMsg);
             }
 
             alert('삭제되었습니다.');
-            Kits.loadDetail(kitId);
+            Kits.loadDetail(userKitId);
         } catch (e) {
             console.error(e);
             alert('삭제 실패: ' + e.message);
