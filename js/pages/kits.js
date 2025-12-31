@@ -285,7 +285,51 @@
             }
 
             // 2. Populate Header & Info
-            document.getElementById('detail-kit-name').textContent = kit.kit_name;
+            // 2. Populate Header & Info
+            const nameEl = document.getElementById('detail-kit-name');
+            nameEl.textContent = kit.kit_name;
+
+            // Add 'Back to List' button if not exists
+            const headerContainer = nameEl.parentElement;
+            if (headerContainer && !headerContainer.querySelector('.btn-back-list')) {
+                // Ensure header is flex for alignment
+                headerContainer.style.display = 'flex';
+                headerContainer.style.alignItems = 'center';
+
+                // Create Spacer to push button to right
+                const spacer = document.createElement('div');
+                spacer.style.flex = '1';
+                headerContainer.appendChild(spacer);
+
+                const btnBack = document.createElement('button');
+                // Removed btn-secondary-action to avoid block styling
+                btnBack.className = 'btn-back-list';
+                // Explicit inline styles for small, right-aligned button
+                btnBack.style.marginLeft = '10px';
+                btnBack.style.padding = '4px 10px';
+                btnBack.style.fontSize = '12px';
+                btnBack.style.height = '30px';
+                btnBack.style.display = 'inline-flex';
+                btnBack.style.alignItems = 'center';
+                btnBack.style.justifyContent = 'center';
+                btnBack.style.border = '1px solid #ddd';
+                btnBack.style.borderRadius = '4px';
+                btnBack.style.backgroundColor = '#fff';
+                btnBack.style.cursor = 'pointer';
+                btnBack.style.color = '#555';
+                btnBack.style.whiteSpace = 'nowrap'; // Prevent wrapping
+
+                btnBack.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; margin-right:4px;">list</span>목록으로';
+
+                // Hover effect
+                btnBack.onmouseover = () => btnBack.style.backgroundColor = '#f5f5f5';
+                btnBack.onmouseout = () => btnBack.style.backgroundColor = '#fff';
+
+                btnBack.onclick = () => App.Router.go('kits');
+
+                headerContainer.appendChild(btnBack);
+            }
+
             document.getElementById('detail-kit-class').textContent = kit.kit_class || '-';
 
             // Photo
