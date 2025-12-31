@@ -181,34 +181,82 @@
 
             listContainer.innerHTML = '';
 
+            // Multi-Category Display Logic
             const shouldGroup = (currentSort === 'name_class');
-            let currentCategory = null;
 
-            filteredData.forEach(kit => {
-                if (shouldGroup) {
-                    const cat = kit.kit_class || '미분류';
-                    if (cat !== currentCategory) {
-                        currentCategory = cat;
-                        const count = filteredData.filter(k => (k.kit_class || '미분류') === cat).length;
+            // 1. Determine items to iterate (Cats or Kits)
+            // If grouping: Iterate Categories -> Render related kits
+            // If NOT grouping: Iterate Kits (sorted by currentSort)
 
-                        const wrapper = document.createElement("div");
-                        wrapper.className = "section-header-wrapper";
+            let displayPlan = [];
 
-                        const header = document.createElement("div");
-                        header.className = "inventory-section-header";
-                        // Styles are now handled by styles.css (including gradient border fix)
-
-                        header.innerHTML = `
-                             <span class="section-title">${cat}</span>
-                             <span class="section-count">${count}</span>
-                        `;
-                        wrapper.appendChild(header);
-                        listContainer.appendChild(wrapper);
+            if (shouldGroup) {
+                // Collect Unique Categories
+                const categorySet = new Set();
+                filteredData.forEach(kit => {
+                    if (!kit.kit_class) {
+                        categorySet.add('미분류');
+                    } else {
+                        // Split by comma, trim, avoid duplicates
+                        const classes = kit.kit_class.split(',').map(s => s.trim()).filter(s => s);
+                        if (classes.length === 0) categorySet.add('미분류');
+                        else classes.forEach(c => categorySet.add(c));
                     }
+                });
+
+                // Sort Categories (Fixed order + Others)
+                const fixedOrder = ['물리학', '화학', '생명과학', '지구과학', '융합과학', '기타', '미분류'];
+                const sortedCats = Array.from(categorySet).sort((a, b) => {
+                    const idxA = fixedOrder.indexOf(a);
+                    const idxB = fixedOrder.indexOf(b);
+                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    if (idxA !== -1) return -1;
+                    if (idxB !== -1) return 1;
+                    return a.localeCompare(b);
+                });
+
+                // Build Display Plan: { type: 'header', value: 'CatName' } followed by { type: 'kit', data: Kit }
+                sortedCats.forEach(cat => {
+                    // Filter kits belonging to this category
+                    const categoryKits = filteredData.filter(kit => {
+                        if (cat === '미분류') return !kit.kit_class || kit.kit_class.trim() === '';
+                        if (!kit.kit_class) return false;
+                        const classes = kit.kit_class.split(',').map(s => s.trim());
+                        return classes.includes(cat);
+                    });
+
+                    if (categoryKits.length > 0) {
+                        // Add Header
+                        displayPlan.push({ type: 'header', value: cat, count: categoryKits.length });
+                        // Add Kits
+                        categoryKits.forEach(kit => displayPlan.push({ type: 'kit', data: kit }));
+                    }
+                });
+
+            } else {
+                // No grouping, just list kits
+                filteredData.forEach(kit => displayPlan.push({ type: 'kit', data: kit }));
+            }
+
+            // 2. Render from Display Plan
+            displayPlan.forEach(item => {
+                if (item.type === 'header') {
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "section-header-wrapper";
+                    const header = document.createElement("div");
+                    header.className = "inventory-section-header";
+                    header.innerHTML = `
+                         <span class="section-title">${item.value}</span>
+                         <span class="section-count">${item.count}</span>
+                    `;
+                    wrapper.appendChild(header);
+                    listContainer.appendChild(wrapper);
+                    return;
                 }
 
+                const kit = item.data;
                 const card = document.createElement('div');
-                card.className = 'inventory-card tool-card'; // Add tool-card for 0 padding reset
+                card.className = 'inventory-card tool-card';
                 card.dataset.id = kit.id;
 
                 // Image block
@@ -225,7 +273,6 @@
                         </div>`;
                 }
 
-                // Location formatter
                 const locStr = formatLocation(kit.location);
 
                 card.innerHTML = `
@@ -244,7 +291,7 @@
                         </div>
 
                         <div class="inv-card-right" style="display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; margin-left: 10px;">
-                            <div style="height: 20px;"></div> <!-- Spacer for Alignment with Category (Top) -->
+                            <div style="height: 20px;"></div>
                             <div style="display: flex; align-items: center; justify-content: flex-end; flex: 1;">
                                 ${kit.kit_person ? `<span style="font-size: 13px; color: #008000; font-weight: bold;">(${kit.kit_person}인용)</span>` : ''}
                             </div>
@@ -255,7 +302,6 @@
                     </div>
                 `;
 
-                // Card Click -> Navigate to Detail Page
                 card.addEventListener('click', () => {
                     App.Router.go('kitDetail', { id: kit.id });
                 });
