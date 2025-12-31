@@ -7,7 +7,7 @@
     // DOM Elements Cache
     let form, kitClassButtonsDiv, kitClassValueInput, nameSelect, customInputs,
         checkCustom, customNameInput, casInputContainer, btnAddCas,
-        quantityInput, dateInput,
+        quantityInput, dateInput, kitPersonInput,
         previewImg, videoStream, canvas, photoContainer,
         fileInput, cameraInput;
 
@@ -88,6 +88,7 @@
 
         quantityInput = document.getElementById('kit-quantity');
         dateInput = document.getElementById('kit-date');
+        kitPersonInput = document.getElementById('kit-person');
 
         previewImg = document.getElementById('kit-preview-img');
         videoStream = document.getElementById('kit-camera-stream');
@@ -249,6 +250,25 @@
                 App.Router.go('kits');
             }
         });
+
+        // Name Select Change (Auto-fill Person)
+        nameSelect.addEventListener('change', () => {
+            if (!checkCustom.checked) {
+                const opt = nameSelect.options[nameSelect.selectedIndex];
+                if (opt && opt.dataset.person) {
+                    if (kitPersonInput) kitPersonInput.value = opt.dataset.person;
+                } else {
+                    // Optionally clear or keep previous value?
+                    // Let's clear it if no person count in catalog, or let user decide.
+                    // Better to clear if switching to a known item that has no person count logic?
+                    // Actually many don't have it yet. Let's not clear aggressively if user typed it?
+                    // But if user picks Item A (4 person) -> Input 4.
+                    // Picks Item B (No person) -> If we keep 4, it might be misleading.
+                    // Let's clear if empty.
+                    if (kitPersonInput) kitPersonInput.value = '';
+                }
+            }
+        });
     }
 
     function updateNameList() {
@@ -329,6 +349,7 @@
             // 3. Details
             quantityInput.value = kit.quantity;
             dateInput.value = kit.purchase_date;
+            if (kitPersonInput) kitPersonInput.value = kit.kit_person || '';
 
             // 4. Photo
             if (kit.image_url) {
@@ -409,7 +430,11 @@
             opt.dataset.class = k.kit_class;
             if (selectedKitId && k.id == selectedKitId) {
                 opt.selected = true;
+                // If selected by ID (Edit Mode initial load), we might want to fill person count from catalog?
+                // But Edit Mode 'loadData' already sets it from user_kits.
+                // However, if user changes selection in Create Mode:
             }
+            opt.dataset.person = k.kit_person || ''; // Store person count in dataset
             nameSelect.appendChild(opt);
         });
     }
@@ -584,6 +609,7 @@
 
         const quantity = parseInt(quantityInput.value, 10);
         const purchaseDate = dateInput.value;
+        const kitPerson = kitPersonInput && kitPersonInput.value ? parseInt(kitPersonInput.value, 10) : null;
         const file = fileInput.files[0];
 
         // Location
@@ -617,6 +643,7 @@
             kit_name: finalKitName,
             kit_class: kitClass,
             kit_cas: customCas,
+            kit_person: kitPerson, // Add to payload
             quantity: quantity,
             purchase_date: purchaseDate,
             photo_base64: photoBase64,

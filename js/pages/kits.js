@@ -160,7 +160,7 @@
                     return name.includes(currentSearch) || kClass.includes(currentSearch);
                 });
             }
-            currentFilteredData = filteredData; // ✅ Update state for print
+            currentFilteredData = filteredData; // ✅ State for printing
 
             if (!filteredData || filteredData.length === 0) {
                 if (currentSearch) {
@@ -244,7 +244,10 @@
                         </div>
 
                         <div class="inv-card-right" style="display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; margin-left: 10px;">
-                            <div style="height: 26px;"></div> <!-- Spacer -->
+                            <div style="height: 20px;"></div> <!-- Spacer for Alignment with Category (Top) -->
+                            <div style="display: flex; align-items: center; justify-content: flex-end; flex: 1;">
+                                ${kit.kit_person ? `<span style="font-size: 13px; color: #008000; font-weight: bold;">(${kit.kit_person}인용)</span>` : ''}
+                            </div>
                             <div class="inv-quantity" style="font-size: 14px; color: #555;">
                                 수량: ${kit.quantity}개
                             </div>
@@ -1357,7 +1360,7 @@
                 <button class="btn-mini btn-save" style="background:#4caf50; color:white; border:none; padding:4px 8px; cursor:pointer; margin-right:4px; border-radius:4px; font-size:11px;" onclick="App.Kits.saveKitInitial(${kitId}, ${currentInitialAmount})">저장</button>
                 <button class="btn-mini btn-cancel" style="background:#ccc; border:none; padding:4px 8px; cursor:pointer; border-radius:4px; font-size:11px;" onclick="App.Kits.cancelKitEdit(${kitId})">취소</button>
             </td>
-         `;
+        `;
     };
 
     Kits.saveKitInitial = async function (kitId, oldInitialAmount) {
@@ -1402,35 +1405,38 @@
 
         } catch (e) {
             console.error(e);
-            alert('수정 실패: ' + e.message);
+            alert('삭제 실패: ' + e.message);
         }
     };
 
-    Kits.deleteKitInitial = async function (kitId, initialAmount) {
-        if (!confirm('최초 등록 정보를 삭제하시겠습니까?\n이 키트의 총 수량에서 최초 수량만큼 차감됩니다.\n(구입일은 초기화됩니다)')) return;
+    Kits.deleteKitInitial = async function (kitId, oldInitialAmount) {
+        // Deleting initial -> Amount becomes 0? Or resets purchase date?
+        // Usually, removing initial means setting quantity to 0, or just re-setting it.
+        // Let's assume it sets quantity to 0 + (usage). Actually if we delete 'Initial', we might be deleting the kit.
+        // But here, let's just say we set it to 0.
+        if (!confirm('최초 등록 내역을 삭제하면 초기 수량이 0이 됩니다. 계속하시겠습니까?')) return;
 
         try {
             const { data: kit, error: kitError } = await supabase.from('user_kits').select('quantity').eq('id', kitId).single();
             if (kitError) throw kitError;
 
-            const newQty = kit.quantity - initialAmount;
-            // Should we delete the kit to allow negative? Probably not.
-            // If newQty < 0, warn?
-            // But if user messed up, maybe they want to fix it.
-            // Let's allow it but warn if it goes negative? Or clamp to 0?
-            // "총 수량에서 최초 수량만큼 차감됩니다" -> imply simple math.
+            // New Qty = Current - Initial
+            const newTotalQty = kit.quantity - oldInitialAmount;
+            if (newTotalQty < 0) {
+                alert('삭제 시 총 수량이 0보다 작아져서 불가능합니다.');
+                return;
+            }
 
-            await supabase
+            const { error: updateError } = await supabase
                 .from('user_kits')
                 .update({
-                    quantity: newQty, // Allow negative if logs imply high usage but initial was deleted?
-                    // Actually DB constraint might prevent negative if UNSIGNED.
-                    // Image showed int4. Usually signed.
-                    purchase_date: null // Reset date
+                    quantity: newTotalQty
+                    // purchase_date? maybe keep it
                 })
                 .eq('id', kitId);
 
-            alert('최초 등록 정보가 삭제(초기화)되었습니다.');
+            if (updateError) throw updateError;
+            alert('초기 수량이 삭제(0) 되었습니다.');
             Kits.loadDetail(kitId);
 
         } catch (e) {
@@ -1440,12 +1446,18 @@
     };
 
     Kits.cancelKitEdit = function (kitId) {
-        Kits.loadDetail(kitId);
+        Kits.loadDetail(kitId); // Just reload to reset view
     };
 
-    // ---- Export to App ----
-    globalThis.App = globalThis.App || {};
-    Kits.loadCatalog = loadCatalog; // ✅ Export loadCatalog
-    globalThis.App.Kits = Kits;
 
+    // Export
+    window.App = window.App || {};
+    window.App.Kits = Kits;
+
+    // Auto Init
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => Kits.init());
+    } else {
+        Kits.init();
+    }
 })();
