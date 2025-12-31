@@ -108,16 +108,10 @@
         customInputs.style.display = 'none';
         // kitPersonGroup inherits visibility from customInputs in Create Mode
 
-        // Reset Class Buttons (Default: All)
+        // Reset Class Buttons (Default: None selected)
         const buttons = kitClassButtonsDiv.querySelectorAll('.class-toggle-btn');
-        buttons.forEach(btn => {
-            if (btn.dataset.value === 'all') {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-        kitClassValueInput.value = 'all';
+        buttons.forEach(btn => btn.classList.remove('active'));
+        kitClassValueInput.value = ''; // No categories selected
 
         // Reset Name Select
         nameSelect.innerHTML = '<option value="" disabled selected>분류를 먼저 선택하세요</option>';
@@ -167,33 +161,30 @@
             if (e.target.classList.contains('class-toggle-btn')) {
                 const btn = e.target;
                 const val = btn.dataset.value;
+                const allButtons = Array.from(kitClassButtonsDiv.querySelectorAll('.class-toggle-btn'));
+                const specificButtons = allButtons.filter(b => b.dataset.value !== 'all');
+                const allBtn = allButtons.find(b => b.dataset.value === 'all');
 
                 if (val === 'all') {
-                    // Activate All -> Deactivate others
-                    const buttons = kitClassButtonsDiv.querySelectorAll('.class-toggle-btn');
-                    buttons.forEach(b => {
-                        if (b.dataset.value === 'all') {
-                            b.classList.add('active');
-                        } else {
-                            b.classList.remove('active');
-                        }
-                    });
+                    // Toggle All: If 'all' was not active, select all. If it was active, properties toggle
+                    const isNowActive = !btn.classList.contains('active');
+                    if (isNowActive) {
+                        // Activate everything (Select All)
+                        allButtons.forEach(b => b.classList.add('active'));
+                    } else {
+                        // Deactivate everything (Deselect All)
+                        allButtons.forEach(b => b.classList.remove('active'));
+                    }
                 } else {
                     // Specific Category Clicked
-                    // 1. Deactivate 'all'
-                    const allBtn = kitClassButtonsDiv.querySelector('.class-toggle-btn[data-value="all"]');
-                    if (allBtn) {
-                        allBtn.classList.remove('active');
-                    }
-
-                    // 2. Toggle clicked button
                     btn.classList.toggle('active');
 
-                    // 3. If no buttons active, reactivate 'all'
-                    const activeBtns = kitClassButtonsDiv.querySelectorAll('.class-toggle-btn.active');
-                    if (activeBtns.length === 0) {
-                        const allBtn = kitClassButtonsDiv.querySelector('.class-toggle-btn[data-value="all"]');
+                    // Check if all specific buttons are active
+                    const allActive = specificButtons.every(b => b.classList.contains('active'));
+                    if (allActive) {
                         if (allBtn) allBtn.classList.add('active');
+                    } else {
+                        if (allBtn) allBtn.classList.remove('active');
                     }
                 }
 
@@ -279,7 +270,8 @@
         if (checkCustom.checked) return;
 
         const activeBtns = Array.from(kitClassButtonsDiv.querySelectorAll('.class-toggle-btn.active'));
-        const selectedValues = activeBtns.map(b => b.dataset.value);
+        // Filter out 'all' so it's not saved as a category string
+        const selectedValues = activeBtns.map(b => b.dataset.value).filter(v => v !== 'all');
 
         // Update Hidden Input (for reference or saving)
         kitClassValueInput.value = selectedValues.join(',');
