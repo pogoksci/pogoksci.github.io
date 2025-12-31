@@ -7,7 +7,7 @@
     // DOM Elements Cache
     let form, kitClassButtonsDiv, kitClassValueInput, nameSelect, customInputs,
         checkCustom, customNameInput, casInputContainer, btnAddCas,
-        quantityInput, dateInput, kitPersonInput,
+        quantityInput, dateInput, kitPersonInput, kitPersonGroup,
         previewImg, videoStream, canvas, photoContainer,
         fileInput, cameraInput;
 
@@ -89,6 +89,7 @@
         quantityInput = document.getElementById('kit-quantity');
         dateInput = document.getElementById('kit-date');
         kitPersonInput = document.getElementById('kit-person');
+        kitPersonGroup = document.getElementById('kit-person-group');
 
         previewImg = document.getElementById('kit-preview-img');
         videoStream = document.getElementById('kit-camera-stream');
@@ -105,6 +106,7 @@
 
         // Reset Custom Inputs
         customInputs.style.display = 'none';
+        // kitPersonGroup inherits visibility from customInputs in Create Mode
 
         // Reset Class Buttons (Default: All)
         const buttons = kitClassButtonsDiv.querySelectorAll('.class-toggle-btn');
@@ -204,10 +206,12 @@
         checkCustom.addEventListener('change', (e) => {
             if (e.target.checked) {
                 customInputs.style.display = 'block';
+                // kitPersonGroup is inside, so it shows
                 nameSelect.disabled = true;
                 nameSelect.innerHTML = '<option value="" disabled selected>직접 입력 모드</option>';
             } else {
                 customInputs.style.display = 'none';
+                // kitPersonGroup is inside, so it hides
                 updateNameList(); // Re-populate based on buttons
             }
         });
@@ -321,6 +325,15 @@
 
             // Update hidden input
             updateNameList(); // This also triggers updateNameSelect
+
+            // Force show kitPersonGroup in Edit Mode by moving it OUT of kit-name-group
+            if (kitPersonGroup) {
+                const nameGroup = document.getElementById('kit-name-group');
+                if (nameGroup && nameGroup.parentNode) {
+                    nameGroup.parentNode.insertBefore(kitPersonGroup, nameGroup.nextSibling);
+                    kitPersonGroup.style.display = 'block'; // Ensure visible
+                }
+            }
 
             // 2. Name
             // updateNameList calling updateNameSelect will populate options
