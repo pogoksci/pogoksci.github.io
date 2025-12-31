@@ -110,7 +110,7 @@ select {
   padding: 8px 10px;
   font-size: 14px;
   height: 36px;
-  margin-top: 6px;
+  margin-top: 0;
   margin-bottom: 0;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -3909,6 +3909,52 @@ input[type="date"] {
 
 .scroll-padding-fab {
   padding-bottom: 130px !important;
+}
+
+#lab-usage-log-page .scroll-padding-fab {
+  padding-bottom: 0 !important;
+}
+
+#lab-usage-log-page .layout-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Usage View Page Layout - Full Height Flexbox */
+#lab-usage-view-page .layout-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Disable outer scroll */
+  padding-bottom: 80px !important; /* Make space for Navbar */
+}
+
+#lab-usage-view-page .table-container-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0 !important;
+}
+
+#lab-usage-view-page .table-overlay-scroll {
+  flex: 1;
+  overflow-y: auto;
+  max-height: none !important;
+  padding-bottom: 0 !important;
+}
+
+#lab-usage-view-page #pagination-controls {
+  flex-shrink: 0;
+  border-top: 1px solid #edf2f4;
+  background: #fdfdfd;
+  z-index: 10;
+}
+
+#usage-log-grid-container {
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 130px; /* Prevent FAB overlap (increased) */
 }
 
 #auth-action-icon {

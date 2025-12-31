@@ -13,6 +13,33 @@
     // Pagination State
     let currentPage = 1;
     let pageSize = 10; // Default
+    let isDescSort = true; // Default: Descending (Latest first)
+
+    function sortData(list) {
+        if (!list) return;
+        list.sort((a, b) => {
+            // Sort by Date -> Period -> Room Name
+            if (a.usage_date !== b.usage_date) {
+                return isDescSort 
+                    ? b.usage_date.localeCompare(a.usage_date) 
+                    : a.usage_date.localeCompare(b.usage_date);
+            }
+            if (a.period !== b.period) {
+                // Period can be string '1', '2' or '99', '88'
+                // For simple string comparison is okay usually, but numeric is better if mixed.
+                // Assuming string comparison is sufficient or convert to int if strictly numerical sort needed.
+                return isDescSort 
+                    ? String(b.period).localeCompare(String(a.period))
+                    : String(a.period).localeCompare(String(b.period));
+            }
+            // Room Name Map check
+            const roomA = roomMap[a.lab_room_id] || '';
+            const roomB = roomMap[b.lab_room_id] || '';
+            return isDescSort 
+                ? roomB.localeCompare(roomA)
+                : roomA.localeCompare(roomB);
+        });
+    }
 
     LabUsageView.init = async function () {
         console.log("🔍 Lab Usage View Init");
@@ -43,9 +70,12 @@
         // 3. Initial Search (Auto-run) - Done after dates and filters are ready
         await search();
 
-        // 4. Bind Export
+        // 4. Bind Export & Print
         const btnExport = document.getElementById('btn-export-excel');
         if (btnExport) btnExport.onclick = exportToExcel;
+
+        const btnPrint = document.getElementById('btn-print-report');
+        if (btnPrint) btnPrint.onclick = printReport;
     };
 
     async function loadInitialData() {
@@ -124,6 +154,21 @@
             };
         }
 
+        const btnSort = document.getElementById('btn-toggle-sort');
+        if (btnSort) {
+            btnSort.onclick = () => {
+                isDescSort = !isDescSort;
+                // Update Icon
+                const icon = btnSort.querySelector('.material-symbols-outlined');
+                if (icon) icon.textContent = isDescSort ? 'sort' : 'sort_by_alpha'; // approximate icons
+                
+                // Re-sort data
+                sortData(lastSearchResult);
+                currentPage = 1;
+                renderTable(lastSearchResult);
+            };
+        }
+
         const btnPrev = document.getElementById('btn-prev-page');
         const btnNext = document.getElementById('btn-next-page');
         if (btnPrev) btnPrev.onclick = () => {
@@ -176,6 +221,10 @@
         const filteredData = rawData.filter(item => !item.remarks || item.remarks === '승인');
 
         lastSearchResult = filteredData;
+        
+        // Initial Sort
+        sortData(lastSearchResult);
+
         currentPage = 1; // Reset to first page on search
         renderTable(lastSearchResult);
     }
@@ -226,7 +275,7 @@
                 <td>${teacherMap[item.teacher_id] || '-'}</td>
                 <td class="cell-content" 
                     contenteditable="${canEdit}" 
-                    style="${canEdit ? 'border: 1px dashed transparent;' : ''}"
+                    style="${canEdit ? 'outline: 1px dashed transparent;' : ''}"
                     title="${canEdit ? '클릭하여 내용 수정 (입력 후 포커스를 옮기면 저장됩니다)' : ''}">${item.content || ''}</td>
                 <td style="text-align:center;">
                     <span class="badge-safety ${safetyClass}" 
@@ -240,9 +289,9 @@
                 badge.onclick = () => toggleSafetyStatus(item, badge);
 
                 const contentCell = tr.querySelector('.cell-content');
-                contentCell.onfocus = () => contentCell.style.borderColor = '#00A0B2';
+                contentCell.onfocus = () => contentCell.style.outlineColor = '#00A0B2';
                 contentCell.onblur = async () => {
-                    contentCell.style.borderColor = 'transparent';
+                    contentCell.style.outlineColor = 'transparent';
                     const newText = contentCell.textContent.trim();
                     if (newText !== (item.content || '')) {
                         await updateContent(item, newText, contentCell);
@@ -274,15 +323,16 @@
             const { error } = await supabase
                 .from('lab_usage_log')
                 .update({ safety_education: newStatus })
-                .match({
-                    lab_room_id: item.lab_room_id,
-                    usage_date: item.usage_date,
-                    period: item.period,
-                    subject_id: item.subject_id,
-                    teacher_id: item.teacher_id,
-                    grade: item.grade,
-                    class_number: item.class_number
-                });
+                .eq('id', item.id);
+            //     .match({
+            //         lab_room_id: item.lab_room_id,
+            //         usage_date: item.usage_date,
+            //         period: item.period,
+            //         subject_id: item.subject_id,
+            //         teacher_id: item.teacher_id,
+            //         grade: item.grade,
+            //         class_number: item.class_number
+            //     });
 
             if (error) throw error;
 
@@ -313,15 +363,16 @@
             const { error } = await supabase
                 .from('lab_usage_log')
                 .update({ content: newText })
-                .match({
-                    lab_room_id: item.lab_room_id,
-                    usage_date: item.usage_date,
-                    period: item.period,
-                    subject_id: item.subject_id,
-                    teacher_id: item.teacher_id,
-                    grade: item.grade,
-                    class_number: item.class_number
-                });
+                .eq('id', item.id);
+            //     .match({
+            //         lab_room_id: item.lab_room_id,
+            //         usage_date: item.usage_date,
+            //         period: item.period,
+            //         subject_id: item.subject_id,
+            //         teacher_id: item.teacher_id,
+            //         grade: item.grade,
+            //         class_number: item.class_number
+            //     });
 
             if (error) throw error;
 
@@ -387,6 +438,95 @@
         // 5. Save File
         const dateStr = new Date().toISOString().slice(0, 10);
         XLSX.writeFile(workbook, `과학실_사용기록_${dateStr}.xlsx`);
+    }
+
+    function printReport() {
+        if (!lastSearchResult || lastSearchResult.length === 0) {
+            alert("인쇄할 데이터가 없습니다.");
+            return;
+        }
+
+        // 1. Determine Title
+        const roomId = document.getElementById('filter-room').value;
+        let title = "과학실 사용기록";
+        if (roomId && roomMap[roomId]) {
+            title = `${roomMap[roomId]} 사용기록`;
+        }
+        const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        // 2. Build HTML Content
+        const rows = lastSearchResult.map((item, index) => {
+            const periodLabel = item.period === '99' ? '점심' : (item.period === '88' ? '방과후' : `${item.period}교시`);
+            return `
+                <tr>
+                    <td style="text-align: center;">${index + 1}</td>
+                    <td style="text-align: center;">${item.usage_date}</td>
+                    <td style="text-align: center;">${periodLabel}</td>
+                    <td style="text-align: center;">${roomMap[item.lab_room_id] || '-'}</td>
+                    <td style="text-align: center;">${item.grade ? `${item.grade}-${item.class_number}` : '-'}</td>
+                    <td style="text-align: center;">${subjectMap[item.subject_id] || item.activity_type}</td>
+                    <td style="text-align: center;">${teacherMap[item.teacher_id] || '-'}</td>
+                    <td style="padding: 5px 8px;">${item.content || ''}</td>
+                    <td style="text-align: center;">${item.safety_education}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const printWindow = window.open('', '_blank', 'width=1000,height=800');
+        if (!printWindow) {
+            alert("팝업 차단을 해제해주세요.");
+            return;
+        }
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${title}</title>
+                <style>
+                    body { font-family: "Malgun Gothic", sans-serif; padding: 20px; }
+                    h1 { text-align: center; margin-bottom: 5px; font-size: 24px; }
+                    .meta { text-align: right; margin-bottom: 15px; font-size: 12px; color: #555; }
+                    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                    th, td { border: 1px solid #333; padding: 6px 4px; }
+                    th { background-color: #f0f0f0; text-align: center; font-weight: bold; }
+                    @media print {
+                        @page { margin: 15mm; }
+                        body { padding: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>${title}</h1>
+                <div class="meta">출력일: ${today} | 총 ${lastSearchResult.length}건</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">No</th>
+                            <th style="width: 90px;">날짜</th>
+                            <th style="width: 60px;">교시</th>
+                            <th style="width: 100px;">장소</th>
+                            <th style="width: 70px;">학급</th>
+                            <th style="width: 120px;">과목</th>
+                            <th style="width: 80px;">담당교사</th>
+                            <th>활동 내용</th>
+                            <th style="width: 60px;">안전</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        window.close();
+                    };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
     }
 
     function formatDate(date) {
