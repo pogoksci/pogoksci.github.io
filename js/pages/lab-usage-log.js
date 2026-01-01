@@ -76,9 +76,20 @@
             }
             if (monthSelect) {
                 monthSelect.onchange = (e) => {
-                    const m = parseInt(e.target.value);
-                    const y = selectedDate.getFullYear();
-                    selectedDate = new Date(y, m - 1, 1);
+                    const targetMonth = parseInt(e.target.value);
+                    const currentYear = selectedDate.getFullYear();
+                    const currentMonth = selectedDate.getMonth() + 1;
+                    
+                    // Determine Academic Year Start Year (March of the school year)
+                    // If current view is Jan/Feb, it belongs to previous year's School Year
+                    const academicStartYear = currentMonth < 3 ? currentYear - 1 : currentYear;
+
+                    // Calculate Target Year based on Target Month
+                    // If Target is Jan/Feb, it belongs to the next calendar year of the academic year
+                    // If Target is Mar-Dec, it belongs to the academic start year
+                    const targetYear = targetMonth < 3 ? academicStartYear + 1 : academicStartYear;
+
+                    selectedDate = new Date(targetYear, targetMonth - 1, 1);
                     updateWeekLabel();
                     refresh();
                 };

@@ -5,9 +5,11 @@
     let subjectMap = {};
     let teacherMap = {};
     let roomMap = {};
+    let clubMap = {}; // ✅ Club Map added
     let allSubjects = [];
     let allTeachers = [];
     let allRooms = [];
+    let allClubs = []; // ✅ Club List added
     let lastSearchResult = [];
 
     // Pagination State
@@ -26,8 +28,6 @@
             }
             if (a.period !== b.period) {
                 // Period can be string '1', '2' or '99', '88'
-                // For simple string comparison is okay usually, but numeric is better if mixed.
-                // Assuming string comparison is sufficient or convert to int if strictly numerical sort needed.
                 return isDescSort 
                     ? String(b.period).localeCompare(String(a.period))
                     : String(a.period).localeCompare(String(b.period));
@@ -46,7 +46,7 @@
         const supabase = globalThis.App?.supabase;
         if (!supabase) return;
 
-        // 1. Default Dates: School Year (Mar 1st ~ Feb End) - Run this FIRST
+        // 1. Default Dates: School Year (Mar 1st ~ Feb End)
         try {
             const now = new Date();
             let schoolYear = now.getFullYear();
@@ -67,7 +67,7 @@
         await loadInitialData();
         setupFilters();
 
-        // 3. Initial Search (Auto-run) - Done after dates and filters are ready
+        // 3. Initial Search (Auto-run)
         await search();
 
         // 4. Bind Export & Print
@@ -81,19 +81,22 @@
     async function loadInitialData() {
         const supabase = globalThis.App?.supabase;
 
-        const [rooms, subjects, teachers] = await Promise.all([
+        const [rooms, subjects, teachers, clubs] = await Promise.all([
             supabase.from('lab_rooms').select('*').order('sort_order'),
             supabase.from('lab_subjects').select('*').order('name'),
-            supabase.from('lab_teachers').select('*').order('name')
+            supabase.from('lab_teachers').select('*').order('name'),
+            supabase.from('lab_clubs').select('*').order('name') // ✅ Fetch Clubs
         ]);
 
         allRooms = rooms.data || [];
         allSubjects = subjects.data || [];
         allTeachers = teachers.data || [];
+        allClubs = clubs.data || [];
 
         allRooms.forEach(r => roomMap[r.id] = r.room_name);
         allSubjects.forEach(s => subjectMap[s.id] = s.name);
         allTeachers.forEach(t => teacherMap[t.id] = t.name);
+        allClubs.forEach(c => clubMap[c.id] = c.name); // ✅ Populate Club Map
 
         // Update Dropdowns
         const selRoom = document.getElementById('filter-room');
@@ -105,7 +108,6 @@
                 allRooms.map(r => `<option value="${r.id}">${r.room_name}</option>`).join('');
         }
         if (selSubj) {
-            // Deduplicate by name for cleaner filter
             const uniqueSub = [];
             const seenSub = new Set();
             allSubjects.forEach(s => {
@@ -118,7 +120,6 @@
                 uniqueSub.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         }
         if (selTech) {
-            // Deduplicate by name for cleaner filter
             const uniqueTech = [];
             const seenTech = new Set();
             allTeachers.forEach(t => {
@@ -146,7 +147,7 @@
 
         const selPageSize = document.getElementById('filter-page-size');
         if (selPageSize) {
-            selPageSize.value = "10"; // Sync with default state
+            selPageSize.value = "10";
             selPageSize.onchange = () => {
                 pageSize = selPageSize.value === 'all' ? 999999 : parseInt(selPageSize.value);
                 currentPage = 1;
@@ -158,11 +159,9 @@
         if (btnSort) {
             btnSort.onclick = () => {
                 isDescSort = !isDescSort;
-                // Update Icon
                 const icon = btnSort.querySelector('.material-symbols-outlined');
-                if (icon) icon.textContent = isDescSort ? 'sort' : 'sort_by_alpha'; // approximate icons
+                if (icon) icon.textContent = isDescSort ? 'sort' : 'sort_by_alpha';
                 
-                // Re-sort data
                 sortData(lastSearchResult);
                 currentPage = 1;
                 renderTable(lastSearchResult);
@@ -195,10 +194,10 @@
         const subjectId = document.getElementById('filter-subject').value;
         const teacherId = document.getElementById('filter-teacher').value;
 
-        // Explicitly select columns to avoid errors with potential schema cache issues or hidden columns
-        // Explicitly select columns. Compacted to avoid any whitespace issues.
+        // ✅ Add club_id to select
+        // Explicitly select columns to avoid errors
         let query = supabase.from('lab_usage_log')
-            .select('id, lab_room_id, usage_date, period, grade, class_number, subject_id, teacher_id, activity_type, content, safety_education, remarks, semester_id');
+            .select('id, lab_room_id, usage_date, period, grade, class_number, subject_id, teacher_id, activity_type, content, safety_education, remarks, semester_id, club_id');
 
         console.log("Values for search:", { startDate, endDate, roomId, grade, subjectId, teacherId });
 
@@ -266,6 +265,12 @@
             const periodLabel = item.period === '99' ? '점심' : (item.period === '88' ? '방과후' : `${item.period}교시`);
             const safetyClass = item.safety_education === '실시' ? 'complete' : 'pending';
 
+            // ✅ Logic to display Club Name or Content
+            let displayContent = item.content || '';
+            if (item.activity_type === '동아리' && item.club_id) {
+                displayContent = clubMap[item.club_id] || displayContent;
+            }
+
             tr.innerHTML = `
                 <td style="font-weight:500;">${item.usage_date}</td>
                 <td>${periodLabel}</td>
@@ -276,7 +281,7 @@
                 <td class="cell-content" 
                     contenteditable="${canEdit}" 
                     style="${canEdit ? 'outline: 1px dashed transparent;' : ''}"
-                    title="${canEdit ? '클릭하여 내용 수정 (입력 후 포커스를 옮기면 저장됩니다)' : ''}">${item.content || ''}</td>
+                    title="${canEdit ? '클릭하여 내용 수정 (입력 후 포커스를 옮기면 저장됩니다)' : ''}">${displayContent}</td>
                 <td style="text-align:center;">
                     <span class="badge-safety ${safetyClass}" 
                           style="${canEdit ? 'cursor:pointer;' : ''}"
