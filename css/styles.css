@@ -1411,6 +1411,7 @@ body.home-active #splash-screen {
 #refresh-btn,
 #print-report-btn,
 #stock-report-btn,
+#btn-print-labels,
 #kit-refresh-btn,
 #kit-print-btn,
 #aid-refresh-btn,
@@ -1431,6 +1432,7 @@ body.home-active #splash-screen {
 #refresh-btn:hover,
 #print-report-btn:hover,
 #stock-report-btn:hover,
+#btn-print-labels:hover,
 #kit-refresh-btn:hover,
 #kit-print-btn:hover,
 #aid-refresh-btn:hover,
@@ -1442,9 +1444,15 @@ body.home-active #splash-screen {
 #refresh-btn .material-symbols-outlined,
 #print-report-btn .material-symbols-outlined,
 #stock-report-btn .material-symbols-outlined,
+#btn-print-labels .material-symbols-outlined,
+#kit-refresh-btn .material-symbols-outlined,
 #kit-print-btn .material-symbols-outlined,
+#aid-refresh-btn .material-symbols-outlined,
+#aid-print-btn .material-symbols-outlined {
+  font-size: 20px;
+}
 
----------------------------- */ .custom-dropdown {
+/* ---------------------------- */ .custom-dropdown {
   position: relative;
   display: inline-block;
   font-family: inherit;

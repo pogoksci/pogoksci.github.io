@@ -998,6 +998,311 @@
   }
 
   // ------------------------------------------------------------
+  // 5️⃣ 라벨 출력 ("시약장 라벨")
+  // ------------------------------------------------------------
+  async function openLabelPrintModal() {
+    const supabase = getSupabase();
+    // 1. Fetch Cabinets
+    const { data: cabinets, error } = await supabase
+      .from("Cabinet")
+      .select("id, cabinet_name, area_id:lab_rooms!fk_cabinet_lab_rooms (room_name)")
+      .order("cabinet_name");
+
+    if (error) {
+      alert("시약장 목록을 불러오지 못했습니다.");
+      return;
+    }
+
+    // 2. Simple UI for Selection
+    const modalHtml = `
+      <div id="label-print-modal" class="modal-overlay" style="z-index: 9999; display: flex;">
+        <div class="modal-content" style="max-width: 400px; width: 90%;">
+          <h3>시약장 라벨 출력</h3>
+          <p style="margin-bottom: 10px; font-size: 14px; color: #666;">
+            출력할 시약장을 선택하세요.<br>
+            (A4 용지에 상/하, 좌/우 구역별로 인쇄됩니다.)
+          </p>
+          <select id="label-cabinet-select" class="form-input" style="margin-bottom: 20px;">
+            <option value="all">전체 시약장 (데이터 많음 주의)</option>
+            ${cabinets.map(c => {
+                const area = c.area_id?.room_name || "미지정";
+                return `<option value="${c.id}">[${area}] ${c.cabinet_name}</option>`;
+            }).join('')}
+          </select>
+          <div style="display: flex; gap: 10px; justify-content: flex-end;">
+             <button id="btn-cancel-label" class="btn-cancel">취소</button>
+             <button id="btn-confirm-label" class="btn-primary">출력하기</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const existing = document.getElementById("label-print-modal");
+    if (existing) existing.remove();
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const modal = document.getElementById("label-print-modal");
+    document.getElementById("btn-cancel-label").onclick = () => modal.remove();
+    document.getElementById("btn-confirm-label").onclick = () => {
+        const val = document.getElementById("label-cabinet-select").value;
+        modal.remove();
+        printShelfLabels(val === 'all' ? null : Number(val));
+    };
+  }
+
+  async function printShelfLabels(targetCabinetId) {
+    const supabase = getSupabase();
+    
+    // 1. Fetch Inventory Data
+    let query = supabase
+      .from("Inventory")
+      .select(`
+        id, edited_name_kor,
+        door_vertical, door_horizontal, internal_shelf_level, storage_column,
+        Cabinet!inner ( id, cabinet_name, door_horizontal_count, area_id:lab_rooms!fk_cabinet_lab_rooms(room_name) ),
+        Substance ( chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod )
+      `);
+
+    if (targetCabinetId) {
+      query = query.eq("cabinet_id", targetCabinetId);
+    }
+
+    // Sort: Cabinet -> Unit(Vert) -> Floor(Horiz) -> Row(Shelf) -> Col
+    query = query.order("cabinet_id")
+                 .order("door_vertical")
+                 .order("door_horizontal")
+                 .order("internal_shelf_level")
+                 .order("storage_column");
+
+    const { data, error } = await query;
+    if (error) {
+      console.error(error);
+      alert("데이터 조회 실패: " + (error.message || JSON.stringify(error)));
+      return;
+    }
+    
+    if (!data || data.length === 0) {
+      alert("출력할 데이터가 없습니다.");
+      return;
+    }
+
+    // 2. Grouping
+    const pages = {};
+
+    data.forEach(item => {
+        const cabId = item.Cabinet.id;
+        const unit = item.door_vertical || '?'; // 단 (Unit) -> Header: 층
+        const floor = item.door_horizontal || '?'; // 층 (Floor) -> Header: 문
+        const row = item.internal_shelf_level || 1; // 행 (Shelf) -> Header: 단
+        const col = item.storage_column || 1; // 열 (Col) -> Header: 열
+
+        // Group by Cabinet + Unit + Floor + Shelf (Row)
+        const key = `${cabId}_${unit}_${floor}_${row}`;
+        if (!pages[key]) {
+            pages[key] = {
+                cabinetName: item.Cabinet.cabinet_name,
+                areaName: item.Cabinet.area_id?.room_name,
+                cabinetDoorCount: item.Cabinet.door_horizontal_count || 1,
+                unit: unit,
+                floor: floor,
+                row: row,
+                cols: {} // Key: col number (1~6), Value: Array of items
+            };
+        }
+        if (!pages[key].cols[col]) pages[key].cols[col] = [];
+        pages[key].cols[col].push(item);
+    });
+
+    // 3. Generate HTML
+    const pageKeys = Object.keys(pages).sort();
+
+    const htmlContent = pageKeys.map(key => {
+        const pageData = pages[key];
+        
+        const renderBlock = (colNum) => {
+            const colItems = pageData.cols[colNum] || [];
+            
+            // Sort by ID (or name if preferred)
+            colItems.sort((a, b) => a.id - b.id);
+
+            let trs = '';
+            const MAX_ROWS = 9;
+            
+            // 1. Render Actual Items
+            colItems.forEach(item => {
+                 let kor = "";
+                 let eng = "";
+                 if (item) {
+                     kor = item.Substance?.chem_name_kor_mod || item.Substance?.chem_name_kor || "";
+                     eng = item.Substance?.substance_name_mod || item.Substance?.substance_name || "";
+                 }
+                 
+                 const idVal = item.id;
+                 
+                 trs += `
+                    <tr>
+                        <td class="col-id">${idVal}</td>
+                        <td class="col-name fit-content kor-name">${kor}</td>
+                        <td class="col-name fit-content eng-name">${eng}</td>
+                    </tr>
+                 `;
+            });
+            
+            // 2. Pad to MAX_ROWS
+            for (let i = colItems.length; i < MAX_ROWS; i++) {
+                 trs += `
+                    <tr>
+                        <td class="col-id"></td>
+                        <td class="col-name fit-content kor-name"></td>
+                        <td class="col-name fit-content eng-name"></td>
+                    </tr>
+                 `;
+            }
+            
+            // Header Info
+            const uVal = pageData.unit;
+            const fVal = pageData.floor;
+            const rVal = pageData.row;
+            const cVal = colNum;
+            const doorCount = pageData.cabinetDoorCount || 1;
+            
+            let locationText = "";
+            if (doorCount === 1) {
+                locationText = `${uVal}층문, ${rVal}단 ${cVal}열`;
+            } else {
+                const doorDir = (fVal == 1) ? "왼쪽문" : "오른쪽문";
+                locationText = `${uVal}층 ${doorDir}, ${rVal}단 ${cVal}열`;
+            }
+            
+            return `
+                <div class="label-block">
+                    <div class="block-header">${locationText}</div>
+                    <table class="label-table">
+                        <colgroup>
+                            <col class="col-id" style="width: 9mm;">
+                            <col class="col-name" style="width: 50%;">
+                            <col class="col-name" style="width: 50%;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>No</th><th>한글</th><th>영문</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${trs}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        };
+
+        const leftBlocks = [1, 3, 5].map(c => renderBlock(c)).join('');
+        const rightBlocks = [2, 4, 6].map(c => renderBlock(c)).join('');
+
+        return `
+            <div class="print-page">
+                <div class="column left-column">
+                    ${leftBlocks}
+                </div>
+                <div class="column right-column">
+                    ${rightBlocks}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // 4. Open Print Window
+    const win = window.open('', '_blank', 'width=1000,height=800');
+    win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>시약장 라벨 출력</title>
+            <style>
+                @page { size: A4 portrait; margin: 10mm; }
+                body { font-family: "Noto Sans KR", sans-serif; margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
+                .print-page { 
+                    width: 190mm; 
+                    height: 277mm; 
+                    page-break-after: always; 
+                    position: relative;
+                    display: flex;
+                    justify-content: space-between;
+                }
+                .page-header { text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 5mm; }
+                /* .grid-container removed */
+                /* 2 Columns: ~90mm each width with gap */
+                .column { width: 48%; margin-right: 0; vertical-align: top; }
+                .column:last-child { margin-right: 0; }
+                
+                .label-block { margin-bottom: 5mm; border: none; break-inside: avoid; }
+                .block-header { 
+                    text-align: center; 
+                    font-weight: bold; 
+                    font-size: 10pt; 
+                    padding: 2px 0; 
+                    border-bottom: 1px solid #000; 
+                    background-color: #f8f8f8;
+                    -webkit-print-color-adjust: exact;
+                }
+                table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                th, td { border: 1px solid #000; text-align: center; padding: 2px; height: 7mm; font-size: 9pt; overflow: hidden; vertical-align: middle; box-sizing: border-box; }
+                
+                /* Header Background */
+                th { background-color: #ffeb3b !important; font-weight: bold; font-size: 8pt; }
+
+                /* Column Widths handled by colgroup, but explicit helpers here too */
+                .col-id { width: 9mm; font-size: 8pt; }
+                .col-name { width: auto; } 
+
+                .kor-name { font-weight: bold; }
+                .eng-name { font-size: 8pt; }
+                
+                /* Utility for JS resizing */
+                .fit-content {
+                    white-space: nowrap;
+                }
+            </style>
+        </head>
+        <body>
+            ${htmlContent}
+            <script>
+                function fitText() {
+                    const cells = document.querySelectorAll('.fit-content');
+                    cells.forEach(el => {
+                        let size = 9; // Start size (matches CSS)
+                        if (el.classList.contains('eng-name')) size = 8;
+                        
+                        // Reset to ensure we start clean
+                        el.style.fontSize = size + 'pt';
+                        el.style.whiteSpace = 'nowrap'; // Ensure no wrapping for calculation
+                        
+                        // Shrink if overflowing
+                        // Min size 5pt to be readable
+                        while (el.scrollWidth > el.clientWidth && size > 5) {
+                            size -= 0.5;
+                            el.style.fontSize = size + 'pt';
+                        }
+                    });
+                }
+                
+                window.onload = function() {
+                    fitText();
+                    // Small delay to ensure render before print
+                    setTimeout(() => {
+                        window.print();
+                        // window.close(); // Optional: keep open for debug if needed, but user prefers auto
+                    }, 500);
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    win.document.close();
+  }
+
+  // ------------------------------------------------------------
   // 6️⃣ 정렬 & 버튼 UI
   // ------------------------------------------------------------
   function bindListPage() {
@@ -1023,6 +1328,17 @@
       } else {
         printBtn.style.display = "";
         printBtn.onclick = () => printReport();
+      }
+    }
+
+    // 라벨 출력 버튼 바인딩
+    const labelBtn = document.getElementById("btn-print-labels");
+    if (labelBtn) {
+      if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
+        labelBtn.style.display = "none";
+      } else {
+        labelBtn.style.display = "";
+        labelBtn.onclick = () => openLabelPrintModal();
       }
     }
 

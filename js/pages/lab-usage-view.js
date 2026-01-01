@@ -14,7 +14,7 @@
 
     // Pagination State
     let currentPage = 1;
-    let pageSize = 10; // Default
+    let pageSize = 30; // Default
     let isDescSort = true; // Default: Descending (Latest first)
 
     function sortData(list) {
@@ -147,7 +147,7 @@
 
         const selPageSize = document.getElementById('filter-page-size');
         if (selPageSize) {
-            selPageSize.value = "10";
+            selPageSize.value = "30";
             selPageSize.onchange = () => {
                 pageSize = selPageSize.value === 'all' ? 999999 : parseInt(selPageSize.value);
                 currentPage = 1;
@@ -462,6 +462,13 @@
         // 2. Build HTML Content
         const rows = lastSearchResult.map((item, index) => {
             const periodLabel = item.period === '99' ? '점심' : (item.period === '88' ? '방과후' : `${item.period}교시`);
+            
+            // ✅ Display Content Logic (Same as renderTable)
+            let displayContent = item.content || '';
+            if (item.activity_type === '동아리' && item.club_id) {
+                displayContent = clubMap[item.club_id] || displayContent;
+            }
+
             return `
                 <tr>
                     <td style="text-align: center;">${index + 1}</td>
@@ -470,8 +477,7 @@
                     <td style="text-align: center;">${roomMap[item.lab_room_id] || '-'}</td>
                     <td style="text-align: center;">${item.grade ? `${item.grade}-${item.class_number}` : '-'}</td>
                     <td style="text-align: center;">${subjectMap[item.subject_id] || item.activity_type}</td>
-                    <td style="text-align: center;">${teacherMap[item.teacher_id] || '-'}</td>
-                    <td style="padding: 5px 8px;">${item.content || ''}</td>
+                    <td style="text-align: left;">${displayContent}</td>
                     <td style="text-align: center;">${item.safety_education}</td>
                 </tr>
             `;
@@ -492,11 +498,11 @@
                     body { font-family: "Malgun Gothic", sans-serif; padding: 20px; }
                     h1 { text-align: center; margin-bottom: 5px; font-size: 24px; }
                     .meta { text-align: right; margin-bottom: 15px; font-size: 12px; color: #555; }
-                    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-                    th, td { border: 1px solid #333; padding: 6px 4px; }
+                    table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; } /* Fixed layout for better control */
+                    th, td { border: 1px solid #333; padding: 4px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                     th { background-color: #f0f0f0; text-align: center; font-weight: bold; }
                     @media print {
-                        @page { margin: 15mm; }
+                        @page { margin: 10mm; size: portrait; } 
                         body { padding: 0; }
                     }
                 </style>
@@ -505,17 +511,26 @@
                 <h1>${title}</h1>
                 <div class="meta">출력일: ${today} | 총 ${lastSearchResult.length}건</div>
                 <table>
+                    <colgroup>
+                        <col style="width: 30px;">
+                        <col style="width: 75px;">
+                        <col style="width: 40px;">
+                        <col style="width: 80px;">
+                        <col style="width: 50px;">
+                        <col style="width: 90px;">
+                        <col style="width: auto;"> <!-- Content expanded without teacher col -->
+                        <col style="width: 40px;">
+                    </colgroup>
                     <thead>
                         <tr>
-                            <th style="width: 40px;">No</th>
-                            <th style="width: 90px;">날짜</th>
-                            <th style="width: 60px;">교시</th>
-                            <th style="width: 100px;">장소</th>
-                            <th style="width: 70px;">학급</th>
-                            <th style="width: 120px;">과목</th>
-                            <th style="width: 80px;">담당교사</th>
+                            <th>No</th>
+                            <th>날짜</th>
+                            <th>교시</th>
+                            <th>장소</th>
+                            <th>학급</th>
+                            <th>과목</th>
                             <th>활동 내용</th>
-                            <th style="width: 60px;">안전</th>
+                            <th>안전</th>
                         </tr>
                     </thead>
                     <tbody>
