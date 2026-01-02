@@ -110,7 +110,7 @@ select {
   padding: 8px 10px;
   font-size: 14px;
   height: 36px;
-  margin-top: 0;
+  margin-top: 6px;
   margin-bottom: 0;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -1452,7 +1452,8 @@ body.home-active #splash-screen {
   font-size: 20px;
 }
 
-/* ---------------------------- */ .custom-dropdown {
+/* ---------------------------- */
+.custom-dropdown {
   position: relative;
   display: inline-block;
   font-family: inherit;
@@ -3932,8 +3933,10 @@ input[type="date"] {
 #lab-usage-view-page .layout-content {
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Disable outer scroll */
-  padding-bottom: 80px !important; /* Make space for Navbar */
+  overflow: hidden;
+  /* Disable outer scroll */
+  padding-bottom: 80px !important;
+  /* Make space for Navbar */
 }
 
 #lab-usage-view-page .table-container-card {
@@ -3962,7 +3965,8 @@ input[type="date"] {
 #usage-log-grid-container {
   flex: 1;
   min-height: 0;
-  padding-bottom: 130px; /* Prevent FAB overlap (increased) */
+  padding-bottom: 130px;
+  /* Prevent FAB overlap (increased) */
 }
 
 #auth-action-icon {
