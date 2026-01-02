@@ -7,7 +7,7 @@
     // DOM Elements Cache
     let form, kitClassButtonsDiv, kitClassValueInput, nameSelect, customInputs,
         checkCustom, customNameInput, casInputContainer, btnAddCas,
-        quantityInput, dateInput, kitPersonInput, kitPersonGroup,
+        quantityInput, yearInput, monthInput, dayInput, hiddenDateInput, kitPersonInput, kitPersonGroup,
         previewImg, videoStream, canvas, photoContainer,
         fileInput, cameraInput;
 
@@ -33,7 +33,12 @@
             // ✅ 1. Initialize Storage Selector IMMEDIATELY
             if (currentMode === 'create') {
                 document.querySelector('#kit-form-title').textContent = "키트 등록";
-                dateInput.valueAsDate = new Date();
+                const now = new Date();
+                yearInput.value = now.getFullYear();
+                monthInput.value = String(now.getMonth() + 1).padStart(2, '0');
+                dayInput.value = String(now.getDate()).padStart(2, '0');
+                // Sync hidden
+                hiddenDateInput.valueAsDate = now;
 
                 if (App.StorageSelector) {
                     const selectorContainer = document.getElementById("kit-storage-selector");
@@ -87,7 +92,10 @@
         btnAddCas = document.getElementById('btn-add-cas');
 
         quantityInput = document.getElementById('kit-quantity');
-        dateInput = document.getElementById('kit-date');
+        yearInput = document.getElementById('kit-date-year');
+        monthInput = document.getElementById('kit-date-month');
+        dayInput = document.getElementById('kit-date-day');
+        hiddenDateInput = document.getElementById('kit-date-hidden');
         kitPersonInput = document.getElementById('kit-person');
         kitPersonGroup = document.getElementById('kit-person-group');
 
@@ -264,6 +272,61 @@
                 }
             }
         });
+
+        // 1. Auto-focus & Select-All Logic
+        [yearInput, monthInput, dayInput].forEach(input => {
+            if (input) {
+                input.addEventListener('focus', () => input.select());
+            }
+        });
+
+        if (yearInput) {
+            yearInput.addEventListener('input', () => {
+                if (yearInput.value.length === 4) monthInput.focus();
+                syncToHidden();
+            });
+        }
+        if (monthInput) {
+            monthInput.addEventListener('input', () => {
+                if (monthInput.value.length === 2) dayInput.focus();
+                syncToHidden();
+            });
+        }
+        if (dayInput) {
+            dayInput.addEventListener('input', syncToHidden);
+        }
+
+        // 2. Calendar Picker Logic
+        const btnCalendar = document.getElementById('btn-open-calendar');
+        if (btnCalendar && hiddenDateInput) {
+            btnCalendar.addEventListener('click', () => {
+                if (hiddenDateInput.showPicker) {
+                    hiddenDateInput.showPicker();
+                } else {
+                    hiddenDateInput.focus();
+                    hiddenDateInput.click();
+                }
+            });
+
+            hiddenDateInput.addEventListener('change', () => {
+                if (hiddenDateInput.value) {
+                    const [y, m, d] = hiddenDateInput.value.split('-');
+                    yearInput.value = y;
+                    monthInput.value = m;
+                    dayInput.value = d;
+                }
+            });
+        }
+
+        function syncToHidden() {
+            const y = yearInput.value;
+            const m = monthInput.value.padStart(2, '0');
+            const d = dayInput.value.padStart(2, '0');
+            if (y.length === 4 && m.length === 2 && d.length === 2) {
+                hiddenDateInput.value = `${y}-${m}-${d}`;
+            }
+        }
+
     }
 
     function updateNameList() {
@@ -353,7 +416,13 @@
 
             // 3. Details
             quantityInput.value = kit.quantity;
-            dateInput.value = kit.purchase_date;
+            if (kit.purchase_date) {
+                const [y, m, d] = kit.purchase_date.split('-');
+                yearInput.value = y;
+                monthInput.value = m;
+                dayInput.value = d;
+                hiddenDateInput.value = kit.purchase_date;
+            }
             if (kitPersonInput) kitPersonInput.value = kit.kit_person || '';
 
             // 4. Photo
@@ -613,7 +682,12 @@
 
 
         const quantity = parseInt(quantityInput.value, 10);
-        const purchaseDate = dateInput.value;
+        const yVal = yearInput.value.trim();
+        const mVal = monthInput.value.trim().padStart(2, '0');
+        const dVal = dayInput.value.trim().padStart(2, '0');
+
+        if (!yVal || !mVal || !dVal) return alert("구입일을 정확히 입력하세요.");
+        const purchaseDate = `${yVal}-${mVal}-${dVal}`;
         const kitPerson = kitPersonInput && kitPersonInput.value ? parseInt(kitPersonInput.value, 10) : null;
         const file = fileInput.files[0];
 
