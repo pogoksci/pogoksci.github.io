@@ -713,18 +713,24 @@
 
                     // Buttons
                     let btnHtml = '';
-                    if (log.is_initial) {
-                        // For initial, pass current change (initial quantity) to delete
-                        btnHtml = `
-                            <button class="btn-mini btn-edit" style="background:#ffdd57; border:none; padding:4px 8px; cursor:pointer; margin-right:4px; border-radius:4px; font-size:11px;" onclick="App.Kits.editKitInitial(${kit.id}, '${log.log_date || ''}', ${change})">수정</button>
-                            <button class="btn-mini btn-delete" style="background:#ff3860; color:white; border:none; padding:4px 8px; cursor:pointer; border-radius:4px; font-size:11px;" onclick="App.Kits.deleteKitInitial(${kit.id}, ${change})">삭제</button>
-                        `;
-                    } else {
-                        const logTypeKey = log.log_type === 'usage' ? 'usage' : (log.log_type === 'purchase' ? 'purchase' : 'usage'); // Default to usage if unknown
-                        btnHtml = `
-                            <button class="btn-mini btn-edit" style="background:#ffdd57; border:none; padding:4px 8px; cursor:pointer; margin-right:4px; border-radius:4px; font-size:11px;" onclick="App.Kits.editKitLog(${kit.id}, ${log.id}, '${log.log_date || ''}', '${logTypeKey}', ${change})">수정</button>
-                            <button class="btn-mini btn-delete" style="background:#ff3860; color:white; border:none; padding:4px 8px; cursor:pointer; border-radius:4px; font-size:11px;" onclick="App.Kits.deleteKitLog(${kit.id}, ${log.id}, ${change})">삭제</button>
-                         `;
+                    // Permission Check: Hide for Guest/Student
+                    const userRole = (App.Auth && App.Auth.user && App.Auth.user.role) ? App.Auth.user.role : 'guest';
+                    const isRestricted = ['guest', 'student'].includes(userRole);
+
+                    if (!isRestricted) {
+                        if (log.is_initial) {
+                            // For initial, pass current change (initial quantity) to delete
+                            btnHtml = `
+                                <button class="btn-mini btn-edit" style="background:#ffdd57; border:none; padding:4px 8px; cursor:pointer; margin-right:4px; border-radius:4px; font-size:11px;" onclick="App.Kits.editKitInitial(${kit.id}, '${log.log_date || ''}', ${change})">수정</button>
+                                <button class="btn-mini btn-delete" style="background:#ff3860; color:white; border:none; padding:4px 8px; cursor:pointer; border-radius:4px; font-size:11px;" onclick="App.Kits.deleteKitInitial(${kit.id}, ${change})">삭제</button>
+                            `;
+                        } else {
+                            const logTypeKey = log.log_type === 'usage' ? 'usage' : (log.log_type === 'purchase' ? 'purchase' : 'usage'); // Default to usage if unknown
+                            btnHtml = `
+                                <button class="btn-mini btn-edit" style="background:#ffdd57; border:none; padding:4px 8px; cursor:pointer; margin-right:4px; border-radius:4px; font-size:11px;" onclick="App.Kits.editKitLog(${kit.id}, ${log.id}, '${log.log_date || ''}', '${logTypeKey}', ${change})">수정</button>
+                                <button class="btn-mini btn-delete" style="background:#ff3860; color:white; border:none; padding:4px 8px; cursor:pointer; border-radius:4px; font-size:11px;" onclick="App.Kits.deleteKitLog(${kit.id}, ${log.id}, ${change})">삭제</button>
+                             `;
+                        }
                     }
 
                     tr.innerHTML = `

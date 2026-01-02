@@ -727,28 +727,22 @@
 
             // Buttons
             let btnHtml = '';
-            if (log.is_initial) {
-                // Initial Log: Edit/Delete buttons (User said Kits style, where initial IS editable)
-                // However, user said "Last request: Initial Registration does not need edit/delete" for Chemicals?
-                // But for Kits I added it back.
-                // For Teaching Tools, let's assume same as Kits (Edit Initial allowed).
-                btnHtml = `
-                    <button class="btn-mini btn-edit" style="background:#ffdd57; border:none; padding:4px 8px; cursor:pointer; margin-right:4px; border-radius:4px; font-size:11px;" onclick="App.TeachingTools.editToolInitial(${tool.id}, '${dateStr}', ${change})">수정</button>
-                    <!-- <button class="btn-mini btn-delete" ... delete initial? Maybe restrict if inconsistent> -->
-                `;
-                // Let's hold off on Delete Initial unless requested, to avoid complexity (as per Chemical "no edit initial" recent request). 
-                // Wait, user said "Display in the form of 'Usage History' displayed in Kits".
-                // Kits has Edit/Delete for initial.
-                // So I will execute that.
-                btnHtml = `
-                    <button class="btn-mini btn-edit" style="background:#ffdd57; border:none; padding:4px 8px; cursor:pointer; margin-right:4px; border-radius:4px; font-size:11px;" onclick="App.TeachingTools.editToolInitial(${tool.id}, '${dateStr}', ${change})">수정</button>
-                    <button class="btn-mini btn-delete" style="background:#ff3860; color:white; border:none; padding:4px 8px; cursor:pointer; border-radius:4px; font-size:11px;" onclick="App.TeachingTools.deleteToolInitial(${tool.id}, ${change})">삭제</button>
-                 `;
-            } else {
-                btnHtml = `
-                    <button class="btn-mini btn-edit" style="background:#ffdd57; border:none; padding:4px 8px; cursor:pointer; margin-right:4px; border-radius:4px; font-size:11px;" onclick="App.TeachingTools.editToolLog(${tool.id}, ${log.id}, '${dateStr}', '${log.reason || ''}', ${change})">수정</button>
-                    <button class="btn-mini btn-delete" style="background:#ff3860; color:white; border:none; padding:4px 8px; cursor:pointer; border-radius:4px; font-size:11px;" onclick="App.TeachingTools.deleteToolLog(${tool.id}, ${log.id}, ${change})">삭제</button>
-                `;
+            // Permission Check: Hide for Guest/Student
+            const userRole = (App.Auth && App.Auth.user && App.Auth.user.role) ? App.Auth.user.role : 'guest';
+            const isRestricted = ['guest', 'student'].includes(userRole);
+
+            if (!isRestricted) {
+                if (log.is_initial) {
+                    btnHtml = `
+                        <button class="btn-mini btn-edit" style="background:#ffdd57; border:none; padding:4px 8px; cursor:pointer; margin-right:4px; border-radius:4px; font-size:11px;" onclick="App.TeachingTools.editToolInitial(${tool.id}, '${dateStr}', ${change})">수정</button>
+                        <button class="btn-mini btn-delete" style="background:#ff3860; color:white; border:none; padding:4px 8px; cursor:pointer; border-radius:4px; font-size:11px;" onclick="App.TeachingTools.deleteToolInitial(${tool.id}, ${change})">삭제</button>
+                    `;
+                } else {
+                    btnHtml = `
+                        <button class="btn-mini btn-edit" style="background:#ffdd57; border:none; padding:4px 8px; cursor:pointer; margin-right:4px; border-radius:4px; font-size:11px;" onclick="App.TeachingTools.editToolLog(${tool.id}, ${log.id}, '${dateStr}', '${log.reason || ''}', ${change})">수정</button>
+                        <button class="btn-mini btn-delete" style="background:#ff3860; color:white; border:none; padding:4px 8px; cursor:pointer; border-radius:4px; font-size:11px;" onclick="App.TeachingTools.deleteToolLog(${tool.id}, ${log.id}, ${change})">삭제</button>
+                    `;
+                }
             }
 
             tr.innerHTML = `

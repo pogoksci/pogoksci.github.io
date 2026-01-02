@@ -206,8 +206,11 @@
                 const itemsHtml = renderItems(group.items);
 
                 // 폐수위탁처리 버튼: 미처리 항목이 있을 때 표시
-                // (날짜 필터와 관계없이, 현재 '미처리' 상태인 항목이 있다면 처리 가능하도록 함)
-                const showDisposalBtn = hasActiveItems;
+                // 권한 체크: Guest/Student 제외
+                const userRole = (App.Auth && App.Auth.user && App.Auth.user.role) ? App.Auth.user.role : 'guest';
+                const isRestricted = ['guest', 'student'].includes(userRole);
+
+                const showDisposalBtn = hasActiveItems && !isRestricted;
 
                 html += `
                 <div class="inventory-section-group">
@@ -276,7 +279,7 @@
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <span style="font-weight: 700; color: ${isDisposed ? '#888' : '#d33'}; font-size: 14px;">${amountStr} g</span>
                     
-                    ${!readOnly && !isDisposed ? `
+                    ${!readOnly && !isDisposed && !(App.Auth && ['guest', 'student'].includes(App.Auth.user?.role || 'guest')) ? `
                     <button class="icon-btn edit-waste-btn" data-id="${item.id}" style="border:none; background:none; cursor:pointer; padding:4px;">
                         <span class="material-symbols-outlined" style="font-size: 20px; color: #00a0b2;">edit</span>
                     </button>

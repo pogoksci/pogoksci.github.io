@@ -699,6 +699,13 @@
       });
 
       document.getElementById("delete-inventory-btn")?.addEventListener("click", async () => {
+        // Permission Check
+        const userRole = (getApp().Auth && getApp().Auth.user && getApp().Auth.user.role) ? getApp().Auth.user.role : 'guest';
+        if (['guest', 'student'].includes(userRole)) {
+          alert('권한이 없습니다.');
+          return;
+        }
+
         if (!confirm("정말 삭제하시겠습니까?\n(마지막 재고인 경우 물질 정보와 파일도 함께 삭제됩니다.)")) return;
 
         try {
@@ -727,12 +734,29 @@
 
 
       document.getElementById("edit-inventory-btn")?.addEventListener("click", async () => {
+        // Permission Check
+        const userRole = (getApp().Auth && getApp().Auth.user && getApp().Auth.user.role) ? getApp().Auth.user.role : 'guest';
+        if (['guest', 'student'].includes(userRole)) {
+          alert('권한이 없습니다.');
+          return;
+        }
+
         if (getApp().Router?.go) {
           await getApp().Router.go("addInventory", { mode: "edit", detail: data });
         } else {
           alert("편집 모드로 전환 (구현 필요)");
         }
       });
+
+      // Initial Visibility Check (Hide buttons if restricted)
+      const userRoleRaw = (getApp().Auth && getApp().Auth.user && getApp().Auth.user.role) ? getApp().Auth.user.role : 'guest';
+      if (['guest', 'student'].includes(userRoleRaw)) {
+        const delBtn = document.getElementById("delete-inventory-btn");
+        if (delBtn) delBtn.style.display = 'none';
+
+        const editBtn = document.getElementById("edit-inventory-btn");
+        if (editBtn) editBtn.style.display = 'none';
+      }
 
       // ---------------------------------------------------------
       // 3D Viewer Logic
