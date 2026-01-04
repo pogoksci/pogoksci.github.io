@@ -405,6 +405,12 @@
 
   async function showListPage() {
     const app = getApp(); // Define app locally or use globalThis.App
+    
+    // ✅ Fix: Clear FAB immediately to prevent "FOUC" (Flash of Wrong Content)
+    if (app.Fab && app.Fab.setVisibility) {
+        app.Fab.setVisibility(false);
+    }
+
     const inventoryApi = app.Inventory || {};
     inventoryApi.__manualMount = true;
     app.Inventory = inventoryApi;
@@ -424,7 +430,32 @@
     // app.SortDropdown?.init?.({ ... });
 
     await loadList();
-    app.Fab?.setVisibility?.(false);
+    
+    // ✅ Fix: Use Global FAB explicit registration to prevent "Ghost" FABs
+    // Instead of hiding it (which might fail due to CSS overrides), we overwrite it.
+    if (app.Fab && app.Fab.setVisibility) {
+        const canWrite = App.Auth?.canWrite ? App.Auth.canWrite() : true; // Default to true if check missing, or handle strictly
+        
+        // Check Auth similar to bindListPage (lines 1392)
+        // If reusing the exact logic is hard, just call the shared create function or define inline.
+        // We will define specific handler here to match new-inventory-btn behavior.
+        
+        if (canWrite) {
+            app.Fab.setVisibility(true, '<span class="material-symbols-outlined">add</span> 새 약품 등록', async () => {
+                console.log("🧾 새 약품 등록(FAB) 클릭됨");
+                const ok = await app.includeHTML("pages/inventory-form.html", "form-container");
+                if (ok) {
+                    console.log("📄 inventory-form.html 로드 완료 → 폼 초기화 시작");
+                    App.Forms?.initInventoryForm?.("create", null);
+                } else {
+                    console.error("❌ inventory-form.html 로드 실패");
+                }
+            });
+        } else {
+            app.Fab.setVisibility(false);
+        }
+    }
+
     delete app.Inventory.__manualMount;
   }
 

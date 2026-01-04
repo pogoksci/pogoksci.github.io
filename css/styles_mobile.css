@@ -101,13 +101,11 @@ h3,
 /* --- Waste List Header Mobile Layout --- */
 .header-actions {
   display: grid !important;
-  grid-template-columns: auto auto 1fr !important;
-  /* Col1: Summary, Col2: Dropdown, Col3: Buttons (right aligned) */
-  /* Actually buttons are separate. */
-  /* Let's define grid areas */
+  grid-template-columns: auto 1fr auto auto !important;
+  /* Col1: Summary, Col2: Spacer, Col3: Dropdown, Col4: Buttons */
   grid-template-areas:
-    "date date date"
-    "summ drop btns" !important;
+    "date date date date"
+    "summ . drop btns" !important;
   gap: 6px !important;
   align-items: center !important;
   padding-bottom: 5px !important;
@@ -154,6 +152,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   grid-area: drop !important;
   margin: 0 !important;
   width: auto !important;
+  /* Alignment Fix */
+  display: flex !important;
+  align-items: center !important;
+  align-self: center !important;
 }
 
 .waste-sort-dropdown .dropdown-label {
@@ -176,7 +178,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   grid-area: btns !important;
   margin: 0 !important;
   justify-self: end !important;
-  /* Push to right */
+  /* Alignment Fix */
+  display: flex !important;
+  align-items: center !important;
+  align-self: center !important;
+  gap: 5px !important; /* Ensure buttons in group have gap */
 }
 
 .waste-btn-group button {
@@ -227,8 +233,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .scroll-padding-fab {
-  padding-bottom: 80px !important;
-  /* 기존 186px + 30px */
+  padding-bottom: 160px !important;
+  /* Increased to clear centered FAB (approx bottom 80 + height 48 + buffer) */
 }
 
 .layout-header {
@@ -556,6 +562,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* =================================================================
    12. Standard FAB (Floating Action Button) for Mobile
    ================================================================= */
+/* FAB Base Styles */
+#fab-button,
 .fab {
   position: fixed !important;
   bottom: 80px !important;
@@ -566,22 +574,75 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   height: 48px !important;
   border-radius: 24px !important;
   padding: 0 20px !important;
-  display: flex !important;
+  /* FAB Design Update: Solid Color & Fix Visibility override */
+  /* FAB Design Update: Solid Color & Fix Visibility override */
+  display: flex !important; /* Re-added !important to ensure display, but careful with hiding. Actually, JS needs to hide it. 
+     User issue was persistent FABs. Previous fix 'display: flex' (no important) worked for hiding.
+     But let's stick to the non-important display for visibility toggling. */
+  display: flex; 
   align-items: center !important;
   justify-content: center !important;
-  background: linear-gradient(135deg, #00897b, #2dd4bf) !important;
-  color: #ffffff !important;
+  background: #00A0B2 !important; /* Solid Color */
+  color: #ffffff !important; /* Force text color */
   box-shadow: 0 4px 12px rgba(0, 137, 123, 0.4) !important;
   border: none !important;
   z-index: 9000 !important;
-  /* Ensure on top */
   font-weight: bold !important;
   font-size: 14px !important;
   margin: 0 !important;
-  transform: none !important;
-  /* Fix for potential transform contexts */
   line-height: 1 !important;
-  /* Force vertical centering */
+  
+  /* Centering */
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+}
+
+/* Force all children of FAB (icons, spans) to be white - PROPER ID TARGETING */
+#fab-button *,
+.fab * {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important; /* Webkit override */
+}
+
+/* Specific fix for material icons inside FAB */
+#fab-button .material-symbols-outlined,
+.fab .material-symbols-outlined {
+  color: #ffffff !important;
+}
+
+/* Fix "Menu" button text/bg color in the expanded menu */
+#fab-menu-container button {
+  background-color: #00A0B2 !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+}
+#fab-menu-container button span {
+  color: #ffffff !important;
+}
+
+/* ----------------------------------------------------
+   Context-Aware FAB Visibility (Ghost Busting)
+   ---------------------------------------------------- */
+
+/* 1. Hide Global FAB on Inventory Detail (Chemical Details) */
+/* The user reported "New Kit Registration" appearing here. */
+body:has(#detail-name-kor) #fab-button {
+  display: none !important;
+}
+
+/* 2. Hide Local Waste FAB when NOT on Waste Page (Ghosting on Teaching Tools) */
+/* If #new-waste-btn persists in DOM, force hide it unless we are inside the Waste List container */
+body:not(:has(#waste-list-container)) #new-waste-btn {
+  display: none !important;
+}
+
+/* 3. Hide Global FAB on Waste Page (To prevent overlap with Local Waste FAB) */
+/* Waste page has its own #new-waste-btn */
+body:has(#waste-list-container) #fab-button {
+  display: none !important;
 }
 
 .fab .material-symbols-outlined {
@@ -674,4 +735,116 @@ html,
 body {
   background-color: #fff !important;
   color: #333 !important;
+}
+
+/* =================================================================
+   14. Navbar "Menu" Button Colors (User Request: TEXT ONLY)
+   ================================================================= */
+/* Force White Text & Icons inside the Menu Button without changing layout/background */
+#menu-toggle-btn span, 
+#menu-toggle-btn .material-symbols-outlined {
+  fill: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: bold !important;
+}
+
+/* =================================================================
+   15. Start Menu & User Profile Typography (User Request: Unified Size)
+   ================================================================= */
+/* Unify font size for Menu Items and User ID (Request: "Middle Size") */
+#start-menu .menu-item {
+  font-size: 14px !important; /* Unified Medium Size */
+}
+
+/* User Profile Section in Footer */
+#start-menu .user-id {
+  font-size: 14px !important; /* Match Menu Item Size */
+  font-weight: bold !important; /* Ensure visibility */
+  color: #333 !important;
+}
+
+#start-menu .user-icon {
+  font-size: 20px !important; /* Slightly larger icon for balance */
+}
+
+/* =================================================================
+   16. Search Box Optimization (Mobile)
+   ================================================================= */
+/* Reduce search box width to prevent Sort Dropdown text wrapping */
+/* EXPAND search box to fill gap to Dropdown */
+.header-actions .search-container {
+  flex: 1 1 auto !important; /* Grow to fill space */
+  max-width: none !important; /* Remove 120px limit */
+  min-width: 100px !important; /* Prevent total collapse */
+}
+
+/* Ensure input fits container */
+.header-actions .search-container input {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* =================================================================
+   17. Filter Toggle Buttons (Mobile)
+   ================================================================= */
+/* Center text vertically in "All/Teaching Aids/Facilities" buttons */
+.filter-toggle-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: normal !important; /* Reset line-height to allow flex centering */
+  padding: 0 !important; /* Remove padding that might offset content if height is fixed, though padding: 10px is in inline. Let's keep padding but rely on flex. */
+  padding: 10px !important; /* Re-assert padding */
+}
+
+/* =================================================================
+   18. Teaching Aids Header Layout (Mobile)
+   ================================================================= */
+/* Push Sort Dropdown to the right (next to Print/Refresh buttons) */
+/* Remove auto margin so Search grows to meet it */
+#aid-sort-dropdown {
+  margin-left: 5px !important;
+}
+
+/* =================================================================
+   19. Kit Header Layout (Mobile)
+   ================================================================= */
+/* Push Sort Dropdown to the right */
+/* Remove auto margin so Search grows to meet it */
+#kit-sort-dropdown {
+  margin-left: 5px !important;
+}
+
+/* =================================================================
+   20. Inventory Header Layout (Mobile) - 2 Line Layout
+   ================================================================= */
+
+/* 1. RESET Global Grid Layout to Flexbox for Inventory, Kit, and Aid Pages */
+body:has(#inventory-list-container) .header-actions,
+body:has(#kit-search-input) .header-actions,
+body:has(#aid-search-input) .header-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  grid-template-columns: none !important;
+  grid-template-areas: none !important;
+  justify-content: flex-start !important;
+  gap: 5px !important;
+}
+
+/* Line 1: Search + Dropdown (Right Aligned) */
+/* Line 1: Search + Dropdown (Right Aligned via Search Grow) */
+#sort-dropdown {
+  margin-left: 5px !important;
+}
+
+/* Line 2: Action Buttons (Right Aligned) */
+.inventory-btn-group {
+  width: 100% !important;
+  flex: 1 0 100% !important; /* Force full width to trigger wrap */
+  box-sizing: border-box !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 5px !important;
+  margin-top: 5px !important;
+  margin-left: 0 !important;
 }

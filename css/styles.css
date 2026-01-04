@@ -1541,6 +1541,11 @@ body.home-active #splash-screen {
   background-color: #e8f4ff;
 }
 
+.inventory-btn-group {
+  display: flex;
+  align-items: center;
+}
+
 #fab-button,
 .fab {
   z-index: 2000 !important;
