@@ -56,15 +56,17 @@ button,
 }
 
 /* 5. Icons */
-.material-symbols-outlined {
+/* 5. Icons */
+.material-symbols-outlined,
+.inventory-card .icon-btn .material-symbols-outlined {
   font-size: 16px !important;
-  /* Keep icons readable */
+  /* Adjusted to 16px as requested */
 }
 
 /* 6. Waste Amount / Right Side Info */
 .inventory-card>div:last-child>span,
 .inv-card-right div {
-  font-size: 11px !important;
+  font-size: 12px !important; /* Adjusted to 12px */
 }
 
 /* 7. Kits & Teaching Tools Overrides (Inline Styles) */
@@ -146,6 +148,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .summary-label-mobile {
   display: inline !important;
+  padding-left: 10px !important;
 }
 
 .waste-sort-dropdown {
@@ -199,8 +202,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .card-info .cabinet-specs,
 .card-info .area-name,
 .location-text {
-  font-size: 10px !important;
-  /* Reduced from 11px */
+  font-size: 12px !important;
+  /* Adjusted to 12px */
   letter-spacing: -0.5px;
 }
 
