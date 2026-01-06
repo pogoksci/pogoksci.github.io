@@ -749,12 +749,13 @@
       });
 
       // Initial Visibility Check
+      const userRoleRaw = (getApp().Auth && getApp().Auth.user && getApp().Auth.user.role) ? getApp().Auth.user.role : 'guest';
       if (!['guest', 'student'].includes(userRoleRaw)) {
         const delBtn = document.getElementById("delete-inventory-btn");
-        if (delBtn) delBtn.style.display = ''; // Restore default display (flex/block)
+        if (delBtn) delBtn.style.display = 'inline-block';
 
         const editBtn = document.getElementById("edit-inventory-btn");
-        if (editBtn) editBtn.style.display = '';
+        if (editBtn) editBtn.style.display = 'inline-block';
       }
 
       // ---------------------------------------------------------
