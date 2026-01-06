@@ -1068,7 +1068,7 @@
             if (typeof App.Inventory.updateInventory !== 'function') throw new Error("App.Inventory.updateInventory missing");
             await App.Inventory.updateInventory(detail.id, payload);
 
-            alert("✅ 수정 완료 (개별 이름만 저장됨)");
+            alert("해당 약품의 정보를 수정하였습니다.");
           }
           App.Router.go("inventory");
         } catch (err) {
