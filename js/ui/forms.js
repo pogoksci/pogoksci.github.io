@@ -1099,6 +1099,75 @@
               console.log(`✅ Auto-import success. Inventory ID: ${impData.inventoryId}`);
 
               // Direct success handling - skip local creation
+
+              // ----------------------------------------------------------------
+              // 🧪 Post-Fix: Update Hazard Classification for Auto-Imported Items
+              // ----------------------------------------------------------------
+              try {
+                // 1. Fetch newly created Substance to get standards
+                const { data: newSub } = await supabase.from("Substance")
+                  .select("school_hazardous_chemical_standard, school_accident_precaution_chemical_standard, special_health_checkup_hazardous_factor_standard, toxic_substance_standard, permitted_substance_standard, restricted_substance_standard, prohibited_substance_standard, molecular_mass, Properties(name, property)")
+                  .eq("cas_rn", casRn)
+                  .maybeSingle();
+
+                if (newSub && impData.inventoryId) {
+                  // 2. Re-calculate properties (Density, Conversions)
+                  // (Simplified: assuming density=1 if unknown, similar to main logic)
+                  let densityVal = 1;
+                  const densityProp = newSub.Properties?.find(p => p.name === "Density");
+                  if (densityProp && densityProp.property) {
+                    const match = densityProp.property.match(/[0-9]*\.?[0-9]+/);
+                    if (match) densityVal = parseFloat(match[0]);
+                  }
+
+                  // 3. Compute Conversions
+                  const conversions = App.Utils.computeConversions({
+                    value: payload.concentration_value,
+                    unit: payload.concentration_unit,
+                    molarMass: newSub.molecular_mass,
+                    density: densityVal,
+                    valence: Number(payload.valence) || 1
+                  });
+
+                  let currentPercent = null;
+                  if (payload.concentration_unit === '%') {
+                    currentPercent = Number(payload.concentration_value);
+                  } else if (conversions && conversions.percent != null) {
+                    // Note: check logic aligns.
+                    // If input was M, conversions.percent is derived.
+                    currentPercent = conversions.percent;
+                  }
+
+                  const checkHazard = (standard, pct) => {
+                    if (!standard || pct === null || pct === undefined || isNaN(pct)) return "-";
+                    const match = String(standard).match(/[0-9.]+/);
+                    if (!match) return "-";
+                    const limit = parseFloat(match[0]);
+                    if (pct >= limit) return "○";
+                    return "-";
+                  };
+
+                  const patchData = {};
+                  if (currentPercent !== null) {
+                    patchData.school_hazardous_chemical = checkHazard(newSub.school_hazardous_chemical_standard, currentPercent);
+                    patchData.school_accident_precaution_chemical = checkHazard(newSub.school_accident_precaution_chemical_standard, currentPercent);
+                    patchData.special_health_checkup_hazardous_factor = checkHazard(newSub.special_health_checkup_hazardous_factor_standard, currentPercent);
+                    patchData.toxic_substance = checkHazard(newSub.toxic_substance_standard, currentPercent);
+                    patchData.permitted_substance = checkHazard(newSub.permitted_substance_standard, currentPercent);
+                    patchData.restricted_substance = checkHazard(newSub.restricted_substance_standard, currentPercent);
+                    patchData.prohibited_substance = checkHazard(newSub.prohibited_substance_standard, currentPercent);
+                  }
+
+                  if (Object.keys(patchData).length > 0) {
+                    await supabase.from("Inventory").update(patchData).eq("id", impData.inventoryId);
+                    console.log("✅ Auto-Import Hazard Flags Updated:", patchData);
+                  }
+                }
+              } catch (fixErr) {
+                console.warn("⚠️ Failed to update hazard flags for auto-import:", fixErr);
+                // Non-blocking error
+              }
+
               alert("✅ 물질 자동 생성 및 등록 완료");
               App.Router.go("inventory");
               return; // EXIT FUNCTION HERE
