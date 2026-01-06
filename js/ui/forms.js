@@ -971,12 +971,16 @@
 
           if (!payload.substance_id && casRn) {
             // 1. Try exact match
-            let { data: subData } = await supabase.from("Substance").select("id, molecular_mass, Properties(name, property)").eq("cas_rn", casRn).maybeSingle();
+            const hazardCols = `
+              school_hazardous_chemical_standard, school_accident_precaution_chemical_standard, special_health_checkup_hazardous_factor_standard,
+              toxic_substance_standard, permitted_substance_standard, restricted_substance_standard, prohibited_substance_standard
+            `;
+            let { data: subData } = await supabase.from("Substance").select(`id, molecular_mass, Properties(name, property), ${hazardCols}`).eq("cas_rn", casRn).maybeSingle();
 
             // 2. If not found, try removing dashes (if input had dashes)
             if (!subData && casRn.includes("-")) {
               const stripped = casRn.replace(/-/g, "");
-              const { data: subData2 } = await supabase.from("Substance").select("id, molecular_mass, Properties(name, property)").eq("cas_rn", stripped).maybeSingle();
+              const { data: subData2 } = await supabase.from("Substance").select(`id, molecular_mass, Properties(name, property), ${hazardCols}`).eq("cas_rn", stripped).maybeSingle();
               if (subData2) subData = subData2;
             }
 
@@ -1027,6 +1031,38 @@
                     payload.converted_concentration_value_2 = conversions.molality;
                     payload.converted_concentration_unit_2 = conversions.molality != null ? annotateUnit("m") : null;
                   }
+                }
+
+                // ------------------------------------------------------------
+                // ☣️ Update Hazard Classification Flags
+                // ------------------------------------------------------------
+                let currentPercent = null;
+                if (payload.concentration_unit === '%') {
+                  currentPercent = Number(payload.concentration_value);
+                } else if (payload.converted_concentration_unit_1 === '%') {
+                  currentPercent = Number(payload.converted_concentration_value_1);
+                }
+
+                // Helper: Compare Limit
+                const checkHazard = (standard, pct) => {
+                  if (!standard || pct === null || pct === undefined || isNaN(pct)) return "-";
+                  const match = String(standard).match(/[0-9.]+/);
+                  if (!match) return "-";
+                  const limit = parseFloat(match[0]);
+                  // Standard logic: usually ">= limit" means Applicable.
+                  // E.g. "10%" -> if >= 10, then Applicable.
+                  if (pct >= limit) return "○";
+                  return "-";
+                };
+
+                if (currentPercent !== null) {
+                  payload.school_hazardous_chemical = checkHazard(subData.school_hazardous_chemical_standard, currentPercent);
+                  payload.school_accident_precaution_chemical = checkHazard(subData.school_accident_precaution_chemical_standard, currentPercent);
+                  payload.special_health_checkup_hazardous_factor = checkHazard(subData.special_health_checkup_hazardous_factor_standard, currentPercent);
+                  payload.toxic_substance = checkHazard(subData.toxic_substance_standard, currentPercent);
+                  payload.permitted_substance = checkHazard(subData.permitted_substance_standard, currentPercent);
+                  payload.restricted_substance = checkHazard(subData.restricted_substance_standard, currentPercent);
+                  payload.prohibited_substance = checkHazard(subData.prohibited_substance_standard, currentPercent);
                 }
               }
             } else {
