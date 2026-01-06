@@ -744,8 +744,12 @@
         e.preventDefault();
 
         // 🛑 Manual Validation for Button Groups
-        set("unit", document.getElementById("unit_hidden")?.value || "");
-        set("bottle_type", document.getElementById("bottle_type_hidden")?.value || "");
+        // Only overwrite state from hidden input if hidden input has a value
+        const valUnitHidden = document.getElementById("unit_hidden")?.value;
+        if (valUnitHidden) set("unit", valUnitHidden);
+
+        const valBottleHidden = document.getElementById("bottle_type_hidden")?.value;
+        if (valBottleHidden) set("bottle_type", valBottleHidden);
 
         const vUnit = get("unit");
         const vBottle = get("bottle_type");
