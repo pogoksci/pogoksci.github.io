@@ -218,6 +218,97 @@
     return hashHex;
   }
 
+  function bindDateInput({ yearId, monthId, dayId, hiddenId, btnId, initialDate }) {
+    const yearInput = document.getElementById(yearId);
+    const monthInput = document.getElementById(monthId);
+    const dayInput = document.getElementById(dayId);
+    const hiddenDateInput = document.getElementById(hiddenId);
+    const btnCalendar = document.getElementById(btnId);
+
+    if (!yearInput || !monthInput || !dayInput || !hiddenDateInput) return;
+
+    // 1. Initial Set
+    if (initialDate) {
+      let d = new Date(initialDate);
+      if (!isNaN(d.getTime())) {
+        yearInput.value = d.getFullYear();
+        monthInput.value = String(d.getMonth() + 1).padStart(2, '0');
+        dayInput.value = String(d.getDate()).padStart(2, '0');
+        hiddenDateInput.value = initialDate; // Ensure YYYY-MM-DD format if passed correctly
+      } else if (/^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
+        // Just text string match
+        const [y, m, dstr] = initialDate.split('-');
+        yearInput.value = y;
+        monthInput.value = m;
+        dayInput.value = dstr;
+        hiddenDateInput.value = initialDate;
+      }
+    } else {
+      // Default to Today if explicitly requested? Or leave empty?
+      // Logic: Leave empty usually unless specified, but user might want 'Today'.
+      // For now, respect passed initialDate only.
+    }
+
+    // 2. Sync to Hidden
+    const syncToHidden = () => {
+      const y = yearInput.value.trim();
+      const m = monthInput.value.trim().padStart(2, '0');
+      const d = dayInput.value.trim().padStart(2, '0');
+      if (y.length === 4 && m.length === 2 && d.length === 2) {
+        // Simple validation
+        hiddenDateInput.value = `${y}-${m}-${d}`;
+      }
+    };
+
+    // 3. Auto-focus Logic
+    yearInput.addEventListener('focus', () => yearInput.select());
+    monthInput.addEventListener('focus', () => monthInput.select());
+    dayInput.addEventListener('focus', () => dayInput.select());
+
+    yearInput.addEventListener('input', () => {
+      if (yearInput.value.length === 4) monthInput.focus();
+      syncToHidden();
+    });
+    monthInput.addEventListener('input', () => {
+      if (monthInput.value.length === 2) dayInput.focus();
+      syncToHidden();
+    });
+    dayInput.addEventListener('input', syncToHidden);
+
+    // 4. Calendar Picker Logic
+    if (btnCalendar && hiddenDateInput) {
+      btnCalendar.addEventListener('click', () => {
+        if (hiddenDateInput.showPicker) {
+          hiddenDateInput.showPicker();
+        } else {
+          hiddenDateInput.focus();
+          hiddenDateInput.click();
+        }
+      });
+
+      hiddenDateInput.addEventListener('change', () => {
+        if (hiddenDateInput.value) {
+          const [y, m, d] = hiddenDateInput.value.split('-');
+          yearInput.value = y;
+          monthInput.value = m;
+          dayInput.value = d;
+        }
+      });
+    }
+
+    return {
+      getDateString: () => hiddenDateInput.value || null,
+      setDate: (dateStr) => {
+        if (!dateStr) return;
+        const [y, m, d] = dateStr.split('-');
+        yearInput.value = y;
+        monthInput.value = m;
+        dayInput.value = d;
+        hiddenDateInput.value = dateStr;
+      }
+    };
+  }
+
   globalThis.App = globalThis.App || {};
-  globalThis.App.Utils = { sleep, collectFormData, setupButtonGroup, makePayload, base64ToBlob, computeConversions, computeFileHash };
+  globalThis.App.Utils = { sleep, collectFormData, setupButtonGroup, makePayload, base64ToBlob, computeConversions, computeFileHash, bindDateInput };
 })();

@@ -8,6 +8,8 @@
     const { set, get, reset, dump } = App.State;
     const supabase = App.supabase;
 
+    let datePickerInterface = null; // ✅ Date Picker Interface
+
     // ------------------------------------------------------------
     // 1️⃣ 목록 조회 및 렌더링
     // ------------------------------------------------------------
@@ -398,8 +400,20 @@
 
         // 기본값 설정
         const today = new Date().toISOString().split("T")[0];
-        document.getElementById("waste_date").value = today;
+        // document.getElementById("waste_date").value = today; // Handled by bindDateInput
         set("waste_date", today);
+
+        // 🗓️ 날짜 입력 바인딩 (bindDateInput)
+        if (App.Utils && App.Utils.bindDateInput) {
+            datePickerInterface = App.Utils.bindDateInput({
+                yearId: "waste-date-year",
+                monthId: "waste-date-month",
+                dayId: "waste-date-day",
+                hiddenId: "waste_date",
+                btnId: "btn-open-calendar-waste",
+                initialDate: today
+            });
+        }
 
         // 버튼 그룹 설정
         setupButtonGroup("waste_classification_buttons", (btn) => {
@@ -428,7 +442,9 @@
             }
 
             // 데이터 채우기
-            document.getElementById("waste_date").value = data.date;
+            // document.getElementById("waste_date").value = data.date; // Handled below
+            if (datePickerInterface) datePickerInterface.setDate(data.date);
+
             set("waste_date", data.date);
 
             // 분류 버튼 활성화

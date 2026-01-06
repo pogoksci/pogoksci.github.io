@@ -11,6 +11,8 @@
         stdBaseInput, stdUnitSelect, stdTargetInput, reqInput, stockInput, propInput,
         previewImg, videoStream, canvas, photoContainer;
 
+    let datePickerInterface = null; // ✅ Date Picker Interface
+
     const CATEGORIES_AID = [
         '물리학', '화학', '생명과학', '지구과학',
         '공통(기자재)', '공통-일반교구', '공통-측정교구', '안전장구'
@@ -36,8 +38,13 @@
         } else {
             // New Registration: Auto Generate No
             await generateAutoNo();
+            await generateAutoNo();
             document.querySelector('#tools-form-title').textContent = "교구/설비 등록";
-            dateInput.valueAsDate = new Date();
+            // dateInput.valueAsDate = new Date(); // Handled by bindDateInput default or manually below if needed
+            // Default to today for Create mode?
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            if (datePickerInterface) datePickerInterface.setDate(todayStr);
 
             // Storage Selector Init (Create Mode)
             if (App.StorageSelector) {
@@ -94,6 +101,19 @@
     }
 
     function bindEvents() {
+        // Date Picker Binding
+        if (App.Utils && App.Utils.bindDateInput) {
+            // Initial date will be set by loadData or create logic
+            datePickerInterface = App.Utils.bindDateInput({
+                yearId: "tool-date-year",
+                monthId: "tool-date-month",
+                dayId: "tool-date-day",
+                hiddenId: "purchase_date",
+                btnId: "btn-open-calendar-tool",
+                initialDate: null // Will be set later
+            });
+        }
+
         // Button Group Click Delegation
         setupBtnGroup(sectionBtns, (val) => updateUIForSection(val));
         setupBtnGroup(periodBtns);
@@ -407,7 +427,10 @@
             nameInput.value = data.tools_name || '';
             document.getElementById('specification').value = data.specification || '';
             noInput.value = data.tools_no;
-            dateInput.value = data.purchase_date;
+            // dateInput.value = data.purchase_date;
+            if (datePickerInterface && data.purchase_date) {
+                datePickerInterface.setDate(data.purchase_date);
+            }
 
             // Multi-select Using Class
             if (data.using_class) {
@@ -514,7 +537,7 @@
                 tools_code: codeInput.value,
                 specification: document.getElementById('specification').value,
                 tools_no: parseInt(noInput.value) || 0,
-                purchase_date: dateInput.value,
+                purchase_date: datePickerInterface ? datePickerInterface.getDateString() : dateInput.value,
                 location: richLocation, // JSONB
                 image_url: imageUrl,
                 using_class: usingClass,

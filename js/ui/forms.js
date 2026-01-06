@@ -130,6 +130,8 @@
     }
   }
 
+  let datePickerInterface = null; // ✅ Store date picker interface globally for this module instance
+
   async function initInventoryForm(mode = "create", detail = null) {
     window.scrollTo(0, 0); // Force scroll to top
     await App.includeHTML("pages/inventory-form.html", "form-container");
@@ -168,7 +170,8 @@
       set("concentration_value", detail.concentration_value);
       set("concentration_unit", detail.concentration_unit);
       set("manufacturer", detail.manufacturer);
-      set("purchase_date", detail.purchase_date);
+      set("manufacturer", detail.manufacturer);
+      // set("purchase_date", detail.purchase_date); // Handled by datePickerInterface later
 
       // Location logic needs helper or manual set
       // For now, let's just set the basics. Location restoration is complex and usually requires cascading selects.
@@ -222,7 +225,9 @@
       }
       setInput("purchase_volume", detail.current_amount);
       setInput("concentration_value", detail.concentration_value);
-      setInput("purchase_date", detail.purchase_date);
+      setInput("purchase_volume", detail.current_amount);
+      setInput("concentration_value", detail.concentration_value);
+      // setInput("purchase_date", detail.purchase_date); // Handled by datePickerInterface
       setInput("valence_input", detail.valence);
 
       // 2. Buttons
@@ -513,6 +518,21 @@
     }
 
     // ------------------------------------------------------------
+    // 🗓️ 날짜 입력 바인딩 (bindDateInput)
+    // ------------------------------------------------------------
+    if (App.Utils && App.Utils.bindDateInput) {
+      const initialDate = (mode === "edit" && detail) ? detail.purchase_date : null;
+      datePickerInterface = App.Utils.bindDateInput({
+        yearId: "inv-date-year",
+        monthId: "inv-date-month",
+        dayId: "inv-date-day",
+        hiddenId: "purchase_date",
+        btnId: "btn-open-calendar-inv",
+        initialDate: initialDate
+      });
+    }
+
+    // ------------------------------------------------------------
     // 📸 카메라/사진 (inventory-form.html IDs)
     // ------------------------------------------------------------
     // ------------------------------------------------------------
@@ -741,6 +761,9 @@
         set("cas_rn", document.getElementById("cas_rn").value);
         set("purchase_volume", document.getElementById("purchase_volume").value);
         set("concentration_value", document.getElementById("concentration_value").value);
+        set("concentration_value", document.getElementById("concentration_value").value);
+        // set("purchase_date", document.getElementById("purchase_date").value); // Native value is synced by helper
+        // Re-read hidden input which is synced
         set("purchase_date", document.getElementById("purchase_date").value);
         set("valence", document.getElementById("valence_input").value);
         set("edited_name_kor", document.getElementById("chemical_name_ko")?.value || "");
@@ -1068,7 +1091,7 @@
             if (typeof App.Inventory.updateInventory !== 'function') throw new Error("App.Inventory.updateInventory missing");
             await App.Inventory.updateInventory(detail.id, payload);
 
-            alert("해당 약품의 정보를 수정하였습니다.");
+            alert("해당 약품의 정보가 수정되었습니다.");
           }
           App.Router.go("inventory");
         } catch (err) {

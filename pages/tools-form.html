@@ -64,8 +64,28 @@
             </div>
 
             <div class="form-group">
-                <label>구입일</label>
-                <input type="date" id="purchase_date" name="purchase_date">
+                <label for="purchase_date">구입일</label>
+                <div style="display: flex; align-items: center; gap: 5px; position: relative;">
+                    <div
+                        style="display: flex; align-items: center; border: 1px solid #ddd; border-radius: 4px; padding: 2px 8px; background: #fff; height: 32px; box-sizing: border-box;">
+                        <input type="text" id="tool-date-year" placeholder="YYYY" maxlength="4" inputmode="numeric"
+                            style="width: 40px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
+                        <span style="color: #ccc; margin: 0 2px;">-</span>
+                        <input type="text" id="tool-date-month" placeholder="MM" maxlength="2" inputmode="numeric"
+                            style="width: 22px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
+                        <span style="color: #ccc; margin: 0 2px;">-</span>
+                        <input type="text" id="tool-date-day" placeholder="DD" maxlength="2" inputmode="numeric"
+                            style="width: 22px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
+                    </div>
+                    <!-- Hidden Date Input for Picker -->
+                    <input type="date" id="purchase_date" name="purchase_date" tabindex="-1"
+                        style="position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; z-index: -1;">
+                    <!-- Calendar Button -->
+                    <button type="button" id="btn-open-calendar-tool"
+                        style="background: none; border: none; cursor: pointer; color: #666; display: flex; align-items: center; justify-content: center; padding: 0 4px;">
+                        <span class="material-symbols-outlined" style="font-size: 20px;">calendar_month</span>
+                    </button>
+                </div>
             </div>
 
             <div class="form-group-location">
