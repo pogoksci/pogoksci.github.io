@@ -25,7 +25,7 @@
         // 로그인 (ID -> Fake Email)
         login: async function (id, password) {
             const email = id + AUTH_DOMAIN;
-            
+
             // 디버그: 실제 요청되는 이메일 확인
             // alert(`로그인 시도: ${email}`); 
 
@@ -42,7 +42,7 @@
             console.log("✅ 로그인 성공:", data.user.email);
             await this.fetchProfile(data.user.id, data.user.email);
             this.updateUI();
-            
+
             // 로그인 후 페이지 이동 로직
             const savedRoute = sessionStorage.getItem("login_return_route");
             if (savedRoute) {
@@ -72,13 +72,13 @@
             // 현재 페이지가 '권한이 필요한 페이지'라면 홈으로, 아니면 현재 페이지 새로고침(권한 반영)
             const current = App.Router.getCurrentState ? App.Router.getCurrentState() : null;
             const restrictedRoutes = [
-                'dataSync', 'equipmentCabinets', 'addCabinet', 'addInventory', 
+                'dataSync', 'equipmentCabinets', 'addCabinet', 'addInventory',
                 'wasteForm', 'toolsForm', 'kitForm', 'usageRegister'
             ];
-            
+
             if (current && restrictedRoutes.includes(current.pageKey)) {
                 alert("로그아웃되어 메인 화면으로 이동합니다.");
-                App.Router.go("main");
+                window.location.reload();
             } else if (current) {
                 // 현재 페이지 리로드 (데이터/UI 갱신)
                 App.Router.go(current.pageKey, current.params);
@@ -120,9 +120,9 @@
         },
 
         // 현재 권한 체크 헬퍼
-        isAdmin: function() { return this.user?.role === 'admin'; },
-        isTeacher: function() { return ['admin', 'teacher'].includes(this.user?.role); },
-        canWrite: function() { return this.isTeacher(); } // 쓰기 권한은 Teacher 이상
+        isAdmin: function () { return this.user?.role === 'admin'; },
+        isTeacher: function () { return ['admin', 'teacher'].includes(this.user?.role); },
+        canWrite: function () { return this.isTeacher(); } // 쓰기 권한은 Teacher 이상
     };
 
     // 전역 등록
@@ -130,7 +130,7 @@
     globalThis.App.Auth = Auth;
 
     // 로그인 페이지 전용 로직 (Router가 'login' 페이지 로드 시 호출 예정)
-    Auth.bindLoginForm = function() {
+    Auth.bindLoginForm = function () {
         const form = document.getElementById("login-form");
         if (!form) return;
 

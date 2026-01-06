@@ -208,7 +208,7 @@
         concentration_value, concentration_unit, status, edited_name_kor,
         door_vertical, door_horizontal, internal_shelf_level, storage_column,
         Substance ( substance_name, cas_rn, molecular_formula, molecular_mass, chem_name_kor, chem_name_kor_mod, substance_name_mod, molecular_formula_mod, Synonyms ( synonyms_name, synonyms_eng ), ReplacedRns!ReplacedRns_substance_id_fkey ( replaced_rn ) ),
-        Cabinet ( cabinet_name, area_id:lab_rooms!fk_cabinet_lab_rooms ( id, room_name ) )
+        Cabinet ( cabinet_name, door_horizontal_count, area_id:lab_rooms!fk_cabinet_lab_rooms ( id, room_name ) )
       `)
       .order("created_at", { ascending: false });
 
@@ -224,6 +224,7 @@
       const cabinetName = row.Cabinet?.cabinet_name || "";
       const doorVertical = row.door_vertical || "";
       const doorHorizontal = row.door_horizontal || "";
+      const hCount = Number(row.Cabinet?.door_horizontal_count || 0); // ✅ 도어 개수 확인
       const shelfLevel = row.internal_shelf_level;
       const column = row.storage_column;
 
@@ -236,9 +237,13 @@
       let doorPart = "";
       const doorHVal = String(doorHorizontal || "").trim();
       let doorHLabel = "";
-      if (doorHVal === "1") doorHLabel = "왼쪽";
-      else if (doorHVal === "2") doorHLabel = "오른쪽";
-      else doorHLabel = doorHVal;
+
+      // ✅ Detail View Logic: Only show Left/Right if multiple doors exist
+      if (hCount > 1) {
+        if (doorHVal === "1") doorHLabel = "왼쪽";
+        else if (doorHVal === "2") doorHLabel = "오른쪽";
+        else doorHLabel = doorHVal;
+      }
 
       if (doorVertical && doorHLabel) {
         doorPart = `${doorVertical}층 ${doorHLabel}문`;
@@ -262,6 +267,10 @@
       if (detailParts) locationText += detailParts;
 
       locationText = locationText.trim() || "위치 정보 없음";
+
+      // ✅ 보고서용 분리 데이터 (Portrait 모드 2줄 처리용)
+      const locationMain = (area + " " + (cabinetName ? `『${cabinetName}』` : "")).trim();
+      const locationSub = detailParts;
 
       // ✅ CAS Validation
       const rawCas = row.Substance?.cas_rn || "";
@@ -326,6 +335,8 @@
         photo_url_160: row.photo_url_160 || null,
         display_label_html: displayLabelHtml, // HTML로 전달
         location_text: locationText,
+        location_main: locationMain,
+        location_sub: locationSub,
         formula: molecularFormula,
         current_text: currentText,
         concentration_text: concentrationText,
@@ -405,10 +416,10 @@
 
   async function showListPage() {
     const app = getApp(); // Define app locally or use globalThis.App
-    
+
     // ✅ Fix: Clear FAB immediately to prevent "FOUC" (Flash of Wrong Content)
     if (app.Fab && app.Fab.setVisibility) {
-        app.Fab.setVisibility(false);
+      app.Fab.setVisibility(false);
     }
 
     const inventoryApi = app.Inventory || {};
@@ -430,30 +441,30 @@
     // app.SortDropdown?.init?.({ ... });
 
     await loadList();
-    
+
     // ✅ Fix: Use Global FAB explicit registration to prevent "Ghost" FABs
     // Instead of hiding it (which might fail due to CSS overrides), we overwrite it.
     if (app.Fab && app.Fab.setVisibility) {
-        const canWrite = App.Auth?.canWrite ? App.Auth.canWrite() : true; // Default to true if check missing, or handle strictly
-        
-        // Check Auth similar to bindListPage (lines 1392)
-        // If reusing the exact logic is hard, just call the shared create function or define inline.
-        // We will define specific handler here to match new-inventory-btn behavior.
-        
-        if (canWrite) {
-            app.Fab.setVisibility(true, '<span class="material-symbols-outlined">add</span> 새 약품 등록', async () => {
-                console.log("🧾 새 약품 등록(FAB) 클릭됨");
-                const ok = await app.includeHTML("pages/inventory-form.html", "form-container");
-                if (ok) {
-                    console.log("📄 inventory-form.html 로드 완료 → 폼 초기화 시작");
-                    App.Forms?.initInventoryForm?.("create", null);
-                } else {
-                    console.error("❌ inventory-form.html 로드 실패");
-                }
-            });
-        } else {
-            app.Fab.setVisibility(false);
-        }
+      const canWrite = App.Auth?.canWrite ? App.Auth.canWrite() : true; // Default to true if check missing, or handle strictly
+
+      // Check Auth similar to bindListPage (lines 1392)
+      // If reusing the exact logic is hard, just call the shared create function or define inline.
+      // We will define specific handler here to match new-inventory-btn behavior.
+
+      if (canWrite) {
+        app.Fab.setVisibility(true, '<span class="material-symbols-outlined">add</span> 새 약품 등록', async () => {
+          console.log("🧾 새 약품 등록(FAB) 클릭됨");
+          const ok = await app.includeHTML("pages/inventory-form.html", "form-container");
+          if (ok) {
+            console.log("📄 inventory-form.html 로드 완료 → 폼 초기화 시작");
+            App.Forms?.initInventoryForm?.("create", null);
+          } else {
+            console.error("❌ inventory-form.html 로드 실패");
+          }
+        });
+      } else {
+        app.Fab.setVisibility(false);
+      }
     }
 
     delete app.Inventory.__manualMount;
@@ -602,9 +613,11 @@
       const nameEng = item.name_eng || "";
       const casRn = item.cas_rn || "-";
       const formula = item.formula || "-";
-      const location = item.location_text || "-";
+      const locMain = item.location_main || "";
+      const locSub = item.location_sub || "";
       const amount = item.current_text || "-";
       const classification = item.classification || "-";
+      const concentration = item.concentration_text || "-";
 
       rowsHtml += `
         <tr>
@@ -613,9 +626,13 @@
                 <div class="name-kor">${nameKor}</div>
                 ${nameEng ? `<div class="name-eng">${nameEng}</div>` : ""}
             </td>
+            <td style="text-align: center;">${concentration}</td>
             <td style="text-align: center;">${casRn}</td>
             <td style="text-align: center;">${formula}</td>
-            <td>${location}</td>
+            <td class="col-location">
+                <span class="loc-main">${locMain}</span>
+                <span class="loc-sub">${locSub}</span>
+            </td>
             <td style="text-align: center;">${amount}</td>
             <td style="text-align: center;">${classification}</td>
         </tr>
@@ -627,25 +644,30 @@
     <html lang="ko">
     <head>
         <meta charset="UTF-8">
-        <title>약품 보유 목록 보고서</title>
+        <title>약품 목록</title>
         <style>
             body { font-family: "Noto Sans KR", sans-serif; padding: 20px; }
             h1 { text-align: center; margin-bottom: 10px; font-size: 24px; }
             .meta { text-align: right; margin-bottom: 20px; font-size: 14px; color: #555; }
-            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            table { width: 100%; border-collapse: collapse; font-size: 11px; }
             th, td { border: 1px solid #ddd; padding: 8px; vertical-align: middle; }
             th { background-color: #f2f2f2; text-align: center; font-weight: bold; }
-            .name-kor { font-weight: bold; font-size: 13px; }
-            .name-eng { font-size: 11px; color: #666; margin-top: 2px; }
+            .name-kor { font-weight: bold; font-size: 12px; }
+            .name-eng { font-size: 10px; color: #666; margin-top: 2px; }
             @media print {
                 @page { margin: 15mm; }
                 body { padding: 0; }
                 th { background-color: #eee !important; -webkit-print-color-adjust: exact; }
             }
+            /* Portrait Optimization */
+            @media print and (orientation: portrait) {
+                .loc-main { display: block; white-space: nowrap; }
+                .col-location { font-size: 10px; }
+            }
         </style>
     </head>
     <body>
-        <h1>약품 보유 목록 보고서</h1>
+        <h1>약품 목록</h1>
         <div class="meta">
             출력일: ${dateStr} | 총 ${currentFilteredData.length}건
         </div>
@@ -653,10 +675,11 @@
             <thead>
                 <tr>
                     <th width="5%">No.</th>
-                    <th width="25%">약품명</th>
-                    <th width="12%">CAS No.</th>
+                    <th width="18%">약품명</th>
+                    <th width="10%">농도</th>
+                    <th width="15%">CAS No.</th>
                     <th width="13%">화학식</th>
-                    <th width="25%">위치</th>
+                    <th width="19%" class="col-location">위치</th>
                     <th width="10%">보유량</th>
                     <th width="10%">분류</th>
                 </tr>
@@ -1056,9 +1079,9 @@
           <select id="label-cabinet-select" class="form-input" style="margin-bottom: 20px;">
             <option value="all">전체 시약장 (데이터 많음 주의)</option>
             ${cabinets.map(c => {
-                const area = c.area_id?.room_name || "미지정";
-                return `<option value="${c.id}">[${area}] ${c.cabinet_name}</option>`;
-            }).join('')}
+      const area = c.area_id?.room_name || "미지정";
+      return `<option value="${c.id}">[${area}] ${c.cabinet_name}</option>`;
+    }).join('')}
           </select>
           <div style="display: flex; gap: 10px; justify-content: flex-end;">
              <button id="btn-cancel-label" class="btn-cancel">취소</button>
@@ -1076,15 +1099,15 @@
     const modal = document.getElementById("label-print-modal");
     document.getElementById("btn-cancel-label").onclick = () => modal.remove();
     document.getElementById("btn-confirm-label").onclick = () => {
-        const val = document.getElementById("label-cabinet-select").value;
-        modal.remove();
-        printShelfLabels(val === 'all' ? null : Number(val));
+      const val = document.getElementById("label-cabinet-select").value;
+      modal.remove();
+      printShelfLabels(val === 'all' ? null : Number(val));
     };
   }
 
   async function printShelfLabels(targetCabinetId) {
     const supabase = getSupabase();
-    
+
     // 1. Fetch Inventory Data
     let query = supabase
       .from("Inventory")
@@ -1101,10 +1124,10 @@
 
     // Sort: Cabinet -> Unit(Vert) -> Floor(Horiz) -> Row(Shelf) -> Col
     query = query.order("cabinet_id")
-                 .order("door_vertical")
-                 .order("door_horizontal")
-                 .order("internal_shelf_level")
-                 .order("storage_column");
+      .order("door_vertical")
+      .order("door_horizontal")
+      .order("internal_shelf_level")
+      .order("storage_column");
 
     const { data, error } = await query;
     if (error) {
@@ -1112,7 +1135,7 @@
       alert("데이터 조회 실패: " + (error.message || JSON.stringify(error)));
       return;
     }
-    
+
     if (!data || data.length === 0) {
       alert("출력할 데이터가 없습니다.");
       return;
@@ -1122,91 +1145,91 @@
     const pages = {};
 
     data.forEach(item => {
-        const cabId = item.Cabinet.id;
-        const unit = item.door_vertical || '?'; // 단 (Unit) -> Header: 층
-        const floor = item.door_horizontal || '?'; // 층 (Floor) -> Header: 문
-        const row = item.internal_shelf_level || 1; // 행 (Shelf) -> Header: 단
-        const col = item.storage_column || 1; // 열 (Col) -> Header: 열
+      const cabId = item.Cabinet.id;
+      const unit = item.door_vertical || '?'; // 단 (Unit) -> Header: 층
+      const floor = item.door_horizontal || '?'; // 층 (Floor) -> Header: 문
+      const row = item.internal_shelf_level || 1; // 행 (Shelf) -> Header: 단
+      const col = item.storage_column || 1; // 열 (Col) -> Header: 열
 
-        // Group by Cabinet + Unit + Floor + Shelf (Row)
-        const key = `${cabId}_${unit}_${floor}_${row}`;
-        if (!pages[key]) {
-            pages[key] = {
-                cabinetName: item.Cabinet.cabinet_name,
-                areaName: item.Cabinet.area_id?.room_name,
-                cabinetDoorCount: item.Cabinet.door_horizontal_count || 1,
-                unit: unit,
-                floor: floor,
-                row: row,
-                cols: {} // Key: col number (1~6), Value: Array of items
-            };
-        }
-        if (!pages[key].cols[col]) pages[key].cols[col] = [];
-        pages[key].cols[col].push(item);
+      // Group by Cabinet + Unit + Floor + Shelf (Row)
+      const key = `${cabId}_${unit}_${floor}_${row}`;
+      if (!pages[key]) {
+        pages[key] = {
+          cabinetName: item.Cabinet.cabinet_name,
+          areaName: item.Cabinet.area_id?.room_name,
+          cabinetDoorCount: item.Cabinet.door_horizontal_count || 1,
+          unit: unit,
+          floor: floor,
+          row: row,
+          cols: {} // Key: col number (1~6), Value: Array of items
+        };
+      }
+      if (!pages[key].cols[col]) pages[key].cols[col] = [];
+      pages[key].cols[col].push(item);
     });
 
     // 3. Generate HTML
     const pageKeys = Object.keys(pages).sort();
 
     const htmlContent = pageKeys.map(key => {
-        const pageData = pages[key];
-        
-        const renderBlock = (colNum) => {
-            const colItems = pageData.cols[colNum] || [];
-            
-            // Sort by ID (or name if preferred)
-            colItems.sort((a, b) => a.id - b.id);
+      const pageData = pages[key];
 
-            let trs = '';
-            const MAX_ROWS = 9;
-            
-            // 1. Render Actual Items
-            colItems.forEach(item => {
-                 let kor = "";
-                 let eng = "";
-                 if (item) {
-                     kor = item.Substance?.chem_name_kor_mod || item.Substance?.chem_name_kor || "";
-                     eng = item.Substance?.substance_name_mod || item.Substance?.substance_name || "";
-                 }
-                 
-                 const idVal = item.id;
-                 
-                 trs += `
+      const renderBlock = (colNum) => {
+        const colItems = pageData.cols[colNum] || [];
+
+        // Sort by ID (or name if preferred)
+        colItems.sort((a, b) => a.id - b.id);
+
+        let trs = '';
+        const MAX_ROWS = 9;
+
+        // 1. Render Actual Items
+        colItems.forEach(item => {
+          let kor = "";
+          let eng = "";
+          if (item) {
+            kor = item.Substance?.chem_name_kor_mod || item.Substance?.chem_name_kor || "";
+            eng = item.Substance?.substance_name_mod || item.Substance?.substance_name || "";
+          }
+
+          const idVal = item.id;
+
+          trs += `
                     <tr>
                         <td class="col-id">${idVal}</td>
                         <td class="col-name fit-content kor-name">${kor}</td>
                         <td class="col-name fit-content eng-name">${eng}</td>
                     </tr>
                  `;
-            });
-            
-            // 2. Pad to MAX_ROWS
-            for (let i = colItems.length; i < MAX_ROWS; i++) {
-                 trs += `
+        });
+
+        // 2. Pad to MAX_ROWS
+        for (let i = colItems.length; i < MAX_ROWS; i++) {
+          trs += `
                     <tr>
                         <td class="col-id"></td>
                         <td class="col-name fit-content kor-name"></td>
                         <td class="col-name fit-content eng-name"></td>
                     </tr>
                  `;
-            }
-            
-            // Header Info
-            const uVal = pageData.unit;
-            const fVal = pageData.floor;
-            const rVal = pageData.row;
-            const cVal = colNum;
-            const doorCount = pageData.cabinetDoorCount || 1;
-            
-            let locationText = "";
-            if (doorCount === 1) {
-                locationText = `${uVal}층문, ${rVal}단 ${cVal}열`;
-            } else {
-                const doorDir = (fVal == 1) ? "왼쪽문" : "오른쪽문";
-                locationText = `${uVal}층 ${doorDir}, ${rVal}단 ${cVal}열`;
-            }
-            
-            return `
+        }
+
+        // Header Info
+        const uVal = pageData.unit;
+        const fVal = pageData.floor;
+        const rVal = pageData.row;
+        const cVal = colNum;
+        const doorCount = pageData.cabinetDoorCount || 1;
+
+        let locationText = "";
+        if (doorCount === 1) {
+          locationText = `${uVal}층문, ${rVal}단 ${cVal}열`;
+        } else {
+          const doorDir = (fVal == 1) ? "왼쪽문" : "오른쪽문";
+          locationText = `${uVal}층 ${doorDir}, ${rVal}단 ${cVal}열`;
+        }
+
+        return `
                 <div class="label-block">
                     <div class="block-header">${locationText}</div>
                     <table class="label-table">
@@ -1226,12 +1249,12 @@
                     </table>
                 </div>
             `;
-        };
+      };
 
-        const leftBlocks = [1, 3, 5].map(c => renderBlock(c)).join('');
-        const rightBlocks = [2, 4, 6].map(c => renderBlock(c)).join('');
+      const leftBlocks = [1, 3, 5].map(c => renderBlock(c)).join('');
+      const rightBlocks = [2, 4, 6].map(c => renderBlock(c)).join('');
 
-        return `
+      return `
             <div class="print-page">
                 <div class="column left-column">
                     ${leftBlocks}
