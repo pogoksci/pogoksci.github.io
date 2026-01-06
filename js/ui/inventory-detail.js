@@ -136,7 +136,7 @@
         if (getApp().Auth && typeof getApp().Auth.canWrite === 'function' && !getApp().Auth.canWrite()) {
           btnGoUsage.style.display = "none";
         } else {
-          btnGoUsage.style.display = ""; // Ensure visible for authorized users
+          btnGoUsage.style.display = "inline-block"; // Ensure visible for authorized users
           btnGoUsage.onclick = async () => {
             // Navigate to usageRegister with inventory info
             if (getApp().Router?.go) {
@@ -748,14 +748,13 @@
         }
       });
 
-      // Initial Visibility Check (Hide buttons if restricted)
-      const userRoleRaw = (getApp().Auth && getApp().Auth.user && getApp().Auth.user.role) ? getApp().Auth.user.role : 'guest';
-      if (['guest', 'student'].includes(userRoleRaw)) {
+      // Initial Visibility Check
+      if (!['guest', 'student'].includes(userRoleRaw)) {
         const delBtn = document.getElementById("delete-inventory-btn");
-        if (delBtn) delBtn.style.display = 'none';
+        if (delBtn) delBtn.style.display = ''; // Restore default display (flex/block)
 
         const editBtn = document.getElementById("edit-inventory-btn");
-        if (editBtn) editBtn.style.display = 'none';
+        if (editBtn) editBtn.style.display = '';
       }
 
       // ---------------------------------------------------------

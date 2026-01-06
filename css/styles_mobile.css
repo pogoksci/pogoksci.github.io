@@ -9,6 +9,10 @@ html,
 body {
   font-size: 11px !important;
   /* Reduced from 12px */
+  overflow: hidden !important;
+  /* Prevent double scrollbar */
+  height: 100dvh !important;
+  /* Force viewport height */
 }
 
 input,
@@ -213,7 +217,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* 2. Layout Container Reset (Full Bleed) */
 .layout-container {
   width: 100% !important;
-  height: 100% !important;
+  height: 100dvh !important;
   display: flex !important;
   flex-direction: column !important;
   padding: 0 !important;
@@ -234,8 +238,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* 2.1 Scroll Padding Overrides (충분한 하단 여백 확보) */
 .scroll-padding-nav {
-  padding-bottom: 50px !important;
-  /* 기존 156px + 30px */
+  padding-bottom: 120px !important;
+  /* 기존 50px -> 120px: Navbar 가림 방지 및 여유 스크롤 */
 }
 
 .scroll-padding-fab {
