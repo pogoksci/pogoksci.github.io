@@ -20,15 +20,41 @@
   // ------------------------------------------------------------
   // 1️⃣ 정렬 함수
   // ------------------------------------------------------------
+  const CLASSIFICATION_PRIORITY = {
+    '강산': 1, '약산': 2, '강염기': 3, '약염기': 4,
+    '알코올': 5, '유기화합물': 6, '산화염': 7, '수산화염': 8,
+    '염화염': 9, '질산염': 10, '탄산염': 11, '황산염': 12,
+    '황화염': 13, '무기화합물': 14, '금속': 15, '지시약': 16,
+    '생명과학': 17, '식품류': 18, '오일류': 19, '화장품재료': 20,
+    '세제류': 21, '기타': 22
+  };
+
+  function getPriority(classification) {
+    // Exact match or default to 999
+    return CLASSIFICATION_PRIORITY[classification] || 999;
+  }
+
   function sortData(rows, key) {
     const collateKo = (a, b) => String(a || "").localeCompare(String(b || ""), "ko");
     const collateEn = (a, b) => String(a || "").localeCompare(String(b || ""), "en", { sensitivity: "base" });
 
     switch (key) {
       case "category_name_kor": // 한글명(분류)
-        return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateKo(a.name_kor, b.name_kor) || (a.id - b.id));
+        return rows.sort((a, b) => {
+          const pA = getPriority(a.classification);
+          const pB = getPriority(b.classification);
+          if (pA !== pB) return pA - pB;
+          // Same priority? Sort by classification name (if not covered) or skip
+          // Then sort by Name
+          return collateKo(a.classification, b.classification) || collateKo(a.name_kor, b.name_kor) || (a.id - b.id);
+        });
       case "category_name_eng": // 영문명(분류)
-        return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateEn(a.name_eng, b.name_eng) || (a.id - b.id));
+        return rows.sort((a, b) => {
+          const pA = getPriority(a.classification);
+          const pB = getPriority(b.classification);
+          if (pA !== pB) return pA - pB;
+          return collateKo(a.classification, b.classification) || collateEn(a.name_eng, b.name_eng) || (a.id - b.id);
+        });
       case "name_kor": // 한글명(전체)
         return rows.sort((a, b) => collateKo(a.name_kor, b.name_kor) || (a.id - b.id)); // Optional: added ID sort for consistency
       case "name_eng": // 영문명(전체)
@@ -100,6 +126,18 @@
 
         if (aLast && !bLast) return 1;
         if (!aLast && bLast) return -1;
+
+        // Custom Priority Check
+        if (typeof getPriority === 'function') {
+          const pA = getPriority(a);
+          const pB = getPriority(b);
+          if (pA !== 999 || pB !== 999) {
+            // If both are 999 (unknown), fall back to string compare
+            // If one is known and other is 999, known comes first (smaller number)
+            if (pA !== pB) return pA - pB;
+          }
+        }
+
         return String(a).localeCompare(String(b), "ko");
       })
       .map(([groupTitle, items]) => {
