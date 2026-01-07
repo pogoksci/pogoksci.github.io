@@ -161,8 +161,165 @@
                 yearInput.value = y;
                 monthInput.value = m;
                 dayInput.value = d;
+                // Auto-hide previous results if date changes
+                const resultContainer = document.getElementById("schedule-result-container");
+                if (resultContainer) resultContainer.style.display = "none";
             }
         });
+
+        // 5. Schedule Search
+        const btnSearchSchedule = document.getElementById("btn-search-schedule");
+        if (btnSearchSchedule) {
+            btnSearchSchedule.addEventListener("click", fetchSchedule);
+        }
+    }
+
+    async function fetchSchedule() {
+        const dateVal = document.getElementById("usage-date").value;
+        if (!dateVal) {
+            alert("날짜를 먼저 선택해주세요.");
+            return;
+        }
+
+        const supabase = App.supabase;
+        const resultContainer = document.getElementById("schedule-result-container");
+        const listContainer = document.getElementById("schedule-list");
+
+        if (!resultContainer || !listContainer) return;
+
+        resultContainer.style.display = "block";
+        listContainer.innerHTML = '<span style="color:#666; font-size:12px;">일정을 조회 중입니다...</span>';
+
+        try {
+            // Fetch usage logs for the date
+            // Join with subjects, clubs, teachers to get names
+            const { data, error } = await supabase
+                .from('lab_usage_log')
+                .select(`
+                    *,
+                    lab_subjects ( name ),
+                    lab_clubs ( name ),
+                    lab_teachers ( name )
+                `)
+                .eq('usage_date', dateVal)
+                .order('period', { ascending: true });
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                listContainer.innerHTML = '<span style="color:#888; font-size:12px;">해당 날짜에 등록된 일정이 없습니다.</span>';
+                return;
+            }
+
+            listContainer.innerHTML = "";
+
+            data.forEach(log => {
+                // Determine Label
+                let periodLabel = `${log.period}교시`;
+                let periodVal = `${log.period}교시`;
+
+                // Handle Special Periods
+                if (String(log.period) === '99') {
+                    periodLabel = '점심';
+                    periodVal = '점심시간';
+                } else if (String(log.period) === '88') {
+                    periodLabel = '방과후';
+                    periodVal = '방과후';
+                }
+
+                let displayStr = "";
+                let applySubject = "";
+
+                if (log.activity_type === '교과수업') {
+                    const subjectName = log.lab_subjects?.name || log.subject || "과목미상";
+                    const teacherName = log.lab_teachers?.name || "";
+                    displayStr = `[${periodLabel}] ${subjectName} ${teacherName ? `(${teacherName})` : ''}`;
+                    applySubject = subjectName;
+                }
+                else if (log.activity_type === '동아리') {
+                    // 동아리의 경우 교시와 동아리명 표시
+                    const clubName = log.lab_clubs?.name || "동아리";
+                    displayStr = `[${periodLabel}] ${clubName}`;
+                    applySubject = "동아리";
+                }
+                else {
+                    // 행사, 기타 등: 교시와 내용(행사명) 표시
+                    // Prioritize content field, then subject field
+                    const content = log.content || log.subject || "활동";
+                    displayStr = `[${periodLabel}] ${content}`;
+                    applySubject = "기타";
+                }
+
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "btn-secondary-action";
+                btn.style.fontSize = "12px";
+                btn.style.padding = "4px 8px";
+                btn.style.backgroundColor = "#e0f7fa";
+                btn.style.color = "#006064";
+                btn.style.border = "1px solid #b2ebf2";
+                btn.innerText = displayStr;
+                btn.title = "클릭하여 적용";
+
+                btn.onclick = () => {
+                    applySchedule(periodVal, applySubject);
+                };
+
+                listContainer.appendChild(btn);
+            });
+
+        } catch (err) {
+            console.error("일정 조회 실패:", err);
+            listContainer.innerHTML = '<span style="color:red; font-size:12px;">일정 조회에 실패했습니다.</span>';
+        }
+    }
+
+    function applySchedule(period, fullSubjectName) {
+        const periodSelect = document.getElementById("usage-period");
+        const subjectSelect = document.getElementById("usage-subject");
+
+        if (periodSelect) periodSelect.value = period;
+
+        if (subjectSelect) {
+            // Try explicit match first
+            let matched = false;
+            for (let i = 0; i < subjectSelect.options.length; i++) {
+                if (subjectSelect.options[i].value === fullSubjectName) {
+                    subjectSelect.selectedIndex = i;
+                    matched = true;
+                    break;
+                }
+            }
+
+            // Fallback logic
+            if (!matched) {
+                // If name contains '동아리', select '동아리'
+                if (fullSubjectName.includes("동아리")) {
+                    subjectSelect.value = "동아리";
+                }
+                // Check other standard subjects
+                else if (fullSubjectName.includes("통합과학")) subjectSelect.value = "통합과학";
+                else if (fullSubjectName.includes("탐구")) subjectSelect.value = "과학탐구실험";
+                else if (fullSubjectName.includes("물리")) subjectSelect.value = "물리학";
+                else if (fullSubjectName.includes("화학")) subjectSelect.value = "화학";
+                else if (fullSubjectName.includes("생명")) subjectSelect.value = "생명과학";
+                else if (fullSubjectName.includes("지구")) subjectSelect.value = "지구과학";
+                else {
+                    subjectSelect.value = "기타";
+                }
+            }
+        }
+
+        // Visual Feedback (Flash effect)
+        const feedbackColor = "#e0f2f1"; // Light teal
+        if (periodSelect) {
+            periodSelect.style.backgroundColor = feedbackColor;
+            setTimeout(() => periodSelect.style.backgroundColor = "", 500);
+        }
+        if (subjectSelect) {
+            subjectSelect.style.backgroundColor = feedbackColor;
+            setTimeout(() => subjectSelect.style.backgroundColor = "", 500);
+        }
     }
 
     // ------------------------------------------------------------
