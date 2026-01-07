@@ -13,7 +13,7 @@
   // ✅ 전역 앱 환경 설정
   const APP_CONFIG = {
     APPNAME: "SciManager",   // 앱 이름
-    SCHOOL: "포곡고등학교",     // 학교명
+    SCHOOL: "GOE학교",     // 학교명
     VERSION: "v0.12.24",     // 버전
   };
 
@@ -63,4 +63,23 @@
     globalThis.supabaseClient = globalThis.App.supabase;
     globalThis.APP_CONFIG = APP_CONFIG;
   }
+  // 5️⃣ 동적 설정 로드 (학교 이름 등)
+  // ------------------------------------------------------------
+  (async function loadGlobalSettings() {
+    if (!globalThis.App.supabase) return;
+    try {
+      const { data, error } = await globalThis.App.supabase
+        .from('global_settings')
+        .select('value')
+        .eq('key', 'SCHOOL_NAME')
+        .maybeSingle();
+
+      if (data && data.value) {
+        APP_CONFIG.SCHOOL = data.value; // Override default
+        console.log(`🏫 학교 이름 설정 로드됨: ${APP_CONFIG.SCHOOL}`);
+      }
+    } catch (e) {
+      console.warn("⚠️ 설정 로드 실패 (기본값 사용):", e);
+    }
+  })();
 })();

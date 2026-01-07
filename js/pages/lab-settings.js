@@ -69,6 +69,78 @@
 
 
         // ==========================================
+        // Tab 0: School Info Settings Logic
+        // ==========================================
+        const btnSaveSchoolInfo = document.getElementById('btn-save-school-info');
+
+        // Load School Info
+        async function loadSchoolInfo() {
+            const { data, error } = await supabase
+                .from('global_settings')
+                .select('key, value');
+
+            if (error) {
+                console.warn("School info load failed:", error);
+                return;
+            }
+
+            const settings = {};
+            if (data) {
+                data.forEach(item => settings[item.key] = item.value);
+            }
+
+            // Populate Fields
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.value = val || '';
+            };
+
+            setVal('school-name-input', settings['SCHOOL_NAME']);
+
+            setVal('sc-grade-1-classes', settings['GRADE_1_CLASSES']);
+            setVal('sc-grade-2-classes', settings['GRADE_2_CLASSES']);
+            setVal('sc-grade-3-classes', settings['GRADE_3_CLASSES']);
+
+            setVal('sc-grade-1-students', settings['GRADE_1_STUDENTS']);
+            setVal('sc-grade-2-students', settings['GRADE_2_STUDENTS']);
+            setVal('sc-grade-3-students', settings['GRADE_3_STUDENTS']);
+        }
+
+        // Save School Info
+        if (btnSaveSchoolInfo) {
+            btnSaveSchoolInfo.addEventListener('click', async () => {
+                const getVal = (id) => document.getElementById(id)?.value?.trim() || '';
+
+                const updates = [
+                    { key: 'SCHOOL_NAME', value: getVal('school-name-input') },
+                    { key: 'GRADE_1_CLASSES', value: getVal('sc-grade-1-classes') },
+                    { key: 'GRADE_2_CLASSES', value: getVal('sc-grade-2-classes') },
+                    { key: 'GRADE_3_CLASSES', value: getVal('sc-grade-3-classes') },
+                    { key: 'GRADE_1_STUDENTS', value: getVal('sc-grade-1-students') },
+                    { key: 'GRADE_2_STUDENTS', value: getVal('sc-grade-2-students') },
+                    { key: 'GRADE_3_STUDENTS', value: getVal('sc-grade-3-students') },
+                ];
+
+                // Upsert all
+                const { error } = await supabase
+                    .from('global_settings')
+                    .upsert(updates);
+
+                if (error) {
+                    alert('저장 실패: ' + error.message);
+                } else {
+                    // Update global config immediately
+                    const newName = getVal('school-name-input');
+                    if (newName) {
+                        window.APP_CONFIG.SCHOOL = newName;
+                    }
+                    alert('학교 정보가 저장되었습니다.');
+                }
+            });
+        }
+
+
+        // ==========================================
         // Tab 1: Lab Management Logic
         // ==========================================
 
@@ -1024,10 +1096,16 @@
             }
         }
 
+        // --- Initialization Calls ---
+        // (Moved from dispersed locations to here)
+        loadSchoolInfo();
+        loadLabRooms();
+        loadSemesters(); // Load semesters -> which loads lists via change handler
+
+        // Initial Tab setup
         initTabs();
-        await loadLabRooms();
-        await loadSemesters();
-    };
+
+    }; // End init
 
     globalThis.App = globalThis.App || {};
     globalThis.App.LabSettings = LabSettings;
