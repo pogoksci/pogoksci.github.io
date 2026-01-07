@@ -184,6 +184,13 @@ serve(async (req: Request) => {
             msdsData = await fetchKoshaMsds(chemId);
         }
 
+        // Fallback if no info found
+        if (!nameKo && !nameEn) {
+            console.log(`[kit-casimport] No external data for ${normalizedCas}. Registering as placeholder.`);
+            nameKo = normalizedCas; // Use CAS as name so it appears in lists
+            nameEn = "Information Not Available";
+        }
+
         // 2. Prepare Record
         const record = {
             cas_no: normalizedCas,

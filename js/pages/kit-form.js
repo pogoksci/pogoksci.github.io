@@ -742,6 +742,29 @@
             if (error) throw error;
             if (data?.error) throw new Error(data.error);
 
+            // ✅ Auto-register Missing Chemicals
+            try {
+                let targetCasStr = null;
+                if (isCustom && customCas) {
+                    targetCasStr = customCas;
+                } else if (!isCustom && finalKitName) {
+                    // Find in catalog to get CAS list
+                    const catItem = window.catalog?.find(c => c.kit_name === finalKitName);
+                    if (catItem) targetCasStr = catItem.kit_cas;
+                }
+
+                if (targetCasStr) {
+                    const casList = targetCasStr.split(',').map(s => s.trim().replace(/['"]/g, '')).filter(s => s);
+                    if (casList.length > 0) {
+                        btnSave.textContent = '약품 등록 중...';
+                        await checkAndRegisterChemicals(casList);
+                    }
+                }
+            } catch (chemErr) {
+                console.warn("Chemical registration warning:", chemErr);
+                // Don't block main success, just warn
+            }
+
             alert("저장되었습니다.");
 
             // Post-process logic (Chemicals, Catalog Refresh)
@@ -771,6 +794,43 @@
             btnSave.textContent = oldText;
             btnSave.disabled = false;
         }
+    }
+
+    // --- Chemical Auto-Registration Helper ---
+    async function checkAndRegisterChemicals(casList) {
+        if (!casList || casList.length === 0) return;
+        const uniqueCas = [...new Set(casList)];
+
+        // 1. Check existing in kit_chemicals
+        // We can't easily use .in() for large lists, but CAS list for a kit is usually small (<20).
+        const { data: existing, error } = await supabase
+            .from('kit_chemicals')
+            .select('cas_no')
+            .in('cas_no', uniqueCas);
+
+        if (error) {
+            console.error("Failed to check existing chemicals:", error);
+            return;
+        }
+
+        const existingSet = new Set(existing.map(e => e.cas_no));
+        const missing = uniqueCas.filter(c => !existingSet.has(c));
+
+        if (missing.length === 0) return;
+
+        console.log(`[KitForm] Found ${missing.length} missing chemicals. Registering...`, missing);
+
+        // 2. Register missing (Parallel)
+        await Promise.all(missing.map(async (cas) => {
+            try {
+                const { error: invokeError } = await supabase.functions.invoke('kit-casimport', {
+                    body: { cas_rn: cas }
+                });
+                if (invokeError) throw invokeError;
+            } catch (e) {
+                console.error(`Failed to auto-register ${cas}:`, e);
+            }
+        }));
     }
 
     // Export
