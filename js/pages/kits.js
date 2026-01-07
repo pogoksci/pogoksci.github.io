@@ -454,7 +454,7 @@
             <html lang="ko">
             <head>
                 <meta charset="UTF-8">
-                <title>실험 키트 보유 목록 보고서</title>
+                <title>실험 키트 목록</title>
                 <style>
                     body { font-family: "Noto Sans KR", sans-serif; padding: 20px; }
                     h1 { text-align: center; margin-bottom: 10px; font-size: 24px; }
@@ -470,7 +470,7 @@
                 </style>
             </head>
             <body>
-                <h1>실험 키트 보유 목록 보고서</h1>
+                <h1>실험 키트 목록</h1>
                 <div class="meta">
                     출력일: ${dateStr} | 총 ${currentFilteredData.length}건
                 </div>
