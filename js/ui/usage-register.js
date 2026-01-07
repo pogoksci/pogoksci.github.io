@@ -17,9 +17,21 @@
         currentSort = "category_name_kor"; // 정렬 상태 초기화
 
         // 날짜 기본값: 오늘
-        const dateInput = document.getElementById("usage-date");
-        if (dateInput) {
-            dateInput.valueAsDate = new Date();
+        const now = new Date();
+        const yearInput = document.getElementById("usage-date-year");
+        const monthInput = document.getElementById("usage-date-month");
+        const dayInput = document.getElementById("usage-date-day");
+        const hiddenDateInput = document.getElementById("usage-date");
+
+        if (yearInput && monthInput && dayInput && hiddenDateInput) {
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+
+            yearInput.value = y;
+            monthInput.value = m;
+            dayInput.value = d;
+            hiddenDateInput.value = `${y}-${m}-${d}`;
         }
 
         // 정렬 드롭다운 초기화
@@ -72,6 +84,9 @@
     }
 
     function bindEvents() {
+        // 날짜 입력 로직 바인딩
+        bindDateEvents();
+
         // 검색
         const searchInput = document.getElementById("usage-search-input");
         if (searchInput) {
@@ -91,6 +106,63 @@
         if (form) {
             form.addEventListener("submit", handleUsageSubmit);
         }
+    }
+
+    function bindDateEvents() {
+        const yearInput = document.getElementById("usage-date-year");
+        const monthInput = document.getElementById("usage-date-month");
+        const dayInput = document.getElementById("usage-date-day");
+        const hiddenDateInput = document.getElementById("usage-date");
+        const btnCalendar = document.getElementById("btn-open-calendar");
+
+        if (!yearInput || !monthInput || !dayInput || !hiddenDateInput) return;
+
+        // 1. Auto-focus & Select-All
+        [yearInput, monthInput, dayInput].forEach(input => {
+            input.addEventListener('focus', () => input.select());
+        });
+
+        // 2. Auto-advance & Sync
+        yearInput.addEventListener('input', () => {
+            if (yearInput.value.length === 4) monthInput.focus();
+            syncToHidden();
+        });
+        monthInput.addEventListener('input', () => {
+            if (monthInput.value.length === 2) dayInput.focus();
+            syncToHidden();
+        });
+        dayInput.addEventListener('input', syncToHidden);
+
+        function syncToHidden() {
+            const y = yearInput.value;
+            const m = monthInput.value.padStart(2, '0');
+            const d = dayInput.value.padStart(2, '0');
+            if (y.length === 4 && m.length === 2 && d.length === 2) {
+                hiddenDateInput.value = `${y}-${m}-${d}`;
+            }
+        }
+
+        // 3. Calendar Picker
+        if (btnCalendar) {
+            btnCalendar.addEventListener('click', () => {
+                if (hiddenDateInput.showPicker) {
+                    hiddenDateInput.showPicker();
+                } else {
+                    hiddenDateInput.focus();
+                    hiddenDateInput.click();
+                }
+            });
+        }
+
+        // 4. Hidden Input Change (Sync Back)
+        hiddenDateInput.addEventListener('change', () => {
+            if (hiddenDateInput.value) {
+                const [y, m, d] = hiddenDateInput.value.split('-');
+                yearInput.value = y;
+                monthInput.value = m;
+                dayInput.value = d;
+            }
+        });
     }
 
     // ------------------------------------------------------------
