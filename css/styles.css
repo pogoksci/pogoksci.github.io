@@ -90,6 +90,26 @@ body.home-active {
    3. LAYOUT (High-Level Structural Elements)
 ================================================================= */
 
+
+/* =================================================================
+   LAYOUT CONTAINER (App-like Flex Structure)
+   ================================================================= */
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh; /* Occupy full viewport */
+  overflow: hidden; /* Prevent outer scroll */
+  background-color: #fff;
+}
+
+.layout-content {
+  flex: 1;
+  overflow-y: auto;
+  /* Add padding for fixed bottom navbar if needed, though usage-inventory-list has specific padding */
+  -webkit-overflow-scrolling: touch;
+}
+
 label {
   display: block;
   margin-bottom: 0;
