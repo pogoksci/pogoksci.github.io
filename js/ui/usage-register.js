@@ -365,16 +365,42 @@
         filterAndRenderList("");
     }
 
-    // 정렬 함수 (inventory.js와 동일)
+    // ------------------------------------------------------------
+    // 정렬 우선순위 상수 (inventory.js와 동일)
+    // ------------------------------------------------------------
+    const CLASSIFICATION_PRIORITY = {
+        '강산': 1, '약산': 2, '강염기': 3, '약염기': 4,
+        '알코올': 5, '유기화합물': 6, '산화염': 7, '수산화염': 8,
+        '염화염': 9, '질산염': 10, '탄산염': 11, '황산염': 12,
+        '황화염': 13, '무기화합물': 14, '금속': 15, '지시약': 16,
+        '생명과학': 17, '식품류': 18, '오일류': 19, '화장품재료': 20,
+        '세제류': 21, '기타': 22
+    };
+
+    function getPriority(classification) {
+        return CLASSIFICATION_PRIORITY[classification] || 999;
+    }
+
+    // 정렬 함수
     function sortData(rows, key) {
         const collateKo = (a, b) => String(a || "").localeCompare(String(b || ""), "ko");
         const collateEn = (a, b) => String(a || "").localeCompare(String(b || ""), "en", { sensitivity: "base" });
 
         switch (key) {
-            case "category_name_kor": // 한글명(분류)
-                return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateKo(a.edited_name_kor || a.Substance?.chem_name_kor, b.edited_name_kor || b.Substance?.chem_name_kor) || (a.id - b.id));
-            case "category_name_eng": // 영문명(분류)
-                return rows.sort((a, b) => collateKo(a.classification, b.classification) || collateEn(a.Substance?.substance_name, b.Substance?.substance_name) || (a.id - b.id));
+            case "category_name_kor": // 한글명(분류) + 우선순위
+                return rows.sort((a, b) => {
+                    const pA = getPriority(a.classification);
+                    const pB = getPriority(b.classification);
+                    if (pA !== pB) return pA - pB;
+                    return collateKo(a.classification, b.classification) || collateKo(a.edited_name_kor || a.Substance?.chem_name_kor, b.edited_name_kor || b.Substance?.chem_name_kor) || (a.id - b.id);
+                });
+            case "category_name_eng": // 영문명(분류) + 우선순위
+                return rows.sort((a, b) => {
+                    const pA = getPriority(a.classification);
+                    const pB = getPriority(b.classification);
+                    if (pA !== pB) return pA - pB;
+                    return collateKo(a.classification, b.classification) || collateEn(a.Substance?.substance_name, b.Substance?.substance_name) || (a.id - b.id);
+                });
             case "name_kor": // 한글명(전체)
                 return rows.sort((a, b) => collateKo(a.edited_name_kor || a.Substance?.chem_name_kor, b.edited_name_kor || b.Substance?.chem_name_kor) || (a.id - b.id));
             case "name_eng": // 영문명(전체)
@@ -405,8 +431,13 @@
                 if (!groups[cls]) groups[cls] = [];
                 groups[cls].push(item);
             });
-            // 키 정렬
-            return Object.keys(groups).sort().map(cls => [cls, groups[cls]]);
+            // 키 정렬 (우선순위 적용)
+            return Object.keys(groups).sort((a, b) => {
+                const pA = getPriority(a);
+                const pB = getPriority(b);
+                if (pA !== pB) return pA - pB;
+                return String(a).localeCompare(String(b), "ko");
+            }).map(cls => [cls, groups[cls]]);
         }
         return [["", rows]]; // 그룹 없음
     }
