@@ -62,6 +62,7 @@
       case "formula": // 화학식
         return rows.sort((a, b) => collateEn(a.formula, b.formula));
       case "id_asc": // 전체(번호순)
+      case "id_asc_all": // 전체(전량소진포함)
         return rows.sort((a, b) => a.id - b.id);
       case "storage_location": // 위치
         return rows.sort((a, b) => {
@@ -387,6 +388,7 @@
         synonyms_eng: synonymsEng,
         replaced_rn: replacedRns,
         is_low_stock: row.is_low_stock,
+        initial_amount: row.initial_amount, // ✅ 수정 시 초기 구입량 표시를 위해 추가
       };
     });
 
@@ -411,6 +413,8 @@
     if (currentSort === "exhausted") {
       // 소모완료약품 모드: '전량소진'인 것만 표시
       filtered = filtered.filter((item) => String(item.status || "").replace(/\s+/g, "") === "전량소진");
+    } else if (currentSort === "id_asc_all") {
+      // 전체(전량소진포함) 모드: 필터링 없음 (전체 표시)
     } else {
       // 일반 모드: '전량소진' 제외
       filtered = filtered.filter((item) => String(item.status || "").replace(/\s+/g, "") !== "전량소진");
@@ -744,7 +748,7 @@
 
 
   // ------------------------------------------------------------
-  // 8️⃣ 수불부 보고서 (Stock Transaction Report)
+  // 8️⃣ 수불대장 보고서 (Stock Transaction Report)
   // ------------------------------------------------------------
 
   function openStockReportModal() {
@@ -853,9 +857,17 @@
 
   async function generateStockReport({ startDate, endDate, target, layout }) {
     // 1. Fetch Data
-    let itemsToProcess = (currentFilteredData && currentFilteredData.length > 0)
-      ? currentFilteredData
-      : allInventoryData;
+    let itemsToProcess = [];
+
+    if (target === 'all_with_exhausted') {
+      // 강제로 전체 데이터 사용 (필터링 무시)
+      itemsToProcess = allInventoryData;
+    } else {
+      // 기존 로직: 현재 필터링된 데이터 사용 (없으면 전체)
+      itemsToProcess = (currentFilteredData && currentFilteredData.length > 0)
+        ? currentFilteredData
+        : allInventoryData;
+    }
 
     if (itemsToProcess.length === 0) return alert("출력할 약품 데이터가 없습니다.");
 
@@ -916,6 +928,27 @@
       let shouldPrint = false;
       if (target === 'usage_only') {
         shouldPrint = hasTransaction;
+      } else if (target === 'all_with_exhausted') {
+        // 전량소모포함 전체: 거래내역 있거나 잔고 있거나 소진된 상태라도 기록이 있으면 출력 (여기서는 hasTransaction || hasBalance 로 충분할듯, 
+        // 하지만 전량소진이지만 기간내 거래내역이 없으면? -> 이월재고가 0이어도 출력하고 싶다면? 
+        // "전량소모약품 포함"의 의도가 "현재 보유량이 0이어도 목록에 있으면 출력"이라면 항상 True여야함?
+        // 보통 "전체 품목"의 의미는 잔고가 있거나 거래가 있는 것을 의미함.
+        // 전량소진된 약품은 current_amount가 0임.
+        // 만약 기간 내 거래가 없고, 이월재고도 0이면 (이미 옛날에 소진됨), 출력할 필요가 있을까?
+        // 사용자 의도: "목록에 있는 모든 것" -> itemsToProcess에 있으면 일단 출력 시도.
+        // 하지만 수불대장은 "내역"이거나 "잔고"가 핵심.
+        // 옛날에 소진되어 0인 것을 굳이 출력할 필요는 없지만, "재고 확인용"이라면 0으로 표시되는게 의미 있을 수 있음.
+        // 일단 hasTransaction || hasBalance 조건을 유지하되, itemsToProcess 자체가 이미 exhausted를 포함하고 있으므로,
+        // hasBalance가 0이어도 기간내 내역 없어도 출력하고 싶다면 shouldPrint = true; 로 변경해야함.
+        // 기존 'all' 로직: hasTransaction || hasBalance. 
+        // 여기서 'all'은 "전체 품목(이월 재고 확인용)" 인데, 이는 "현재 잔고가 있는 것" 위주임.
+        // "전량소모약품 포함"은 아마 내역이 없어도 0으로 찍히길 원할 수도 있음.
+        // 안전하게 hasTransaction || hasBalance 유지하되, 만약 사용자가 "모든 리스트"를 원하면 True로 변경 고려.
+        // 일단 기존 'all'과 동일한 조건 사용 (데이터 소스만 다름).
+        shouldPrint = hasTransaction || hasBalance;
+        
+        // 추가: 만약 잔고 0이고 내역 없어도 출력하길 원한다면 아래 주석 해제
+        // shouldPrint = true; 
       } else { // 'all'
         shouldPrint = hasTransaction || hasBalance;
       }
@@ -1401,7 +1434,7 @@
     // ✅ 페이지 진입 시 정렬 상태 초기화 (메뉴 이동 후 복귀 시 초기화 보장)
     currentSort = "category_name_kor";
 
-    // 수불부 버튼 바인딩
+    // 수불대장 버튼 바인딩
     const stockBtn = document.getElementById("stock-report-btn");
     if (stockBtn) {
       if (App.Auth && typeof App.Auth.canWrite === 'function' && !App.Auth.canWrite()) {
@@ -1442,6 +1475,7 @@
         name_kor: "한글명(전체)",
         name_eng: "영문명(전체)",
         id_asc: "전체(번호순)",
+        id_asc_all: "전체(전량소진포함)",
         formula: "화학식",
         storage_location: "위치",
         created_at_desc: "등록순서",

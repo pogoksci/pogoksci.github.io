@@ -223,9 +223,7 @@
       } else {
         setInput("cas_rn", "");
       }
-      setInput("purchase_volume", detail.current_amount);
-      setInput("concentration_value", detail.concentration_value);
-      setInput("purchase_volume", detail.current_amount);
+      setInput("purchase_volume", detail.initial_amount); // ✅ 수량 (초기 구입량)
       setInput("concentration_value", detail.concentration_value);
       // setInput("purchase_date", detail.purchase_date); // Handled by datePickerInterface
       setInput("valence_input", detail.valence);
@@ -804,8 +802,9 @@
             storage_column: get("storage_column"),
             // Inventory Specific Fields
             cas_rn: get("cas_rn"),
-            initial_amount: vol, // ✅ initial_amount 추가
-            current_amount: isNaN(vol) ? 0 : vol,
+            initial_amount: vol, 
+            // ✅ Fix: Edit 모드에서 현재 잔고(current_amount)가 초기화되지 않도록 Create 모드일 때만 설정
+            ...(mode === "create" && { current_amount: isNaN(vol) ? 0 : vol }),
             unit: get("unit"),
             bottle_type: get("bottle_type"), // ✅ bottle_type 컬럼 추가
             // bottle_identifier logic: Use existing (Edit) or Generate New (Create)

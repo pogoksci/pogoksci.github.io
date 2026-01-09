@@ -58,6 +58,11 @@
             <span class="material-symbols-outlined">format_list_numbered</span>
             전체(번호순)
           </div>
+          <div class="dropdown-item" data-value="id_asc_all">
+            <span class="material-symbols-outlined"
+            >format_list_numbered_rtl</span>
+            전체(전량소진포함)
+          </div>
           <div class="dropdown-item" data-value="formula">
             <span class="material-symbols-outlined">science</span>
             화학식
@@ -79,44 +84,44 @@
 
       <!-- Print Report Button -->
       <div class="inventory-btn-group">
-      <!-- Print Report Button -->
-      <button
-        id="print-report-btn"
-        title="보고서 출력"
-        aria-label="출력"
-        style="height: 100%"
-      >
-        <span class="material-symbols-outlined">print</span>
-      </button>
+        <!-- Print Report Button -->
+        <button
+          id="print-report-btn"
+          title="보고서 출력"
+          aria-label="출력"
+          style="height: 100%"
+        >
+          <span class="material-symbols-outlined">print</span>
+        </button>
 
-      <!-- Stock Report Button -->
-      <button
-        id="stock-report-btn"
-        title="수불부(수불대장) 출력"
-        aria-label="수불부 출력"
-        style="height: 100%"
-      >
-        <span class="material-symbols-outlined">history_edu</span>
-      </button>
+        <!-- Stock Report Button -->
+        <button
+          id="stock-report-btn"
+          title="수불대장 출력"
+          aria-label="수불대장 출력"
+          style="height: 100%"
+        >
+          <span class="material-symbols-outlined">history_edu</span>
+        </button>
 
-      <!-- Label Print Button -->
-      <button
-        id="btn-print-labels"
-        title="시약장 라벨 출력"
-        aria-label="라벨 출력"
-      >
-        <span class="material-symbols-outlined">label</span>
-      </button>
+        <!-- Label Print Button -->
+        <button
+          id="btn-print-labels"
+          title="시약장 라벨 출력"
+          aria-label="라벨 출력"
+        >
+          <span class="material-symbols-outlined">label</span>
+        </button>
 
-      <!-- Refresh Button -->
-      <button
-        id="refresh-btn"
-        title="목록 새로고침"
-        aria-label="새로고침"
-        style="height: 100%"
-      >
-        <span class="material-symbols-outlined">refresh</span>
-      </button>
+        <!-- Refresh Button -->
+        <button
+          id="refresh-btn"
+          title="목록 새로고침"
+          aria-label="새로고침"
+          style="height: 100%"
+        >
+          <span class="material-symbols-outlined">refresh</span>
+        </button>
       </div>
     </div>
   </div>
@@ -131,72 +136,121 @@
       <p>목록을 불러오는 중...</p>
     </div>
   </div>
-
-
 </div>
 
 <!-- Stock Report Settings Modal -->
-<div id="modal-stock-report" class="modal-overlay" style="display: none;">
-    <div class="modal-content" style="max-width: 400px;">
-        <h3 class="modal-header" style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
-            수불부(수불대장) 출력 설정
-        </h3>
+<div id="modal-stock-report" class="modal-overlay" style="display: none">
+  <div class="modal-content" style="max-width: 400px">
+    <h3
+      class="modal-header"
+      style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px"
+    >
+      수불대장 출력 설정
+    </h3>
 
-        <form id="form-stock-report">
-            <!-- 1. Period -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="font-weight: bold; display: block; margin-bottom: 8px;">1. 조회 기간</label>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="date" id="report-start-date" class="form-input" required>
-                    <span>~</span>
-                    <input type="date" id="report-end-date" class="form-input" required>
-                </div>
-                <!-- Quick Buttons -->
-                <div style="margin-top: 8px; display: flex; gap: 5px;">
-                    <button type="button" class="btn-mini" onclick="App.Inventory.setReportPeriod('cur_year')">올해(3월~)</button>
-                    <button type="button" class="btn-mini" onclick="App.Inventory.setReportPeriod('last_year')">작년</button>
-                    <button type="button" class="btn-mini" onclick="App.Inventory.setReportPeriod('1st_sem')">1학기</button>
-                    <button type="button" class="btn-mini" onclick="App.Inventory.setReportPeriod('2nd_sem')">2학기</button>
-                </div>
-            </div>
+    <form id="form-stock-report">
+      <!-- 1. Period -->
+      <div class="form-group" style="margin-bottom: 20px">
+        <label style="font-weight: bold; display: block; margin-bottom: 8px"
+        >1. 조회 기간</label>
+        <div style="display: flex; gap: 10px; align-items: center">
+          <input type="date" id="report-start-date" class="form-input" required>
+          <span>~</span>
+          <input type="date" id="report-end-date" class="form-input" required>
+        </div>
+        <!-- Quick Buttons -->
+        <div style="margin-top: 8px; display: flex; gap: 5px">
+          <button
+            type="button"
+            class="btn-mini"
+            onclick="App.Inventory.setReportPeriod('cur_year')"
+          >
+            올해(3월~)
+          </button>
+          <button
+            type="button"
+            class="btn-mini"
+            onclick="App.Inventory.setReportPeriod('last_year')"
+          >
+            작년
+          </button>
+          <button
+            type="button"
+            class="btn-mini"
+            onclick="App.Inventory.setReportPeriod('1st_sem')"
+          >
+            1학기
+          </button>
+          <button
+            type="button"
+            class="btn-mini"
+            onclick="App.Inventory.setReportPeriod('2nd_sem')"
+          >
+            2학기
+          </button>
+        </div>
+      </div>
 
-            <!-- 2. Target -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="font-weight: bold; display: block; margin-bottom: 8px;">2. 출력 대상</label>
-                <label style="display: flex; align-items: center; margin-bottom: 6px;">
-                    <input type="radio" name="report-target" value="usage_only" checked>
-                    <span style="margin-left: 8px;">변동 내역이 있는 품목만 (권장)</span>
-                </label>
-                <label style="display: flex; align-items: center;">
-                    <input type="radio" name="report-target" value="all">
-                    <span style="margin-left: 8px;">전체 품목 (이월 재고 확인용)</span>
-                </label>
-            </div>
+      <!-- 2. Target -->
+      <div class="form-group" style="margin-bottom: 20px">
+        <label style="font-weight: bold; display: block; margin-bottom: 8px"
+        >2. 출력 대상</label>
+        <label style="display: flex; align-items: center; margin-bottom: 6px">
+          <input type="radio" name="report-target" value="usage_only" checked>
+          <span style="margin-left: 8px">변동 내역이 있는 품목만 (권장)</span>
+        </label>
+        <label style="display: flex; align-items: center">
+          <input type="radio" name="report-target" value="all">
+          <span style="margin-left: 8px">전체 품목 (이월 재고 확인용)</span>
+        </label>
+        <label style="display: flex; align-items: center; margin-top: 6px">
+          <input type="radio" name="report-target" value="all_with_exhausted">
+          <span style="margin-left: 8px">전체 품목 (전량소모약품 포함)</span>
+        </label>
+      </div>
 
-            <!-- 3. Layout -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="font-weight: bold; display: block; margin-bottom: 8px;">3. 출력 형식</label>
-                <label style="display: flex; align-items: center; margin-bottom: 6px;">
-                    <input type="radio" name="report-layout" value="4_per_page" checked>
-                    <span style="margin-left: 8px;">A4 1장에 4개 출력 (절약형)</span>
-                </label>
-                <label style="display: flex; align-items: center; margin-bottom: 6px;">
-                    <input type="radio" name="report-layout" value="1_per_page">
-                    <span style="margin-left: 8px;">A4 1장에 1개 출력 (관리용)</span>
-                </label>
-                <label style="display: flex; align-items: center;">
-                    <input type="radio" name="report-layout" value="feed">
-                    <span style="margin-left: 8px;">이어서 출력 (최대 절약)</span>
-                </label>
-            </div>
+      <!-- 3. Layout -->
+      <div class="form-group" style="margin-bottom: 20px">
+        <label style="font-weight: bold; display: block; margin-bottom: 8px"
+        >3. 출력 형식</label>
+        <label style="display: flex; align-items: center; margin-bottom: 6px">
+          <input type="radio" name="report-layout" value="4_per_page" checked>
+          <span style="margin-left: 8px">A4 1장에 4개 출력 (절약형)</span>
+        </label>
+        <label style="display: flex; align-items: center; margin-bottom: 6px">
+          <input type="radio" name="report-layout" value="1_per_page">
+          <span style="margin-left: 8px">A4 1장에 1개 출력 (관리용)</span>
+        </label>
+        <label style="display: flex; align-items: center">
+          <input type="radio" name="report-layout" value="feed">
+          <span style="margin-left: 8px">이어서 출력 (최대 절약)</span>
+        </label>
+      </div>
 
-            <div class="modal-footer" style="padding-top: 10px; border-top: 1px solid #eee; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button type="button" id="btn-close-report-modal" class="btn-cancel" style="width: 100%; font-size: 14px;">취소</button>
-                <button type="submit" class="btn-primary" style="width: 100%; font-size: 14px; padding: 0;">
-                    <span class="material-symbols-outlined" style="font-size: 14px; margin-right: 4px; vertical-align: bottom;">print</span>
-                    수불 대장 생성
-                </button>
-            </div>
-        </form>
-    </div>
+      <div
+        class="modal-footer"
+        style="padding-top: 10px; border-top: 1px solid #eee; display: grid; grid-template-columns: 1fr 1fr; gap: 10px"
+      >
+        <button
+          type="button"
+          id="btn-close-report-modal"
+          class="btn-cancel"
+          style="width: 100%; font-size: 14px; height: 45px; border-radius: 6px;"
+        >
+          취소
+        </button>
+        <button
+          type="submit"
+          class="btn-primary"
+          style="width: 100%; font-size: 14px; padding: 0; height: 45px; border-radius: 6px;"
+        >
+          <span
+            class="material-symbols-outlined"
+            style="font-size: 14px; margin-right: 4px; vertical-align: bottom"
+          >print</span>
+          수불 대장 생성
+        </button>
+      </div>
+    </form>
+  </div>
 </div>

@@ -46,7 +46,8 @@
                 formula: "화학식",
                 storage_location: "위치",
                 created_at_desc: "등록순서",
-                exhausted: "소모완료약품"
+                exhausted: "소모완료약품",
+                id_asc_all: "전체(전량소진포함)"
             };
             App.SortDropdown.init({
                 onChange: (val) => {
@@ -408,6 +409,7 @@
             case "formula": // 화학식
                 return rows.sort((a, b) => collateEn(a.Substance?.molecular_formula, b.Substance?.molecular_formula));
             case "id_asc": // 전체(번호순)
+            case "id_asc_all": // 전체(전량소진포함)
                 return rows.sort((a, b) => a.id - b.id);
             case "storage_location": // 위치
                 return rows.sort((a, b) => {
@@ -453,6 +455,8 @@
         // 1) 상태 필터링
         if (currentSort === "exhausted") {
             filtered = filtered.filter(item => item.status === "전량소진");
+        } else if (currentSort === "id_asc_all") {
+            // "전체(전량소진포함)"인 경우 필터링 없음 (전체 표시)
         } else {
             filtered = filtered.filter(item => item.status !== "전량소진");
         }
@@ -618,7 +622,7 @@
             <div class="inventory-card__body">
               <div class="inventory-card__left">
                 <div class="inventory-card__line1" style="display: flex; flex-direction: row; align-items: center;">
-                  <span class="inventory-card__no" style="margin-right: 8px;">No.${item.id}</span>
+                  <span class="inventory-card__no" style="margin-right: 8px; display: inline-block; min-width: 60px;">No.${item.id}</span>
                   <span class="name-kor" style="font-weight: bold; margin: 0;">${name}</span>
                 </div>
                 <div class="inventory-card__line4 inventory-card__location" style="margin-top: 4px; color: #666;">${locationText}</div>
