@@ -1,8 +1,7 @@
 <!-- /pages/export.html -->
-<div class="layout-container">
+<div id="export-page" class="layout-container">
     <div class="layout-header no-actions">
-        <h2 class="page-title"
-            style="margin: 0; padding: 0; font-size: 20px; font-weight: 700; color: #333; display: flex; align-items: center; gap: 8px;">
+        <h2 class="page-title page-title-flex">
             <span class="material-symbols-outlined">download</span>
             데이터 내보내기
         </h2>
@@ -10,21 +9,19 @@
 
     <div class="layout-content scroll-padding-nav" style="padding: 25px;">
         <div class="card">
-            <div class="card-body" style="text-align: center; padding: 40px 20px;">
+            <div class="card-body card-body-center">
                 <div style="margin-bottom: 20px;">
-                    <span class="material-symbols-outlined"
-                        style="font-size: 64px; color: var(--primary-color);">cloud_download</span>
+                    <span class="material-symbols-outlined icon-lg">cloud_download</span>
                 </div>
 
                 <h3 style="margin-bottom: 10px;">데이터 내보내기</h3>
-                <p style="color: #666; margin-bottom: 30px; line-height: 1.6;">
+                <p class="desc-text">
                     데이터베이스에 저장된 데이터를 CSV 파일로 다운로드합니다.<br>
                     필요한 데이터를 선택하여 내보내기를 진행하세요.
                 </p>
 
-                <div style="display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 0 auto;">
-                    <button id="btn-export-kits-csv" class="btn btn-secondary btn-lg"
-                        style="justify-content: flex-start;">
+                <div class="btn-container">
+                    <button id="btn-export-kits-csv" class="btn btn-secondary btn-lg btn-flex-start">
                         <span class="material-symbols-outlined">inventory_2</span>
                         <span>키트 목록 내보내기 - CSV</span>
                     </button>

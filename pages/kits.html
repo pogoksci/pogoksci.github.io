@@ -1,4 +1,5 @@
-<div class="layout-container">
+<!-- /pages/kits.html -->
+<div id="kits-page" class="layout-container">
     <!-- 1. Fixed Header -->
     <div class="layout-header">
         <div class="header-top-row">
@@ -8,14 +9,13 @@
         <div class="header-actions">
             <!-- Search -->
             <div class="search-container">
-                <span class="material-symbols-outlined" style="color: #888;">search</span>
+                <span class="material-symbols-outlined search-icon">search</span>
                 <input type="text" id="kit-search-input" placeholder="키트 검색...">
             </div>
 
             <!-- Sort Dropdown -->
             <div class="custom-dropdown" id="kit-sort-dropdown">
-                <button class="dropdown-toggle" id="kit-sort-toggle" aria-haspopup="true" aria-expanded="false"
-                    style="height: 100%;">
+                <button class="dropdown-toggle header-btn" id="kit-sort-toggle" aria-haspopup="true" aria-expanded="false">
                     <span class="material-symbols-outlined">sort</span>
                     <span id="kit-sort-label" data-value="name_class">키트이름(분류)</span>
                     <span class="material-symbols-outlined arrow">expand_more</span>
@@ -38,19 +38,19 @@
             </div>
 
             <!-- Print Button -->
-            <button id="kit-print-btn" title="보고서 출력" aria-label="출력" style="height: 100%;">
+            <button id="kit-print-btn" title="보고서 출력" aria-label="출력" class="header-btn">
                 <span class="material-symbols-outlined">print</span>
             </button>
 
             <!-- Refresh Button -->
-            <button id="kit-refresh-btn" title="목록 새로고침" aria-label="새로고침" style="height: 100%;">
+            <button id="kit-refresh-btn" title="목록 새로고침" aria-label="새로고침" class="header-btn">
                 <span class="material-symbols-outlined">refresh</span>
             </button>
         </div>
     </div>
 
     <!-- Sync Status -->
-    <div id="sync-status" class="sync-status-msg" style="padding: 0 25px;"></div>
+    <div id="sync-status" class="sync-status-msg sync-status-padding"></div>
 
     <!-- 2. Scrollable Content -->
     <div id="kit-list" class="layout-content inventory-list scroll-padding-fab">
@@ -67,7 +67,7 @@
     <div class="modal-content">
         <h3 class="modal-header" id="kit-form-title">키트 등록</h3>
 
-        <form id="form-register-kit" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+        <form id="form-register-kit" class="modal-form-flex">
             <div class="modal-body">
                 <div class="form-group">
                     <div class="form-group">
@@ -112,9 +112,9 @@
                 <div class="form-group">
                     <label for="kit-photo">키트 사진</label>
                     <input type="file" id="kit-photo" class="form-input" accept="image/*">
-                    <div id="kit-photo-preview" style="margin-top: 10px; text-align: center; display: none;">
+                    <div id="kit-photo-preview" class="photo-preview-center">
                         <img id="preview-img" src="" alt="Preview"
-                            style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;">
+                            class="photo-preview-img">
                     </div>
                 </div>
             </div>

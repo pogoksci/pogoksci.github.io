@@ -1,11 +1,8 @@
 <!-- /pages/inventory-list.html -->
-<div class="layout-container">
+<div id="inventory-list-container-page" class="layout-container">
   <!-- 1. Fixed Header -->
   <div class="layout-header">
-    <div
-      class="header-top-row"
-      style="display: flex; justify-content: space-between; align-items: center"
-    >
+    <div class="header-top-row">
       <h2>약품 관리</h2>
     </div>
 
@@ -13,8 +10,7 @@
     <div class="header-actions">
       <!-- Search -->
       <div class="search-container">
-        <span class="material-symbols-outlined" style="color: #888"
-        >search</span>
+        <span class="material-symbols-outlined search-icon">search</span>
         <input
           type="text"
           id="inventory-search-input"
@@ -25,11 +21,10 @@
       <!-- Sort Dropdown -->
       <div class="custom-dropdown" id="sort-dropdown">
         <button
-          class="dropdown-toggle"
+          class="dropdown-toggle sort-toggle-btn"
           id="sort-toggle"
           aria-haspopup="true"
           aria-expanded="false"
-          style="height: 100%"
         >
           <span class="material-symbols-outlined">sort</span>
           <span id="sort-label" data-value="category_name_kor"
@@ -89,7 +84,7 @@
           id="print-report-btn"
           title="보고서 출력"
           aria-label="출력"
-          style="height: 100%"
+          class="action-btn"
         >
           <span class="material-symbols-outlined">print</span>
         </button>
@@ -99,7 +94,7 @@
           id="stock-report-btn"
           title="수불대장 출력"
           aria-label="수불대장 출력"
-          style="height: 100%"
+          class="action-btn"
         >
           <span class="material-symbols-outlined">history_edu</span>
         </button>
@@ -118,7 +113,7 @@
           id="refresh-btn"
           title="목록 새로고침"
           aria-label="새로고침"
-          style="height: 100%"
+          class="action-btn"
         >
           <span class="material-symbols-outlined">refresh</span>
         </button>
@@ -140,26 +135,22 @@
 
 <!-- Stock Report Settings Modal -->
 <div id="modal-stock-report" class="modal-overlay" style="display: none">
-  <div class="modal-content" style="max-width: 400px">
-    <h3
-      class="modal-header"
-      style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px"
-    >
+  <div class="modal-content modal-content-report">
+    <h3 class="modal-header modal-header-report">
       수불대장 출력 설정
     </h3>
 
     <form id="form-stock-report">
       <!-- 1. Period -->
-      <div class="form-group" style="margin-bottom: 20px">
-        <label style="font-weight: bold; display: block; margin-bottom: 8px"
-        >1. 조회 기간</label>
-        <div style="display: flex; gap: 10px; align-items: center">
+      <div class="form-group form-group-report">
+        <label class="label-report">1. 조회 기간</label>
+        <div class="date-range-group">
           <input type="date" id="report-start-date" class="form-input" required>
           <span>~</span>
           <input type="date" id="report-end-date" class="form-input" required>
         </div>
         <!-- Quick Buttons -->
-        <div style="margin-top: 8px; display: flex; gap: 5px">
+        <div class="quick-btn-group">
           <button
             type="button"
             class="btn-mini"
@@ -192,62 +183,52 @@
       </div>
 
       <!-- 2. Target -->
-      <div class="form-group" style="margin-bottom: 20px">
-        <label style="font-weight: bold; display: block; margin-bottom: 8px"
-        >2. 출력 대상</label>
-        <label style="display: flex; align-items: center; margin-bottom: 6px">
+      <div class="form-group form-group-report">
+        <label class="label-report">2. 출력 대상</label>
+        <label class="radio-label">
           <input type="radio" name="report-target" value="usage_only" checked>
-          <span style="margin-left: 8px">변동 내역이 있는 품목만 (권장)</span>
+          <span class="radio-text">변동 내역이 있는 품목만 (권장)</span>
         </label>
-        <label style="display: flex; align-items: center">
+        <label class="radio-label-last">
           <input type="radio" name="report-target" value="all">
-          <span style="margin-left: 8px">전체 품목 (이월 재고 확인용)</span>
+          <span class="radio-text">전체 품목 (이월 재고 확인용)</span>
         </label>
-        <label style="display: flex; align-items: center; margin-top: 6px">
+        <label class="radio-label-mt">
           <input type="radio" name="report-target" value="all_with_exhausted">
-          <span style="margin-left: 8px">전체 품목 (전량소모약품 포함)</span>
+          <span class="radio-text">전체 품목 (전량소모약품 포함)</span>
         </label>
       </div>
 
       <!-- 3. Layout -->
-      <div class="form-group" style="margin-bottom: 20px">
-        <label style="font-weight: bold; display: block; margin-bottom: 8px"
-        >3. 출력 형식</label>
-        <label style="display: flex; align-items: center; margin-bottom: 6px">
+      <div class="form-group form-group-report">
+        <label class="label-report">3. 출력 형식</label>
+        <label class="radio-label">
           <input type="radio" name="report-layout" value="4_per_page" checked>
-          <span style="margin-left: 8px">A4 1장에 4개 출력 (절약형)</span>
+          <span class="radio-text">A4 1장에 4개 출력 (절약형)</span>
         </label>
-        <label style="display: flex; align-items: center; margin-bottom: 6px">
+        <label class="radio-label">
           <input type="radio" name="report-layout" value="1_per_page">
-          <span style="margin-left: 8px">A4 1장에 1개 출력 (관리용)</span>
+          <span class="radio-text">A4 1장에 1개 출력 (관리용)</span>
         </label>
-        <label style="display: flex; align-items: center">
+        <label class="radio-label-last">
           <input type="radio" name="report-layout" value="feed">
-          <span style="margin-left: 8px">이어서 출력 (최대 절약)</span>
+          <span class="radio-text">이어서 출력 (최대 절약)</span>
         </label>
       </div>
 
-      <div
-        class="modal-footer"
-        style="padding-top: 10px; border-top: 1px solid #eee; display: grid; grid-template-columns: 1fr 1fr; gap: 10px"
-      >
+      <div class="modal-footer modal-footer-report">
         <button
           type="button"
           id="btn-close-report-modal"
-          class="btn-cancel"
-          style="width: 100%; font-size: 14px; height: 45px; border-radius: 6px;"
+          class="btn-cancel btn-report-cancel"
         >
           취소
         </button>
         <button
           type="submit"
-          class="btn-primary"
-          style="width: 100%; font-size: 14px; padding: 0; height: 45px; border-radius: 6px;"
+          class="btn-primary btn-report-submit"
         >
-          <span
-            class="material-symbols-outlined"
-            style="font-size: 14px; margin-right: 4px; vertical-align: bottom"
-          >print</span>
+          <span class="material-symbols-outlined icon-print-sm">print</span>
           수불 대장 생성
         </button>
       </div>

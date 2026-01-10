@@ -1,9 +1,10 @@
+<!-- /pages/lunch-lab-view.html -->
 <div id="lunch-lab-view-page" class="layout-container">
-    <div class="layout-header" style="flex-direction: column; align-items: stretch; gap: 15px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: baseline; gap: 10px;">
-                <h2 style="margin: 0; font-size: 20px;">런치랩 예약조회</h2>
-                <span id="current-month-display" style="font-size: 13px; color: #888; font-weight: normal;"></span>
+    <div class="layout-header header-col">
+        <div class="header-top">
+            <div class="header-title-group">
+                <h2 class="header-h2">런치랩 예약조회</h2>
+                <span id="current-month-display" class="header-sub"></span>
             </div>
             <div style="display: flex; gap: 10px;">
                 <div style="display: flex; gap: 10px;">
@@ -13,20 +14,17 @@
         </div>
 
         <!-- Weekly Navigation -->
-        <div
-            style="display: flex; justify-content: center; align-items: center; gap: 20px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <label style="font-size: 16px; font-weight: bold; color: #333; line-height: 1;">월 선택:</label>
-                <select id="lunch-month-select" class="form-select"
-                    style="width: 110px; padding: 6px; font-size: 14px; height: 36px;"></select>
+        <div class="weekly-nav-box">
+            <div class="month-sel-group">
+                <label class="month-label">월 선택:</label>
+                <select id="lunch-month-select" class="form-select month-select"></select>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="date-nav-group">
                 <button id="btn-prev-week" class="btn-icon-only">
                     <span class="material-symbols-outlined">chevron_left</span>
                 </button>
-                <div id="current-week-label"
-                    style="font-weight: bold; font-size: 16px; min-width: 250px; text-align: center;">
+                <div id="current-week-label" class="week-label">
                     -
                 </div>
                 <button id="btn-next-week" class="btn-icon-only">
@@ -34,17 +32,16 @@
                 </button>
             </div>
 
-            <button id="btn-today" class="btn-secondary" style="padding: 4px 12px; font-size: 13px;">오늘</button>
+            <button id="btn-today" class="btn-secondary btn-today-sm">오늘</button>
         </div>
     </div>
 
-    <div class="layout-content" style="padding: 15px; position: relative;">
-        <div id="usage-log-grid-container"
-            style="overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div class="layout-content content-rel-pad">
+        <div id="usage-log-grid-container" class="grid-container-shadow">
             <table id="usage-log-table" class="usage-grid-table">
                 <thead>
                     <tr id="usage-grid-header">
-                        <th style="width: 80px;">시간</th>
+                        <th class="th-time-w80">시간</th>
                         <!-- Dates will be injected here -->
                     </tr>
                 </thead>
@@ -54,132 +51,8 @@
             </table>
         </div>
 
-        <div style="margin-top: 20px; text-align: center; color: #666; font-size: 13px;">
+        <div class="footer-note">
             * 점심시간 예약 현황만 표시됩니다. 상세 내용은 해당 항목을 클릭하여 확인할 수 있습니다.
         </div>
     </div>
 </div>
-
-<style>
-    .usage-grid-table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-        min-width: auto;
-    }
-
-    .usage-grid-table th,
-    .usage-grid-table td {
-        border: 1px solid #eee;
-        padding: 10px;
-        vertical-align: top;
-    }
-
-    .usage-grid-table th {
-        background: #f8f9fa;
-        color: #555;
-        font-size: 14px;
-        height: 50px;
-    }
-
-    .period-col {
-        background: #fdfdfd;
-        font-weight: bold;
-        text-align: center;
-        vertical-align: middle !important;
-        color: #888;
-        font-size: 13px;
-    }
-
-    .is-today {
-        background-color: #e0f7fa !important;
-        color: #00838f !important;
-    }
-
-    .date-num {
-        font-size: 18px;
-        display: block;
-        margin-bottom: 2px;
-    }
-
-    .day-text {
-        font-size: 12px;
-        color: #888;
-    }
-
-    /* Activity Items */
-    .activity-container {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        min-height: 100px;
-        /* Ensure some height for empty cells */
-    }
-
-    .activity-item {
-        display: flex;
-        flex-direction: column;
-        /* Vertical layout for more info */
-        gap: 4px;
-        padding: 8px;
-        border-radius: 6px;
-        font-size: 12px;
-        border: 1px solid #e0e0e0;
-        background: #fafafa;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .activity-item:hover {
-        border-color: #00A0B2;
-        background: #f0fbfc;
-    }
-
-    .activity-item.status-pending {
-        border-left: 3px solid #ff9800;
-        background: #fff8e1;
-    }
-
-    .activity-item.status-approved {
-        border-left: 3px solid #4caf50;
-        background: #e8f5e9;
-    }
-
-    .activity-item.status-rejected {
-        border-left: 3px solid #f44336;
-        background: #ffebee;
-        opacity: 0.7;
-    }
-
-    .act-header {
-        display: flex;
-        justify-content: space-between;
-        font-weight: 600;
-        color: #333;
-    }
-
-    .act-room {
-        color: #00A0B2;
-        font-size: 11px;
-    }
-
-    .act-content {
-        margin-top: 2px;
-        color: #555;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        -webkit-box-orient: vertical;
-    }
-
-    .badge-status {
-        display: inline-block;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 10px;
-        font-weight: normal;
-        margin-left: auto;
-    }
-</style>

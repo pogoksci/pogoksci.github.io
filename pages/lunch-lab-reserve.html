@@ -1,10 +1,11 @@
+<!-- /pages/lunch-lab-reserve.html -->
 <div id="lunch-lab-reserve-page" class="layout-container">
     <div class="layout-header">
-        <h2 style="margin: 0; font-size: 20px;">런치랩 사전예약</h2>
-        <p style="margin: 5px 0 0 0; color: #666; font-size: 13px;">점심시간 과학실 사용을 예약합니다. (학생용)</p>
+        <h2 class="header-title">런치랩 사전예약</h2>
+        <p class="header-desc">점심시간 과학실 사용을 예약합니다. (학생용)</p>
     </div>
 
-    <div class="layout-content" style="padding: 15px; padding-bottom: 80px; position: relative;">
+    <div class="layout-content content-pb">
 
         <div class="card">
             <div class="form-group">
@@ -36,10 +37,9 @@
 
             <div class="form-group">
                 <label class="form-label required">신청 대표자 정보</label>
-                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                    <input type="text" id="applicant-number" class="form-input" placeholder="학번 (예: 20101)"
-                        style="flex: 1;">
-                    <input type="text" id="applicant-name" class="form-input" placeholder="이름" style="flex: 1;">
+                <div class="applicant-row">
+                    <input type="text" id="applicant-number" class="form-input input-flex" placeholder="학번 (예: 20101)">
+                    <input type="text" id="applicant-name" class="form-input input-flex" placeholder="이름">
                 </div>
                 <input type="tel" id="applicant-phone" class="form-input" placeholder="연락처">
             </div>

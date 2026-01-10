@@ -1,12 +1,11 @@
 <!-- /pages/kit-detail.html -->
-<div class="layout-container">
+<div id="kit-detail-page" class="layout-container">
     <!-- Header -->
     <div class="layout-header no-actions">
         <div class="detail-name-group">
-            <h2 id="detail-kit-name" style="margin: 0; padding: 0; font-size: 20px; font-weight: 700; color: #333;">
+            <h2 id="detail-kit-name" class="detail-header-title">
             </h2>
-            <span id="detail-kit-class" class="kit-tag"
-                style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:14px; margin-left: 10px;"></span>
+            <span id="detail-kit-class" class="kit-tag kit-class-tag"></span>
         </div>
     </div>
 
@@ -16,8 +15,7 @@
         <div class="detail-grid">
             <!-- Left: Photo -->
             <div class="detail-left">
-                <div class="photo-preview-box" id="detail-kit-photo"
-                    style="width: 210px; height: 280px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                <div class="photo-preview-box kit-photo-box" id="detail-kit-photo">
                     <!-- Photo will be inserted here -->
                 </div>
             </div>
@@ -48,7 +46,7 @@
         </div>
 
         <!-- Usage Logs -->
-        <div class="kit-logs-section" style="margin-top: 30px;">
+        <div class="kit-logs-section">
             <h3>사용 기록</h3>
             <div class="kit-log-table-container">
                 <table class="kit-log-table">
@@ -56,7 +54,7 @@
                         <tr>
                             <th>날짜</th>
                             <th>유형</th>
-                            <th style="text-align: right;">변동/수량</th>
+                            <th class="kit-logs-th-right">변동/수량</th>
                         </tr>
                     </thead>
                     <tbody id="kit-usage-logs-body">
@@ -67,9 +65,8 @@
         </div>
 
         <!-- Inline Chemical Detail Container -->
-        <div id="kit-chem-detail-container"
-            style="display: none; margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
-            <h3 id="kit-chem-detail-title" style="margin-bottom: 15px;">약품 상세 정보</h3>
+        <div id="kit-chem-detail-container" class="chem-detail-container">
+            <h3 id="kit-chem-detail-title" class="chem-detail-title">약품 상세 정보</h3>
             <div id="kit-chem-detail-content">
                 <!-- Inline chemical details will be rendered here -->
             </div>

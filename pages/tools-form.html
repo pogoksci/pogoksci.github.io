@@ -1,23 +1,22 @@
 <!-- /pages/tools-form.html -->
-<div class="layout-container">
+<div id="tools-form-page" class="layout-container">
     <div class="layout-header no-actions">
-        <h2 id="tools-form-title" style="margin: 0; padding: 0; font-size: 20px; font-weight: 700; color: #333;">교구/설비
+        <h2 id="tools-form-title" class="page-title-custom">교구/설비
             등록</h2>
     </div>
 
-    <div class="layout-content scroll-padding-nav" style="padding: 0 25px;">
+    <div class="layout-content scroll-padding-nav form-padding">
         <form id="tools-form" autocomplete="off">
             <!-- Toggle Section -->
-            <div style="padding: 0; border-bottom: 1px solid #eee; margin-bottom: 20px;">
-                <div class="button-group" id="tools-section-group" style="width:100%; display:flex;">
-                    <button type="button" data-value="교구" class="active" style="flex:1;">교구</button>
-                    <button type="button" data-value="설비" style="flex:1;">설비</button>
+            <div class="toggle-section">
+                <div class="button-group toggle-btn-group" id="tools-section-group">
+                    <button type="button" data-value="교구" class="active toggle-btn-item">교구</button>
+                    <button type="button" data-value="설비" class="toggle-btn-item">설비</button>
                 </div>
             </div>
 
             <!-- SECTION 1: Basic Info -->
-            <h3
-                style="margin: 0 0 10px; font-size: 16px; color: #00a0b2; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+            <h3 class="section-heading">
                 기본 정보</h3>
 
             <div class="form-group">
@@ -31,8 +30,7 @@
 
             <div class="form-group">
                 <label>과목 영역</label> <!-- Changed dynamically for Facility -->
-                <div class="button-group" id="tools-category-group"
-                    style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                <div class="button-group grid-category-group" id="tools-category-group">
                     <!-- Filled by JS -->
                 </div>
             </div>
@@ -53,36 +51,33 @@
             </div>
 
             <!-- SECTION 2: Management Info -->
-            <h3
-                style="margin: 30px 0 10px; font-size: 16px; color: #00a0b2; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+            <h3 class="section-heading-mt">
                 관리 정보</h3>
 
             <div class="form-group">
                 <label>순번 (자동생성)</label>
                 <input type="number" id="tools_no" name="tools_no" placeholder="자동 입력됨" readonly
-                    style="background-color: #f0f0f0; color: #666;">
+                    class="readonly-input">
             </div>
 
             <div class="form-group">
                 <label for="purchase_date">구입일</label>
-                <div style="display: flex; align-items: center; gap: 5px; position: relative;">
-                    <div
-                        style="display: flex; align-items: center; border: 1px solid #ddd; border-radius: 4px; padding: 2px 8px; background: #fff; height: 32px; box-sizing: border-box;">
+                <div class="date-input-group">
+                    <div class="date-input-box">
                         <input type="text" id="tool-date-year" placeholder="YYYY" maxlength="4" inputmode="numeric"
-                            style="width: 40px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
-                        <span style="color: #ccc; margin: 0 2px;">-</span>
+                            class="date-year">
+                        <span class="date-divider">-</span>
                         <input type="text" id="tool-date-month" placeholder="MM" maxlength="2" inputmode="numeric"
-                            style="width: 22px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
-                        <span style="color: #ccc; margin: 0 2px;">-</span>
+                            class="date-month-day">
+                        <span class="date-divider">-</span>
                         <input type="text" id="tool-date-day" placeholder="DD" maxlength="2" inputmode="numeric"
-                            style="width: 22px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
+                            class="date-month-day">
                     </div>
                     <!-- Hidden Date Input for Picker -->
                     <input type="date" id="purchase_date" name="purchase_date" tabindex="-1"
-                        style="position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; z-index: -1;">
+                        class="date-picker-hidden">
                     <!-- Calendar Button -->
-                    <button type="button" id="btn-open-calendar-tool"
-                        style="background: none; border: none; cursor: pointer; color: #666; display: flex; align-items: center; justify-content: center; padding: 0 4px;">
+                    <button type="button" id="btn-open-calendar-tool" class="btn-calendar-icon">
                         <span class="material-symbols-outlined" style="font-size: 20px;">calendar_month</span>
                     </button>
                 </div>
@@ -98,12 +93,10 @@
                 <label>사진</label>
                 <div class="photo-container">
                     <div id="tools-photo-preview" class="photo-preview-box">
-                        <img id="tools-preview-img"
-                            style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                        <span class="placeholder-text" style="color:#888;">사진 없음</span>
-                        <video id="tools-camera-stream" autoplay playsinline
-                            style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
-                        <canvas id="tools-camera-canvas" style="display: none;"></canvas>
+                        <img id="tools-preview-img" class="preview-img">
+                        <span class="placeholder-text">사진 없음</span>
+                        <video id="tools-camera-stream" autoplay playsinline class="camera-stream"></video>
+                        <canvas id="tools-camera-canvas" class="camera-canvas"></canvas>
                     </div>
                     <div class="photo-buttons">
                         <button type="button" id="tools-photo-btn"><span class="material-symbols-outlined">image</span>
@@ -113,21 +106,20 @@
                                 class="material-symbols-outlined">photo_camera</span>
                             카메라로
                             촬영</button>
-                        <button type="button" id="tools-camera-confirm-btn" style="display: none;"><span
+                        <button type="button" id="tools-camera-confirm-btn" class="btn-photo-confirm"><span
                                 class="material-symbols-outlined">check</span> 확인</button>
-                        <button type="button" id="tools-camera-cancel-btn" style="display: none;"><span
+                        <button type="button" id="tools-camera-cancel-btn" class="btn-photo-cancel"><span
                                 class="material-symbols-outlined">close</span> 취소</button>
                     </div>
                 </div>
-                <input type="file" id="tools-photo-input" accept="image/*" style="display: none;">
+                <input type="file" id="tools-photo-input" accept="image/*" class="file-input-hidden">
                 <input type="file" id="tools-camera-input" accept="image/*" capture="environment"
-                    style="display: none;">
+                    class="file-input-hidden">
             </div>
 
 
             <!-- SECTION 3: Standards & Status -->
-            <h3
-                style="margin: 30px 0 10px; font-size: 16px; color: #00a0b2; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+            <h3 class="section-heading-mt">
                 기준 및 현황</h3>
 
             <div class="form-group">
@@ -143,15 +135,15 @@
 
             <div class="form-group">
                 <label>소요기준 (예: 4명당 1개)</label>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="number" id="std_base_count" placeholder="예: 4" style="flex:1;">
-                    <select id="std_unit" style="flex:1.5;">
+                <div class="std-base-row">
+                    <input type="number" id="std_base_count" placeholder="예: 4" class="std-base-count">
+                    <select id="std_unit" class="std-unit">
                         <option value="학생(명)">학생(명)당</option>
                         <option value="실험(실)">실험(실)당</option>
                     </select>
-                    <input type="number" id="std_target_count" placeholder="예: 1" style="flex:1;">
+                    <input type="number" id="std_target_count" placeholder="예: 1" class="std-target-count">
                 </div>
-                <p style="font-size: 12px; color: #666; margin-top: 4px;">입력 시 자동 저장: "4 학생(명)당 1"</p>
+                <p class="std-note">입력 시 자동 저장: "4 학생(명)당 1"</p>
             </div>
 
             <div class="form-group">
@@ -166,8 +158,7 @@
 
             <div class="form-group">
                 <label>보유율 (%)</label>
-                <input type="text" id="proportion" name="proportion" readonly
-                    style="background-color: #f0f0f0; color: #666; font-weight: bold;">
+                <input type="text" id="proportion" name="proportion" readonly class="proportion-input">
             </div>
 
             <div class="form-group">
@@ -191,7 +182,7 @@
                 <button type="button" id="btn-cancel-tools" class="btn-cancel">취소</button>
                 <button type="submit" id="btn-save-tools">저장</button>
             </div>
-            <p id="toolsStatusMessage" style="margin-top: 15px; text-align: center; color: #666;"></p>
+            <p id="toolsStatusMessage" class="status-message"></p>
 
         </form>
     </div>

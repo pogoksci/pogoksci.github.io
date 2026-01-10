@@ -1,31 +1,29 @@
+<!-- /pages/lab-usage-log.html -->
 <div id="lab-usage-log-page" class="layout-container">
     <script src="data/subject-config.js"></script>
-    <div class="layout-header" style="flex-direction: column; align-items: stretch; gap: 15px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div class="page-title-wrapper" style="display: flex; align-items: baseline; gap: 10px;">
-                <h2 style="margin: 0; font-size: 20px;">과학실 사용기록·예약</h2>
-                <span id="current-semester-display" style="font-size: 13px; color: #888; font-weight: normal;"></span>
+    <div class="layout-header header-col-stretch">
+        <div class="top-row-between">
+            <div class="page-title-wrapper title-baseline-gap">
+                <h2 class="title-main">과학실 사용기록·예약</h2>
+                <span id="current-semester-display" class="semester-sub"></span>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <select id="usage-room-select" class="form-select" style="max-width: 200px;"></select>
+            <div class="room-select-group">
+                <select id="usage-room-select" class="form-select room-select"></select>
             </div>
         </div>
 
         <!-- Weekly Navigation -->
-        <div class="weekly-nav-container"
-            style="display: flex; justify-content: center; align-items: center; gap: 20px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
-            <div class="month-select-wrapper" style="display: flex; align-items: center; gap: 8px;">
-                <label style="font-size: 16px; font-weight: bold; color: #333; line-height: 1;">월 선택:</label>
-                <select id="usage-month-select" class="form-select"
-                    style="width: 110px; padding: 6px; font-size: 14px; height: 36px;"></select>
+        <div class="weekly-nav-container">
+            <div class="month-select-wrapper">
+                <label class="month-label">월 선택:</label>
+                <select id="usage-month-select" class="form-select month-select"></select>
             </div>
 
-            <div class="date-nav-wrapper" style="display: flex; align-items: center; gap: 15px;">
+            <div class="date-nav-wrapper">
                 <button id="btn-prev-week" class="btn-icon-only">
                     <span class="material-symbols-outlined">chevron_left</span>
                 </button>
-                <div id="current-week-label"
-                    style="font-weight: bold; font-size: 16px; min-width: 250px; text-align: center;">
+                <div id="current-week-label" class="current-week-label">
                     2025년 12월 22일(월) ~ 12월 28일(일)
                 </div>
                 <button id="btn-next-week" class="btn-icon-only">
@@ -33,22 +31,21 @@
                 </button>
             </div>
 
-            <button id="btn-today" class="btn-secondary" style="padding: 4px 12px; font-size: 13px;">오늘</button>
+            <button id="btn-today" class="btn-secondary btn-today-style">오늘</button>
         </div>
     </div>
 
-    <div class="layout-content scroll-padding-fab" style="padding: 15px; position: relative;">
+    <div class="layout-content scroll-padding-fab content-relative">
         <!-- Weekend Toggle -->
-        <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-            <input type="checkbox" id="show-weekend-toggle" style="width: 16px; height: 16px; cursor: pointer;">
-            <label for="show-weekend-toggle" style="font-size: 13px; color: #555; cursor: pointer;">토요일/일요일 표시</label>
+        <div class="weekend-toggle-wrapper">
+            <input type="checkbox" id="show-weekend-toggle" class="weekend-toggle-input">
+            <label for="show-weekend-toggle" class="weekend-toggle-label">토요일/일요일 표시</label>
         </div>
-        <div id="usage-log-grid-container"
-            style="overflow-x: auto; overflow-y: auto; background: white; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div id="usage-log-grid-container" class="grid-container">
             <table id="usage-log-table" class="usage-grid-table">
                 <thead>
                     <tr id="usage-grid-header">
-                        <th style="width: 60px;">교시</th>
+                        <th class="th-period">교시</th>
                         <!-- Dates will be injected here -->
                     </tr>
                 </thead>
@@ -66,174 +63,3 @@
         </button>
     </div>
 </div>
-
-<style>
-    .usage-grid-table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-        min-width: 1000px;
-    }
-
-    .usage-grid-table th,
-    .usage-grid-table td {
-        border: 1px solid #eee;
-        padding: 10px;
-        vertical-align: top;
-    }
-
-    .usage-grid-table th {
-        background: #f8f9fa;
-        color: #555;
-        font-size: 14px;
-        height: 50px;
-        position: sticky;
-        /* Sticky Header */
-        top: 0;
-        z-index: 10;
-        box-shadow: 0 1px 0 #ddd;
-        /* Bottom border for sticky header */
-    }
-
-    .period-col {
-        background: #fdfdfd;
-        font-weight: bold;
-        text-align: center;
-        vertical-align: middle !important;
-        color: #888;
-        font-size: 13px;
-    }
-
-    .period-highlight tr,
-    .period-highlight td {
-        background-color: #ebf5ff !important;
-    }
-
-    .period-highlight .period-col {
-        background-color: #ebf5ff !important;
-        color: #888;
-        /* Revert font color */
-    }
-
-    .cell-day-header {
-        text-align: center;
-    }
-
-    .date-num {
-        font-size: 18px;
-        display: block;
-        margin-bottom: 2px;
-    }
-
-    .day-text {
-        font-size: 12px;
-        color: #888;
-    }
-
-    .is-today {
-        background-color: #e0f7fa !important;
-        color: #00838f !important;
-    }
-
-    /* Activity Items */
-    .activity-container {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin-bottom: 8px;
-    }
-
-    .activity-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 8px;
-        border-radius: 6px;
-        font-size: 13px;
-        border: 1px solid #f0f0f0;
-        background: #fafafa;
-        transition: all 0.2s;
-        cursor: pointer;
-    }
-
-    .activity-item:hover {
-        border-color: #ccc;
-        background: #f0f0f0;
-    }
-
-    .activity-item.checked {
-        background: #f1f8e9;
-        border-color: #c5e1a5;
-    }
-
-    .activity-item input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        cursor: pointer;
-    }
-
-    .activity-info {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .safety-tag {
-        font-size: 10px;
-        padding: 1px 4px;
-        border-radius: 3px;
-        background: #e0e0e0;
-        color: #666;
-        margin-left: 4px;
-    }
-
-    .safety-on {
-        background: #c8e6c9;
-        color: #2e7d32;
-    }
-
-    /* Add Button */
-    .btn-add-activity {
-        width: 100%;
-        padding: 6px;
-        border: 1px dashed #ccc;
-        background-color: #fff;
-        border-radius: 6px;
-        color: #888;
-        font-size: 12px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-        transition: all 0.2s;
-    }
-
-    .btn-add-activity:hover {
-        border-color: #00A0B2;
-        color: #00A0B2;
-        background: #f0fbfc;
-    }
-
-    /* Select Overlays */
-    .activity-add-form {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        border: 1px solid #00A0B2;
-        padding: 8px;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .activity-add-form select,
-    .activity-add-form input {
-        width: 100%;
-        padding: 5px;
-        font-size: 12px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
-    }
-</style>

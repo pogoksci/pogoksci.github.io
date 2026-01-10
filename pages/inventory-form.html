@@ -1,11 +1,11 @@
 <!-- /pages/inventory-form.html -->
-<div class="layout-container">
+<div id="inventory-form-page" class="layout-container">
     <div class="layout-header no-actions">
-        <h2 id="inventory-form-title" style="margin: 0; font-size: 20px; font-weight: 700; color: #333;">약품 등록
+        <h2 id="inventory-form-title" class="page-title-inv">약품 등록
         </h2>
     </div>
 
-    <div class="layout-content scroll-padding-nav" style="padding: 25px;">
+    <div class="layout-content scroll-padding-nav form-container-inv">
         <form id="inventory-form" autocomplete="off">
             <div class="form-group">
                 <label for="cas_rn">CAS <span class="required-mark">*</span></label>
@@ -24,11 +24,10 @@
                     autocomplete="off" required>
             </div>
 
-            <div class="form-group" style="position: relative;">
+            <div class="form-group relative-group">
                 <label>단위 <span class="required-mark">*</span></label>
                 <!-- Hidden input for state tracking (no required to avoid scroll issues) -->
-                <input type="text" id="unit_hidden"
-                    style="position: absolute; opacity: 0; width: 1px; height: 1px; bottom: 0; left: 50%;">
+                <input type="text" id="unit_hidden" class="hidden-state-input">
                 <div class="button-group" id="unit_buttons">
                     <button type="button" data-value="g">g</button>
                     <button type="button" data-value="mL">mL</button>
@@ -36,11 +35,10 @@
                 </div>
             </div>
 
-            <div class="form-group" style="position: relative;">
+            <div class="form-group relative-group">
                 <label>시약병 형태 <span class="required-mark">*</span></label>
                 <!-- Hidden input for state tracking (no required to avoid scroll issues) -->
-                <input type="text" id="bottle_type_hidden"
-                    style="position: absolute; opacity: 0; width: 1px; height: 1px; bottom: 0; left: 50%;">
+                <input type="text" id="bottle_type_hidden" class="hidden-state-input">
                 <div class="button-group" id="bottle_type_buttons">
                     <button type="button" data-value="갈색유리">갈색유리</button>
                     <button type="button" data-value="투명유리">투명유리</button>
@@ -55,11 +53,10 @@
                 <label>사진</label>
                 <div class="photo-container">
                     <div id="photo-preview" class="photo-preview-box">
-                        <img id="preview-img" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                        <span class="placeholder-text" style="color:#888;">사진 없음</span>
-                        <video id="camera-stream" autoplay playsinline
-                            style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
-                        <canvas id="camera-canvas" style="display: none;"></canvas>
+                        <img id="preview-img" class="preview-img">
+                        <span class="placeholder-text">사진 없음</span>
+                        <video id="camera-stream" autoplay playsinline class="camera-stream"></video>
+                        <canvas id="camera-canvas" class="camera-canvas"></canvas>
                     </div>
                     <div class="photo-buttons">
                         <button type="button" id="photo-btn"><span class="material-symbols-outlined">image</span> 파일에서
@@ -68,14 +65,14 @@
                                 class="material-symbols-outlined">photo_camera</span>
                             카메라로
                             촬영</button>
-                        <button type="button" id="camera-confirm-btn" style="display: none;"><span
+                        <button type="button" id="camera-confirm-btn" class="btn-photo-confirm"><span
                                 class="material-symbols-outlined">check</span> 확인</button>
-                        <button type="button" id="camera-cancel-btn" style="display: none;"><span
+                        <button type="button" id="camera-cancel-btn" class="btn-photo-cancel"><span
                                 class="material-symbols-outlined">close</span> 취소</button>
                     </div>
                 </div>
-                <input type="file" id="photo-input" accept="image/*" style="display: none;">
-                <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+                <input type="file" id="photo-input" accept="image/*" class="file-input-hidden">
+                <input type="file" id="camera-input" accept="image/*" capture="environment" class="file-input-hidden">
             </div>
 
             <div class="form-group">
@@ -138,13 +135,12 @@
                 </div>
 
                 <div class="form-group" id="valence_group" style="display: none;">
-                    <label for="valence_input" style="color: #d32f2f;">가수 (Valence) *</label>
-                    <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="valence_input" class="valence-label">가수 (Valence) *</label>
+                    <div class="valence-wrapper">
                         <input type="number" id="valence_input" name="valence" placeholder="예: 1, 2" min="1" step="1"
-                            style="width: 120px;" autocomplete="off">
-                        <span style="font-size: 13px; color: #666;">
-                            <span class="material-symbols-outlined"
-                                style="font-size: 14px; vertical-align: middle;">info</span>
+                            class="valence-input" autocomplete="off">
+                        <span class="valence-info">
+                            <span class="material-symbols-outlined info-icon-sm">info</span>
                             노르말 농도(N) 계산을 위한 가수입니다.
                         </span>
                     </div>
@@ -178,24 +174,22 @@
 
             <div class="form-group">
                 <label for="purchase_date">제조일 또는 구입일</label>
-                <div style="display: flex; align-items: center; gap: 5px; position: relative;">
-                    <div
-                        style="display: flex; align-items: center; border: 1px solid #ddd; border-radius: 4px; padding: 2px 8px; background: #fff; height: 32px; box-sizing: border-box;">
+                <div class="date-input-group">
+                    <div class="date-input-box">
                         <input type="text" id="inv-date-year" placeholder="YYYY" maxlength="4" inputmode="numeric"
-                            style="width: 40px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
-                        <span style="color: #ccc; margin: 0 2px;">-</span>
+                            class="date-year">
+                        <span class="date-divider">-</span>
                         <input type="text" id="inv-date-month" placeholder="MM" maxlength="2" inputmode="numeric"
-                            style="width: 22px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
-                        <span style="color: #ccc; margin: 0 2px;">-</span>
+                            class="date-month-day">
+                        <span class="date-divider">-</span>
                         <input type="text" id="inv-date-day" placeholder="DD" maxlength="2" inputmode="numeric"
-                            style="width: 22px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
+                            class="date-month-day">
                     </div>
                     <!-- Hidden Date Input for Picker -->
                     <input type="date" id="purchase_date" name="purchase_date" tabindex="-1"
-                        style="position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; z-index: -1;">
+                        class="date-picker-hidden">
                     <!-- Calendar Button -->
-                    <button type="button" id="btn-open-calendar-inv"
-                        style="background: none; border: none; cursor: pointer; color: #666; display: flex; align-items: center; justify-content: center; padding: 0 4px;">
+                    <button type="button" id="btn-open-calendar-inv" class="btn-calendar-icon">
                         <span class="material-symbols-outlined" style="font-size: 20px;">calendar_month</span>
                     </button>
                 </div>
@@ -216,11 +210,11 @@
             <div class="form-group">
                 <label for="msds-pdf-input">MSDS PDF 파일</label>
                 <input type="file" id="msds-pdf-input" accept=".pdf">
-                <p style="font-size: 12px; color: #666; margin-top: 4px;">(3MB 이하의 PDF 파일만 업로드 가능)</p>
+                <p class="msds-note">(3MB 이하의 PDF 파일만 업로드 가능)</p>
             </div>
 
             <button type="submit" id="inventory-submit-button">약품 입고 정보 저장</button>
-            <p id="statusMessage" style="margin-top: 15px;"></p>
+            <p id="statusMessage" class="status-margin"></p>
         </form>
     </div>
 </div>

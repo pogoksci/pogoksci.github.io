@@ -1,32 +1,26 @@
 <!-- /pages/waste-form.html -->
-<div class="layout-container">
+<div id="waste-form-page" class="layout-container">
     <div class="layout-header no-actions">
-        <h3 id="waste-form-title" style="margin: 0; padding: 0; font-size: 20px; font-weight: 700; color: #333;">폐수 등록
+        <h3 id="waste-form-title" class="page-title">폐수 등록
         </h3>
     </div>
 
-    <div class="layout-content scroll-padding-nav" style="padding: 0 25px 0 25px;">
+    <div class="layout-content scroll-padding-nav content-pad">
         <form id="waste-form" autocomplete="off">
             <div class="form-group">
                 <label for="waste_date">등록일 *</label>
-                <div style="display: flex; align-items: center; gap: 5px; position: relative;">
-                    <div
-                        style="display: flex; align-items: center; border: 1px solid #ddd; border-radius: 4px; padding: 2px 8px; background: #fff; height: 32px; box-sizing: border-box;">
-                        <input type="text" id="waste-date-year" placeholder="YYYY" maxlength="4" inputmode="numeric"
-                            style="width: 40px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
-                        <span style="color: #ccc; margin: 0 2px;">-</span>
-                        <input type="text" id="waste-date-month" placeholder="MM" maxlength="2" inputmode="numeric"
-                            style="width: 22px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
-                        <span style="color: #ccc; margin: 0 2px;">-</span>
-                        <input type="text" id="waste-date-day" placeholder="DD" maxlength="2" inputmode="numeric"
-                            style="width: 22px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
+                <div class="date-wrapper">
+                    <div class="date-display-box">
+                        <input type="text" id="waste-date-year" placeholder="YYYY" maxlength="4" inputmode="numeric" class="date-input-year">
+                        <span class="date-sep">-</span>
+                        <input type="text" id="waste-date-month" placeholder="MM" maxlength="2" inputmode="numeric" class="date-input-day">
+                        <span class="date-sep">-</span>
+                        <input type="text" id="waste-date-day" placeholder="DD" maxlength="2" inputmode="numeric" class="date-input-day">
                     </div>
                     <!-- Hidden Date Input for Picker -->
-                    <input type="date" id="waste_date" name="waste_date" tabindex="-1"
-                        style="position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; z-index: -1;">
+                    <input type="date" id="waste_date" name="waste_date" tabindex="-1" class="date-picker-hidden">
                     <!-- Calendar Button -->
-                    <button type="button" id="btn-open-calendar-waste"
-                        style="background: none; border: none; cursor: pointer; color: #666; display: flex; align-items: center; justify-content: center; padding: 0 4px;">
+                    <button type="button" id="btn-open-calendar-waste" class="calendar-btn">
                         <span class="material-symbols-outlined" style="font-size: 20px;">calendar_month</span>
                     </button>
                 </div>
@@ -43,26 +37,25 @@
                 </div>
             </div>
 
-            <div class="form-group"
-                style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
-                <label style="color: #00a0b2; margin-bottom: 12px; display: block;">폐기량 입력 (택 1) *</label>
+            <div class="form-group amount-section">
+                <label class="amount-label">폐기량 입력 (택 1) *</label>
 
-                <div style="display: flex; gap: 10px; align-items: flex-start;">
-                    <div style="flex: 1;">
-                        <label for="waste_amount_direct" style="font-size: 13px; color: #555;">1. 폐수량 직접 입력 (g)</label>
+                <div class="amount-inputs-flex">
+                    <div class="amount-input-col">
+                        <label for="waste_amount_direct" class="amount-sublabel">1. 폐수량 직접 입력 (g)</label>
                         <input type="number" id="waste_amount_direct" placeholder="예: 500" step="any">
                     </div>
 
-                    <div style="display: flex; align-items: center; padding-top: 25px; color: #aaa; font-size: 12px;">
+                    <div class="amount-or-sep">
                         또는
                     </div>
 
-                    <div style="flex: 1;">
-                        <label for="waste_total_mass" style="font-size: 13px; color: #555;">2. 폐수통 전체 질량 (g)</label>
+                    <div class="amount-input-col">
+                        <label for="waste_total_mass" class="amount-sublabel">2. 폐수통 전체 질량 (g)</label>
                         <input type="number" id="waste_total_mass" placeholder="예: 2500" step="any">
                     </div>
                 </div>
-                <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: right;">* 전체 질량 입력 시 이전 기록과 비교하여 자동
+                <p class="amount-hint">* 전체 질량 입력 시 이전 기록과 비교하여 자동
                     계산
                 </p>
             </div>
@@ -77,10 +70,9 @@
                 <input type="text" id="waste_remarks" placeholder="특이사항 등">
             </div>
 
-            <div class="form-bottom-buttons" style="padding-bottom: 0;">
-                <button type="button" id="waste-cancel-button"
-                    style="flex: 1; background-color: #e0e0e0; color: #333; padding: 12px; border: none; border-radius: 5px; font-size: 16px; font-weight: 600;">취소</button>
-                <button type="submit" id="waste-submit-button" style="flex: 1;">폐수 정보 저장</button>
+            <div class="form-bottom-buttons bottom-btns-nopad">
+                <button type="button" id="waste-cancel-button" class="btn-cancel-waste">취소</button>
+                <button type="submit" id="waste-submit-button" class="btn-submit-waste">폐수 정보 저장</button>
             </div>
         </form>
     </div>

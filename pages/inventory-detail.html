@@ -2,26 +2,23 @@
 <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
 <script src="./js/ui/concentration-conversion.js"></script>
 
-<div class="layout-container">
+<div id="inventory-detail-page" class="layout-container">
   <!-- 1. Header (Universal Layout) -->
   <div class="layout-header no-actions">
     <!-- Names Moved Here (Top) -->
     <div class="detail-name-group">
-      <h2 id="detail-name-kor" style="margin: 0; font-size: 20px; font-weight: 700; color: #333;">정보 로드 중...</h2>
+      <h2 id="detail-name-kor" class="page-title">정보 로드 중...</h2>
       <span id="detail-name-eng" class="eng-name"></span>
-      <span id="detail-substance-id" class="substance-id-tag"
-        style="margin-left: auto; color: #888; font-size: 0.9rem;"></span>
+      <span id="detail-substance-id" class="substance-id-tag"></span>
 
       <!-- New Button -->
-      <button id="btn-open-conc-calc" class="usage-mgmt-btn"
-        style="margin-left: 10px; background-color: #6c5ce7; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+      <button id="btn-open-conc-calc" class="usage-mgmt-btn btn-purple">
         <span class="material-symbols-outlined"
           style="font-size: 14px; vertical-align: middle; margin-right: 2px;">science</span>
         농도 변환
       </button>
 
-      <button id="btn-go-usage" class="usage-mgmt-btn"
-        style="margin-left: 5px; background-color: #00A0B2; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; display: none;">수불
+      <button id="btn-go-usage" class="usage-mgmt-btn btn-teal" style="display: none;">수불
         관리</button>
     </div>
   </div>
@@ -31,8 +28,7 @@
     <!-- 2-Column Grid: Photo & Info -->
     <div class="detail-grid">
       <div class="detail-left">
-        <div id="detail-photo" class="photo-preview-box"
-          style="width: 210px; height: 280px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+        <div id="detail-photo" class="photo-preview-box photo-box-style">
           <span>사진 없음</span>
         </div>
       </div>
@@ -60,8 +56,7 @@
       <div class="chem-grid">
         <div class="structure-wrapper" data-view-mode="2d" style="position: relative;">
           <!-- Zoom Controls (Overlay) -->
-          <div class="zoom-controls"
-            style="position: absolute; top: 10px; right: 10px; z-index: 10; display: flex; flex-direction: column; gap: 5px;">
+          <div class="zoom-controls">
             <button id="btn-zoom-in" class="view-mode-btn" title="확대">+</button>
             <button id="btn-zoom-out" class="view-mode-btn" title="축소">-</button>
           </div>
@@ -73,9 +68,8 @@
             <!-- 3D Viewer -->
           </div>
 
-          <div class="structure-footer"
-            style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: nowrap;">
-            <span class="license-notice" style="font-size: 10px; color: #aaa; white-space: nowrap;">3D
+          <div class="structure-footer structure-footer-flex">
+            <span class="license-notice">3D
               Viewer powered by
               PubChem</span>
             <div style="display: flex; gap: 5px;">
@@ -144,17 +138,17 @@
         <table class="hazard-summary-table">
           <thead>
             <tr>
-              <th rowspan="2" style="width: 12.5%;">구분</th>
-              <th colspan="2" class="merged-header" style="width: 25%;">학교사용</th>
-              <th rowspan="2" class="small-font" style="width: 12.5%;">특수건강진단<br>유해인자</th>
-              <th rowspan="2" style="width: 12.5%;">유독물질</th>
-              <th rowspan="2" style="width: 12.5%;">허가물질</th>
-              <th rowspan="2" style="width: 12.5%;">제한물질</th>
-              <th rowspan="2" style="width: 12.5%;">금지물질</th>
+              <th rowspan="2" class="th-w-12">구분</th>
+              <th colspan="2" class="merged-header th-w-25">학교사용</th>
+              <th rowspan="2" class="small-font th-w-12">특수건강진단<br>유해인자</th>
+              <th rowspan="2" class="th-w-12">유독물질</th>
+              <th rowspan="2" class="th-w-12">허가물질</th>
+              <th rowspan="2" class="th-w-12">제한물질</th>
+              <th rowspan="2" class="th-w-12">금지물질</th>
             </tr>
             <tr>
-              <th class="small-font" style="width: 12.5%;">유해물질</th>
-              <th class="small-font" style="width: 12.5%;">사고대비물질</th>
+              <th class="small-font th-w-12">유해물질</th>
+              <th class="small-font th-w-12">사고대비물질</th>
             </tr>
           </thead>
           <tbody>

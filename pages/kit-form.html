@@ -1,14 +1,14 @@
-<div class="layout-container">
+<!-- /pages/kit-form.html -->
+<div id="kit-form-page" class="layout-container">
     <div class="layout-header no-actions">
-        <h2 id="kit-form-title" style="margin: 0; padding: 0; font-size: 20px; font-weight: 700; color: #333;">키트 등록
+        <h2 id="kit-form-title" class="page-title">키트 등록
         </h2>
     </div>
 
     <div class="layout-content scroll-padding-nav">
         <form id="kit-form" autocomplete="off">
             <!-- SECTION 1: Classification & Name -->
-            <h3
-                style="margin: 0 0 10px; font-size: 16px; color: #00a0b2; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+            <h3 class="section-title">
                 기본 정보
             </h3>
 
@@ -34,22 +34,20 @@
                 </select>
 
                 <!-- Custom Kit Checkbox -->
-                <div id="custom-kit-checkbox-wrapper" class="custom-kit-checkbox-wrapper"
-                    style="margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
+                <div id="custom-kit-checkbox-wrapper" class="custom-kit-checkbox-wrapper custom-kit-check-wrapper">
                     <input type="checkbox" id="check-custom-kit">
                     <label for="check-custom-kit">키트 목록에 없는 새로운 키트를 등록할 경우 체크하세요.</label>
                 </div>
 
                 <!-- Custom Kit Inputs -->
-                <div id="custom-kit-inputs" class="custom-kit-inputs"
-                    style="display: none; margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px solid #eee;">
+                <div id="custom-kit-inputs" class="custom-kit-inputs custom-kit-box">
                     <div class="form-group">
                         <label for="custom-kit-name">등록하려는 키트 이름</label>
                         <input type="text" id="custom-kit-name" class="form-input" placeholder="키트 이름을 입력하세요">
                     </div>
 
                     <!-- Common Kit Person Input (Inside Custom Box for Create Mode) -->
-                    <div id="kit-person-group" class="form-group" style="margin-top: 15px;">
+                    <div id="kit-person-group" class="form-group kit-person-group">
                         <label for="kit-person">인원수 (명)</label>
                         <input type="number" id="kit-person" class="form-input" min="1" placeholder="예: 4 (4인용)">
                     </div>
@@ -57,19 +55,16 @@
                     <div class="form-group" style="margin-top: 10px;">
                         <label>구성 약품 (CAS No.)</label>
                         <div id="cas-input-container">
-                            <input type="text" class="form-input cas-input" placeholder="CAS1 (예: 7732-18-5)"
-                                style="margin-bottom: 5px;">
+                            <input type="text" class="form-input cas-input cas-input-marginBottom" placeholder="CAS1 (예: 7732-18-5)">
                         </div>
-                        <button type="button" id="btn-add-cas" class="btn-secondary-action"
-                            style="font-size:12px; padding:4px 8px;">+ CAS 추가</button>
-                        <p style="font-size: 11px; color: #888; margin-top: 5px;">* CAS 입력란이 부족할 경우 추가버튼을 누르세요.</p>
+                        <button type="button" id="btn-add-cas" class="btn-secondary-action btn-add-cas-style">+ CAS 추가</button>
+                        <p class="cas-note">* CAS 입력란이 부족할 경우 추가버튼을 누르세요.</p>
                     </div>
                 </div>
             </div>
 
             <!-- SECTION 2: Quantity & Storage -->
-            <h3
-                style="margin: 30px 0 10px; font-size: 16px; color: #00a0b2; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+            <h3 class="section-title-mt">
                 관리 정보
             </h3>
 
@@ -80,25 +75,19 @@
 
             <div class="form-group">
                 <label>구입일</label>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <div
-                        style="display: flex; align-items: center; border: 1px solid #ddd; border-radius: 4px; padding: 2px 8px; background: #fff; height: 32px; box-sizing: border-box;">
-                        <input type="text" id="kit-date-year" placeholder="YYYY" maxlength="4" inputmode="numeric"
-                            style="width: 40px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
-                        <span style="color: #ccc; margin: 0 2px;">-</span>
-                        <input type="text" id="kit-date-month" placeholder="MM" maxlength="2" inputmode="numeric"
-                            style="width: 22px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
-                        <span style="color: #ccc; margin: 0 2px;">-</span>
-                        <input type="text" id="kit-date-day" placeholder="DD" maxlength="2" inputmode="numeric"
-                            style="width: 22px; border: none; text-align: center; outline: none; font-size: 14px; padding: 0; background: transparent;">
+                <div class="date-input-wrapper">
+                    <div class="date-box">
+                        <input type="text" id="kit-date-year" placeholder="YYYY" maxlength="4" inputmode="numeric" class="date-year-input">
+                        <span class="date-separator">-</span>
+                        <input type="text" id="kit-date-month" placeholder="MM" maxlength="2" inputmode="numeric" class="date-day-input">
+                        <span class="date-separator">-</span>
+                        <input type="text" id="kit-date-day" placeholder="DD" maxlength="2" inputmode="numeric" class="date-day-input">
                     </div>
                     <!-- Hidden Date Input for Picker -->
-                    <input type="date" id="kit-date-hidden"
-                        style="width: 0; height: 0; opacity: 0; position: absolute; pointer-events: none;">
+                    <input type="date" id="kit-date-hidden" class="hidden-date-picker">
                     <!-- Calendar Button -->
-                    <button type="button" id="btn-open-calendar"
-                        style="background: none; border: none; cursor: pointer; color: #666; display: flex; align-items: center; justify-content: center; padding: 0 4px;">
-                        <span class="material-symbols-outlined" style="font-size: 20px;">calendar_month</span>
+                    <button type="button" id="btn-open-calendar" class="btn-calendar-open">
+                        <span class="material-symbols-outlined calendar-icon">calendar_month</span>
                     </button>
                 </div>
             </div>
@@ -113,10 +102,9 @@
                 <label>사진</label>
                 <div class="photo-container">
                     <div id="kit-photo-preview" class="photo-preview-box">
-                        <img id="kit-preview-img" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                        <span class="placeholder-text" style="color:#888;">사진 없음</span>
-                        <video id="kit-camera-stream" autoplay playsinline
-                            style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                        <img id="kit-preview-img" class="media-cover-kit">
+                        <span class="placeholder-text placeholder-text-kit">사진 없음</span>
+                        <video id="kit-camera-stream" autoplay playsinline class="media-cover-kit"></video>
                         <canvas id="kit-camera-canvas" style="display: none;"></canvas>
                     </div>
                     <div class="photo-buttons">
