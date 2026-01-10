@@ -71,13 +71,22 @@
       console.log("🔄 학교 설정 로딩 시작...");
       const { data, error } = await globalThis.App.supabase
         .from('global_settings')
-        .select('value')
-        .eq('key', 'SCHOOL_NAME')
-        .maybeSingle();
+        .select('key, value'); // Fetch all keys
 
-      if (data && data.value) {
-        APP_CONFIG.SCHOOL = data.value; // Override default
-        console.log(`🏫 학교 이름 설정 로드됨: ${APP_CONFIG.SCHOOL}`);
+      if (data) {
+        const settings = {};
+        data.forEach(item => settings[item.key] = item.value);
+
+        if (settings['SCHOOL_NAME']) {
+          APP_CONFIG.SCHOOL = settings['SCHOOL_NAME'];
+          console.log(`🏫 학교 이름 설정 로드됨: ${APP_CONFIG.SCHOOL}`);
+        }
+        
+        // Store API Expiration Dates in APP_CONFIG
+        APP_CONFIG.API_EXP_CAS = settings['API_EXP_CAS'];
+        APP_CONFIG.API_EXP_KOSHA = settings['API_EXP_KOSHA'];
+        APP_CONFIG.API_EXP_KREACH = settings['API_EXP_KREACH'];
+
       } else {
         console.log("ℹ️ 저장된 학교 이름이 없어 기본값 사용");
       }

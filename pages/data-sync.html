@@ -222,6 +222,52 @@
                     </div>
                 </div>
 
+                <!-- 🚀 API 만료일 설정 섹션 (학교 정보 설정에서 이동) -->
+                <div class="migration-section">
+                    <h3 class="migration-title">외부 API 만료일 설정</h3>
+                    <p class="migration-desc">
+                        CAS, 안전보건공단, 환경공단 등 외부 API의 만료일을 관리합니다.<br>
+                        (만료 1주일 전 홈 화면에 경고가 표시됩니다.)
+                    </p>
+
+                    <div class="migration-form-box bg-red-50">
+                        <div class="form-group settings-grid-3col">
+                            <div>
+                                <label for="api-exp-cas" class="form-label">
+                                    CAS.org API 만료일
+                                    <a href="https://www.cas.org/services/commonchemistry-api" target="_blank" style="font-size: 11px; color: #1976d2; margin-left: 4px; text-decoration: none;">
+                                        (LINK)
+                                    </a>
+                                </label>
+                                <input type="date" id="api-exp-cas" class="form-control form-input">
+                            </div>
+                            <div>
+                                <label for="api-exp-kosha" class="form-label">
+                                    한국산업안전보건공단 물질안전보건자료 API 만료일
+                                    <a href="https://www.data.go.kr/" target="_blank" style="font-size: 11px; color: #1976d2; margin-left: 4px; text-decoration: none;">
+                                        (LINK)
+                                    </a>
+                                </label>
+                                <input type="date" id="api-exp-kosha" class="form-control form-input">
+                            </div>
+                            <div>
+                                <label for="api-exp-kreach" class="form-label">
+                                    한국환경공단 화학물질 정보 조회 서비스 API 만료일
+                                    <a href="https://www.data.go.kr/" target="_blank" style="font-size: 11px; color: #1976d2; margin-left: 4px; text-decoration: none;">
+                                        (LINK)
+                                    </a>
+                                </label>
+                                <input type="date" id="api-exp-kreach" class="form-control form-input">
+                            </div>
+                        </div>
+
+                        <button id="btn-save-api-exp" class="btn btn-primary btn-lg btn-migration-start btn-gray" style="margin-top: 15px;">
+                            <span class="material-symbols-outlined">save</span>
+                            <span>API 만료일 저장</span>
+                        </button>
+                    </div>
+                </div>
+
 
             </div>
         </div>

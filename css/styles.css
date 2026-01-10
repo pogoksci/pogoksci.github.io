@@ -5360,6 +5360,10 @@ body:not(.home-active) #splash-screen {
   background: #e8f5e9;
 }
 
+#data-sync-page .bg-red-50 {
+  background: #ffebee;
+}
+
 #data-sync-page .form-group-mb {
   margin-bottom: 15px;
 }
@@ -5367,6 +5371,7 @@ body:not(.home-active) #splash-screen {
 #data-sync-page .form-label {
   display: block;
   margin-bottom: 5px;
+  margin-top: 12px;
   font-weight: 500;
 }
 

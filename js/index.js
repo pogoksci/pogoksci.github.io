@@ -131,6 +131,56 @@
     // FAB 숨김
     App.Fab?.setVisibility(false);
 
+    // ------------------------------------------------------------
+    // ⚠️ Check API Expiration
+    // ------------------------------------------------------------
+    const checkApiExp = () => {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        
+        const warnings = [];
+        const check = (key, name) => {
+            const dateStr = globalThis.APP_CONFIG?.[key];
+            if (!dateStr) return;
+            
+            const expDate = new Date(dateStr);
+            const diffTime = expDate - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays <= 7 && diffDays >= 0) {
+                warnings.push(`[${name}] API 만료 <b>${diffDays}일 전</b> (${dateStr})`);
+            } else if (diffDays < 0) {
+                warnings.push(`[${name}] API <b>기간 만료</b> (${dateStr})`);
+            }
+        };
+
+        check('API_EXP_CAS', 'CAS');
+        check('API_EXP_KOSHA', '안전보건공단');
+        check('API_EXP_KREACH', '환경공단');
+
+        if (warnings.length > 0) {
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                let warnBox = document.getElementById('api-warn-box');
+                if (!warnBox) {
+                    warnBox = document.createElement('div');
+                    warnBox.id = 'api-warn-box';
+                    warnBox.style.marginTop = '20px';
+                    warnBox.style.padding = '10px';
+                    warnBox.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+                    warnBox.style.color = '#d32f2f';
+                    warnBox.style.borderRadius = '8px';
+                    warnBox.style.fontSize = '14px';
+                    warnBox.style.textAlign = 'center';
+                    warnBox.style.fontWeight = 'bold';
+                    splash.appendChild(warnBox);
+                }
+                warnBox.innerHTML = warnings.join('<br>');
+            }
+        }
+    };
+    checkApiExp();
+
     console.log("✅ 초기화 완료 — App 실행 중");
 
     // 🚫 더 이상 splash를 숨기지 않음 (홈 로고로 계속 유지)

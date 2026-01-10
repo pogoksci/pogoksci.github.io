@@ -116,6 +116,7 @@
                     { key: 'GRADE_1_CLASSES', value: getVal('sc-grade-1-classes') },
                     { key: 'GRADE_2_CLASSES', value: getVal('sc-grade-2-classes') },
                     { key: 'GRADE_3_CLASSES', value: getVal('sc-grade-3-classes') },
+                    { key: 'GRADE_3_CLASSES', value: getVal('sc-grade-3-classes') },
                     { key: 'GRADE_1_STUDENTS', value: getVal('sc-grade-1-students') },
                     { key: 'GRADE_2_STUDENTS', value: getVal('sc-grade-2-students') },
                     { key: 'GRADE_3_STUDENTS', value: getVal('sc-grade-3-students') },

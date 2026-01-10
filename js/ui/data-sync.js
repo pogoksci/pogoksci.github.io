@@ -36,6 +36,65 @@
             // Edufine Export
             const btnEdufine = document.getElementById("btn-download-edufine");
             if (btnEdufine) btnEdufine.addEventListener("click", () => this.handleEdufineDownload(btnEdufine));
+
+            // API Expiration Settings
+            this.initApiExp();
+        },
+
+        // ----------------------------------------------------------------
+        // 🆕 API Expiration Settings
+        // ----------------------------------------------------------------
+        initApiExp: async function() {
+            const btnSave = document.getElementById('btn-save-api-exp');
+            if (!btnSave) return;
+
+            // Load
+            const { data } = await App.supabase
+                .from('global_settings')
+                .select('key, value')
+                .in('key', ['API_EXP_CAS', 'API_EXP_KOSHA', 'API_EXP_KREACH']);
+
+            if (data) {
+                const map = {};
+                data.forEach(item => map[item.key] = item.value);
+                
+                const setVal = (id, key) => {
+                    const el = document.getElementById(id);
+                    if(el) el.value = map[key] || '';
+                };
+                
+                setVal('api-exp-cas', 'API_EXP_CAS');
+                setVal('api-exp-kosha', 'API_EXP_KOSHA');
+                setVal('api-exp-kreach', 'API_EXP_KREACH');
+            }
+
+            // Save
+            btnSave.addEventListener('click', async () => {
+                const getVal = (id) => document.getElementById(id)?.value || null;
+                
+                const updates = [
+                    { key: 'API_EXP_CAS', value: getVal('api-exp-cas') },
+                    { key: 'API_EXP_KOSHA', value: getVal('api-exp-kosha') },
+                    { key: 'API_EXP_KREACH', value: getVal('api-exp-kreach') }
+                ];
+                
+                // Filter out empty strings if desired, or save as null? 
+                // DB value is string, so empty string is fine.
+                
+                const { error } = await App.supabase
+                    .from('global_settings')
+                    .upsert(updates);
+                    
+                if (error) {
+                    alert('저장 실패: ' + error.message);
+                } else {
+                    alert('API 만료일이 저장되었습니다.');
+                    // Update global config immediately if available
+                    if (window.APP_CONFIG) {
+                        updates.forEach(u => window.APP_CONFIG[u.key] = u.value);
+                    }
+                }
+            });
         },
 
         // ----------------------------------------------------------------
