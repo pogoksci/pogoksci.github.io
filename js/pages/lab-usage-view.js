@@ -22,20 +22,20 @@
         list.sort((a, b) => {
             // Sort by Date -> Period -> Room Name
             if (a.usage_date !== b.usage_date) {
-                return isDescSort 
-                    ? b.usage_date.localeCompare(a.usage_date) 
+                return isDescSort
+                    ? b.usage_date.localeCompare(a.usage_date)
                     : a.usage_date.localeCompare(b.usage_date);
             }
             if (a.period !== b.period) {
                 // Period can be string '1', '2' or '99', '88'
-                return isDescSort 
+                return isDescSort
                     ? String(b.period).localeCompare(String(a.period))
                     : String(a.period).localeCompare(String(b.period));
             }
             // Room Name Map check
             const roomA = roomMap[a.lab_room_id] || '';
             const roomB = roomMap[b.lab_room_id] || '';
-            return isDescSort 
+            return isDescSort
                 ? roomB.localeCompare(roomA)
                 : roomA.localeCompare(roomB);
         });
@@ -161,7 +161,7 @@
                 isDescSort = !isDescSort;
                 const icon = btnSort.querySelector('.material-symbols-outlined');
                 if (icon) icon.textContent = isDescSort ? 'sort' : 'sort_by_alpha';
-                
+
                 sortData(lastSearchResult);
                 currentPage = 1;
                 renderTable(lastSearchResult);
@@ -220,7 +220,7 @@
         const filteredData = rawData.filter(item => !item.remarks || item.remarks === '승인');
 
         lastSearchResult = filteredData;
-        
+
         // Initial Sort
         sortData(lastSearchResult);
 
@@ -272,9 +272,9 @@
             }
 
             tr.innerHTML = `
-                <td style="font-weight:500;">${item.usage_date}</td>
+                <td class="usage-view-cell-date">${item.usage_date}</td>
                 <td>${periodLabel}</td>
-                <td style="color:#00A0B2; font-weight:600;">${roomMap[item.lab_room_id] || '-'}</td>
+                <td class="usage-view-cell-room">${roomMap[item.lab_room_id] || '-'}</td>
                 <td>${item.grade ? `${item.grade}학년-${item.class_number}반` : '-'}</td>
                 <td>${subjectMap[item.subject_id] || item.activity_type}</td>
                 <td>${teacherMap[item.teacher_id] || '-'}</td>
@@ -282,7 +282,7 @@
                     contenteditable="${canEdit}" 
                     style="${canEdit ? 'outline: 1px dashed transparent;' : ''}"
                     title="${canEdit ? '클릭하여 내용 수정 (입력 후 포커스를 옮기면 저장됩니다)' : ''}">${displayContent}</td>
-                <td style="text-align:center;">
+                <td class="usage-view-cell-center">
                     <span class="badge-safety ${safetyClass}" 
                           style="${canEdit ? 'cursor:pointer;' : ''}"
                           title="${canEdit ? '클릭하여 상태 변경' : ''}">${item.safety_education}</span>
@@ -329,15 +329,6 @@
                 .from('lab_usage_log')
                 .update({ safety_education: newStatus })
                 .eq('id', item.id);
-            //     .match({
-            //         lab_room_id: item.lab_room_id,
-            //         usage_date: item.usage_date,
-            //         period: item.period,
-            //         subject_id: item.subject_id,
-            //         teacher_id: item.teacher_id,
-            //         grade: item.grade,
-            //         class_number: item.class_number
-            //     });
 
             if (error) throw error;
 
@@ -369,15 +360,6 @@
                 .from('lab_usage_log')
                 .update({ content: newText })
                 .eq('id', item.id);
-            //     .match({
-            //         lab_room_id: item.lab_room_id,
-            //         usage_date: item.usage_date,
-            //         period: item.period,
-            //         subject_id: item.subject_id,
-            //         teacher_id: item.teacher_id,
-            //         grade: item.grade,
-            //         class_number: item.class_number
-            //     });
 
             if (error) throw error;
 
@@ -462,7 +444,7 @@
         // 2. Build HTML Content
         const rows = lastSearchResult.map((item, index) => {
             const periodLabel = item.period === '99' ? '점심' : (item.period === '88' ? '방과후' : `${item.period}교시`);
-            
+
             // ✅ Display Content Logic (Same as renderTable)
             let displayContent = item.content || '';
             if (item.activity_type === '동아리' && item.club_id) {
@@ -471,14 +453,14 @@
 
             return `
                 <tr>
-                    <td style="text-align: center;">${index + 1}</td>
-                    <td style="text-align: center;">${item.usage_date}</td>
-                    <td style="text-align: center;">${periodLabel}</td>
-                    <td style="text-align: center;">${roomMap[item.lab_room_id] || '-'}</td>
-                    <td style="text-align: center;">${item.grade ? `${item.grade}-${item.class_number}` : '-'}</td>
-                    <td style="text-align: center;">${subjectMap[item.subject_id] || item.activity_type}</td>
-                    <td style="text-align: left;">${displayContent}</td>
-                    <td style="text-align: center;">${item.safety_education}</td>
+                    <td class="center">${index + 1}</td>
+                    <td class="center">${item.usage_date}</td>
+                    <td class="center">${periodLabel}</td>
+                    <td class="center">${roomMap[item.lab_room_id] || '-'}</td>
+                    <td class="center">${item.grade ? `${item.grade}-${item.class_number}` : '-'}</td>
+                    <td class="center">${subjectMap[item.subject_id] || item.activity_type}</td>
+                    <td class="left">${displayContent}</td>
+                    <td class="center">${item.safety_education}</td>
                 </tr>
             `;
         }).join('');
@@ -494,23 +476,18 @@
             <html>
             <head>
                 <title>${title}</title>
+                <link rel="stylesheet" href="/css/styles.css">
                 <style>
-                    body { font-family: "Malgun Gothic", sans-serif; padding: 20px; }
-                    h1 { text-align: center; margin-bottom: 5px; font-size: 24px; }
-                    .meta { text-align: right; margin-bottom: 15px; font-size: 12px; color: #555; }
-                    table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; } /* Fixed layout for better control */
-                    th, td { border: 1px solid #333; padding: 4px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                    th { background-color: #f0f0f0; text-align: center; font-weight: bold; }
+                    /* Fallback to ensure print styles are active if external load fails or for specific overrides */
                     @media print {
-                        @page { margin: 10mm; size: portrait; } 
-                        body { padding: 0; }
+                         body { font-family: "Malgun Gothic", sans-serif; padding: 20px; }
                     }
                 </style>
             </head>
-            <body>
-                <h1>${title}</h1>
-                <div class="meta">출력일: ${today} | 총 ${lastSearchResult.length}건</div>
-                <table>
+            <body class="usage-print-body">
+                <h1 class="usage-print-title">${title}</h1>
+                <div class="meta usage-print-meta">출력일자: ${today}</div>
+                <table class="usage-print-table">
                     <colgroup>
                         <col style="width: 30px;">
                         <col style="width: 75px;">
@@ -518,7 +495,7 @@
                         <col style="width: 80px;">
                         <col style="width: 50px;">
                         <col style="width: 90px;">
-                        <col style="width: auto;"> <!-- Content expanded without teacher col -->
+                        <col style="width: auto;">
                         <col style="width: 40px;">
                     </colgroup>
                     <thead>
@@ -556,6 +533,7 @@
         return `${y}-${m}-${d}`;
     }
 
+    // Expose to App
     globalThis.App = globalThis.App || {};
     globalThis.App.LabUsageView = LabUsageView;
 })();

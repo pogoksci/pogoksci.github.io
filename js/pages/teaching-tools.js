@@ -117,24 +117,22 @@
         const btnFact = document.getElementById("btn-filter-facility");
         if (!btnAll || !btnAid || !btnFact) return;
 
-        // Reset Styles
-        const defaultStyle = "flex: 1; padding: 10px; border: 1px solid #ddd; background: #fff; color: #666; font-weight: bold; cursor: pointer; transition: all 0.2s; border-radius: 6px;";
-        // Active Style
-        const activeStyle = "background: #e3f2fd; color: #1565c0; border-color: #2196f3;";
+        // Reset Classes
+        btnAll.className = "filter-btn";
+        btnAid.className = "filter-btn";
+        btnFact.className = "filter-btn";
 
-        btnAll.style.cssText = defaultStyle;
-        btnAid.style.cssText = defaultStyle;
-        btnFact.style.cssText = defaultStyle;
+        // Remove old style resets
+        btnAll.style.cssText = "";
+        btnAid.style.cssText = "";
+        btnFact.style.cssText = "";
 
         if (state.filterSection === "All") {
-            btnAll.style.cssText += activeStyle;
-            btnAll.style.borderColor = "#2196f3";
+            btnAll.classList.add("active");
         } else if (state.filterSection === "교구") {
-            btnAid.style.cssText += activeStyle;
-            btnAid.style.borderColor = "#2196f3";
+            btnAid.classList.add("active");
         } else if (state.filterSection === "설비") {
-            btnFact.style.cssText += activeStyle;
-            btnFact.style.borderColor = "#2196f3";
+            btnFact.classList.add("active");
         }
     }
 
@@ -297,9 +295,9 @@
             }
 
             const locStr = formatLocation(item.location);
-            // Match Kit Tag Style: background, color, padding, border-radius, font-size
-            const sectionTag = `<span class="kit-tag" style="background:#f3e5f5; color:#7b1fa2; padding:2px 6px; border-radius:4px; font-size:12px;">${item.tools_section || '교구'}</span>`;
-            const categoryTag = `<span class="kit-tag" style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:12px;">${item.tools_category || '-'}</span>`;
+            // Match Kit Tag Style
+            const sectionTag = `<span class="kit-tag section">${item.tools_section || '교구'}</span>`;
+            const categoryTag = `<span class="kit-tag category">${item.tools_category || '-'}</span>`;
 
             // Stock Status
             let statusTag = "";
@@ -579,8 +577,8 @@
             const section = tool.tools_section || '교구';
             const category = tool.tools_category || '-';
 
-            const sectionTag = `<span class="kit-tag" style="background:#f3e5f5; color:#7b1fa2; padding:2px 6px; border-radius:4px; font-size:12px; margin-right:5px;">${section}</span>`;
-            const categoryTag = `<span class="kit-tag" style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:12px;">${category}</span>`;
+            const sectionTag = `<span class="kit-tag section" style="margin-right:5px;">${section}</span>`;
+            const categoryTag = `<span class="kit-tag category">${category}</span>`;
 
             const classEl = document.getElementById('detail-aid-class');
             if (classEl) {

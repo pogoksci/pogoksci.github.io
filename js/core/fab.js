@@ -7,14 +7,7 @@
         menuContainer = document.createElement("div");
         menuContainer.id = "fab-menu-container";
         Object.assign(menuContainer.style, {
-            position: "fixed",
-            bottom: "80px", // Align above standard FAB position
-            right: "20px",  // Align with FAB
-            display: "none",
-            flexDirection: "column",
-            alignItems: "flex-end", // Align items to right
-            gap: "10px",
-            zIndex: "1100" // Higher than typical overlays
+            // All styles moved to #fab-menu-container in styles.css
         });
         document.body.appendChild(menuContainer);
 
@@ -100,21 +93,8 @@
         items.forEach(item => {
             const btn = document.createElement("button");
             // Basic Styling
-            Object.assign(btn.style, {
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "10px 16px",
-                backgroundColor: "white",
-                color: "#333",
-                border: "1px solid #ddd",
-                borderRadius: "20px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                fontSize: "14px",
-                fontWeight: "500"
-            });
+            btn.className = "fab-menu-item";
+            // Styles moved to .fab-menu-item in styles.css
 
             btn.innerHTML = `<span class="material-symbols-outlined" style="color:#555;">${item.icon}</span> <span>${item.label}</span>`;
             btn.onclick = (e) => {
@@ -148,7 +128,7 @@
 
     function setDisabled(disabled) {
         const fabs = document.querySelectorAll(".fab");
-        
+
         fabs.forEach(fab => {
             if (disabled) {
                 fab.style.opacity = "0.5";

@@ -317,7 +317,7 @@
         if (!fileDisplay) {
           fileDisplay = document.createElement("div");
           fileDisplay.className = "msds-file-display";
-          fileDisplay.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px;";
+          fileDisplay.className = "msds-file-display";
           container.appendChild(fileDisplay);
         }
 
@@ -802,7 +802,7 @@
             storage_column: get("storage_column"),
             // Inventory Specific Fields
             cas_rn: get("cas_rn"),
-            initial_amount: vol, 
+            initial_amount: vol,
             // ✅ Fix: Edit 모드에서 현재 잔고(current_amount)가 초기화되지 않도록 Create 모드일 때만 설정
             ...(mode === "create" && { current_amount: isNaN(vol) ? 0 : vol }),
             unit: get("unit"),

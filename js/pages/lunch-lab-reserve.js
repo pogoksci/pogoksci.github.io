@@ -132,6 +132,12 @@
             if (teacherLabel) teacherLabel.textContent = "나의 이름 (담당교사)";
 
             // Auto-fill? Not needed, just input
+
+            // Update Header Text for Teacher
+            const headerDesc = document.querySelector('.header-desc');
+            if (headerDesc) {
+                headerDesc.textContent = "점심시간 과학실 사용을 예약합니다.";
+            }
         }
 
         // Helper to render club select

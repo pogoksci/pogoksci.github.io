@@ -30,29 +30,22 @@
 
             // 3. Render Content with explicit scrolling container
             mainContent.innerHTML = `
-                <div style="
-                    height: 100vh; 
-                    overflow-y: auto; 
-                    -webkit-overflow-scrolling: touch; 
-                    padding: 20px; 
-                    box-sizing: border-box; 
-                    padding-bottom: 120px;
-                ">
-                    <div style="max-width: 1000px; margin: 0 auto;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-                            <h1 style="margin:0; font-weight: 700; color: #333;">🧯 과학실 안전 교육</h1>
-                            <button id="btn-sync-content" style="display:none; padding:8px 16px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">
+                <div class="safety-main-container">
+                    <div class="safety-content-wrapper">
+                        <div class="safety-header-row">
+                            <h1 class="safety-section-title">🧯 과학실 안전 교육</h1>
+                            <button id="btn-sync-content" class="safety-sync-btn">
                                 🔄 최신 콘텐츠 동기화
                             </button>
                         </div>
                         
-                        <div class="tabs" style="display:flex; gap:10px; margin-bottom:20px; border-bottom: 2px solid #eee; padding-bottom: 10px; overflow-x: auto;">
+                        <div class="tabs safety-tabs-container">
                             <button class="nav-tab active" data-target="video-section">안전교육 동영상 (${VIDEO_LIST.length})</button>
                             <button class="nav-tab" data-target="manual-section">안전 메뉴얼 / 서식 (${countManualItems()})</button>
                         </div>
 
                         <div id="video-section" class="tab-content">
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                            <div class="safety-video-grid">
                                 ${renderVideos()}
                             </div>
                         </div>
@@ -88,57 +81,7 @@
                 if (targetEl) targetEl.style.display = 'block';
             }
 
-            // Add Tab Styles inline based on typical CSS
-            const style = document.createElement('style');
-            style.textContent = `
-                .nav-tab {
-                    padding: 10px 20px;
-                    border: none;
-                    background: none;
-                    font-size: 1.1rem;
-                    font-weight: 600;
-                    color: #888;
-                    cursor: pointer;
-                    border-radius: 8px;
-                    transition: 0.2s;
-                    white-space: nowrap;
-                }
-                .nav-tab.active {
-                    background: #e3f2fd;
-                    color: #1976d2;
-                }
-                .nav-tab:hover:not(.active) {
-                    background: #f5f5f5;
-                }
-                .video-card {
-                    background:white; 
-                    border-radius:12px; 
-                    overflow:hidden; 
-                    box-shadow:0 2px 8px rgba(0,0,0,0.1);
-                }
-                .manual-pdf-container {
-                    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
-                }
-                .manual-btn {
-                    padding: 8px 16px;
-                    background: white;
-                    border: 1px solid #ddd;
-                    border-radius: 20px;
-                    cursor: pointer;
-                    font-size: 0.9rem;
-                    display:flex; align-items:center; gap:6px;
-                }
-                .manual-btn:hover {
-                    background: #f0f0f0;
-                    border-color: #bbb;
-                }
-                .manual-btn.active {
-                    background: #2196f3;
-                    color: white;
-                    border-color: #2196f3;
-                }
-            `;
-            mainContent.appendChild(style);
+            // Removed inline style injection. Styles moved to styles.css
 
             // Bind Manual Buttons
             bindManualButtons();
@@ -198,9 +141,9 @@
     function renderVideos() {
         return VIDEO_LIST.map(v => `
             <div class="video-card">
-                <div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+                <div class="safety-video-wrapper">
                     <iframe 
-                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                        class="safety-video-iframe"
                         src="https://www.youtube.com/embed/${v.id}" 
                         title="${v.title}" 
                         frameborder="0" 
@@ -208,9 +151,9 @@
                         allowfullscreen>
                     </iframe>
                 </div>
-                <div style="padding: 12px;">
-                    <div style="font-size:0.8rem; color:#666; margin-bottom:4px;">${v.category}</div>
-                    <h3 style="font-size:1rem; margin:0; line-height:1.4;">${v.title}</h3>
+                <div class="safety-video-info">
+                    <div class="safety-video-category">${v.category}</div>
+                    <h3 class="safety-video-title">${v.title}</h3>
                 </div>
             </div>
         `).join('');
@@ -218,8 +161,8 @@
 
     function renderManuals() {
         return MANUAL_LIST_GROUPED.map((cat, idx) => `
-            <div style="margin-bottom: 30px;">
-                <h3 style="margin-bottom: 12px; font-size: 1.2rem; border-left:4px solid #1976d2; padding-left:10px;">${cat.category}</h3>
+            <div class="safety-manual-section">
+                <h3 class="safety-manual-category">${cat.category}</h3>
                 <div class="manual-pdf-container">
                     ${cat.items.map(item => `
                         <button class="manual-btn" data-file="${item.fileId}">
@@ -229,7 +172,7 @@
                     `).join('')}
                 </div>
                 <!-- Viewer Area for this Category -->
-                <div id="viewer-cat-${idx}" class="pdf-viewer-box" style="width:100%; height:0; transition: height 0.3s; overflow:hidden; border-radius:8px; background:#fafafa;">
+                <div id="viewer-cat-${idx}" class="pdf-viewer-box safety-pdf-viewer">
                 </div>
             </div>
         `).join('');

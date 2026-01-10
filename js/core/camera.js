@@ -57,7 +57,7 @@
 
     const previewBox = form.querySelector(`#${previewId}`);
     if (previewBox) {
-      previewBox.innerHTML = `<img src="${base64Data}" alt="사진 미리보기" style="width:100%;height:100%;object-fit:cover;">`;
+      previewBox.innerHTML = `<img src="${base64Data}" alt="사진 미리보기" class="camera-preview-img">`;
     }
   }
 

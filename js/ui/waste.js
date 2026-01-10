@@ -624,16 +624,16 @@
             }).join("");
 
             reportHtml += `
-            <div class="page">
-                <div class="report-header">
+            <div class="page waste-print-page">
+                <div class="report-header waste-print-header">
                     <h1>폐수 수거(처리) 내역서</h1>
-                    <div class="meta-info">
+                    <div class="meta-info waste-print-meta">
                         <span>분류: <strong>${displayTitle}</strong></span>
                         <span>기간: ${periodText}</span>
                     </div>
                 </div>
                 
-                <table class="report-table">
+                <table class="report-table waste-print-table">
                     <thead>
                         <tr>
                             <th style="width: 50px;">연번</th>
@@ -656,10 +656,10 @@
                         </tr>
                     </tfoot>
                 </table>
-                <div class="footer">
+                <div class="footer waste-print-footer">
                     <p>위와 같이 폐수를 수거(처리)하였음을 확인합니다.</p>
                     <p class="date">${new Date().toLocaleDateString()}</p>
-                    <p class="signature">담당자: ________________ (인)</p>
+                    <p class="signature waste-print-signature">담당자: ________________ (인)</p>
                 </div>
             </div>`;
         });
@@ -670,35 +670,15 @@
             <html>
             <head>
                 <title>폐수 처리 내역서</title>
+                <link rel="stylesheet" href="/css/styles.css">
                 <style>
-                    @page { size: A4; margin: 20mm; }
-                    body { font-family: "Malgun Gothic", sans-serif; margin: 0; padding: 0; background: #fff; }
-                    .page { 
-                        width: 210mm; min-height: 296mm; 
-                        padding: 20mm; box-sizing: border-box; 
-                        margin: 0 auto; 
-                        page-break-after: always; /* 강제 페이지 넘김 */
-                        position: relative;
-                    }
-                    .report-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-                    .report-header h1 { margin: 0 0 10px 0; font-size: 24px; }
-                    .meta-info { display: flex; justify-content: space-between; font-size: 14px; }
-                    
-                    .report-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
-                    .report-table th, .report-table td { border: 1px solid #444; padding: 8px; }
-                    .report-table th { background: #f0f0f0; text-align: center; }
-                    
-                    .footer { margin-top: 50px; text-align: center; }
-                    .footer p { margin: 10px 0; font-size: 14px; }
-                    .signature { margin-top: 30px; }
-                    
+                    /* Fallback or specific override if needed */
                     @media print {
                         body { -webkit-print-color-adjust: exact; }
-                        .page { margin: 0; border: none; }
                     }
                 </style>
             </head>
-            <body>
+            <body class="waste-print-body">
                 ${reportHtml}
                 <script>
                     window.onload = function() { window.print(); }

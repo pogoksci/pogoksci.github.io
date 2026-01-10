@@ -215,10 +215,14 @@
             }
         });
 
-        // Add CAS Button
         btnAddCas.addEventListener('click', () => {
             const div = document.createElement('div');
-            div.innerHTML = `<input type="text" class="form-input cas-input" placeholder="CAS (예: 7732-18-5)" style="margin-bottom: 5px;">`;
+            // Inline style removed, wrapper class implicit or not needed on input itself if div handles it, 
+            // but the original code had style on input. 
+            // Let's assume class 'cas-input' is enough if defined, but I added 'cas-input-wrapper' above. Wait.
+            // Original: <input ... style="margin-bottom: 5px;">
+            // I'll add the class to input.
+            div.innerHTML = `<input type="text" class="form-input cas-input cas-input-wrapper" placeholder="CAS (예: 7732-18-5)">`;
             casInputContainer.appendChild(div.firstChild);
         });
 

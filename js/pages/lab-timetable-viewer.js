@@ -74,7 +74,7 @@
             if (!currentSemesterId) return;
 
             // Show loading or clear grid
-            gridContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #666;">데이터를 불러오는 중...</div>';
+            gridContainer.innerHTML = '<div class="timetable-loading-msg">데이터를 불러오는 중...</div>';
 
             // Teachers
             const { data: teachers } = await supabase.from('lab_teachers').select('*').eq('semester_id', currentSemesterId).order('name');
@@ -148,7 +148,7 @@
                 tdLabel.className = 'period-cell';
                 if (p === 'LUNCH') {
                     tdLabel.textContent = ''; // Empty for Lunch? Or '점심'
-                    tr.style.height = '10px'; // Thin divider
+                    tr.className = 'timetable-lunch-divider'; // Thin divider
                     // Actually, if we want to mimic screenshot, remove lunch row or make it minimal
                     // Screenshot doesn't seem to show Lunch row prominently or at all within the grid periods?
                     // Actually, usually grids ignore lunch or have a break.

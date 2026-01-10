@@ -158,7 +158,7 @@
             const imageSrc = item.photo_url_320 || item.photo_url_160 || "";
             const imageBlock = imageSrc
               ? `<div class="inventory-card__image">
-                   <img src="${imageSrc}" alt="Inventory Image" style="width: 75px; height: 100px; object-fit: cover; object-position: center;" />
+                   <img src="${imageSrc}" alt="Inventory Image" class="inventory-list-img" />
                  </div>`
               : `<div class="inventory-card__image inventory-card__image--empty">
                    <span class="inventory-card__placeholder">사진 없음</span>
@@ -185,7 +185,7 @@
                     <div class="meta-line3">${item.concentration_text || '-'}</div>
                     <div class="meta-line4">
                       ${item.current_text}
-                      ${item.is_low_stock ? `<span style="background-color: #ffcccc; color: #d63031; border: 1px solid #d63031; border-radius: 4px; padding: 0px 3px; font-size: 0.7rem; font-weight: bold; margin-left: 5px; vertical-align: middle;">구입요청</span>` : ""}
+                      ${item.is_low_stock ? `<span class="low-stock-badge-list">구입요청</span>` : ""}
                     </div>
                   </div>
                 </div>
@@ -946,7 +946,7 @@
         // 안전하게 hasTransaction || hasBalance 유지하되, 만약 사용자가 "모든 리스트"를 원하면 True로 변경 고려.
         // 일단 기존 'all'과 동일한 조건 사용 (데이터 소스만 다름).
         shouldPrint = hasTransaction || hasBalance;
-        
+
         // 추가: 만약 잔고 0이고 내역 없어도 출력하길 원한다면 아래 주석 해제
         // shouldPrint = true; 
       } else { // 'all'

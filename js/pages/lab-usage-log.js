@@ -79,7 +79,7 @@
                     const targetMonth = parseInt(e.target.value);
                     const currentYear = selectedDate.getFullYear();
                     const currentMonth = selectedDate.getMonth() + 1;
-                    
+
                     // Determine Academic Year Start Year (March of the school year)
                     // If current view is Jan/Feb, it belongs to previous year's School Year
                     const academicStartYear = currentMonth < 3 ? currentYear - 1 : currentYear;
@@ -456,7 +456,7 @@
                     if (!readOnly) {
                         const btnAdd = document.createElement('button');
                         btnAdd.className = 'btn-add-activity';
-                        btnAdd.innerHTML = '<span class="material-symbols-outlined" style="font-size: 16px;">add</span>활동 추가';
+                        btnAdd.innerHTML = '<span class="material-symbols-outlined btn-add-activity-icon">add</span>활동 추가';
                         btnAdd.onclick = () => showAddActivityForm(container, btnAdd, dateStr, dbPeriod);
                         td.appendChild(btnAdd);
                     }
@@ -469,7 +469,7 @@
         function createActivityItem(item, isReadOnly) {
             const div = document.createElement('div');
             div.className = `activity-item ${item.checked ? 'checked' : ''}`;
-            if (isReadOnly) div.style.cursor = 'default';
+            if (isReadOnly) div.classList.add('activity-item-readonly');
             div.dataset.item = JSON.stringify(item.data);
 
             const cb = document.createElement('input');
@@ -497,9 +497,8 @@
                 text = d.content || '활동';
             }
             info.textContent = text;
-            info.style.marginLeft = '4px';
-            info.style.fontSize = '12px';
-            info.style.color = '#333';
+            info.className = 'activity-info activity-info-text';
+            // Inline styles removed (margin-left, fontSize, color)
             div.appendChild(info);
 
             div.oncontextmenu = (e) => {
@@ -522,9 +521,9 @@
             form.innerHTML = `
                 <select class="sel-type"><option value="">유형 선택</option><option value="교과수업">교과수업</option><option value="동아리">동아리</option><option value="행사">행사</option><option value="기타">기타</option></select>
                 <div class="form-fields"></div>
-                <div style="display:flex; gap:4px;">
-                    <button class="btn-confirm btn-primary" style="flex:1; padding:4px; font-size:12px;">확인</button>
-                    <button class="btn-cancel btn-secondary" style="flex:1; padding:4px; font-size:12px;">취소</button>
+                <div class="activity-form-actions">
+                    <button class="btn-confirm btn-primary activity-form-btn">확인</button>
+                    <button class="btn-cancel btn-secondary activity-form-btn">취소</button>
                 </div>
             `;
             const selType = form.querySelector('.sel-type');
@@ -535,10 +534,10 @@
                 fields.innerHTML = '';
                 if (type === '교과수업') {
                     fields.innerHTML = `
-                            <select class="sel-grade"><option value="">학년 선택</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
-                        <select class="sel-class" style="margin-top:4px;"><option value="">반 선택</option></select>
-                        <select class="sel-subject" style="margin-top:4px;"><option value="">과목 선택</option></select>
-                        <select class="sel-teacher" style="margin-top:4px;"><option value="">교사 선택</option>${allTeachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}</select>
+                        <select class="sel-grade"><option value="">학년 선택</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
+                        <select class="sel-class activity-form-select"><option value="">반 선택</option></select>
+                        <select class="sel-subject activity-form-select"><option value="">과목 선택</option></select>
+                        <select class="sel-teacher activity-form-select"><option value="">교사 선택</option>${allTeachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}</select>
                     `;
                     const selGrade = fields.querySelector('.sel-grade');
                     const selClass = fields.querySelector('.sel-class');

@@ -103,7 +103,7 @@
               <h3>${cab.cabinet_name} <small class="area-name">${areaName}</small></h3>
             </div>
             <div class="card-image-placeholder">
-              ${photo ? `<img src="${photo}" alt="${cab.cabinet_name}" class="card-image" style="width: 210px; height: 280px; object-fit: cover; object-position: center;">` : `<span class="no-photo-text">사진 없음</span>`}
+              ${photo ? `<img src="${photo}" alt="${cab.cabinet_name}" class="card-image cabinet-card-img-style">` : `<span class="no-photo-text">사진 없음</span>`}
             </div>
             <div class="card-actions">
               <button class="edit-btn" data-id="${cab.id}">수정</button>

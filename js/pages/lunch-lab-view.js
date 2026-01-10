@@ -133,7 +133,7 @@
         // Render Header Dates
         const headRow = document.getElementById('usage-grid-header');
         if (headRow) {
-            headRow.innerHTML = '<th style="width: 60px; text-align:center;">과학실</th>'; // Changed width to 60px
+            headRow.innerHTML = '<th class="lunch-header-cell">과학실</th>';
             weekDates.forEach(d => {
                 const day = d.getDay();
 
@@ -210,7 +210,7 @@
                     let buttonsHtml = '';
                     if (isTeacher && (remarks === '신청중' || remarks.startsWith('보류'))) {
                         buttonsHtml = `
-                            <div class="teacher-actions" style="margin-top:4px; display:flex; gap:4px; justify-content:flex-end;">
+                            <div class="teacher-actions lunch-teacher-actions">
                                 <button class="btn-xs btn-approve" data-id="${log.id}">승인</button>
                                 <button class="btn-xs btn-hold" data-id="${log.id}">보류</button>
                                 <button class="btn-xs btn-reject" data-id="${log.id}">거절</button>
@@ -223,7 +223,9 @@
                              ${log.content || (log.activity_type + ' 활동')}
                         </div>
                         <div style="display:flex; justify-content:space-between; margin-top:4px; align-items:center;">
-                            <span class="badge-status" style="background:${getStatusColor(remarks)}; color:#fff;">${remarks}</span>
+                            <span class="badge-status lunch-status-badge-base ${remarks.startsWith('승인') ? 'lunch-status-approved' :
+                            (remarks.startsWith('거절') ? 'lunch-status-rejected' : 'lunch-status-pending')
+                        }">${remarks}</span>
                         </div>
                         ${buttonsHtml}
                     `;

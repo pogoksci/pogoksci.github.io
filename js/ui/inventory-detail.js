@@ -26,7 +26,7 @@
       const [valuePart, ...rest] = raw.split("@");
       const value = valuePart.trim();
       const temp = rest.join("@").trim();
-      return temp ? `${value} <span style="font-size: 10px;">@ ${temp}</span>` : value || "-";
+      return temp ? `${value} <span class="density-temp-note">@ ${temp}</span>` : value || "-";
     }
 
     const n = Number(raw);
@@ -123,7 +123,7 @@
       const photoDiv = document.getElementById("detail-photo");
       const photoUrl = data.photo_url_320 || data.photo_url_160 || "";
       photoDiv.innerHTML = photoUrl
-        ? `<img src="${photoUrl}" alt="시약 사진" style="width: 100%; height: 100%; object-fit: cover; object-position: center;">`
+        ? `<img src="${photoUrl}" alt="시약 사진" class="inventory-detail-photo-img">`
         : `<span>사진 없음</span>`;
 
       if (data.id) {
@@ -182,7 +182,7 @@
 
       // ⚠️ Low Stock Badge (Detail View)
       if (initialAmountVal > 0 && currentAmountVal <= (initialAmountVal * 0.2)) {
-        amountHtml += ` <span style="background-color: #ffcccc; color: #d63031; border: 1px solid #d63031; border-radius: 4px; padding: 1px 4px; font-size: 0.75rem; font-weight: bold; margin-left: 5px;">구입요청</span>`;
+        amountHtml += ` <span class="low-stock-badge-detail">구입요청</span>`;
       }
 
       document.getElementById("detail-quantity").innerHTML = amountHtml;
@@ -289,7 +289,7 @@
         const cid = await loadPubChemCid();
         if (cid) {
           const imgUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/PNG?record_type=2d&image_size=300x300`;
-          structureBox.innerHTML = `<img src="${imgUrl}" alt="Structure" style="width:100%; height:100%; object-fit:contain;">`;
+          structureBox.innerHTML = `<img src="${imgUrl}" alt="Structure" class="structure-img-2d">`;
         } else {
           if (data.Substance?.svg_image) {
             renderSvg(data.Substance.svg_image, structureBox);

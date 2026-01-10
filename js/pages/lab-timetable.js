@@ -181,11 +181,8 @@
                 if (rowInfo.id === 'AFTER') tr.className = 'row-afterschool';
                 const th = document.createElement('td');
                 th.textContent = rowInfo.label;
-                th.style.fontWeight = 'bold';
-                th.style.backgroundColor = '#f9f9f9';
-                th.style.verticalAlign = 'middle';
-                th.style.textAlign = 'center';
-                th.style.fontSize = '13px';
+                th.className = 'timetable-header-cell';
+                // Inline styles removed: fontWeight, backgroundColor, verticalAlign, textAlign, fontSize
                 tr.appendChild(th);
                 DAYS.forEach(day => {
                     const td = document.createElement('td');

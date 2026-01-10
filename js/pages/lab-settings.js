@@ -556,7 +556,7 @@
             // Option to remove if needed (for now just clearing value)
             const removeBtn = document.createElement('button');
             removeBtn.className = 'btn-remove';
-            removeBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">remove</span>';
+            removeBtn.innerHTML = '<span class="material-symbols-outlined btn-remove-icon">remove</span>';
             removeBtn.tabIndex = -1;
             removeBtn.addEventListener('click', async () => {
                 div.remove();

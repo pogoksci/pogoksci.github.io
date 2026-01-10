@@ -44,12 +44,12 @@
 
             const modalHtml = `
             <div id="modal-conc-conversion" class="modal-overlay" style="display:none; z-index: 9999;">
-                <div class="modal-container" style="max-width: 600px; width: 95%; background: white; max-height: 90vh; display: flex; flex-direction: column; padding: 12px;">
-                    <div class="modal-header" style="flex-shrink: 0;">
+                <div class="conc-modal-container">
+                    <div class="modal-header">
                         <h3>🧪 농도 변환 레시피</h3>
-                        <button id="btn-close-conc" class="close-btn">&times;</button>
+                        <!-- <button id="btn-close-conc" class="close-btn">&times;</button> -->
                     </div>
-                    <div class="modal-body" id="conc-modal-body" style="overflow-y: auto; flex: 1; padding: 0 5px;">
+                    <div class="modal-body" id="conc-modal-body" style="overflow-y: auto;">
                         <!-- Content Injected Here -->
                     </div>
                     <div class="modal-footer" style="display: flex; justify-content: center; gap: 10px; padding-top: 15px; flex-shrink: 0;">
@@ -64,7 +64,7 @@
             this.modalElement = document.getElementById("modal-conc-conversion");
 
             // Event Bindings
-            document.getElementById("btn-close-conc").onclick = () => this.closeModal();
+            // document.getElementById("btn-close-conc").onclick = () => this.closeModal();
             document.getElementById("btn-conc-cancel").onclick = () => this.closeModal();
 
             this.modalElement.addEventListener("click", (e) => {
@@ -84,26 +84,26 @@
             const mw = this.currentInventory.Substance?.molecular_mass || "정보 없음";
 
             body.innerHTML = `
-                <div class="conc-info-summary" style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9em;">
+                <div class="conc-info-summary">
                     <strong>현재 물질:</strong> ${name}<br>
                     <strong>현재 농도/순도:</strong> ${currentConc} ${currentUnit}<br>
                     <span style="color: #666;">(MW: ${mw}, 밀도: ${density})</span>
                 </div>
 
-                <div class="conc-input-group" style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 20px;">
+                <div class="conc-input-row">
                     <div style="flex: 1;">
-                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">만들고자 하는 부피 (mL)</label>
+                        <label class="conc-label">만들고자 하는 부피 (mL)</label>
                         <input type="number" id="calc-target-vol" class="form-input" placeholder="예: 500" style="width: 100%;">
                     </div>
                 </div>
 
-                <div class="conc-input-group" style="display: flex; gap: 12px; align-items: flex-end; margin-bottom: 10px;">
+                <div class="conc-input-group">
                     <div style="flex: 1;">
-                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">목표 농도 값</label>
+                        <label class="conc-label">목표 농도 값</label>
                         <input type="number" step="any" id="calc-target-conc" class="form-input" placeholder="예: 0.1" style="width: 100%;">
                     </div>
                     <div style="flex: 1;">
-                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">단위</label>
+                        <label class="conc-label">단위</label>
                         <select id="calc-target-unit" class="form-select" style="width: 100%;">
                             <option value="M">M (몰농도)</option>
                             <option value="%">% (퍼센트)</option>
@@ -114,13 +114,13 @@
                 </div>
 
                 <!-- Density Input (Hidden by default, shown if needed) -->
-                <div id="conc-density-input-area" style="display: none; margin-bottom: 15px; background: #fff3cd; padding: 10px; border-radius: 4px;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #856404;">⚠️ 밀도 정보 필요</label>
-                    <p style="font-size: 0.85em; margin-bottom: 5px; color: #856404;">정확한 변환을 위해 밀도(g/mL) 값이 필요합니다.</p>
+                <div id="conc-density-input-area" class="conc-density-area">
+                    <label class="conc-density-label">⚠️ 밀도 정보 필요</label>
+                    <p class="conc-density-desc">정확한 변환을 위해 밀도(g/mL) 값이 필요합니다.</p>
                     <input type="number" step="any" id="calc-density-manual" class="form-input" placeholder="예: 1.0" value="1.0">
                 </div>
 
-                <div id="conc-result-area" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; display: none;">
+                <div id="conc-result-area" class="conc-result-area">
                     <!-- Result will be rendered here -->
                 </div>
             `;
@@ -495,7 +495,7 @@
             // Label Preview
             const labelHtml = `
                 <div style="display:flex; flex-direction:column; align-items:center;">
-                    <div class="label-preview-card" style="border: 2px dashed #333; padding: 15px; margin-top: 20px; background: white; width: 250px; position: relative; text-align: center;">
+                    <div id="label-capture-area" class="label-preview-card" style="background:white; padding:15px; border:2px dashed #333; width:200px; text-align:center;">
                         <h3 style="margin: 5px 0 10px; border-bottom: 2px solid #000; padding-bottom: 5px;">${chemName}</h3>
                         <div style="font-size: 1.4em; font-weight: bold; margin-bottom: 15px;">
                             ${targetConc}${targetUnit}
@@ -506,6 +506,12 @@
                         </div>
                         ${isAcid ? '<div style="background:orange; color:white; font-weight:bold; margin-top:10px; padding:2px; font-size:0.8em;">산성 / 부식성 주의</div>' : ''}
                     </div>
+
+                    <div style="margin-top: 10px; display:flex; gap: 8px;">
+                        <button id="btn-export-png" class="btn-sm" style="font-size:12px; padding:4px 8px; cursor:pointer; background:#fff; border:1px solid #ccc; border-radius:4px;">PNG 저장</button>
+                        <button id="btn-export-pdf" class="btn-sm" style="font-size:12px; padding:4px 8px; cursor:pointer; background:#fff; border:1px solid #ccc; border-radius:4px;">PDF 저장</button>
+                    </div>
+
                     <p style="font-size: 0.8em; color: #666; margin-top: 8px;">▲ 위 내용을 견출지에 적어 용기에 붙이세요.</p>
                 </div>
             `;
@@ -529,6 +535,52 @@
                     </div>
                 </div>
             `;
+
+            // Bind Export Events
+            setTimeout(() => {
+                const btnPng = document.getElementById("btn-export-png");
+                const btnPdf = document.getElementById("btn-export-pdf");
+
+                if (btnPng) btnPng.onclick = () => this.downloadLabelAsPNG(chemName);
+                if (btnPdf) btnPdf.onclick = () => this.downloadLabelAsPDF(chemName);
+            }, 100);
+        },
+
+        downloadLabelAsPNG: function (filename) {
+            const element = document.getElementById("label-capture-area");
+            if (!element || !window.html2canvas) return;
+
+            html2canvas(element, { scale: 2 }).then(canvas => {
+                const link = document.createElement("a");
+                link.download = `${filename}_Vial_Label.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        },
+
+        downloadLabelAsPDF: function (filename) {
+            const element = document.getElementById("label-capture-area");
+            if (!element || !window.html2canvas || !window.jspdf) return;
+
+            html2canvas(element, { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL("image/png");
+                const { jsPDF } = window.jspdf;
+
+                // 60mm x 60mm PDF
+                const pdf = new jsPDF({
+                    orientation: 'p',
+                    unit: 'mm',
+                    format: [60, 60]
+                });
+
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                // Maintain aspect ratio
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+                pdf.save(`${filename}_Vial_Label.pdf`);
+            });
         }
 
 

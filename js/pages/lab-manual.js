@@ -132,19 +132,19 @@
     function renderManuals() {
         return MANUAL_DATA.map(group => `
             <div>
-                <h2 style="font-size: 1.4rem; color: #1976d2; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 16px;">
+                <h2 class="manual-section-title">
                     ${group.title}
                 </h2>
-                <div class="manual-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
+                <div class="manual-grid">
                     ${group.items.map(item => `
-                        <div style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); background: white; transition: transform 0.2s;">
-                            <div style="width: 100%; height: 200px; background: #f0f0f0; overflow:hidden;">
+                        <div class="manual-card">
+                            <div class="manual-card-img-wrapper">
                                 <img src="${item.src}" alt="${item.caption}" loading="lazy" 
-                                    style="width: 100%; height: 100%; object-fit: cover; cursor:pointer;"
+                                    class="manual-card-img"
                                     onclick="window.open('${item.src}', '_blank')">
                             </div>
-                            <div style="padding: 12px;">
-                                <h3 style="margin: 0; font-size: 1rem; color: #444; text-align: center;">${item.caption}</h3>
+                            <div class="manual-card-content">
+                                <h3 class="manual-card-text">${item.caption}</h3>
                             </div>
                         </div>
                     `).join('')}

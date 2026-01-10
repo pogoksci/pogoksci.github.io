@@ -40,8 +40,8 @@
 
             const div = document.createElement("div");
             div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-            if (type === "error") div.style.color = "#ff4444";
-            if (type === "success") div.style.color = "#00ccff";
+            if (type === "error") div.className = 'sync-log-error';
+            if (type === "success") div.className = 'sync-log-success';
 
             logEl.appendChild(div);
             logEl.scrollTop = logEl.scrollHeight;

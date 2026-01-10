@@ -253,12 +253,8 @@
 
                 const btn = document.createElement("button");
                 btn.type = "button";
-                btn.className = "btn-secondary-action";
-                btn.style.fontSize = "12px";
-                btn.style.padding = "4px 8px";
-                btn.style.backgroundColor = "#e0f7fa";
-                btn.style.color = "#006064";
-                btn.style.border = "1px solid #b2ebf2";
+                btn.className = "btn-secondary-action usage-period-btn";
+                // Inline styles removed
                 btn.innerText = displayStr;
                 btn.title = "클릭하여 적용";
 
@@ -618,18 +614,18 @@
 
         // ✅ 목록 화면 (isDetail=false): 2줄 레이아웃 (사진 없음)
         return `
-          <div class="inventory-card" ${onClickAttr} style="padding: 10px 12px;">
+          <div class="inventory-card inventory-card-simple" ${onClickAttr}>
             <div class="inventory-card__body">
               <div class="inventory-card__left">
-                <div class="inventory-card__line1" style="display: flex; flex-direction: row; align-items: center;">
-                  <span class="inventory-card__no" style="margin-right: 8px; display: inline-block; min-width: 60px;">No.${item.id}</span>
-                  <span class="name-kor" style="font-weight: bold; margin: 0;">${name}</span>
+                <div class="inventory-card__line1 inventory-card-line1-flex">
+                  <span class="inventory-card__no inventory-card-no-fixed">No.${item.id}</span>
+                  <span class="name-kor inventory-card-name-bold">${name}</span>
                 </div>
-                <div class="inventory-card__line4 inventory-card__location" style="margin-top: 4px; color: #666;">${locationText}</div>
+                <div class="inventory-card__line4 inventory-card__location inventory-card-loc-gray">${locationText}</div>
               </div>
-              <div class="inventory-card__meta" style="text-align: right; min-width: 80px;">
-                <div class="meta-line3" style="font-weight: bold; color: #555;">${concStr}</div>
-                <div class="meta-line4" style="margin-top: 4px; color: #00a0b2; font-weight: bold;">${item.current_amount}${item.unit}</div>
+              <div class="inventory-card__meta inventory-card-meta-right">
+                <div class="meta-line3 inventory-card-meta-bold">${concStr}</div>
+                <div class="meta-line4 inventory-card-stock-highlight">${item.current_amount}${item.unit}</div>
               </div>
             </div>
           </div>

@@ -264,12 +264,12 @@
                 if (kit.image_url) {
                     imageBlock = `
                         <div class="inv-card-img">
-                            <img src="${kit.image_url}" alt="${kit.kit_name}" loading="lazy" style="width: 75px; height: 100px; object-fit: cover; object-position: center;">
+                            <img src="${kit.image_url}" alt="${kit.kit_name}" loading="lazy" class="kit-list-img">
                         </div>`;
                 } else {
                     imageBlock = `
-                        <div class="inv-card-img empty">
-                             <span style="font-size:12px; color:#999;">사진 없음</span>
+                        <div class="inv-card-img empty kit-list-img-empty">
+                             <span>사진 없음</span>
                         </div>`;
                 }
 
@@ -277,25 +277,25 @@
 
                 card.innerHTML = `
                     ${imageBlock}
-                    <div class="inv-card-content" style="display: flex; justify-content: space-between; align-items: stretch; width: 100%; padding: 12px 15px; box-sizing: border-box;">
-                        <div class="inv-card-left" style="display: flex; flex-direction: column; justify-content: space-between; flex: 1;">
+                    <div class="inv-card-content kit-card-content">
+                        <div class="inv-card-left kit-card-left">
                              <div>
-                                <span class="kit-tag" style="background:#e3f2fd; color:#0d47a1; padding:2px 6px; border-radius:4px; font-size:12px;">${kit.kit_class || '미분류'}</span>
+                                <span class="kit-tag kit-tag-refactored">${kit.kit_class || '미분류'}</span>
                              </div>
-                             <div class="inv-name" style="font-weight: bold; font-size: 16px;">
+                             <div class="inv-name kit-name-text">
                                 ${kit.kit_name}
                              </div>
-                             <div class="inv-location" style="font-size: 13px; color: #777;">
+                             <div class="inv-location kit-location-text">
                                 ${locStr}
                              </div>
                         </div>
 
-                        <div class="inv-card-right" style="display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; margin-left: 10px;">
+                        <div class="inv-card-right kit-card-right">
                             <div style="height: 20px;"></div>
                             <div style="display: flex; align-items: center; justify-content: flex-end; flex: 1;">
-                                ${kit.kit_person ? `<span style="font-size: 13px; color: #008000; font-weight: bold;">(${kit.kit_person}인용)</span>` : ''}
+                                ${kit.kit_person ? `<span class="kit-person-count">(${kit.kit_person}인용)</span>` : ''}
                             </div>
-                            <div class="inv-quantity" style="font-size: 14px; color: #555;">
+                            <div class="inv-quantity kit-quantity-text">
                                 수량: ${kit.quantity}개
                             </div>
                         </div>
@@ -350,26 +350,12 @@
                 const btnBack = document.createElement('button');
                 // Removed btn-secondary-action to avoid block styling
                 btnBack.className = 'btn-back-list';
-                // Explicit inline styles for small, right-aligned button
-                btnBack.style.marginLeft = '10px';
-                btnBack.style.padding = '4px 10px';
-                btnBack.style.fontSize = '12px';
-                btnBack.style.height = '30px';
-                btnBack.style.display = 'inline-flex';
-                btnBack.style.alignItems = 'center';
-                btnBack.style.justifyContent = 'center';
-                btnBack.style.border = '1px solid #ddd';
-                btnBack.style.borderRadius = '4px';
-                btnBack.style.backgroundColor = '#fff';
-                btnBack.style.cursor = 'pointer';
-                btnBack.style.color = '#555';
-                btnBack.style.whiteSpace = 'nowrap'; // Prevent wrapping
+                // Explicit inline styles removed, class used instead
 
                 btnBack.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; margin-right:4px;">list</span>목록으로';
 
-                // Hover effect
-                btnBack.onmouseover = () => btnBack.style.backgroundColor = '#f5f5f5';
-                btnBack.onmouseout = () => btnBack.style.backgroundColor = '#fff';
+                // Hover effect handled by CSS
+
 
                 btnBack.onclick = () => App.Router.go('kits');
 
@@ -383,7 +369,7 @@
             if (kit.image_url) {
                 photoBox.innerHTML = `<img src="${kit.image_url}" alt="키트 사진" style="width: 100%; height: 100%; object-fit: cover; object-position: center;">`;
             } else {
-                photoBox.innerHTML = '<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#999;">사진 없음</div>';
+                photoBox.innerHTML = '<div class="kit-detail-photo-wrapper">사진 없음</div>';
             }
 
             // 3. Render 7-Row Layout
