@@ -155,8 +155,8 @@
         };
 
         check('API_EXP_CAS', 'CAS');
-        check('API_EXP_KOSHA', '안전보건공단');
-        check('API_EXP_KREACH', '환경공단');
+        check('API_EXP_KOSHA', '한국산업안전보건공단');
+        check('API_EXP_KREACH', '한국환경공단');
 
         if (warnings.length > 0) {
             const splash = document.getElementById('splash-screen');

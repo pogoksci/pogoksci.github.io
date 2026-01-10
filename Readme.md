@@ -224,8 +224,8 @@ Supabase 프로젝트를 만들고 연결해야 합니다.
 그대로 쓰거나, 새로 발급받아야 합니다.
 
 - `CAS_API_KEY`: 화학물질 검색용 (CAS Common Chemistry)
-- `KOSHA_API_KEY`: 안전보건공단 API
-- `KREACH_API_KEY`: 화학물질정보시스템 API
+- `KOSHA_API_KEY`: 한국산업안전보건공단 API
+- `KREACH_API_KEY`: 한국환경공단 API
 
 **[설정 방법]**
 
