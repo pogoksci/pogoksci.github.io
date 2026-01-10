@@ -32,6 +32,90 @@
             this.initToolsMigration();
             this.initEquipmentMigration();
             this.initUserKitMigration();
+            
+            // Edufine Export
+            const btnEdufine = document.getElementById("btn-download-edufine");
+            if (btnEdufine) btnEdufine.addEventListener("click", () => this.handleEdufineDownload(btnEdufine));
+        },
+
+        // ----------------------------------------------------------------
+        // 🆕 Edufine Excel Export
+        // ----------------------------------------------------------------
+        handleEdufineDownload: async function(btn) {
+            if (btn) btn.disabled = true;
+            try {
+                this.log("🚀 에듀파인 다운로드 시작 (데이터 조회 중...)");
+                
+                // 1. Fetch Data
+                const { data, error } = await App.supabase
+                    .from("Inventory")
+                    .select(`
+                        id, initial_amount, current_amount, unit, edited_name_kor,
+                        Substance ( chem_name_kor, chem_name_kor_mod )
+                    `)
+                    .order('id', { ascending: true });
+
+                if (error) throw error;
+                if (!data || data.length === 0) throw new Error("데이터가 없습니다.");
+
+                this.log(`✅ ${data.length}건 조회 완료. 엑셀 파일 생성 중...`);
+
+                await this.loadSheetJS();
+
+                // 2. Format Data
+                // Columns: A(0), B(상태), C(소모품코드), D(* 소모품명), E(* 규격), F(기초재고량), G(* 단위)
+                const header = ["0", "상태", "소모품코드", "* 소모품명", "* 규격", "기초재고량", "* 단위"];
+                
+                const rows = data.map(item => {
+                    // C: ID Zero Padding (6 digits)
+                    const idStr = String(item.id).padStart(6, '0');
+
+                    // D: Name Priority
+                    let name = item.edited_name_kor;
+                    if (!name) name = item.Substance?.chem_name_kor_mod;
+                    if (!name) name = item.Substance?.chem_name_kor;
+                    name = name || "이름 없음";
+
+                    // E: Spec (Initial Amount + Unit)
+                    // Ensure integer part for amounts as requested ("initial_amount의 정수 부분")
+                    const initialVal = item.initial_amount ? Math.floor(item.initial_amount) : 0;
+                    const unit = item.unit || "";
+                    const spec = `${initialVal}${unit}`;
+
+                    // F: Current Amount (Integer)
+                    const currentVal = item.current_amount ? Math.floor(item.current_amount) : 0;
+
+                    return [
+                        "0",        // A: 0
+                        "",         // B: Empty
+                        idStr,      // C: Inventory ID (000001)
+                        name,       // D: Name
+                        spec,       // E: Standard (Capacity)
+                        currentVal, // F: Current Stock
+                        unit        // G: Unit
+                    ];
+                });
+
+                // Prepend Header
+                const worksheetData = [header, ...rows];
+
+                // 3. Generate Workbook
+                const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "저장성소모품");
+
+                // 4. Download
+                XLSX.writeFile(wb, "저장성소모품코드관리.xlsx");
+                
+                this.log("🎉 저장성소모품코드관리.xlsx 다운로드 완료!", "success");
+
+            } catch (err) {
+                console.error(err);
+                this.log(`❌ 다운로드 실패: ${err.message}`, "error");
+                alert("다운로드 중 오류가 발생했습니다: " + err.message);
+            } finally {
+                if (btn) btn.disabled = false;
+            }
         },
 
         log: function (msg, type = "info") {

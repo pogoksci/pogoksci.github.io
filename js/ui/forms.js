@@ -190,11 +190,18 @@
         if (casEl) {
           casEl.value = detail.Substance.cas_rn;
           casEl.readOnly = true;
-          casEl.style.backgroundColor = "#f0f0f0";
-          casEl.onclick = () => {
-            alert("⚠️ CAS 번호는 수정할 수 없습니다.");
-          };
-        }
+            casEl.style.backgroundColor = "#f0f0f0";
+            // ✅ Allow unlocking with confirmation
+            casEl.onclick = () => {
+              if (casEl.readOnly) {
+                if (confirm("⚠️ CAS 번호를 수정하면 물질 정보가 완전히 변경됩니다.\n계속하시겠습니까?")) {
+                  casEl.readOnly = false;
+                  casEl.style.backgroundColor = "";
+                  casEl.focus();
+                }
+              }
+            };
+          }
         setInput("cas_rn", detail.Substance.cas_rn);
         set("chemical_formula", detail.Substance.chemical_formula);
 
@@ -1171,9 +1178,67 @@
                 // Non-blocking error
               }
 
-              alert("✅ 물질 자동 생성 및 등록 완료");
-              App.Router.go("inventory");
-              return; // EXIT FUNCTION HERE
+                // 4. Handle Edit Mode Duplication
+                if (mode === "edit" && detail && detail.id) {
+                    // Update the existing inventory item with the new substance_id
+                    // We need to fetch the substance_id from the newly created inventory item first
+                    const { data: newInv, error: fetchErr } = await supabase
+                        .from("Inventory")
+                        .select("substance_id")
+                        .eq("id", impData.inventoryId)
+                        .single();
+
+                    if (fetchErr || !newInv) {
+                        console.error("Failed to fetch new inventory info:", fetchErr);
+                        alert("물질 정보 업데이트 중 오류가 발생했습니다.");
+                        return;
+                    }
+
+                    // Update Original Inventory
+                    const { error: updateErr } = await supabase
+                        .from("Inventory")
+                        .update({ 
+                            substance_id: newInv.substance_id,
+                            edited_name_kor: payload.edited_name_kor || null, // Ensure name is also updated if changed
+                            // Update other fields that might have changed
+                            manufacturer: payload.manufacturer,
+                            concentration_value: payload.concentration_value,
+                            concentration_unit: payload.concentration_unit,
+                            purchase_volume: payload.purchase_volume,
+                            unit: payload.unit,
+                            bottle_type: payload.bottle_type,
+                            bottle_mass: payload.bottle_mass,
+                            state: payload.state,
+                            status: payload.status,
+                            valence: payload.valence
+                        })
+                        .eq("id", detail.id);
+
+                    if (updateErr) {
+                         console.error("Failed to update original inventory:", updateErr);
+                         alert("기존 재고 정보 업데이트 실패");
+                         return;
+                    }
+
+                    // Delete the Auto-Generated Duplicate
+                    // Use system-admin function for safety if possible, or direct delete
+                    const { error: delErr } = await App.supabase.functions.invoke("system-admin", {
+                        body: { action: "delete_inventory", inventory_id: impData.inventoryId },
+                    });
+                    
+                    if (delErr) {
+                         // Fallback to direct delete if function fails or not available
+                         console.warn("System admin delete failed, trying direct delete...", delErr);
+                         await supabase.from("Inventory").delete().eq("id", impData.inventoryId);
+                    }
+
+                    alert("✅ 물질 정보가 변경되었습니다. (기존 재고 업데이트 완료)");
+                } else {
+                     alert("✅ 물질 자동 생성 및 등록 완료");
+                }
+
+                App.Router.go("inventory");
+                return; // EXIT FUNCTION HERE
             }
           }
           // Continue to local registration logic only if auto-import wasn't triggered/didn't exit

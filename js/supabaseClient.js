@@ -63,11 +63,12 @@
     globalThis.supabaseClient = globalThis.App.supabase;
     globalThis.APP_CONFIG = APP_CONFIG;
   }
-  // 5️⃣ 동적 설정 로드 (학교 이름 등)
+  // 5️⃣ 동적 설정 로드 (학교 이름 등) - 외부에서 await 할 수 있도록 함수 노출
   // ------------------------------------------------------------
-  (async function loadGlobalSettings() {
+  globalThis.App.loadGlobalSettings = async function() {
     if (!globalThis.App.supabase) return;
     try {
+      console.log("🔄 학교 설정 로딩 시작...");
       const { data, error } = await globalThis.App.supabase
         .from('global_settings')
         .select('value')
@@ -77,9 +78,14 @@
       if (data && data.value) {
         APP_CONFIG.SCHOOL = data.value; // Override default
         console.log(`🏫 학교 이름 설정 로드됨: ${APP_CONFIG.SCHOOL}`);
+      } else {
+        console.log("ℹ️ 저장된 학교 이름이 없어 기본값 사용");
       }
     } catch (e) {
       console.warn("⚠️ 설정 로드 실패 (기본값 사용):", e);
     }
-  })();
+  };
+
+  // 기존에는 즉시 실행했으나, 이제는 index.js에서 initApp() 시점에 호출하도록 변경
+  // (async function loadGlobalSettings() { ... })(); 
 })();
