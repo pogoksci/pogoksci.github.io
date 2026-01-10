@@ -32,7 +32,7 @@ GitHub에 있는 코드를 내 컴퓨터로 가져오기 위한 도구입니다.
 
 ## 2. 프로젝트 코드 가져오기 (Git Clone)
 
-**목표:** `D:\git` 폴더 안에 `scimanager` 라는 이름으로 코드를 가져올 것입니다.
+**목표:** `D:\git` 폴더 안에 `science-lab` 라는 이름으로 코드를 가져옵니다.
 
 ### [방법 1] VS Code 터미널 사용하기 (추천)
 
@@ -46,44 +46,44 @@ GitHub에 있는 코드를 내 컴퓨터로 가져오기 위한 도구입니다.
 3. **터미널 열기**:
    - 메뉴에서 **Terminal > New Terminal**을 누릅니다.
 4. **명령어 입력**:
-   - 아래 명령어를 정확히 입력하고 엔터를 칩니다. (뒤에 `scimanager`가
+   - 아래 명령어를 정확히 입력하고 엔터를 칩니다. (뒤에 `science-lab`이
      붙어있는지 꼭 확인하세요!)
    ```bash
-   git clone https://github.com/pogoksci/pogoksci.github.io.git scimanager
+   git clone https://github.com/pogoksci/pogoksci.github.io.git science-lab
    ```
 5. **완료 및 이동**:
-   - 설치가 끝나면 왼쪽에 `scimanager` 폴더가 보입니다.
+   - 설치가 끝나면 왼쪽에 `science-lab` 폴더가 보입니다.
    - **[중요]** 메뉴에서 **File > Open Folder**를 다시 눌러서
-     `D:\git\scimanager` 폴더를 새로 여세요.
+     `D:\git\science-lab` 폴더를 새로 여세요.
 
 ### [방법 2] 윈도우 파워쉘(PowerShell) 사용하기
 
 1. **폴더 준비**:
    - 파일 탐색기에서 `D:\git` 폴더로 이동합니다. (없으면 새로 만드세요)
 2. **파워쉘 열기**:
-   - `D:\git` 폴더 안의 빈 공간에 **[Shift] 키를 누른 채로 마우스 우클릭**을
+   - `D:\git` 폴더 안의 빈 공간에 **[Shift] 키를 누른 채로 마우스 우클릭**
      합니다.
    - **"여기에 PowerShell 창 열기"**를 선택합니다.
 3. **명령어 입력**:
    - 아래 명령어를 입력하고 엔터를 칩니다.
    ```powershell
-   git clone https://github.com/pogoksci/pogoksci.github.io.git scimanager
+   git clone https://github.com/pogoksci/pogoksci.github.io.git science-lab
    ```
 4. **결과 확인**:
-   - `D:\git` 폴더 안에 `scimanager` 라는 폴더가 생겼는지 확인합니다.
-   - 이제 VS Code를 켜고 `D:\git\scimanager` 폴더를 열어서 작업하면 됩니다.
+   - `D:\git` 폴더 안에 `science-lab` 라는 폴더가 생겼는지 확인합니다.
+   - 이제 VS Code를 켜고 `D:\git\science-lab` 폴더를 열어서 작업하면 됩니다.
 
 ---
 
-이제 코드가 내 컴퓨터(`D:\git\scimanager`)에 준비되었습니다. 다음 단계인
+이제 코드가 내 컴퓨터(`D:\git\science-lab`)에 준비되었습니다. 다음 단계인
 **Supabase(데이터베이스)** 설정을 진행하세요.
 
 ---
 
 ## 3. Supabase (데이터베이스) 설정
 
-이 프로젝트는 Supabase라는 클라우드 데이터베이스를 사용합니다. User B 본인의
-Supabase 프로젝트를 만들고 연결해야 합니다.
+이 프로젝트는 Supabase라는 클라우드 데이터베이스를 사용합니다. 새로운 사용자는
+본인의 Supabase 프로젝트를 만들고 연결해야 합니다.
 
 ### 단계 1: Supabase 가입 및 프로젝트 생성
 
@@ -109,7 +109,7 @@ Supabase 프로젝트를 만들고 연결해야 합니다.
 
 ### 단계 3: 내 코드에 적용하기
 
-1. VS Code에서 `D:\git\scimanager` 폴더를 열어둔 상태에서, 왼쪽 파일 목록의
+1. VS Code에서 `D:\git\science-lab` 폴더를 열어둔 상태에서, 왼쪽 파일 목록의
    **[js](file:///d:/Cloud/git/pogoksci/js) 폴더 >
    [supabaseClient.js](file:///d:/Cloud/git/pogoksci/js/supabaseClient.js)
    파일**을 클릭합니다.
@@ -118,7 +118,7 @@ Supabase 프로젝트를 만들고 연결해야 합니다.
    const SUPABASE_URL = "여기에_Project_URL_붙여넣기";
    const SUPABASE_ANON_KEY = "여기에_anon_public_키_붙여넣기";
    ```
-3. 선생님의 기존 값 대신, 방금 Supabase에서 복사한 **본인의 URL과 Key**로
+3. 기존 값 대신, 새로운 사용자의 Supabase에서 복사한 **본인의 URL과 Key**로
    바꿔치기합니다.
 4. `Ctrl + S`를 눌러 저장합니다.
 
@@ -126,8 +126,8 @@ Supabase 프로젝트를 만들고 연결해야 합니다.
 
 ## 4. 데이터베이스 구조 만들기 (Schema 적용)
 
-아직 데이터베이스가 비어있습니다. 선생님이 만들어둔
-구조([schema.sql](file:///d:/Cloud/git/pogoksci/schema.sql))를 그대로 적용해야
+아직 데이터베이스가 비어있습니다. 기존 사용자가 만들어둔
+DB구조([schema.sql](file:///d:/Cloud/git/pogoksci/schema.sql))를 그대로 적용해야
 합니다.
 
 1. VS Code에서 **[schema.sql](file:///d:/Cloud/git/pogoksci/schema.sql)** 파일을
@@ -144,8 +144,6 @@ Supabase 프로젝트를 만들고 연결해야 합니다.
 
 ## 5. 웹사이트 실행하기
 
-이제 설정이 다 끝났습니다. 웹사이트를 켜볼까요?
-
 ### 방법 1: VS Code "Live Server" 사용 (추천)
 
 가장 안정적으로 실행하는 방법입니다. 확장 프로그램을 하나 설치해야 합니다.
@@ -159,24 +157,23 @@ Supabase 프로젝트를 만들고 연결해야 합니다.
 5. 브라우저가 열리면서 `http://127.0.0.1:5500/index.html` 주소로 사이트가
    실행됩니다.
 
-수고하셨습니다! 이제 나만의 과학실 관리 프로그램이 작동합니다.
+수고하셨습니다! 이제 새로운 사용자의 과학실 관리 프로그램이 작동합니다.
 
 ---
 
 ## 6. 인터넷에 배포하기 (sdevbox.github.io)
 
 내 컴퓨터뿐만 아니라, 다른 사람들도 접속할 수 있게 인터넷에 올리고 싶다면
-**GitHub Pages**를 사용합니다. User B의 GitHub 아이디가 `sdevbox`라고 가정하고
-설명합니다.
+**GitHub Pages**를 사용합니다. 새로운 사용자의 GitHub 아이디가 `myshcoolid`라고
+가정하고 설명합니다.
 
 ### 단계 1: 새 저장소(Repository) 만들기
 
 1. GitHub 웹사이트 로그인 후, 우측 상단 `+` 버튼을 눌러 **New repository**를
    선택합니다.
 2. **Repository name**에 정확히 다음 이름을 입력합니다. (매우 중요!)
-   - `sdevbox.github.io`
-   - (만약 아이디가 sdevbox가 아니라면 `본인아이디.github.io`로 만들어야
-     합니다.)
+   - `myshcoolid.github.io`
+   - (즉, `본인아이디.github.io`로 만들어야 합니다.)
 3. `Public`으로 설정하고, 다른 체크박스는 건드리지 말고 **Create repository**를
    누릅니다.
 
@@ -193,7 +190,7 @@ Supabase 프로젝트를 만들고 연결해야 합니다.
 
 2. **내 저장소 연결하기**:
    ```bash
-   git remote add origin https://github.com/sdevbox/sdevbox.github.io.git
+   git remote add origin https://github.com/myschoolid/myschoolid.github.io.git
    ```
 
 3. **코드 올리기 (Upload)**:
@@ -206,7 +203,7 @@ Supabase 프로젝트를 만들고 연결해야 합니다.
 
 약 1~2분 정도 기다린 후, 브라우저 주소창에 다음 주소를 입력해보세요.
 
-- `https://sdevbox.github.io`
+- `https://myshcoolid.github.io`
 
 이제 전 세계 어디서든 이 주소로 내 과학실 관리 프로그램에 접속할 수 있습니다!
 
@@ -220,12 +217,13 @@ Supabase 프로젝트를 만들고 연결해야 합니다.
 
 ### 1단계: API 키 준비하기 (Secret)
 
-서버가 동작하려면 몇 가지 비밀키(Secret)가 필요합니다. 선생님이 사용하던 키를
-그대로 쓰거나, 새로 발급받아야 합니다.
+서버가 동작하려면 몇 가지 비밀키(Secret)가 필요합니다. 각 사이트를 방문하여 새로
+발급받아야 합니다.
 
-- `CAS_API_KEY`: 화학물질 검색용 (CAS Common Chemistry)
-- `KOSHA_API_KEY`: 한국산업안전보건공단 API
-- `KREACH_API_KEY`: 한국환경공단 API
+- `CAS_API_KEY`:
+  [CAS Common Chemistry API](https://www.cas.org/services/commonchemistry-api)
+- `KOSHA_API_KEY`: [한국산업안전보건공단 API](https://www.data.go.kr)
+- `KREACH_API_KEY`: [한국환경공단 API](https://www.data.go.kr)
 
 **[설정 방법]**
 
@@ -234,22 +232,23 @@ Supabase 프로젝트를 만들고 연결해야 합니다.
 2. **"Add new secret"** 버튼을 누릅니다.
 3. 위 키 이름(`CAS_API_KEY` 등)을 **Name**에, 실제 비밀 키 값을 **Value**에
    입력하고 저장합니다.
-   - (키 값은 선생님에게 문의하거나, 각 사이트에서 발급받아야 합니다.)
 
 ### 2단계: Supabase CLI 설치 및 배포
 
 이 과정은 **터미널**에서 명령어로 진행해야 합니다.
 
-1. **Supabase CLI 설치** (Windows PowerShell 관리자 권한)
-   - `Win` 키를 누르고 "PowerShell"을 검색한 뒤 **"관리자 권한으로 실행"**을
-     누릅니다.
-   - 다음 명령어를 입력하여 설치합니다 (Scoop 패키지 매니저 사용 예시, 또는
-     `npm` 사용).
+1. **Supabase CLI 설치** (Windows PowerShell)
+   - 키보드에서 `Win` 키를 누르고 "PowerShell"을 검색하여 실행합니다.
+   - **Scoop(패키지 관리자)**를 먼저 설치해야 합니다. (이미 있다면 건너뜀)
      ```powershell
-     winget install Supabase.CLI
+     Set-ExecutionPolicy RemoteSigned -Scope CurrentUser # (Y를 눌러 승인)
+     irm get.scoop.sh | iex
      ```
-     (winget이 없다면 `npm install -g supabase` 를 사용하세요. 단, Node.js가
-     설치되어 있어야 합니다.)
+   - Scoop을 이용해 Supabase CLI를 설치합니다.
+     ```powershell
+     scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+     scoop install supabase
+     ```
 
 2. **로그인**: VS Code 터미널에서 다음 명령어를 입력합니다.
    ```bash

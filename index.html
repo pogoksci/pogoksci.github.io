@@ -24,13 +24,20 @@
   <link rel="stylesheet" href="css/styles_mobile.css?v=20251229_v8" media="(max-width: 600px)">
 
   <script>
-    // GitHub Pages: (루트) vs (서브루트 /scimanager/) 모두 대응
+    // GitHub Pages: (루트) vs (서브루트 /repo-name/) 모두 대응
     (function () {
-      var guessed = location.pathname.includes('/scimanager/')
-        ? '/scimanager/'
+      // 1. 호스트가 github.io 인지 확인
+      var isGithubPages = location.hostname.includes('github.io');
+      
+      // 2. 경로의 첫 번째 세그먼트 추출
+      var firstSegment = location.pathname.split('/')[1]; 
+      
+      // 3. 결정: GitHub Pages이고 첫 세그먼트가 있다면 그것을 base로, 아니면 /
+      var guessed = (isGithubPages && firstSegment) 
+        ? '/' + firstSegment + '/' 
         : '/';
 
-      window.APP_BASE_PATH = guessed.replace(/\/+$/, '/'); // 끝에 / 하나로 정리
+      window.APP_BASE_PATH = guessed;
     })();
   </script>
 
