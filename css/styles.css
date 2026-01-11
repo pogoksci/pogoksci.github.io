@@ -5900,8 +5900,9 @@ body:not(.home-active) #splash-screen {
   display: none;
 }
 
-#tools-form-page .file-input-hidden {
-  display: none;
+/* Global Utility for hidden file inputs */
+.file-input-hidden {
+  display: none !important;
 }
 
 #tools-form-page .std-base-row {
