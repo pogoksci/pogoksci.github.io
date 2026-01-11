@@ -54,10 +54,10 @@
     if (settingsToggle && submenuSettings) {
       settingsToggle.addEventListener("click", (e) => {
         e.preventDefault();
-        e.stopPropagation(); // 메뉴 닫힘 방지
-        const isHidden = submenuSettings.style.display === "none";
-        submenuSettings.style.display = isHidden ? "block" : "none";
-        settingsToggle.classList.toggle("expanded", isHidden);
+        e.stopPropagation();
+        const isOpen = settingsToggle.classList.contains("expanded");
+        submenuSettings.style.display = isOpen ? "none" : "block";
+        settingsToggle.classList.toggle("expanded", !isOpen);
       });
     }
 
@@ -67,10 +67,10 @@
     if (safetyToggle && submenuSafety) {
       safetyToggle.addEventListener("click", (e) => {
         e.preventDefault();
-        e.stopPropagation(); // 메뉴 닫힘 방지
-        const isHidden = submenuSafety.style.display === "none";
-        submenuSafety.style.display = isHidden ? "block" : "none";
-        safetyToggle.classList.toggle("expanded", isHidden);
+        e.stopPropagation();
+        const isOpen = safetyToggle.classList.contains("expanded");
+        submenuSafety.style.display = isOpen ? "none" : "block";
+        safetyToggle.classList.toggle("expanded", !isOpen);
       });
     }
 
@@ -221,9 +221,9 @@
       labUsageToggle.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const isHidden = submenuLabUsage.style.display === "none";
-        submenuLabUsage.style.display = isHidden ? "block" : "none";
-        labUsageToggle.classList.toggle("expanded", isHidden);
+        const isOpen = labUsageToggle.classList.contains("expanded");
+        submenuLabUsage.style.display = isOpen ? "none" : "block";
+        labUsageToggle.classList.toggle("expanded", !isOpen);
       });
     }
 

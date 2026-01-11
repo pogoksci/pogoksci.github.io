@@ -37,8 +37,8 @@
                     padding-bottom: 120px;
                 ">
                     <div style="max-width: 1000px; margin: 0 auto;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-                            <h1 style="margin:0; font-weight: 700; color: #333;">🧪 과학실 사용 설명서</h1>
+                        <div class="safety-header-row">
+                            <h1 class="safety-section-title">🧪 과학실 사용 설명서</h1>
                             <button id="btn-sync-manual" style="display:none; padding:8px 16px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">
                                 🔄 최신 콘텐츠 동기화
                             </button>
