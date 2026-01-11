@@ -32,7 +32,7 @@ GitHub에 있는 코드를 내 컴퓨터로 가져오기 위한 도구입니다.
 
 ## 2. 프로젝트 코드 가져오기 (Git Clone)
 
-**목표:** `D:\git` 폴더 안에 `science-lab` 라는 이름으로 코드를 가져옵니다.
+**목표:** `D:\git` 폴더 안에 `scimanager` 라는 이름으로 코드를 가져옵니다.
 
 ### [방법 1] VS Code 터미널 사용하기 (추천)
 
@@ -46,15 +46,15 @@ GitHub에 있는 코드를 내 컴퓨터로 가져오기 위한 도구입니다.
 3. **터미널 열기**:
    - 메뉴에서 **Terminal > New Terminal**을 누릅니다.
 4. **명령어 입력**:
-   - 아래 명령어를 정확히 입력하고 엔터를 칩니다. (뒤에 `science-lab`이
+   - 아래 명령어를 정확히 입력하고 엔터를 칩니다. (뒤에 `scimanager`이
      붙어있는지 꼭 확인하세요!)
    ```bash
-   git clone https://github.com/pogoksci/pogoksci.github.io.git science-lab
+   git clone https://github.com/pogoksci/pogoksci.github.io.git scimanager
    ```
 5. **완료 및 이동**:
-   - 설치가 끝나면 왼쪽에 `science-lab` 폴더가 보입니다.
+   - 설치가 끝나면 왼쪽에 `scimanager` 폴더가 보입니다.
    - **[중요]** 메뉴에서 **File > Open Folder**를 다시 눌러서
-     `D:\git\science-lab` 폴더를 새로 여세요.
+     `D:\git\scimanager` 폴더를 새로 여세요.
 
 ### [방법 2] 윈도우 파워쉘(PowerShell) 사용하기
 
@@ -67,15 +67,15 @@ GitHub에 있는 코드를 내 컴퓨터로 가져오기 위한 도구입니다.
 3. **명령어 입력**:
    - 아래 명령어를 입력하고 엔터를 칩니다.
    ```powershell
-   git clone https://github.com/pogoksci/pogoksci.github.io.git science-lab
+   git clone https://github.com/pogoksci/pogoksci.github.io.git scimanager
    ```
 4. **결과 확인**:
-   - `D:\git` 폴더 안에 `science-lab` 라는 폴더가 생겼는지 확인합니다.
-   - 이제 VS Code를 켜고 `D:\git\science-lab` 폴더를 열어서 작업하면 됩니다.
+   - `D:\git` 폴더 안에 `scimanager` 라는 폴더가 생겼는지 확인합니다.
+   - 이제 VS Code를 켜고 `D:\git\scimanager` 폴더를 열어서 작업하면 됩니다.
 
 ---
 
-이제 코드가 내 컴퓨터(`D:\git\science-lab`)에 준비되었습니다. 다음 단계인
+이제 코드가 내 컴퓨터(`D:\git\scimanager`)에 준비되었습니다. 다음 단계인
 **Supabase(데이터베이스)** 설정을 진행하세요.
 
 ---
@@ -109,7 +109,7 @@ GitHub에 있는 코드를 내 컴퓨터로 가져오기 위한 도구입니다.
 
 ### 단계 3: 내 코드에 적용하기
 
-1. VS Code에서 `D:\git\science-lab` 폴더를 열어둔 상태에서, 왼쪽 파일 목록의
+1. VS Code에서 `D:\git\scimanager` 폴더를 열어둔 상태에서, 왼쪽 파일 목록의
    **[js](file:///d:/Cloud/git/pogoksci/js) 폴더 >
    [supabaseClient.js](file:///d:/Cloud/git/pogoksci/js/supabaseClient.js)
    파일**을 클릭합니다.
