@@ -143,7 +143,7 @@
             <div class="quiz-container">
                 <div class="quiz-header">
                     <h2>스마트 과학실 안전 퀴즈</h2>
-                    <p>우리 학교의 실제 데이터를 활용한 퀴즈입니다. 80점 이상 발급!</p>
+                    <p>우리 학교의 데이터를 활용한 퀴즈입니다. 80점 이상 인증서 발급!</p>
                 </div>
                 <div style="text-align:center; margin-top:20px;">
                     <input type="text" id="quiz-user-name" placeholder="이름을 입력하세요" style="padding:10px; border-radius:8px; border:1px solid #ddd; width:200px; margin-bottom:15px;"><br>
