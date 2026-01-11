@@ -1,0 +1,53 @@
+# -----------------------------
+# Environment & local secrets
+# -----------------------------
+.env
+.env.local
+.env.development
+.env.production
+*.env.*
+
+# -----------------------------
+# Supabase local files
+# -----------------------------
+.supabase/
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+
+# -----------------------------
+# Deno / npm cache
+# -----------------------------
+node_modules/
+deno.lock
+npm-debug.log
+pnpm-lock.yaml
+yarn.lock
+
+# -----------------------------
+# OS / Editor / IDE
+# -----------------------------
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+
+.idea/
+*.swp
+*.swo
+
+# -----------------------------
+# Build artifacts
+# -----------------------------
+dist/
+build/
+out/
+.tmp/
+.cache/
+
+# -----------------------------
+# Logs & diagnostics
+# -----------------------------
+*.log
+logs/
+debug/
