@@ -49,5 +49,10 @@ out/
 # Logs & diagnostics
 # -----------------------------
 *.log
-logs/
-debug/
+# logs/
+# debug/
+
+# -----------------------------
+# App Specific (Security)
+# -----------------------------
+js/supabaseClient.js
