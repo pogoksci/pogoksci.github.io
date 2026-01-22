@@ -25,10 +25,8 @@
   // ------------------------------------------------------------
   // 🔐 Deployment Verification
   // ------------------------------------------------------------
-  if (SUPABASE_URL.includes("https://muprmzkvrjacqatqxayf.supabase.co") || SUPABASE_ANON_KEY.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11cHJtemt2cmphY3FhdHF4YXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjYwNzAsImV4cCI6MjA3NTEwMjA3MH0.K2MO-l6QG5nztCPlT3_zqYOrMt-bqM-O5ZYLQpV1L9Y")) {
-    console.error("❌ FATAL: Supabase Secrets were NOT injected (Template Placeholder detected)!");
-    return;
-  }
+  /* Check removed to avoid false positives during substitution */
+
   
   if (!SUPABASE_URL || SUPABASE_URL.trim() === "" || !SUPABASE_URL.startsWith("http")) {
     console.error("❌ FATAL: SUPABASE_URL is Missing or Invalid! (Value is empty or not a URL)");

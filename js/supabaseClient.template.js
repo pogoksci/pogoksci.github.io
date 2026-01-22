@@ -25,10 +25,8 @@
   // ------------------------------------------------------------
   // 🔐 Deployment Verification
   // ------------------------------------------------------------
-  if (SUPABASE_URL.includes("%%SUPABASE_URL%%") || SUPABASE_ANON_KEY.includes("%%SUPABASE_ANON_KEY%%")) {
-    console.error("❌ FATAL: Supabase Secrets were NOT injected (Template Placeholder detected)!");
-    return;
-  }
+  /* Check removed to avoid false positives during substitution */
+
   
   if (!SUPABASE_URL || SUPABASE_URL.trim() === "" || !SUPABASE_URL.startsWith("http")) {
     console.error("❌ FATAL: SUPABASE_URL is Missing or Invalid! (Value is empty or not a URL)");
