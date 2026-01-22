@@ -22,6 +22,27 @@
     return;
   }
 
+  // ------------------------------------------------------------
+  // 🔐 Deployment Verification
+  // ------------------------------------------------------------
+  if (SUPABASE_URL.includes("%%SUPABASE_URL%%") || SUPABASE_ANON_KEY.includes("%%SUPABASE_ANON_KEY%%")) {
+    console.error("❌ FATAL: Supabase Secrets were NOT injected (Template Placeholder detected)!");
+    return;
+  }
+  
+  if (!SUPABASE_URL || SUPABASE_URL.trim() === "" || !SUPABASE_URL.startsWith("http")) {
+    console.error("❌ FATAL: SUPABASE_URL is Missing or Invalid! (Value is empty or not a URL)");
+    console.error("ℹ️ Current Value (First 5 chars):", SUPABASE_URL.substring(0, 5));
+    console.error("ℹ️ Check GitHub Secrets > SUPABASE_URL");
+    return;
+  }
+
+  if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.trim() === "") {
+    console.error("❌ FATAL: SUPABASE_ANON_KEY is Missing!");
+    console.error("ℹ️ Check GitHub Secrets > SUPABASE_ANON_KEY");
+    return;
+  }
+
   try {
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {

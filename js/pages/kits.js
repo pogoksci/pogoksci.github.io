@@ -1,5 +1,7 @@
 (function () {
-    const supabase = globalThis.App?.supabase || window.supabaseClient;
+    // const supabase = globalThis.App?.supabase || window.supabaseClient; // Removed to fix race condition
+    let supabase = null; // Lazy load
+
 
     // State
     let catalog = []; // Full list from experiment_kit table
@@ -51,6 +53,7 @@
 
     const Kits = {
         async init() {
+            supabase = globalThis.App?.supabase || window.supabaseClient; // Init here
             console.log("📦 Kit Page Initialized");
             currentSort = 'name_class'; // 정렬 상태 초기화
 
