@@ -300,3 +300,62 @@ public.user_roles;
    - 완료되면 "Deployed Function..." 메시지가 뜹니다.
 
 이제 모든 기능이 완벽하게 동작합니다!
+
+---
+
+## 9. 프로젝트 백업 및 전달 가이드 (관리자용)
+
+이 섹션은 프로젝트 관리자가 현재 Supabase 프로젝트의 모든 구조와 데이터를
+추출하여 다른 사람에게 전달하거나 백업할 때 사용하는 방법입니다.
+
+### 9-1. 사전 준비
+
+이미 **8. [고급] 서버 기능 설정하기**에서 Supabase CLI를 설치하고 로그인했다면
+이 단계는 건너뛰어도 됩니다.
+
+1. **Supabase CLI 설치 및 로그인**: (위 8단계 참고)
+2. **프로젝트 링크**:
+   ```bash
+   supabase link --project-ref <your-project-id>
+   ```
+
+### 9-2. 데이터베이스 및 스키마 추출
+
+Supabase CLI를 사용하여 데이터베이스의 구조(Schema)와 데이터를 SQL 파일로
+추출합니다.
+
+**전체 백업 명령어 (추천)**: `auth` 사용자 정보, `storage` 폴더 구조, `public`
+데이터 등을 모두 포함합니다.
+
+```bash
+supabase db dump --db-url "postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres" \
+  --schema "auth,storage,public" \
+  -f full_backup.sql
+```
+
+- `[PASSWORD]`: DB 비밀번호
+- `[PROJECT_REF]`: 프로젝트 ID
+- **주의**: `auth`와 `storage` 스키마 복원 시 기존 시스템 테이블과 충돌할 수
+  있으므로, 빈 프로젝트에 복원하거나 주의해서 실행해야 합니다.
+
+### 9-3. 기타 요소 백업
+
+- **Edge Functions**: `supabase/functions` 폴더를 압축(`zip`)하여 전달합니다.
+  SQL에 포함되지 않습니다.
+- **Storage 파일**: 실제 업로드된 파일들은 SQL에 포함되지 않습니다. 별도로
+  다운로드하거나 스크립트를 이용해 백업해야 합니다.
+
+### 9-4. 전달 패키지 구성 요약
+
+다른 사람에게 프로젝트를 완벽하게 넘겨주려면 다음 파일들을 하나의 폴더에 담아
+전달하세요.
+
+1. `full_backup.sql` (전체 구조 및 데이터)
+2. `supabase/functions/` (서버 기능 코드)
+3. `supabase/config.toml` (프로젝트 설정)
+
+**받는 사람의 복원 순서**:
+
+1. 새 Supabase 프로젝트 생성 및 `supabase link`
+2. DB 초기화 후 스키마/데이터 적용: `psql ... < full_backup.sql`
+3. Edge Functions 배포: `supabase functions deploy`
