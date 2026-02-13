@@ -142,7 +142,35 @@ DB구조([schema.sql](file:///d:/Cloud/git/pogoksci/schema.sql))를 그대로 �
 
 ---
 
-## 5. 웹사이트 실행하기
+## 5. 관리자 ID 만들기
+
+1단계: Supabase 대시보드 UI에서 seed 유저 생성
+
+Supabase 메뉴에서 Authentication -> Users로 들어갑니다. 오른쪽 상단의 [Add User]
+-> **[Create new user]**를 클릭합니다.
+
+1. Email: admin@goe.sci / Password:
+2. Email: head@goe.sci / Password:
+3. Email: teacher@goe.sci / Password:
+
+(원하는 비밀번호) 을 입력합니다.
+
+Auto-confirm User: 이 체크박스를 반드시 체크하고 [Create User]를 누릅니다.
+
+2단계: 생성된 유저에게 역할 부여 (SQL)
+
+-- 이미 존재하는 auth.users 유저들을 public.user_roles 테이블에 연결합니다.
+INSERT INTO public.user_roles (user_id, email, role, status) SELECT id, email,
+CASE WHEN email = 'admin@goe.sci' THEN 'admin' WHEN email = 'head@goe.sci' THEN
+'head_teacher' WHEN email = 'teacher@goe.sci' THEN 'teacher' ELSE 'guest' END as
+role, 'active' as status FROM auth.users WHERE email IN ('admin@goe.sci',
+'head@goe.sci', 'teacher@goe.sci') ON CONFLICT (user_id) DO UPDATE SET role =
+EXCLUDED.role, status = EXCLUDED.status; -- 결과 확인 SELECT * FROM
+public.user_roles;
+
+3단계: 확인! 이제 사이트에서 로그인을 시도해 보세요.
+
+## 6. 웹사이트 실행하기
 
 ### 방법 1: VS Code "Live Server" 사용 (추천)
 
@@ -161,7 +189,7 @@ DB구조([schema.sql](file:///d:/Cloud/git/pogoksci/schema.sql))를 그대로 �
 
 ---
 
-## 6. 인터넷에 배포하기 (sdevbox.github.io)
+## 7. 인터넷에 배포하기 (sdevbox.github.io)
 
 내 컴퓨터뿐만 아니라, 다른 사람들도 접속할 수 있게 인터넷에 올리고 싶다면
 **GitHub Pages**를 사용합니다. 새로운 사용자의 GitHub 아이디가 `myshcoolid`라고
@@ -209,7 +237,7 @@ DB구조([schema.sql](file:///d:/Cloud/git/pogoksci/schema.sql))를 그대로 �
 
 ---
 
-## 7. [고급] 서버 기능 (화학 검색, 안전 정보 등) 설정하기
+## 8. [고급] 서버 기능 (화학 검색, 안전 정보 등) 설정하기
 
 이 단계는 조금 어려울 수 있지만, **화학물질 검색, 안전 정보 연동** 기능을 쓰려면
 꼭 필요합니다. Supabase의 **Edge Functions**라는 ‘서버 프로그램’을 배포해야
