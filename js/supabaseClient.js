@@ -27,7 +27,7 @@
   // ------------------------------------------------------------
   /* Check removed to avoid false positives during substitution */
 
-  
+
   if (!SUPABASE_URL || SUPABASE_URL.trim() === "" || !SUPABASE_URL.startsWith("http")) {
     console.error("❌ FATAL: SUPABASE_URL is Missing or Invalid! (Value is empty or not a URL)");
     console.error("ℹ️ Current Value (First 5 chars):", SUPABASE_URL.substring(0, 5));
@@ -63,9 +63,10 @@
   if (typeof globalThis !== "undefined") {
     globalThis.supabaseClient = globalThis.App.supabase;
     globalThis.APP_CONFIG = APP_CONFIG;
+    globalThis.App.APP_CONFIG = globalThis.APP_CONFIG; // Reference for consistency
   }
 
-  globalThis.App.loadGlobalSettings = async function() {
+  globalThis.App.loadGlobalSettings = async function () {
     if (!globalThis.App.supabase) return;
     try {
       const { data, error } = await globalThis.App.supabase
@@ -79,7 +80,7 @@
         if (settings['SCHOOL_NAME']) {
           APP_CONFIG.SCHOOL = settings['SCHOOL_NAME'];
         }
-        
+
         APP_CONFIG.API_EXP_CAS = settings['API_EXP_CAS'];
         APP_CONFIG.API_EXP_KOSHA = settings['API_EXP_KOSHA'];
         APP_CONFIG.API_EXP_KREACH = settings['API_EXP_KREACH'];

@@ -870,3 +870,97 @@ body {
 }
 
 /* Removed Section 20 (2-Line Layout) to enforce Single Line Layout */
+/* Certificate Premium Design Mobile Overrides */
+.certificate-preview {
+  padding: 10px !important;
+}
+
+.cert-container {
+  padding: 30px 15px !important;
+  border: 1px solid #ae946d !important;
+  min-height: 80vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  position: relative !important;
+}
+
+.cert-container::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 3px !important;
+  left: 3px !important;
+  right: 3px !important;
+  bottom: 3px !important;
+  border: 3px solid #ae946d !important;
+  pointer-events: none !important;
+}
+
+.cert-container::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 9px !important;
+  left: 9px !important;
+  right: 9px !important;
+  bottom: 9px !important;
+  border: 0.5px solid #ae946d !important;
+  pointer-events: none !important;
+}
+
+.cert-header {
+  margin-bottom: 30px !important;
+}
+
+.cert-title-top {
+  font-size: 0.8rem !important;
+  letter-spacing: 2px !important;
+}
+
+.cert-main-title {
+  font-size: 1.8rem !important;
+}
+
+.cert-student-box {
+  margin: 20px 0 !important;
+}
+
+.cert-name {
+  font-size: 1.6rem !important;
+  padding: 0 15px !important;
+}
+
+.cert-text {
+  font-size: 1.0rem !important;
+  margin: 15px 0 !important;
+}
+
+.cert-date {
+  margin-top: 25px !important;
+}
+
+.cert-footer {
+  margin-top: 40px !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 15px !important;
+  padding: 0 !important;
+}
+
+.cert-school-name {
+  font-size: 1.3rem !important;
+  text-align: center !important;
+}
+
+.cert-seal {
+  width: 80px !important;
+  height: 80px !important;
+  font-size: 0.7rem !important;
+}
+
+.cert-serial {
+  position: static !important;
+  margin-top: 20px !important;
+  font-size: 0.7rem !important;
+  text-align: center !important;
+}

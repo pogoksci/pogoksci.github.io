@@ -153,14 +153,14 @@
         `;
     }
 
-    SafetyEdu.startQuiz = async function() {
+    SafetyEdu.startQuiz = async function () {
         const name = document.getElementById('quiz-user-name').value;
         if (!name) { alert("이름을 입력해주세요."); return; }
-        
+
         QUIZ_STATE.userName = name;
         QUIZ_STATE.currentStep = 0;
         QUIZ_STATE.score = 0;
-        
+
         // Load Quiz Bank
         QUIZ_STATE.questions = await generateHybridQuestions();
         renderNextQuestion();
@@ -202,7 +202,7 @@
                 const invCopy = [...invData];
                 // Decide how many dynamic questions to use (max 10, but not more than available items)
                 const dynamicCount = Math.min(10, invCopy.length);
-                
+
                 // Inject ONE Mass Comparison Question if possible
                 let massQuestionAdded = false;
                 const massQ = App.SafetyQuizData.getMassComparisonQuestion(invCopy);
@@ -217,14 +217,14 @@
                 for (let i = 0; i < loopLimit; i++) {
                     const idx = Math.floor(Math.random() * invCopy.length);
                     // Use standard item
-                    const item = invCopy[idx]; 
+                    const item = invCopy[idx];
                     // Note: We don't splice here to keep 'invCopy' full for distractor generation if needed, 
                     // but to avoid duplicate questions about same item, we should splice?
                     // getDynamicTemplates needs 'allItems' for distractors.
                     // Let's splice to pick the main item, but pass original 'invData' as context for distractors.
-                    
-                    invCopy.splice(idx, 1); 
-                    
+
+                    invCopy.splice(idx, 1);
+
                     // Get templates
                     const types = App.SafetyQuizData.getDynamicTemplates(item, invData);
                     if (types.length > 0) {
@@ -288,7 +288,7 @@
         `;
     }
 
-    SafetyEdu.checkAnswer = function(idx) {
+    SafetyEdu.checkAnswer = function (idx) {
         const step = QUIZ_STATE.currentStep;
         if (idx === QUIZ_STATE.questions[step].correct) {
             QUIZ_STATE.score += 100 / QUIZ_STATE.questions.length;
@@ -313,21 +313,54 @@
         `;
     }
 
-    SafetyEdu.showCertificate = function() {
+    SafetyEdu.showCertificate = function () {
         const area = document.getElementById('certificate-area');
         area.style.display = 'block';
+
+        // Use global school name or fallback
+        const schoolName = globalThis.APP_CONFIG?.SCHOOL || '과학실';
+
+        // Date-time based Serial: YYYYMMDD-HHmmSS
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hour = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const sec = String(now.getSeconds()).padStart(2, '0');
+        const serialNum = `${year}${month}${day}-${hour}${min}${sec}`;
+
+        const dateStr = `${year}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+
         area.innerHTML = `
-            <div id="print-zone">
-                <div class="cert-title">과학실 안전교육 이수 인증서</div>
-                <div class="cert-content">
-                    <p style="font-size:1.8rem; margin-bottom:40px;">성명: <strong>${QUIZ_STATE.userName}</strong></p>
-                    <p>위 학생은 SciManager를 통한 과학실험<br>안전교육 과정을 우수한 성적으로 이수하였기에<br>이 인증서를 수여합니다.</p>
-                    <p style="margin-top:50px;">${new Date().toLocaleDateString()}</p>
-                    <div style="margin-top:40px; font-weight:bold; font-size:1.8rem;">${App.APP_CONFIG?.SCHOOL || 'GOE학교'}</div>
+            <div id="print-zone" class="cert-container">
+                <div class="cert-header">
+                    <div class="cert-title-top">CERTIFICATE OF COMPLETION</div>
+                    <h1 class="cert-main-title">안전 교육 이수증</h1>
                 </div>
-                <div style="margin-top:30px; text-align:right;">[SciManager Safety Certificate #SD-${Math.floor(Math.random()*9000)+1000}]</div>
+                <div class="cert-body">
+                    <div class="cert-student-box">
+                        <div class="cert-label">성 명</div>
+                        <div class="cert-name">${QUIZ_STATE.userName}</div>
+                    </div>
+                    <div class="cert-text">
+                        위 학생은 SciManager를 통한<br>
+                        <strong>[스마트 과학실 안전 교육]</strong> 과정을<br>
+                        우수한 성적으로 이수하였으므로 이 증서를 수여합니다.
+                    </div>
+                    <div class="cert-date">${dateStr}</div>
+                </div>
+                <div class="cert-footer">
+                    <div class="cert-school-name">${schoolName}</div>
+                    <div class="cert-seal">
+                        SciManager<br>인증인
+                    </div>
+                </div>
+                <div class="cert-serial">[SciManager Safety Certificate #${serialNum}]</div>
             </div>
-            <button class="btn-primary" onclick="window.print()" style="margin-top:20px;">프린트 하기</button>
+            <div style="text-align:center; margin-top:30px;">
+                <button class="btn-primary" onclick="window.print()" style="padding: 15px 40px; font-size: 1.1rem; border-radius: 30px;">프린트 하기</button>
+            </div>
         `;
         area.scrollIntoView({ behavior: 'smooth' });
     };
