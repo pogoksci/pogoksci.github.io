@@ -620,127 +620,126 @@
             container.appendChild(form);
         }
 
-        async function saveWeeklyLog() {
-            if (!weekDates || weekDates.length === 0) return;
-            if (!confirm('현재 화면의 내용을 저장하시겠습니까?\n(체크된 항목만 저장되며, 기존 데이터는 덮어씌워집니다)')) return;
+            async function saveWeeklyLog() {
+                if (!supabase || !currentRoomId) {
+                    alert('저장할 수 없습니다. (데이터베이스 또는 과학실 정보 누락)');
+                    return;
+                }
 
-            const supabase = globalThis.App?.supabase;
-            if (!supabase || !currentRoomId) {
-                alert('데이터베이스 연결에 문제가 있습니다.');
-                return;
-            }
+                if (!weekDates || weekDates.length === 0) return;
+                if (!confirm('현재 화면의 내용을 저장하시겠습니까?\n(체크된 항목만 저장되며, 기존 데이터는 덮어씌워집니다)')) return;
 
-            try {
-                // 1. Collect Data from UI (Group by period to avoid duplicate key errors)
-                const checkedEls = document.querySelectorAll('.activity-container .activity-item.checked');
-                const rowMap = new Map(); // Key: usage_date + period
-                const start = getYYYYMMDD(weekDates[0]);
-                const end = getYYYYMMDD(weekDates[6]);
-
-                checkedEls.forEach(el => {
-                    const raw = el.dataset.item;
-                    if (!raw) return;
-                    const d = JSON.parse(raw);
-
-                    const key = `${d.usage_date}_${d.period}`;
-                    if (!rowMap.has(key)) {
-                        // Find Semester for this date
-                        const usageDateObj = new Date(d.usage_date);
-                        const sem = findSemesterForDate(usageDateObj);
-
-                        const row = {
-                            lab_room_id: currentRoomId,
-                            usage_date: d.usage_date,
-                            period: parseInt(d.period),
-                            activity_type: d.activity_type,
-                            safety_education: '실시', // Default
-                            remarks: '승인',
-                            semester_id: sem ? sem.id : currentSemesterId,
-                            content: d.content || ''
-                        };
-
-                        // Copy optional fields
-                        if (d.grade) row.grade = d.grade;
-                        if (d.class_number) row.class_number = d.class_number;
-                        if (d.subject_id) row.subject_id = d.subject_id;
-                        if (d.teacher_id) row.teacher_id = d.teacher_id;
-                        if (d.club_id) row.club_id = d.club_id;
-
-                        rowMap.set(key, row);
-                    } else {
-                        // Merge with existing row for this period
-                        const existing = rowMap.get(key);
-                        
-                        // Merge content or identifying info
-                        if (d.content) {
-                            existing.content = existing.content ? existing.content + ', ' + d.content : d.content;
-                        }
-                        
-                        // If current row is missing fields, take from d
-                        if (!existing.grade && d.grade) existing.grade = d.grade;
-                        if (!existing.class_number && d.class_number) existing.class_number = d.class_number;
-                        if (!existing.subject_id && d.subject_id) existing.subject_id = d.subject_id;
-                        if (!existing.teacher_id && d.teacher_id) existing.teacher_id = d.teacher_id;
-                        if (!existing.club_id && d.club_id) existing.club_id = d.club_id;
-                        
-                        // Concatenate activity types if they differ
-                        if (d.activity_type && existing.activity_type !== d.activity_type) {
-                            existing.activity_type = '복합활동'; 
-                        }
-                    }
-                });
-
-                const newRows = Array.from(rowMap.values());
-
-                // 2. Delete Existing Logs (Explicit filter to match room and date range)
-                // Use a more robust check before deleting
                 if (isSaving) return;
                 isSaving = true;
-                
-                const { data: existingLogs, error: fetchError } = await supabase.from('lab_usage_log')
-                    .select('id, lab_room_id, usage_date, period')
-                    .eq('lab_room_id', currentRoomId)
-                    .gte('usage_date', start)
-                    .lte('usage_date', end);
-                
-                if (fetchError) throw fetchError;
 
-                // Delete ALL in range (using ID list is more reliable)
-                if (existingLogs && existingLogs.length > 0) {
-                    const idsToDelete = existingLogs.map(l => l.id);
-                    const { error: delError } = await supabase.from('lab_usage_log')
-                        .delete()
-                        .in('id', idsToDelete);
-                    if (delError) throw delError;
-                }
+                try {
+                    const start = getYYYYMMDD(weekDates[0]);
+                    const end = getYYYYMMDD(weekDates[6]);
 
-                // 3. Upsert New (Overwrite if exists using the natural key)
-                if (newRows.length > 0) {
-                    console.log("📤 Upserting Rows:", newRows);
-                    // We use upsert with explicit onConflict to handle cases where 
-                    // delete might have missed something or parallel saves occur.
-                    const { error: insError } = await supabase.from('lab_usage_log')
-                        .upsert(newRows, { 
-                            onConflict: 'lab_room_id, usage_date, period' 
-                        });
-                        
-                    if (insError) {
-                        console.error("❌ Upsert failed details:", insError);
-                        // If it still fails, the constraint might be different or RLS blocks upsert
-                        throw insError;
+                    // 1. Fetch Existing Logs from DB
+                    const { data: dbRows, error: fetchError } = await supabase.from('lab_usage_log')
+                        .select('*')
+                        .eq('lab_room_id', currentRoomId)
+                        .gte('usage_date', start)
+                        .lte('usage_date', end);
+
+                    if (fetchError) throw fetchError;
+
+                    // 2. Map existing rows for quick lookup
+                    const dbMap = new Map();
+                    dbRows.forEach(r => {
+                        const key = `${r.usage_date}_${r.period}`;
+                        dbMap.set(key, r);
+                    });
+
+                    // 3. Collect & Merge Checked UI Items
+                    const checkedEls = document.querySelectorAll('.activity-container .activity-item.checked');
+                    const uiMap = new Map();
+
+                    checkedEls.forEach(el => {
+                        const raw = el.dataset.raw || el.dataset.item; // Fallback for various versions
+                        if (!raw) return;
+                        const d = JSON.parse(raw);
+                        const key = `${d.usage_date}_${d.period}`;
+
+                        if (!uiMap.has(key)) {
+                            const sem = getSemesterForDate(d.usage_date);
+                            const newRow = {
+                                lab_room_id: currentRoomId,
+                                usage_date: d.usage_date,
+                                period: parseInt(d.period),
+                                activity_type: d.activity_type,
+                                safety_education: '실시', // Default
+                                remarks: '승인',
+                                semester_id: sem ? sem.id : currentSemesterId,
+                                content: d.content || '',
+                                grade: d.grade || null,
+                                class_number: d.class_number || null,
+                                subject_id: d.subject_id || null,
+                                teacher_id: d.teacher_id || null,
+                                club_id: d.club_id || null
+                            };
+                            // If this slot already exists in DB, REUSE its ID to force an UPDATE
+                            const existing = dbMap.get(key);
+                            if (existing) {
+                                newRow.id = existing.id;
+                            }
+                            uiMap.set(key, newRow);
+                        } else {
+                            // Merge logic for multiple checked items in same slot
+                            const existingInUI = uiMap.get(key);
+                            if (d.content) {
+                                existingInUI.content = existingInUI.content ? `${existingInUI.content}, ${d.content}` : d.content;
+                            }
+                            if (d.activity_type && d.activity_type !== existingInUI.activity_type) {
+                                existingInUI.activity_type = '복합활동';
+                            }
+                            // Fallback for other fields if empty
+                            existingInUI.grade = existingInUI.grade || d.grade;
+                            existingInUI.class_number = existingInUI.class_number || d.class_number;
+                            existingInUI.subject_id = existingInUI.subject_id || d.subject_id;
+                            existingInUI.teacher_id = existingInUI.teacher_id || d.teacher_id;
+                            existingInUI.club_id = existingInUI.club_id || d.club_id;
+                        }
+                    });
+
+                    // 4. Determine items to delete
+                    const idsToDelete = dbRows
+                        .filter(r => !uiMap.has(`${r.usage_date}_${r.period}`))
+                        .map(r => r.id);
+
+                    // 5. Execute Transactional Sync
+                    if (idsToDelete.length > 0) {
+                        const { error: delError } = await supabase.from('lab_usage_log')
+                            .delete()
+                            .in('id', idsToDelete);
+                        if (delError) throw delError;
                     }
+
+                    const rowsToUpsert = Array.from(uiMap.values());
+                    if (rowsToUpsert.length > 0) {
+                        console.log("📤 Syncing (Upsert):", rowsToUpsert);
+                        const { error: upsertError } = await supabase.from('lab_usage_log')
+                            .upsert(rowsToUpsert, { 
+                                onConflict: 'lab_room_id, usage_date, period' 
+                            });
+
+                        if (upsertError) {
+                            console.error("❌ Sync (Upsert) failed:", upsertError);
+                            throw upsertError;
+                        }
+                    }
+
+                    alert('저장되었습니다.');
+                    refresh();
+
+                } catch (err) {
+                    console.error("Perfect Sync failed:", err);
+                    alert('저장 중 오류가 발생했습니다: ' + (err.message || JSON.stringify(err)));
+                } finally {
+                    isSaving = false;
                 }
-
-                alert('저장되었습니다.');
-                refresh();
-
-            } catch (err) {
-                console.error("Save failed:", err);
-                alert('저장 중 오류가 발생했습니다: ' + (err.message || JSON.stringify(err)));
-            } finally {
-                this.isSaving = false;
             }
-        }
 
         function getGradeForSubject(fullName) {
             const config = globalThis.App?.SubjectConfig;
