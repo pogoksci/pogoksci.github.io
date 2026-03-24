@@ -161,7 +161,8 @@
         const normInputWithoutSuffix = normInput.replace(/[0-9ABC]$/, '');
 
         // 2. Try to find match in DB by normalizing both sides
-        // If normInput is "통학과학", compare it with normalize("통학과학")
+        // If normInput is "통화1", normalize(normInput) might be "통합과학I" (if alias exists)
+        // We compare normalized DB names with normalized input
         let found = dbSubjects.find(s => normalize(s.name) === normInput) || 
                     dbSubjects.find(s => normalize(s.name) === normalize(normInputWithoutSuffix));
         
@@ -178,7 +179,15 @@
     function inferSubjectFromTeacher(teacher, dbSubjects, grade) {
         const teacherName = teacher.name || '';
         
-        // Subject mappings based on teacher name prefixes
+        // 1. Special case for Grade 1: 
+        // Regardless of teacher's base subject, 1st grade should be Tonghap-Gwahak or GwaTamSil
+        if (grade === 1) {
+            const prefers = ['통합과학', '과학탐구실험'];
+            const found = dbSubjects.find(s => prefers.some(p => s.name.includes(p)));
+            if (found) return found.id;
+        }
+
+        // 2. Mapping based on teacher name prefixes (for Grad 2 & 3)
         const mappings = [
             { key: '화', subjects: ['화학', '물질', '화반'] },
             { key: 'Chem', subjects: ['화학', '물질', '화반'] },
@@ -199,12 +208,8 @@
 
         if (candidates.length === 0) return null;
 
-        // Grade-based preferences
-        if (grade === 1) {
-            // Grade 1 prefers Tonghap-Gwahak or GwaTamSil
-            const g1 = candidates.find(s => s.name.includes('통합과학') || s.name.includes('과학탐구실험'));
-            if (g1) return g1.id;
-        } else if (grade === 2) {
+        // Grade-based preferences for Level I/II (Grade 2/3)
+        if (grade === 2) {
             const level1 = candidates.find(s => s.name.includes('I') && !s.name.includes('II'));
             if (level1) return level1.id;
         } else if (grade === 3) {
