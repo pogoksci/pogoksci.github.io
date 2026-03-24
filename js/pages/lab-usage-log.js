@@ -630,9 +630,9 @@
             }
 
             try {
-                // 1. Collect Data from UI
+                // 1. Collect Data from UI (Group by period to avoid duplicate key errors)
                 const checkedEls = document.querySelectorAll('.activity-container .activity-item.checked');
-                const newRows = [];
+                const rowMap = new Map(); // Key: usage_date + period
                 const start = getYYYYMMDD(weekDates[0]);
                 const end = getYYYYMMDD(weekDates[6]);
 
@@ -641,30 +641,55 @@
                     if (!raw) return;
                     const d = JSON.parse(raw);
 
-                    // Find Semester for this date
-                    const usageDateObj = new Date(d.usage_date);
-                    const sem = findSemesterForDate(usageDateObj);
+                    const key = `${d.usage_date}_${d.period}`;
+                    if (!rowMap.has(key)) {
+                        // Find Semester for this date
+                        const usageDateObj = new Date(d.usage_date);
+                        const sem = findSemesterForDate(usageDateObj);
 
-                    const row = {
-                        lab_room_id: currentRoomId,
-                        usage_date: d.usage_date,
-                        period: parseInt(d.period),
-                        activity_type: d.activity_type,
-                        safety_education: '실시', // Default
-                        remarks: '승인',
-                        semester_id: sem ? sem.id : currentSemesterId
-                    };
+                        const row = {
+                            lab_room_id: currentRoomId,
+                            usage_date: d.usage_date,
+                            period: parseInt(d.period),
+                            activity_type: d.activity_type,
+                            safety_education: '실시', // Default
+                            remarks: '승인',
+                            semester_id: sem ? sem.id : currentSemesterId,
+                            content: d.content || ''
+                        };
 
-                    // Copy optional fields
-                    if (d.grade) row.grade = d.grade;
-                    if (d.class_number) row.class_number = d.class_number;
-                    if (d.subject_id) row.subject_id = d.subject_id;
-                    if (d.teacher_id) row.teacher_id = d.teacher_id;
-                    if (d.club_id) row.club_id = d.club_id;
-                    if (d.content) row.content = d.content;
+                        // Copy optional fields
+                        if (d.grade) row.grade = d.grade;
+                        if (d.class_number) row.class_number = d.class_number;
+                        if (d.subject_id) row.subject_id = d.subject_id;
+                        if (d.teacher_id) row.teacher_id = d.teacher_id;
+                        if (d.club_id) row.club_id = d.club_id;
 
-                    newRows.push(row);
+                        rowMap.set(key, row);
+                    } else {
+                        // Merge with existing row for this period
+                        const existing = rowMap.get(key);
+                        
+                        // Merge content or identifying info
+                        if (d.content) {
+                            existing.content = existing.content ? existing.content + ', ' + d.content : d.content;
+                        }
+                        
+                        // If current row is missing fields, take from d
+                        if (!existing.grade && d.grade) existing.grade = d.grade;
+                        if (!existing.class_number && d.class_number) existing.class_number = d.class_number;
+                        if (!existing.subject_id && d.subject_id) existing.subject_id = d.subject_id;
+                        if (!existing.teacher_id && d.teacher_id) existing.teacher_id = d.teacher_id;
+                        if (!existing.club_id && d.club_id) existing.club_id = d.club_id;
+                        
+                        // Concatenate activity types if they differ
+                        if (d.activity_type && existing.activity_type !== d.activity_type) {
+                            existing.activity_type = '복합활동'; 
+                        }
+                    }
                 });
+
+                const newRows = Array.from(rowMap.values());
 
                 // 2. Delete Existing Logs (Overwrite strategy for this room/week)
                 const { error: delError } = await supabase.from('lab_usage_log')
