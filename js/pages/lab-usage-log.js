@@ -719,10 +719,9 @@
                     const rowsToUpsert = Array.from(uiMap.values());
                     if (rowsToUpsert.length > 0) {
                         console.log("📤 Syncing (Upsert):", rowsToUpsert);
+                        // Default to Primary Key (id) by removing explicit onConflict
                         const { error: upsertError } = await supabase.from('lab_usage_log')
-                            .upsert(rowsToUpsert, { 
-                                onConflict: 'lab_room_id, usage_date, period' 
-                            });
+                            .upsert(rowsToUpsert);
 
                         if (upsertError) {
                             console.error("❌ Sync (Upsert) failed:", upsertError);
