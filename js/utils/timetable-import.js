@@ -40,8 +40,9 @@
             unknownSubjects: new Set() // Track unknown subject names
         };
 
+        const currentDbTeachers = dbTeachers || [];
         const teacherNameMap = {};
-        dbTeachers.forEach(t => teacherNameMap[t.name] = t.id);
+        currentDbTeachers.forEach(t => teacherNameMap[t.name] = t.id);
 
         for (let r = 0; r < rows.length; r++) {
             for (let c = 0; c < rows[r].length; c++) {
@@ -54,7 +55,7 @@
                     if (report.foundTeachers.includes(teacherName)) continue;
                     report.foundTeachers.push(teacherName);
 
-                    parseTeacherBlock(rows, r, c, teacherId, teacherScheduleMap, report, dbSubjects, dbTeachers);
+                    parseTeacherBlock(rows, r, c, teacherId, teacherScheduleMap, report, dbSubjects, currentDbTeachers);
                 }
             }
         }
@@ -66,6 +67,7 @@
 
     function parseTeacherBlock(rows, startRow, startCol, teacherId, scheduleMap, report, dbSubjects, dbTeachers) {
         const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+        const currentDbTeachers = dbTeachers || [];
 
         for (let i = 0; i < 7; i++) { // 1 to 7 periods
             const currentRow = startRow + 1 + i;
@@ -77,8 +79,8 @@
 
                 if (cellContent) {
                     report.totalCells++;
-                    // Pass teacherId as well to allow inference
-                    const { parsed, errorReason, rawSubject } = parseCellContent(cellContent, dbSubjects, teacherId, dbTeachers);
+                    // Pass currentDbTeachers to allow inference
+                    const { parsed, errorReason, rawSubject } = parseCellContent(cellContent, dbSubjects, teacherId, currentDbTeachers);
 
                     if (parsed) {
                         if (!scheduleMap[teacherId]) scheduleMap[teacherId] = [];
