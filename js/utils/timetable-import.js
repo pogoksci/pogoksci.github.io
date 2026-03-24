@@ -77,7 +77,8 @@
 
                 if (cellContent) {
                     report.totalCells++;
-                    const { parsed, errorReason, rawSubject } = parseCellContent(cellContent, dbSubjects);
+                    // Pass teacherId as well to allow inference
+                    const { parsed, errorReason, rawSubject } = parseCellContent(cellContent, dbSubjects, teacherId, dbTeachers);
 
                     if (parsed) {
                         if (!scheduleMap[teacherId]) scheduleMap[teacherId] = [];
@@ -100,9 +101,13 @@
         }
     }
 
-    function parseCellContent(text, dbSubjects) {
-        // Regex: Start with Digit (Grade) -> Digit(s) (Class) -> Rest
-        const match = text.match(/^(\d)(\d{2})(.+)$/);
+    function parseCellContent(text, dbSubjects, teacherId = null, dbTeachers = []) {
+        // Preprocess: Replace newline/tab with space, then trim
+        const cleanText = text.replace(/[\r\n\t]+/g, ' ').trim();
+
+        // Regex: Start with Digit (Grade) -> Digit(s) (Class) -> Optional Separator -> Rest (Subject)
+        // Supports: 305물리, 305 물리, 35물리, 305
+        const match = cleanText.match(/^(\d)(\d{1,2})[\/\-\s]*(.*)$/);
 
         if (!match) {
             return { parsed: null, errorReason: 'format_mismatch' };
@@ -112,20 +117,22 @@
         const classNum = parseInt(match[2]);
         let rawSubject = match[3].trim();
 
-        const hasKorean = /[가-힣]/.test(rawSubject);
+        // If subject part is empty, try to find a teacher-based subject
+        let subjectId = findSubjectId(rawSubject, dbSubjects);
 
-        let subjectName = null;
-        if (hasKorean) {
-            subjectName = rawSubject.replace(/^[A-Za-z_]+/, '').trim();
-        } else {
-            // No Korean found, treat as suffix/empty
-            return { parsed: null, errorReason: 'no_korean_subject', rawSubject };
+        // Fallback: If no subject found, and we have teacher info, try to infer from teacher name
+        if (!subjectId && teacherId && dbTeachers) {
+            const teacher = dbTeachers.find(t => t.id == teacherId);
+            if (teacher) {
+                // Try to find a subject that matches a prefix of the teacher's name (e.g., "Chem" -> "화학")
+                // Or if rawSubject contains the teacher's initials/name, ignore it and look for subject
+                // If rawSubject is empty, we definitely use inference
+                subjectId = inferSubjectFromTeacher(teacher, dbSubjects, grade);
+            }
         }
 
-        const subjectId = findSubjectId(subjectName, dbSubjects);
-
         if (!subjectId) {
-            return { parsed: null, errorReason: 'unknown_subject', rawSubject: subjectName };
+            return { parsed: null, errorReason: 'unknown_subject', rawSubject: rawSubject || '(공백)' };
         }
 
         const classGroup = classNum.toString();
@@ -144,19 +151,59 @@
         if (!rawName) return null;
 
         // 1. Normalize input name
-        const normalize = globalThis.App?.normalizeSubject || (n => n.replace(/\s+/g, ''));
-        const normInput = normalize(rawName);
+        const normalize = globalThis.App?.normalizeSubject || (n => n.toString().replace(/\s+/g, ''));
+        let normInput = normalize(rawName);
+
+        // Remove numeric suffixes like "과탐1" or "물리A" if they don't help
+        // But keep I, II, 1, 2 if they are part of level mapping
+        const normInputWithoutSuffix = normInput.replace(/[0-9ABC]$/, '');
 
         // 2. Try to find match in DB by normalizing both sides
-        // This handles cases like input "물리I" and DB "물리학1" matching to "물리학I"
-        const found = dbSubjects.find(s => normalize(s.name) === normInput);
+        let found = dbSubjects.find(s => normalize(s.name) === normInput) || 
+                    dbSubjects.find(s => normalize(s.name) === normInputWithoutSuffix);
+        
         if (found) return found.id;
 
         // 3. StartsWith (fallback)
-        const starts = dbSubjects.find(s => normalize(s.name).startsWith(normInput));
+        const starts = dbSubjects.find(s => normalize(s.name).startsWith(normInput)) ||
+                       dbSubjects.find(s => normalize(s.name).startsWith(normInputWithoutSuffix));
         if (starts) return starts.id;
 
         return null;
+    }
+
+    function inferSubjectFromTeacher(teacher, dbSubjects, grade) {
+        const teacherName = teacher.name || '';
+        
+        // Subject mappings based on teacher name prefixes
+        const mappings = [
+            { key: 'Chem', subjects: ['화학', '물질', '화반'] },
+            { key: 'Phys', subjects: ['물리', '역학', '전자'] },
+            { key: 'Bio', subjects: ['생명', '세포', '유전'] },
+            { key: 'Earth', subjects: ['지구', '지구시스템', '행성'] },
+            { key: '과', subjects: ['통합과학', '과학탐구실험'] }
+        ];
+
+        const match = mappings.find(m => teacherName.toLowerCase().startsWith(m.key.toLowerCase()));
+        if (!match) return null;
+
+        // Try to find a subject that matches one of the candidates and given grade
+        // Filter subjects that contain any of the candidate names
+        const candidates = dbSubjects.filter(s => match.subjects.some(name => s.name.includes(name)));
+
+        if (candidates.length === 0) return null;
+
+        // If grade is 2, prefer Level I. If grade is 3, prefer Level II.
+        if (grade === 2) {
+            const level1 = candidates.find(s => s.name.includes('I') && !s.name.includes('II'));
+            if (level1) return level1.id;
+        } else if (grade === 3) {
+            const level2 = candidates.find(s => s.name.includes('II'));
+            if (level2) return level2.id;
+        }
+
+        // Default: just return the first one
+        return candidates[0].id;
     }
 
     globalThis.App = globalThis.App || {};
