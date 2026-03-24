@@ -54,7 +54,7 @@
                     if (report.foundTeachers.includes(teacherName)) continue;
                     report.foundTeachers.push(teacherName);
 
-                    parseTeacherBlock(rows, r, c, teacherId, teacherScheduleMap, report, dbSubjects);
+                    parseTeacherBlock(rows, r, c, teacherId, teacherScheduleMap, report, dbSubjects, dbTeachers);
                 }
             }
         }
@@ -64,7 +64,7 @@
         return { map: teacherScheduleMap, report: report };
     }
 
-    function parseTeacherBlock(rows, startRow, startCol, teacherId, scheduleMap, report, dbSubjects) {
+    function parseTeacherBlock(rows, startRow, startCol, teacherId, scheduleMap, report, dbSubjects, dbTeachers) {
         const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
         for (let i = 0; i < 7; i++) { // 1 to 7 periods
