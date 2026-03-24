@@ -414,13 +414,13 @@
 
                     // 2. Add potential classes from TEMPLATES (Only those not already in logs)
                     cellTemplates.forEach(t => {
-                        // Check if this specific class/teacher is already in logs for this room/date/period
                         // Since multiple teachers might have same grade/class, teacher_id + subject_id + grade + class_number is the unique combo.
+                        // Use String() for all comparisons to avoid type mismatches (Number vs String)
                         const isAlreadyLogged = cellLogs.some(l =>
-                            l.teacher_id === t.teacher_id &&
-                            l.subject_id === t.subject_id &&
-                            l.grade === t.grade &&
-                            l.class_number === t.class_number
+                            String(l.teacher_id || '') === String(t.teacher_id || '') &&
+                            String(l.subject_id || '') === String(t.subject_id || '') &&
+                            String(l.grade || '') === String(t.grade || '') &&
+                            String(l.class_number || '') === String(t.class_number || '')
                         );
 
                         if (!isAlreadyLogged) {
