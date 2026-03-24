@@ -161,14 +161,15 @@
         const normInputWithoutSuffix = normInput.replace(/[0-9ABC]$/, '');
 
         // 2. Try to find match in DB by normalizing both sides
+        // If normInput is "통학과학", compare it with normalize("통학과학")
         let found = dbSubjects.find(s => normalize(s.name) === normInput) || 
-                    dbSubjects.find(s => normalize(s.name) === normInputWithoutSuffix);
+                    dbSubjects.find(s => normalize(s.name) === normalize(normInputWithoutSuffix));
         
         if (found) return found.id;
 
         // 3. StartsWith (fallback)
         const starts = dbSubjects.find(s => normalize(s.name).startsWith(normInput)) ||
-                       dbSubjects.find(s => normalize(s.name).startsWith(normInputWithoutSuffix));
+                       dbSubjects.find(s => normalize(s.name).startsWith(normalize(normInputWithoutSuffix)));
         if (starts) return starts.id;
 
         return null;
@@ -179,9 +180,13 @@
         
         // Subject mappings based on teacher name prefixes
         const mappings = [
+            { key: '화', subjects: ['화학', '물질', '화반'] },
             { key: 'Chem', subjects: ['화학', '물질', '화반'] },
+            { key: '물', subjects: ['물리', '역학', '전자'] },
             { key: 'Phys', subjects: ['물리', '역학', '전자'] },
+            { key: '생', subjects: ['생명', '세포', '유전'] },
             { key: 'Bio', subjects: ['생명', '세포', '유전'] },
+            { key: '지', subjects: ['지구', '지구시스템', '행성'] },
             { key: 'Earth', subjects: ['지구', '지구시스템', '행성'] },
             { key: '과', subjects: ['통합과학', '과학탐구실험'] }
         ];
@@ -190,13 +195,16 @@
         if (!match) return null;
 
         // Try to find a subject that matches one of the candidates and given grade
-        // Filter subjects that contain any of the candidate names
         const candidates = dbSubjects.filter(s => match.subjects.some(name => s.name.includes(name)));
 
         if (candidates.length === 0) return null;
 
-        // If grade is 2, prefer Level I. If grade is 3, prefer Level II.
-        if (grade === 2) {
+        // Grade-based preferences
+        if (grade === 1) {
+            // Grade 1 prefers Tonghap-Gwahak or GwaTamSil
+            const g1 = candidates.find(s => s.name.includes('통합과학') || s.name.includes('과학탐구실험'));
+            if (g1) return g1.id;
+        } else if (grade === 2) {
             const level1 = candidates.find(s => s.name.includes('I') && !s.name.includes('II'));
             if (level1) return level1.id;
         } else if (grade === 3) {
@@ -204,7 +212,7 @@
             if (level2) return level2.id;
         }
 
-        // Default: just return the first one
+        // Default: return the first one from candidates
         return candidates[0].id;
     }
 
