@@ -714,16 +714,19 @@
                     if (delError) throw delError;
                 }
 
-                // 3. Insert New
+                // 3. Upsert New (Overwrite if exists using the natural key)
                 if (newRows.length > 0) {
-                    console.log("📤 Inserting Rows:", newRows);
-                    const { error: insError } = await supabase.from('lab_usage_log').insert(newRows);
+                    console.log("📤 Upserting Rows:", newRows);
+                    // We use upsert with explicit onConflict to handle cases where 
+                    // delete might have missed something or parallel saves occur.
+                    const { error: insError } = await supabase.from('lab_usage_log')
+                        .upsert(newRows, { 
+                            onConflict: 'lab_room_id, usage_date, period' 
+                        });
+                        
                     if (insError) {
-                        console.error("❌ Insertion failed details:", insError);
-                        // If it still fails with duplicate key, there might be a row we missed or identity sequence is out of sync
-                        if (insError.code === '23505') {
-                            alert('중복 데이터 오류가 발생했습니다. 잠시 후 다시 시도해 주세요. (SEQ_RETRY)');
-                        }
+                        console.error("❌ Upsert failed details:", insError);
+                        // If it still fails, the constraint might be different or RLS blocks upsert
                         throw insError;
                     }
                 }
