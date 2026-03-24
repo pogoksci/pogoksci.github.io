@@ -9,6 +9,7 @@
     let weekDates = []; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
     let showWeekend = false;
     let allSemesters = [];
+    let isSaving = false;
 
     let subjectMap = {};
     let teacherMap = {};
@@ -691,19 +692,40 @@
 
                 const newRows = Array.from(rowMap.values());
 
-                // 2. Delete Existing Logs (Overwrite strategy for this room/week)
-                const { error: delError } = await supabase.from('lab_usage_log')
-                    .delete()
+                // 2. Delete Existing Logs (Explicit filter to match room and date range)
+                // Use a more robust check before deleting
+                if (isSaving) return;
+                isSaving = true;
+                
+                const { data: existingLogs, error: fetchError } = await supabase.from('lab_usage_log')
+                    .select('id, lab_room_id, usage_date, period')
                     .eq('lab_room_id', currentRoomId)
                     .gte('usage_date', start)
                     .lte('usage_date', end);
+                
+                if (fetchError) throw fetchError;
 
-                if (delError) throw delError;
+                // Delete ALL in range (using ID list is more reliable)
+                if (existingLogs && existingLogs.length > 0) {
+                    const idsToDelete = existingLogs.map(l => l.id);
+                    const { error: delError } = await supabase.from('lab_usage_log')
+                        .delete()
+                        .in('id', idsToDelete);
+                    if (delError) throw delError;
+                }
 
                 // 3. Insert New
                 if (newRows.length > 0) {
+                    console.log("📤 Inserting Rows:", newRows);
                     const { error: insError } = await supabase.from('lab_usage_log').insert(newRows);
-                    if (insError) throw insError;
+                    if (insError) {
+                        console.error("❌ Insertion failed details:", insError);
+                        // If it still fails with duplicate key, there might be a row we missed or identity sequence is out of sync
+                        if (insError.code === '23505') {
+                            alert('중복 데이터 오류가 발생했습니다. 잠시 후 다시 시도해 주세요. (SEQ_RETRY)');
+                        }
+                        throw insError;
+                    }
                 }
 
                 alert('저장되었습니다.');
@@ -711,7 +733,9 @@
 
             } catch (err) {
                 console.error("Save failed:", err);
-                alert('저장 중 오류가 발생했습니다: ' + err.message);
+                alert('저장 중 오류가 발생했습니다: ' + (err.message || JSON.stringify(err)));
+            } finally {
+                this.isSaving = false;
             }
         }
 
