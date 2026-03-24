@@ -663,7 +663,7 @@
                         const key = `${d.usage_date}_${d.period}`;
 
                         if (!uiMap.has(key)) {
-                            const sem = getSemesterForDate(d.usage_date);
+                            const sem = findSemesterForDate(new Date(d.usage_date));
                             const newRow = {
                                 lab_room_id: currentRoomId,
                                 usage_date: d.usage_date,
