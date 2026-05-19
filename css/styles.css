@@ -5117,24 +5117,30 @@ body:not(.home-active) #splash-screen {
   box-sizing: border-box;
 }
 
-.date-input-year {
-  width: 40px;
+input[type="text"].date-input-year {
+  width: 44px;
   border: none;
   text-align: center;
   outline: none;
   font-size: 14px;
   padding: 0;
   background: transparent;
+  margin: 0;
+  height: auto;
+  box-shadow: none;
 }
 
-.date-input-month-day {
-  width: 22px;
+input[type="text"].date-input-month-day {
+  width: 26px;
   border: none;
   text-align: center;
   outline: none;
   font-size: 14px;
   padding: 0;
   background: transparent;
+  margin: 0;
+  height: auto;
+  box-shadow: none;
 }
 
 .date-separator {
