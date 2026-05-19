@@ -716,7 +716,14 @@
                         if (delError) throw delError;
                     }
 
-                    const rowsToUpsert = Array.from(uiMap.values());
+                    const rowsToUpsert = Array.from(uiMap.values()).map(row => {
+                        if (!row.id) {
+                            const { id, ...rest } = row;
+                            return rest;
+                        }
+                        return row;
+                    });
+
                     if (rowsToUpsert.length > 0) {
                         console.log("📤 Syncing (Upsert):", rowsToUpsert);
                         // Default to Primary Key (id) by removing explicit onConflict
