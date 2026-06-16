@@ -241,6 +241,10 @@
                     <h2>스마트 과학실 안전 퀴즈</h2>
                     <p>우리 학교의 데이터를 활용한 퀴즈입니다. 80점 이상 인증서 발급!</p>
                 </div>
+                <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 14px 18px; border-radius: 12px; margin: 0 auto 24px auto; max-width: 480px; text-align: left; font-size: 13.5px; line-height: 1.6; color: #1e40af;">
+                    💡 <strong>탐험하며 정답 찾기:</strong><br>
+                    퀴즈를 풀다가 잘 모르는 문제가 나오면, SciManager 사이트 내의 다른 메뉴(영상 교육, 매뉴얼/서식, GHS 기호, 시약/교구 검색 등)를 자유롭게 탐험하며 정답을 찾아 답해 보세요!
+                </div>
                 <div style="text-align:center; margin-top:20px; display:flex; flex-direction:column; align-items:center; gap:12px;">
                     <input type="text" id="quiz-student-no" placeholder="학번을 입력하세요 (예: 50312)" style="padding:10px; border-radius:8px; border:1px solid #ddd; width:220px; font-size:14px;"><br>
                     <input type="text" id="quiz-user-name" placeholder="이름을 입력하세요" style="padding:10px; border-radius:8px; border:1px solid #ddd; width:220px; font-size:14px; margin-top:-10px;"><br>
@@ -386,6 +390,9 @@
                             <div class="quiz-option" onclick="App.SafetyEdu.checkAnswer(${idx})">${opt}</div>
                         `).join('')}
                     </div>
+                </div>
+                <div style="margin-top: 25px; text-align: center; font-size: 0.85rem; color: #64748b; line-height: 1.5; background-color: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    💡 잘 모르는 문제는 SciManager의 다른 메뉴를 탐험하며 정답을 찾아보세요!
                 </div>
             </div>
         `;
