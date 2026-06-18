@@ -246,6 +246,17 @@
   box-shadow: 0 2px 6px rgba(0, 160, 178, 0.2);
 }
 
+.chatbot-chip.chip-filled {
+  background: #00a0b2;
+  color: #ffffff;
+  border-color: #00a0b2;
+}
+
+.chatbot-chip.chip-filled:hover {
+  background: #008cbd;
+  border-color: #008cbd;
+}
+
 /* 7. Chemical Info Cards */
 .chatbot-chemical-card {
   width: 280px;
@@ -413,4 +424,124 @@
   #chatbot-panel.chatbot-panel-hidden {
     transform: translateY(100%);
   }
+}
+
+/* 10. Emergency SOS Card */
+.chatbot-emergency-card {
+  width: 280px;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: #fff5f5;
+  border: 1.5px solid #ff8787;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.15);
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0% { border-color: #ff8787; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.15); }
+  50% { border-color: #fa5252; box-shadow: 0 4px 16px rgba(250, 82, 82, 0.3); }
+  100% { border-color: #ff8787; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.15); }
+}
+
+.chatbot-emergency-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid rgba(255, 107, 107, 0.2);
+  padding-bottom: 6px;
+}
+
+.chatbot-emergency-title {
+  font-weight: bold;
+  font-size: 13.5px;
+  color: #e03131;
+}
+
+.chatbot-emergency-desc {
+  font-size: 12.5px;
+  color: #495057;
+  line-height: 1.5;
+}
+
+/* 11. Experiment Matching Card */
+.chatbot-matching-card {
+  width: 280px;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: #f3fcfd;
+  border: 1px solid rgba(0, 160, 178, 0.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 160, 178, 0.05);
+}
+
+.chatbot-matching-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed rgba(0, 160, 178, 0.2);
+  padding-bottom: 6px;
+}
+
+.chatbot-matching-title {
+  font-weight: bold;
+  font-size: 14px;
+  color: #008c9e;
+}
+
+.chatbot-matching-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.chatbot-matching-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.02);
+  font-size: 12px;
+}
+
+.chatbot-matching-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.chatbot-matching-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.matching-badge {
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.matching-badge.badge-instock {
+  background-color: #e6fcf5;
+  color: #0ca678;
+}
+
+.matching-badge.badge-outofstock {
+  background-color: #fff0f6;
+  color: #d6336c;
 }

@@ -12,6 +12,7 @@
     apiKey: null,
     apiUrl: "",
     model: "",
+    selectedSubstance: null, // Track currently selected substance
 
     // ------------------------------------------------------------
     // 1️⃣ 초기화 및 UI 생성
@@ -26,12 +27,13 @@
       this.apiKey = localStorage.getItem("chatbot_api_key") || globalThis.APP_CONFIG?.GEMINI_API_KEY || null;
       this.apiUrl = localStorage.getItem("chatbot_api_url") || "";
       this.model = localStorage.getItem("chatbot_model") || "";
+      this.selectedSubstance = null;
 
       // 챗봇 HTML 구조 동적 삽입
       const container = document.createElement("div");
       container.id = "chatbot-float-container";
       container.innerHTML = `
-        <button id="chatbot-toggle-btn" title="AI 과학실 비서">
+        <button id="chatbot-toggle-btn" title="AI 과학실 챗봇">
           <span class="material-symbols-outlined chatbot-icon">smart_toy</span>
           <span class="chatbot-badge">AI</span>
         </button>
@@ -40,7 +42,7 @@
             <div class="chatbot-title-area">
               <span class="material-symbols-outlined header-icon">smart_toy</span>
               <div>
-                <div class="chatbot-name">AI 과학실 비서</div>
+                <div class="chatbot-name">AI 과학실 챗봇</div>
                 <div class="chatbot-status" id="chatbot-status-text">하이브리드 모드</div>
               </div>
             </div>
@@ -50,7 +52,7 @@
           </div>
           <div class="chatbot-messages" id="chatbot-messages-container"></div>
           <div class="chatbot-input-area">
-            <input type="text" id="chatbot-input" placeholder="시약 또는 안전 질문을 입력하세요..." autocomplete="off">
+            <input type="text" id="chatbot-input" placeholder="시약의 이름을 입력하세요..." autocomplete="off">
             <button id="chatbot-send-btn" title="보내기">
               <span class="material-symbols-outlined">send</span>
             </button>
@@ -63,7 +65,7 @@
       document.getElementById("chatbot-toggle-btn").onclick = () => this.togglePanel();
       document.getElementById("chatbot-close-btn").onclick = () => this.togglePanel(false);
       document.getElementById("chatbot-send-btn").onclick = () => this.handleSend();
-      
+
       const input = document.getElementById("chatbot-input");
       input.onkeydown = (e) => {
         if (e.key === "Enter" && !e.isComposing) {
@@ -128,19 +130,21 @@
       const welcomeHtml = `
         <div class="chatbot-msg-row msg-bot">
           <div class="chatbot-bubble">
-            안녕하세요! 🧪 <b>AI 과학실 비서</b>입니다.<br>
-            과학실에 구비된 화학물질의 정보나 MSDS 안전 등급을 조회해 드립니다.<br><br>
-            <span style="color:#777; font-size:12px;">💡 <b>질문 예시:</b></span>
+            안녕하세요! 🧪 <b>AI 과학실 챗봇</b>입니다.<br>
+            정보를 조회하고자 하는 시약의 이름을 입력해 주세요.<br><br>
+            <span style="color:#777; font-size:12px;">💡 <b>시약 예시:</b></span>
             <ul style="margin: 4px 0 8px 16px; padding: 0; font-size:12.5px; color:#555;">
-              <li>"수산화 나트륨의 분자량은?"</li>
-              <li>"염산의 위험성(MSDS) 알려줘"</li>
-              <li>"질산 물리화학적 특성 보여줘"</li>
+              <li>"수산화 나트륨"</li>
+              <li>"염산"</li>
+              <li>"에탄올"</li>
+              <li>"아세톤"</li>
             </ul>
-            밑의 추천 질문을 클릭하거나 직접 질문해 보세요!
+            밑의 추천 시약을 클릭하거나 직접 이름을 입력해 보세요!
             <div class="chatbot-chips-container" style="margin-top: 10px;">
-              <button class="chatbot-chip" onclick="App.Chatbot.askPreset('수산화 나트륨 분자량')">⚖️ 수산화 나트륨 분자량</button>
-              <button class="chatbot-chip" onclick="App.Chatbot.askPreset('염산 위험성')">⚠️ 염산 위험성</button>
-              <button class="chatbot-chip" onclick="App.Chatbot.askPreset('에탄올 물리적 특성')">🌡️ 에탄올 특성</button>
+              <button class="chatbot-chip" onclick="App.Chatbot.askPreset('수산화 나트륨')">🧪 수산화 나트륨</button>
+              <button class="chatbot-chip" onclick="App.Chatbot.askPreset('염산')">🧪 염산</button>
+              <button class="chatbot-chip" onclick="App.Chatbot.askPreset('에탄올')">🧪 에탄올</button>
+              <button class="chatbot-chip" onclick="App.Chatbot.askPreset('아세톤')">🧪 아세톤</button>
             </div>
           </div>
         </div>
@@ -249,19 +253,156 @@
       const mwKeywords = ["분자량", "무게", "mw", "질량", "mass", "weight", "mw"];
       const msdsKeywords = ["위험", "유해", "위험성", "유해성", "안전", "msds", "경고", "독성", "조치", "주의사항", "대비"];
       const propKeywords = ["특성", "성질", "성격", "녹는점", "끓는점", "밀도", "비중", "외관", "물리", "bp", "mp"];
+      const resetKeywords = ["다른 시약", "다른시약", "뒤로", "목록", "초기화", "reset", "다른 시약 검색", "새로운 시약", "새시약"];
+      const matchingKeywords = ["실험", "준비물", "준비", "키트"];
+      const emergencyKeywords = ["사고", "화상", "눈에", "피부에", "응급", "대처", "조치", "안전", "흡입", "마셨", "유출", "깨졌"];
+      const wasteKeywords = ["폐액", "폐기", "버려", "버리"];
 
       const isMwQuery = tokens.some(t => mwKeywords.some(k => t.includes(k)));
       const isMsdsQuery = tokens.some(t => msdsKeywords.some(k => t.includes(k)));
       const isPropQuery = tokens.some(t => propKeywords.some(k => t.includes(k)));
+      const isResetQuery = tokens.some(t => resetKeywords.some(k => t.includes(k)));
+      const isMatchingQuery = tokens.some(t => matchingKeywords.some(k => t.includes(k)));
+      const isEmergencyQuery = tokens.some(t => emergencyKeywords.some(k => t.includes(k)));
+      const isWasteQuery = tokens.some(t => wasteKeywords.some(k => t.includes(k)));
+
+      // 다른 시약 검색 요청 시 상태 초기화
+      if (isResetQuery) {
+        this.selectedSubstance = null;
+        const inputEl = document.getElementById("chatbot-input");
+        if (inputEl) {
+          inputEl.placeholder = "시약의 이름을 입력하세요...";
+        }
+        return `🔄 다른 시약을 검색합니다. 시약의 이름을 입력해 주세요.
+        <div class="chatbot-chips-container" style="margin-top: 10px;">
+          <button class="chatbot-chip" onclick="App.Chatbot.askPreset('수산화 나트륨')">🧪 수산화 나트륨</button>
+          <button class="chatbot-chip" onclick="App.Chatbot.askPreset('염산')">🧪 염산</button>
+          <button class="chatbot-chip" onclick="App.Chatbot.askPreset('에탄올')">🧪 에탄올</button>
+          <button class="chatbot-chip" onclick="App.Chatbot.askPreset('아세톤')">🧪 아세톤</button>
+        </div>`;
+      }
+
+      // --- 실험 준비물 매칭 (아이디어 2) ---
+      if (isMatchingQuery) {
+        // 교구/실험 검색 키워드 추출
+        let cleanSubject = query;
+        const removeWords = ["실험", "준비물", "준비", "키트", "알려줘", "보여줘", "알려주세요", "보여주세요", "있어?", "있나요?", "체크", "조회"];
+        removeWords.forEach(w => {
+          cleanSubject = cleanSubject.replace(new RegExp(w, "g"), "");
+        });
+        cleanSubject = cleanSubject.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ").trim();
+
+        if (cleanSubject.length >= 2) {
+          const { data: matchedKits, error: kitErr } = await supabase
+            .from('experiment_kit')
+            .select('*')
+            .ilike('kit_name', `%${cleanSubject}%`)
+            .limit(1);
+
+          if (!kitErr && matchedKits && matchedKits.length > 0) {
+            const kit = matchedKits[0];
+            const casList = (kit.kit_cas || "").split(',').map(s => s.trim().replace(/"/g, '')).filter(s => s);
+
+            // Fetch inventory items to match
+            const { data: invItems, error: invErr } = await supabase
+              .from('Inventory')
+              .select(`
+                id, current_amount, unit, edited_name_kor,
+                Substance ( id, chem_name_kor, chem_name_kor_mod, cas_rn ),
+                Cabinet ( cabinet_name, area_id:lab_rooms!fk_cabinet_lab_rooms ( room_name ) )
+              `);
+
+            if (!invErr && invItems) {
+              const matchingInventories = invItems.filter(item => {
+                const itemCas = item.Substance?.cas_rn;
+                if (!itemCas) return false;
+                return casList.some(cas => itemCas.includes(cas) || cas.includes(itemCas));
+              });
+
+              let reportHtml = `🧪 <b>${kit.kit_name}</b> 실험 준비물 매칭 결과입니다.
+              <div class="chatbot-matching-card">
+                <div class="chatbot-matching-header">
+                  <div class="chatbot-matching-title">${kit.kit_name}</div>
+                  <span class="matching-badge badge-instock">${casList.length}종 약품</span>
+                </div>
+                <div class="chatbot-matching-grid">`;
+
+              for (const cas of casList) {
+                const items = matchingInventories.filter(item => item.Substance?.cas_rn?.includes(cas) || cas.includes(item.Substance?.cas_rn));
+                const isAvailable = items.length > 0;
+
+                // Fetch name from substance or default
+                let displayName = cas;
+                if (isAvailable) {
+                  displayName = items[0].edited_name_kor || items[0].Substance?.chem_name_kor_mod || items[0].Substance?.chem_name_kor || cas;
+                } else {
+                  // Attempt a fallback lookup in kit_chemicals to get the Korean name
+                  const { data: directKitChem } = await supabase
+                    .from('kit_chemicals')
+                    .select('name_ko')
+                    .eq('cas_no', cas)
+                    .maybeSingle();
+                  if (directKitChem && directKitChem.name_ko) {
+                    displayName = directKitChem.name_ko;
+                  }
+                }
+
+                if (isAvailable) {
+                  const totalQty = items.reduce((acc, curr) => acc + (curr.current_amount || 0), 0);
+                  const unit = items[0].unit || "개";
+                  const loc = items[0].Cabinet ? `${items[0].Cabinet.area_id?.room_name || ""} 『${items[0].Cabinet.cabinet_name}』` : "위치 미확인";
+                  reportHtml += `
+                  <div class="chatbot-matching-item">
+                    <span class="chatbot-matching-name">🧪 ${displayName}</span>
+                    <div class="chatbot-matching-status">
+                      <span style="font-size:11px; color:#666;">${loc} (${totalQty}${unit})</span>
+                      <span class="matching-badge badge-instock">보유</span>
+                    </div>
+                  </div>`;
+                } else {
+                  reportHtml += `
+                  <div class="chatbot-matching-item">
+                    <span class="chatbot-matching-name" style="color:#888;">🧪 ${displayName}</span>
+                    <div class="chatbot-matching-status">
+                      <span class="matching-badge badge-outofstock">재고없음</span>
+                    </div>
+                  </div>`;
+                }
+              }
+
+              reportHtml += `
+                </div>
+              </div>
+              <div class="chatbot-chips-container" style="margin-top: 10px;">
+                <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
+              </div>`;
+              return reportHtml;
+            }
+          }
+        }
+
+        // Fallback: If no matching kit found
+        return `🔍 입력하신 실험 키트("${cleanSubject || query}")에 대한 준비물 정보를 찾을 수 없습니다.
+        
+💡 <b>실험명 예시:</b>
+- "화학정원 만들기" (또는 "화학정원")
+- "앙금 생성 반응" (또는 "앙금")
+- "기체 발생 장치"
+- "달고나 만들기"
+<div class="chatbot-chips-container" style="margin-top: 10px;">
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('화학정원 실험')">🧪 화학정원 실험</button>
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('앙금 생성 실험')">🧪 앙금 생성 실험</button>
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
+</div>`;
+      }
 
       // 1. DB에서 가장 적합한 화학물질 매칭 찾기
-      let substance = null;
-      let matchedToken = "";
+      let foundSubstance = null;
 
+      // 1단계: 원본 토큰 그대로 검색 (예: "질산은" 같이 마지막 글자가 조사와 혼동될 수 있는 고유 명칭 우선 대응)
       for (const token of tokens) {
-        if (token.length < 2) continue; // 1글자는 스킵 (오타 최소화)
-        
-        // Substance 테이블 조회
+        if (token.length < 2) continue; // 1글자는 스킵
+
         const { data } = await supabase
           .from("Substance")
           .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
@@ -269,14 +410,81 @@
           .limit(1);
 
         if (data && data.length > 0) {
-          substance = data[0];
-          matchedToken = token;
+          foundSubstance = data[0];
           break;
         }
       }
 
-      // 2. 물질 매칭 실패 시 -> AI Fallback
+      // 2단계: 1단계 실패 시 한국어 조사/접사(의, 은, 는, 이, 가, 을, 를 등)를 제거하여 검색 (예: "아세톤의" -> "아세톤" 검색)
+      if (!foundSubstance) {
+        for (const token of tokens) {
+          if (token.length < 2) continue;
+
+          const stripped = token.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란)$/, "");
+          if (stripped.length < 2 || stripped === token) continue; // 이미 검색했거나 2글자 미만인 경우 스킵
+
+          const { data } = await supabase
+            .from("Substance")
+            .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
+            .or(`chem_name_kor.ilike.%${stripped}%,chem_name_kor_mod.ilike.%${stripped}%,substance_name.ilike.%${stripped}%,substance_name_mod.ilike.%${stripped}%`)
+            .limit(1);
+
+          if (data && data.length > 0) {
+            foundSubstance = data[0];
+            break;
+          }
+        }
+      }
+
+      // 시약 매칭 성공 시 해당 시약을 현재 컨텍스트로 유지
+      if (foundSubstance) {
+        this.selectedSubstance = foundSubstance;
+      }
+
+      const substance = this.selectedSubstance;
+
+      // 2. 물질 매칭 실패 시 -> 긴급/폐기 일반 대처 혹은 AI Fallback
       if (!substance) {
+        if (isEmergencyQuery) {
+          return `🚨 <b>과학실 긴급 상황 대처 요령</b>
+          <div class="chatbot-emergency-card">
+            <div class="chatbot-emergency-header">
+              <span class="material-symbols-outlined" style="color:#e03131; font-size:18px;">emergency</span>
+              <span class="chatbot-emergency-title">비상시 기본 행동 강령</span>
+            </div>
+            <div class="chatbot-emergency-desc">
+              1. <b>피부/눈 노출</b>: 약품이 묻거나 튀었을 경우 즉시 세안기/눈 세척기에서 15분 이상 흐르는 물로 씻어내고 교사에게 알립니다.<br>
+              2. <b>화재 발생</b>: 대피 경보를 울리고 소화기로 초기 진압을 시도하되, 불길이 크면 지체 없이 대피로를 따라 대피합니다.<br>
+              3. <b>약품 유출/유리 파손</b>: 맨손으로 만지지 말고 빗자루와 쓰레받기를 사용해 수거하며, 유기용제 유출 시 즉시 창문을 열어 환기합니다.
+            </div>
+          </div>
+          <div class="chatbot-chips-container" style="margin-top: 10px;">
+            <button class="chatbot-chip" onclick="App.Chatbot.askPreset('수산화 나트륨')">🧪 수산화 나트륨</button>
+            <button class="chatbot-chip" onclick="App.Chatbot.askPreset('염산')">🧪 염산</button>
+            <button class="chatbot-chip" onclick="App.Chatbot.askPreset('에탄올')">🧪 에탄올</button>
+            <button class="chatbot-chip" onclick="App.Chatbot.askPreset('아세톤')">🧪 아세톤</button>
+          </div>`;
+        }
+
+        if (isWasteQuery) {
+          return `🗑️ <b>과학실 화학 폐기물 처리 요령</b>
+          <div class="chatbot-chemical-card">
+            <div class="chatbot-chem-header">
+              <span class="chatbot-chem-title">폐액 분리 배출 기본 원칙</span>
+            </div>
+            <div style="font-size:12.5px; color:#495057; line-height:1.5; padding:8px 0;">
+              1. <b>분리 수거</b>: 산성, 알칼리성, 유기용제, 무기폐수 등 액성에 맞춰 지정된 폐액통에 분리 배출합니다.<br>
+              2. <b>혼합 금지</b>: 서로 반응성이 있는 물질(예: 산성과 염기성, 유기용제와 무기산)을 대량으로 섞으면 열과 독성 가스가 발생하므로 절대 혼합하지 않습니다.<br>
+              3. <b>안전 장비</b>: 배출 시에는 반드시 보안경과 내화학성 장갑을 착용합니다.
+            </div>
+          </div>
+          <div class="chatbot-chips-container" style="margin-top: 10px;">
+            <button class="chatbot-chip" onclick="App.Chatbot.askPreset('수산화 나트륨')">🧪 수산화 나트륨</button>
+            <button class="chatbot-chip" onclick="App.Chatbot.askPreset('염산')">🧪 염산</button>
+            <button class="chatbot-chip" onclick="App.Chatbot.askPreset('에탄올')">🧪 에탄올</button>
+          </div>`;
+        }
+
         if (this.apiKey) {
           return await this.callAI(query);
         } else {
@@ -288,18 +496,86 @@
         }
       }
 
-      // 3. 물질 매칭 성공 -> 의도별 분기 처리
+      // 3. 물질 매칭 성공 -> 의도별 분기 처리 및 2단계 질문 유도
       const chemName = substance.chem_name_kor_mod || substance.chem_name_kor || substance.substance_name_mod || substance.substance_name;
       const casRn = substance.cas_rn || "CAS없음";
       const formula = substance.molecular_formula_mod || substance.molecular_formula || "-";
       const molMass = substance.molecular_mass ? `${substance.molecular_mass} g/mol` : "-";
+
+      // 입력창 placeholder 업데이트
+      const inputEl = document.getElementById("chatbot-input");
+      if (inputEl) {
+        inputEl.placeholder = `"${chemName}"에 대해 질문하세요 (예: 분자량, 위험성)...`;
+      }
+
+      // --- 긴급 SOS 및 폐액 가이드 분기 처리 (아이디어 4) ---
+      if (isEmergencyQuery) {
+        const { data: msdsData } = await supabase
+          .from("MSDS")
+          .select("content")
+          .eq("substance_id", substance.id)
+          .eq("section_number", 4)
+          .maybeSingle();
+
+        let msds4Text = msdsData?.content || "등록된 MSDS 4번(응급조치 요령) 정보가 없습니다.";
+        msds4Text = msds4Text.replace(/;;;/g, "\n").replace(/\|\|\|/g, " - ");
+
+        return `🚨 <b>${chemName}</b> 긴급 응급조치 가이드입니다.
+        <div class="chatbot-emergency-card">
+          <div class="chatbot-emergency-header">
+            <span class="material-symbols-outlined" style="color:#e03131; font-size:18px;">emergency</span>
+            <span class="chatbot-emergency-title">MSDS 제4항. 응급조치 요령</span>
+          </div>
+          <div class="chatbot-emergency-desc">
+            ${msds4Text.replace(/\n/g, "<br>")}
+          </div>
+        </div>
+        <div class="chatbot-chips-container" style="margin-top: 10px;">
+          <button class="chatbot-chip" onclick="App.Chatbot.askPreset('위험성')">⚠️ 일반 위험성(MSDS)</button>
+          <button class="chatbot-chip chip-filled" onclick="App.Chatbot.goToDetail(${substance.id})">상세 이동</button>
+          <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
+        </div>`;
+      }
+
+      if (isWasteQuery) {
+        const { data: msdsData } = await supabase
+          .from("MSDS")
+          .select("content")
+          .eq("substance_id", substance.id)
+          .eq("section_number", 13)
+          .maybeSingle();
+
+        let msds13Text = msdsData?.content || "등록된 MSDS 13번(폐기 시 주의사항) 정보가 없습니다.";
+        msds13Text = msds13Text.replace(/;;;/g, "\n").replace(/\|\|\|/g, " - ");
+
+        return `🗑️ <b>${chemName}</b> 안전 폐기 가이드입니다.
+        <div class="chatbot-chemical-card">
+          <div class="chatbot-chem-header">
+            <span class="chatbot-chem-title">MSDS 제13항. 폐기 시 주의사항</span>
+          </div>
+          <div style="font-size:12.5px; color:#495057; line-height:1.5; padding:8px 0;">
+            ${msds13Text.replace(/\n/g, "<br>")}
+          </div>
+        </div>
+        <div class="chatbot-chips-container" style="margin-top: 10px;">
+          <button class="chatbot-chip" onclick="App.Chatbot.askPreset('분자량')">⚖️ 분자량</button>
+          <button class="chatbot-chip chip-filled" onclick="App.Chatbot.goToDetail(${substance.id})">상세 이동</button>
+          <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
+        </div>`;
+      }
 
       // 3-1. 분자량(Molecular Weight) 의도
       if (isMwQuery) {
         return `⚖️ <b>${chemName}</b> (CAS: ${casRn})의 분자량 정보입니다.
         
 - **분자식**: ${formula}
-- **분자량**: <b>${molMass}</b>`;
+- **분자량**: <b>${molMass}</b>
+<div class="chatbot-chips-container" style="margin-top: 10px;">
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('위험성')">⚠️ 위험성(MSDS)</button>
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('물리적 특성')">🌡️ 물리적 특성</button>
+  <button class="chatbot-chip chip-filled" onclick="App.Chatbot.goToDetail(${substance.id})">상세 이동</button>
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
+</div>`;
       }
 
       // 3-2. 위험성/MSDS 의도
@@ -319,7 +595,6 @@
           .eq("substance_id", substance.id);
 
         let msds2Text = msdsData?.content || "등록된 MSDS 2번(유해성·위험성) 정보가 없습니다.";
-        // Clean markdown/special separators if any
         msds2Text = msds2Text.replace(/;;;/g, "\n").replace(/\|\|\|/g, " - ");
 
         let hazardText = "";
@@ -330,7 +605,13 @@
         return `⚠️ <b>${chemName}</b> (CAS: ${casRn})의 MSDS 위험성 정보입니다.
         
 📢 <b>[MSDS 제2항. 유해성·위험성]</b>
-${msds2Text}${hazardText}`;
+${msds2Text}${hazardText}
+<div class="chatbot-chips-container" style="margin-top: 10px;">
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('분자량')">⚖️ 분자량</button>
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('물리적 특성')">🌡️ 물리적 특성</button>
+  <button class="chatbot-chip chip-filled" onclick="App.Chatbot.goToDetail(${substance.id})">상세 이동</button>
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
+</div>`;
       }
 
       // 3-3. 물리화학적 특성 의도
@@ -360,14 +641,25 @@ ${msds2Text}${hazardText}`;
 
         return `🌡️ <b>${chemName}</b> (CAS: ${casRn})의 물리화학적 특성 정보입니다.
         
-${propText}`;
+${propText}
+<div class="chatbot-chips-container" style="margin-top: 10px;">
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('분자량')">⚖️ 분자량</button>
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('위험성')">⚠️ 위험성(MSDS)</button>
+  <button class="chatbot-chip chip-filled" onclick="App.Chatbot.goToDetail(${substance.id})">상세 이동</button>
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
+</div>`;
       }
 
-      // 3-4. 일반 요약 카드 및 퀵 헬퍼 출력
-      // AI 모드가 활성화되어 있다면, 템플릿 정보와 함께 AI가 가공하도록 Fallback 호출도 가능하지만,
-      // 여기서는 빠른 로컬 템플릿 카드를 먼저 리턴합니다.
+      // 3-4. 일반 요약 카드 및 퀵 헬퍼 출력 (선택된 시약에 대한 추가 질문 유도 단계)
+      if (this.apiKey) {
+        // AI 활성화 상태에서 다른 상세 질문을 입력한 경우
+        const aiPrompt = `[현재 선택된 시약 정보]\n시약명: ${chemName}\nCAS 번호: ${casRn}\n화학식: ${formula}\n분자량: ${molMass}\n\n질문: ${query}`;
+        return await this.callAI(aiPrompt);
+      }
+
+      // AI가 비활성화된 상태이거나 시약 이름만 입력한 경우 요약 카드 출력
       const summaryCardHtml = `
-        🧪 <b>${chemName}</b> 시약 정보 요약입니다.
+        🧪 <b>${chemName}</b> 시약이 선택되었습니다. 이 시약에 대해 무엇이 궁금하신가요?
         <div class="chatbot-chemical-card">
           <div class="chatbot-chem-header">
             <div>
@@ -383,11 +675,14 @@ ${propText}`;
             <div class="chatbot-chem-val">${molMass}</div>
           </div>
           <div class="chatbot-chem-footer-btns">
-            <button class="chatbot-chem-btn" onclick="App.Chatbot.askPreset('${chemName} 분자량')">분자량</button>
-            <button class="chatbot-chem-btn" onclick="App.Chatbot.askPreset('${chemName} 위험성')">위험성</button>
-            <button class="chatbot-chem-btn" onclick="App.Chatbot.askPreset('${chemName} 특성')">물리<br>특성</button>
+            <button class="chatbot-chem-btn" onclick="App.Chatbot.askPreset('분자량')">분자량</button>
+            <button class="chatbot-chem-btn" onclick="App.Chatbot.askPreset('위험성')">위험성</button>
+            <button class="chatbot-chem-btn" onclick="App.Chatbot.askPreset('특성')">물리<br>특성</button>
             <button class="chatbot-chem-btn btn-filled" onclick="App.Chatbot.goToDetail(${substance.id})">상세<br>이동</button>
           </div>
+        </div>
+        <div class="chatbot-chips-container" style="margin-top: 10px;">
+          <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
         </div>
       `;
       return summaryCardHtml;

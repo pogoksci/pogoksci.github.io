@@ -246,7 +246,7 @@
                     퀴즈를 풀다가 잘 모르는 문제가 나오면, SciManager 사이트 내의 다른 메뉴(영상 교육, 매뉴얼/서식, GHS 기호, 시약/교구 검색 등)를 자유롭게 탐험하며 정답을 찾아 답해 보세요!
                 </div>
                 <div style="text-align:center; margin-top:20px; display:flex; flex-direction:column; align-items:center; gap:12px;">
-                    <input type="text" id="quiz-student-no" placeholder="학번을 입력하세요 (예: 50312)" style="padding:10px; border-radius:8px; border:1px solid #ddd; width:220px; font-size:14px;"><br>
+                    <input type="text" id="quiz-student-no" placeholder="학번을 입력하세요 (예: 10133)" style="padding:10px; border-radius:8px; border:1px solid #ddd; width:220px; font-size:14px;"><br>
                     <input type="text" id="quiz-user-name" placeholder="이름을 입력하세요" style="padding:10px; border-radius:8px; border:1px solid #ddd; width:220px; font-size:14px; margin-top:-10px;"><br>
                     <button class="btn-primary" onclick="App.SafetyEdu.startQuiz()" style="margin-top:-5px; width:120px;">시작하기</button>
                 </div>
@@ -260,7 +260,7 @@
         const studentNo = studentNoEl ? studentNoEl.value.trim() : "";
         const name = userNameEl ? userNameEl.value.trim() : "";
 
-        if (!studentNo) { alert("학번을 입력해주세요."); return; }
+        if (!studentNo) { alert(" 입력해주세요."); return; }
         if (!name) { alert("이름을 입력해주세요."); return; }
 
         QUIZ_STATE.studentNo = studentNo;
@@ -285,11 +285,13 @@
         // 1. Try to get safe quantity of Dynamic Questions (Max 10)
         try {
             const { data: invData } = await App.supabase
-                .from('inventory')
+                .from('Inventory')
                 .select(`
                     id, 
-                    location_area(name), 
-                    location_cabinet(name),
+                    door_vertical,
+                    door_horizontal,
+                    internal_shelf_level,
+                    storage_column,
                     substance (
                         chem_name_kor,
                         substance_name,
@@ -301,6 +303,15 @@
                         permitted_substance_standard,
                         restricted_substance_standard,
                         prohibited_substance_standard
+                    ),
+                    Cabinet (
+                        id,
+                        cabinet_name,
+                        door_horizontal_count,
+                        area_id:lab_rooms!fk_cabinet_lab_rooms (
+                            id,
+                            room_name
+                        )
                     )
                 `)
                 .limit(50); // Fetch enough to pick randomly
@@ -392,7 +403,7 @@
                     </div>
                 </div>
                 <div style="margin-top: 25px; text-align: center; font-size: 0.85rem; color: #64748b; line-height: 1.5; background-color: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                    💡 잘 모르는 문제는 SciManager의 다른 메뉴를 탐험하며 정답을 찾아보세요!
+                    💡 잘 모르는 문제는 SciManager의 AI챗봇을 이용하거나 메뉴를 탐험하며 정답을 찾아보세요!
                 </div>
             </div>
         `;
@@ -415,7 +426,7 @@
         // 로딩 상태 임시 노출
         root.innerHTML = `
             <div class="quiz-container" style="text-align:center; padding:40px;">
-                <h2 style="font-size:1.5rem; margin-bottom:20px;">결과를 저장하고 있습니다...</h2>
+                <h2 style="font-size:1.25rem; margin-bottom:20px;">결과를 저장하고 있습니다...</h2>
                 <div style="margin:20px auto; width:40px; height:40px; border:4px solid #f3f3f3; border-top:4px solid #3498db; border-radius:50%; animation:spin 1s linear infinite;"></div>
             </div>
         `;
@@ -470,7 +481,7 @@
 
         root.innerHTML = `
             <div class="quiz-container" style="text-align:center;">
-                <h2 style="font-size:2rem; margin-bottom:20px;">결과: ${score}점</h2>
+                <h2 style="font-size:1.5rem; margin-bottom:20px;">결과: ${score}점</h2>
                 <p>${pass ? `🎉 축하합니다! 과학실 안전교육을 성실히 이수하셨습니다. (시도 회차: ${attemptCount}회)` : `😅 아깝네요. 다시 한 번 도전해 보세요! (시도 회차: ${attemptCount}회)`}</p>
                 <div style="margin-top:30px;">
                     ${pass ? `<button class="btn-primary" onclick="App.SafetyEdu.showCertificate()">인증서 발급하기</button>` : `<button class="btn-cancel" onclick="location.reload()">다시 하기</button>`}
@@ -696,7 +707,7 @@
             opt.textContent = `${grade}학년 ${clsNo}반`;
             statsClassSelect.appendChild(opt);
         });
-        
+
         // 기존 선택 유지
         if (Array.from(classSet).includes(currentSelectedClass)) {
             statsClassSelect.value = currentSelectedClass;
@@ -775,7 +786,7 @@
 
         // --- 3. 독립표본 t-검정 계산 ---
         const ttestBody = document.getElementById('stats-ttest-body');
-        
+
         if (preScores.length === 0 || postScores.length === 0) {
             ttestBody.innerHTML = '<tr><td colspan="7" style="padding: 20px; color: #999;">t-검정을 수행할 사전/사후 집단 데이터가 부족합니다.<br>(사전(1회차) 데이터와 2회차 이상 응답자가 모두 존재해야 분석이 가능합니다)</td></tr>';
         } else {
@@ -802,7 +813,7 @@
                 const var1 = Math.pow(sd1, 2);
                 const var2 = Math.pow(sd2, 2);
                 const spSquared = ((n1 - 1) * var1 + (n2 - 1) * var2) / df;
-                
+
                 if (spSquared > 0) {
                     const standardError = Math.sqrt(spSquared * (1 / n1 + 1 / n2));
                     tValue = (m2 - m1) / standardError;
@@ -869,7 +880,7 @@
         const canvas = document.getElementById('chart-stats-line');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        
+
         if (lineChartInstance) {
             lineChartInstance.destroy();
         }

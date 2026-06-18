@@ -6451,7 +6451,7 @@ input[type="text"].date-input-month-day {
 }
 
 .quiz-header h2 {
-  font-size: 1.8rem;
+  font-size: 1.4rem;
   color: #1e293b;
   margin-bottom: 8px;
 }
@@ -6469,17 +6469,27 @@ input[type="text"].date-input-month-day {
 }
 
 .quiz-question-text {
-  font-size: 1.4rem;
+  font-size: 1.15rem;
   color: #0f172a;
   letter-spacing: -0.5px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  line-height: 1.5;
 }
 
 .quiz-option {
   border: 2px solid #f1f5f9;
-  padding: 20px 24px;
-  border-radius: 16px;
-  font-size: 1.1rem;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 0.95rem;
   color: #475569;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quiz-option:last-child {
+  margin-bottom: 0;
 }
 
 .quiz-option:hover {

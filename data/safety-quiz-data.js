@@ -30,7 +30,7 @@
         { q: "흄 후드(Fume Hood)의 용도는?", options: ["음식 조리", "유독 가스 배출", "보관함", "손 씻기"], correct: 1 },
         { q: "시약장 문을 항상 닫아두어야 하는 이유는?", options: ["전기 절약", "유출 사고 방지 및 냄새 확산 방지", "디자인 때문", "먼지 방지"], correct: 1 },
         { q: "실험실 사고 시 가장 먼저 연락해야 할 사람은?", options: ["친구", "담당 선생님", "교장 선생님", "학부모"], correct: 1 },
-        { q: "산성 폐액통에 염기성 액체를 대량으로 섞으면?", options: ["아무 일 없다", "중화 반응에 의한 열과 가스가 발생할 수 있다", "물이 된다", "색만 변한다"], correct: 1 },
+        { q: "산성 폐액통에 염기성 액체를 대량으로 섞으면?", options: ["아무 일 없다", "중화 반응에 의한 열과 가스가 발생할 수 있다", "양이나 농도에 관계없이 물이 되므로 안전하다.", "색만 변한다"], correct: 1 },
         { q: "유리 기구가 깨졌을 때 조치법은?", options: ["손으로 줍는다", "담당 선생님께 보고하고 빗자루와 쓰레받기를 사용한다", "발로 치운다", "그냥 둔다"], correct: 1 },
         { q: "머리카락이 긴 학생의 실험실 복장 수칙은?", options: ["그냥 둔다", "풀어헤친다", "뒤로 묶는다", "앞으로 내린다"], correct: 2 },
         { q: "가열 중인 시험관의 입구 방향은?", options: ["자신을 향하게", "옆 친구를 향하게", "사람이 없는 방향을 향하게", "입구를 막는다"], correct: 2 },
@@ -130,9 +130,9 @@
      */
     function getDynamicTemplates(item, allItems = []) {
         const templates = [];
-        const s = item.substance || {};
-        const c = item.location_cabinet || {};
-        const a = item.location_area || {};
+        const s = item.Substance || item.substance || {};
+        const c = item.Cabinet || item.location_cabinet || {};
+        const a = c.area_id || item.location_area || {};
 
         // Helper to pick distractors
         const pickDistractors = (sourceList, correctVal, count = 3) => {
@@ -146,25 +146,160 @@
         };
 
         // 1. Storage Location (Detailed)
-        const locName = `${a.name || ''} ${c.name || ''}`.trim();
-        if (locName) {
+        const formatLocation = (val) => {
+            const cabinetObj = val.Cabinet || val.location_cabinet || {};
+            const areaObj = cabinetObj.area_id || val.location_area || {};
+
+            const area = areaObj.room_name || areaObj.name || "";
+            const cab = cabinetObj.cabinet_name || cabinetObj.name || "";
+            const v = val.door_vertical || "";
+            const h = val.door_horizontal || "";
+            const hCount = Number(cabinetObj.door_horizontal_count || val.door_horizontal_count || 0);
+
+            let locText = "";
+            if (area) locText += `${area} `;
+            if (cab) locText += `『${cab}』 `;
+
+            let doorPart = "";
+            const doorHVal = String(h || "").trim();
+            let doorHLabel = "";
+            if (hCount > 1) {
+                if (doorHVal === "1") doorHLabel = "왼쪽";
+                else if (doorHVal === "2") doorHLabel = "오른쪽";
+                else doorHLabel = doorHVal;
+            }
+
+            if (v && doorHLabel) {
+                doorPart = `${v}층 ${doorHLabel}문`;
+            } else if (v) {
+                doorPart = `${v}층문`;
+            } else if (doorHLabel) {
+                doorPart = `${doorHLabel}문`;
+            }
+
+            let shelfPart = "";
+            const shelfVal = val.internal_shelf_level;
+            const colVal = val.storage_column;
+
+            if (shelfVal && colVal) {
+                shelfPart = `${shelfVal}단 ${colVal}열`;
+            } else {
+                if (shelfVal) shelfPart += `${shelfVal}단`;
+                if (colVal) shelfPart += (shelfPart ? " " : "") + `${colVal}열`;
+            }
+
+            const detailParts = [doorPart, shelfPart].filter(Boolean).join(", ");
+            if (detailParts) locText += detailParts;
+
+            return locText.trim();
+        };
+
+        const locName = formatLocation(item);
+        if (locName && locName !== "위치: 미확인") {
+            const generateLocationDistractors = (correctLoc) => {
+                const places = ["과학준비실", "제1과학실", "제2과학실", "생물실", "화학실", "물리실"];
+                const cabinetTypes = ["시약장", "냉장고", "캐비닛", "밀폐식 시약장"];
+                const cabinetNumbers = ["1", "2", "3", "A", "B"];
+                const floors = ["1", "2", "3", "4"];
+                const sides = ["왼쪽", "오른쪽", ""];
+                const shelves = ["1", "2", "3", "4", "5"];
+                const columns = ["1", "2", "3", "4"];
+
+                const dists = [];
+                let attempts = 0;
+
+                const correctArea = (a.room_name || a.name || "과학준비실").trim();
+                const correctCab = (c.cabinet_name || c.name || "시약장1").trim();
+
+                while (dists.length < 3 && attempts < 100) {
+                    attempts++;
+                    
+                    let area = places[Math.floor(Math.random() * places.length)];
+                    let cabType = cabinetTypes[Math.floor(Math.random() * cabinetTypes.length)];
+                    let cabNum = cabinetNumbers[Math.floor(Math.random() * cabinetNumbers.length)];
+                    let cab = `${cabType}${cabNum}`;
+                    
+                    if (Math.random() > 0.5) {
+                        area = correctArea;
+                    }
+                    if (Math.random() > 0.5) {
+                        let cType = "시약장";
+                        for (const t of cabinetTypes) {
+                            if (correctCab.includes(t)) {
+                                cType = t;
+                                break;
+                            }
+                        }
+                        cab = `${cType}${cabinetNumbers[Math.floor(Math.random() * cabinetNumbers.length)]}`;
+                    }
+
+                    let v = floors[Math.floor(Math.random() * floors.length)];
+                    let h = sides[Math.floor(Math.random() * sides.length)];
+                    let shelfVal = shelves[Math.floor(Math.random() * shelves.length)];
+                    let colVal = columns[Math.floor(Math.random() * columns.length)];
+
+                    let locText = `${area} 『${cab}』 `;
+                    
+                    let doorPart = "";
+                    if (v && h) {
+                        doorPart = `${v}층 ${h}문`;
+                    } else if (v) {
+                        doorPart = `${v}층문`;
+                    } else if (h) {
+                        doorPart = `${h}문`;
+                    }
+
+                    let shelfPart = "";
+                    if (shelfVal && colVal) {
+                        shelfPart = `${shelfVal}단 ${colVal}열`;
+                    } else {
+                        if (shelfVal) shelfPart += `${shelfVal}단`;
+                        if (colVal) shelfPart += (shelfPart ? " " : "") + `${colVal}열`;
+                    }
+
+                    const detailParts = [doorPart, shelfPart].filter(Boolean).join(", ");
+                    if (detailParts) locText += detailParts;
+
+                    const finalLoc = locText.trim();
+
+                    if (finalLoc && finalLoc !== correctLoc && !dists.includes(finalLoc)) {
+                        dists.push(finalLoc);
+                    }
+                }
+
+                // Fallback in case of lack of unique items
+                while (dists.length < 3) {
+                    const fallback = `제${dists.length + 1}과학실 『시약장${dists.length + 2}』 1층문, 2단 2열`;
+                    if (!dists.includes(fallback) && fallback !== correctLoc) {
+                        dists.push(fallback);
+                    }
+                }
+
+                return dists;
+            };
+
+            const distractors = generateLocationDistractors(locName);
+
             templates.push(createRandomizedQuestion(
-                `'${s.chem_name_kor}'의 보관 위치로 올바른 곳은?`,
+                `'${s.chem_name_kor || s.substance_name || ''}'의 보관 위치로 올바른 곳은?`,
                 locName,
-                ["교무실", "가정과 실습실", "행정실", "음악실", "체육관"] // Pool of wrong answers
+                distractors
             ));
         }
 
         // 2. Chemical Formula
         if (s.molecular_formula && s.molecular_formula.length > 1) {
             const distractors = pickDistractors(
-                allItems.map(i => i.substance?.molecular_formula).filter(f => f && f.length > 1),
+                allItems.map(i => {
+                    const sub = i.Substance || i.substance;
+                    return sub?.molecular_formula;
+                }).filter(f => f && f.length > 1),
                 s.molecular_formula
             );
             if (distractors.length < 3) distractors.push("H2O", "NaCl", "CO2"); // Fallbacks
 
             templates.push(createRandomizedQuestion(
-                `'${s.chem_name_kor}'의 화학식으로 올바른 것은?`,
+                `'${s.chem_name_kor || s.substance_name || ''}'의 화학식으로 올바른 것은?`,
                 s.molecular_formula,
                 distractors
             ));
@@ -173,13 +308,16 @@
         // 3. CAS Number (Advanced)
         if (s.cas_rn && /^\d+-\d+-\d$/.test(s.cas_rn)) {
             const distractors = pickDistractors(
-                allItems.map(i => i.substance?.cas_rn).filter(c => c && /^\d+-\d+-\d$/.test(c)),
+                allItems.map(i => {
+                    const sub = i.Substance || i.substance;
+                    return sub?.cas_rn;
+                }).filter(c => c && /^\d+-\d+-\d$/.test(c)),
                 s.cas_rn
             );
             if (distractors.length < 3) distractors.push("7732-18-5", "7647-14-5", "64-17-5"); // Water, Salt, Ethanol
 
             templates.push(createRandomizedQuestion(
-                `'${s.chem_name_kor}'의 CAS 등록번호(고유번호)는?`,
+                `'${s.chem_name_kor || s.substance_name || ''}'의 CAS 등록번호(고유번호)는?`,
                 s.cas_rn,
                 distractors
             ));
@@ -198,7 +336,7 @@
             const hazardOptions = ["유독물질", "제한물질", "금지물질", "학교유해화학물질", "일반물질(해당없음)"].filter(o => o !== answer);
 
             templates.push(createRandomizedQuestion(
-                `'${s.chem_name_kor}'은(는) 학교 안전관리 기준상 어떻게 분류됩니까?`,
+                `'${s.chem_name_kor || s.substance_name || ''}'은(는) 학교 안전관리 기준상 어떻게 분류됩니까?`,
                 answer,
                 hazardOptions
             ));
@@ -207,13 +345,16 @@
         // 5. English Name Quiz
         if (s.substance_name) {
             const distractors = pickDistractors(
-                allItems.map(i => i.substance?.substance_name).filter(n => n && n !== s.substance_name),
+                allItems.map(i => {
+                    const sub = i.Substance || i.substance;
+                    return sub?.substance_name;
+                }).filter(n => n && n !== s.substance_name),
                 s.substance_name
             );
             if (distractors.length < 3) distractors.push("Water", "Sodium Chloride", "Ethanol");
 
             templates.push(createRandomizedQuestion(
-                `'${s.chem_name_kor}'의 영문명으로 올바른 것은?`,
+                `'${s.chem_name_kor || s.substance_name || ''}'의 영문명으로 올바른 것은?`,
                 s.substance_name,
                 distractors
             ));
@@ -223,7 +364,10 @@
         if (s.molecular_formula && s.molecular_formula.length > 1) {
             // Distractors are other Korean names
             const distractors = pickDistractors(
-                allItems.map(i => i.substance?.chem_name_kor).filter(n => n && n !== s.chem_name_kor),
+                allItems.map(i => {
+                    const sub = i.Substance || i.substance;
+                    return sub?.chem_name_kor || sub?.substance_name;
+                }).filter(n => n && n !== s.chem_name_kor),
                 s.chem_name_kor
             );
             if (distractors.length < 3) distractors.push("물", "염화나트륨", "에탄올");
@@ -238,7 +382,10 @@
         // 7. Reverse CAS Quiz
         if (s.cas_rn && /^\d+-\d+-\d$/.test(s.cas_rn)) {
             const distractors = pickDistractors(
-                allItems.map(i => i.substance?.chem_name_kor).filter(n => n && n !== s.chem_name_kor),
+                allItems.map(i => {
+                    const sub = i.Substance || i.substance;
+                    return sub?.chem_name_kor || sub?.substance_name;
+                }).filter(n => n && n !== s.chem_name_kor),
                 s.chem_name_kor
             );
             if (distractors.length < 3) distractors.push("물", "염화나트륨", "에탄올");
@@ -258,8 +405,9 @@
      */
     function getMassComparisonQuestion(items) {
         const validItems = items.filter(i => {
-            const m = parseFloat(i.substance?.molecular_mass);
-            return m > 0 && i.substance?.chem_name_kor;
+            const sub = i.Substance || i.substance;
+            const m = parseFloat(sub?.molecular_mass);
+            return m > 0 && (sub?.chem_name_kor || sub?.substance_name);
         });
 
         if (validItems.length < 4) return null;
@@ -277,21 +425,23 @@
 
         // Find max mass
         let maxItem = picked[0];
-        let maxMass = parseFloat(picked[0].substance.molecular_mass);
+        const getMolMass = (p) => parseFloat((p.Substance || p.substance).molecular_mass);
+        const getName = (p) => (p.Substance || p.substance).chem_name_kor || (p.Substance || p.substance).substance_name;
+        let maxMass = getMolMass(picked[0]);
 
         picked.forEach(p => {
-            const m = parseFloat(p.substance.molecular_mass);
+            const m = getMolMass(p);
             if (m > maxMass) {
                 maxMass = m;
                 maxItem = p;
             }
         });
 
-        const correctName = maxItem.substance.chem_name_kor;
+        const correctName = getName(maxItem);
 
         // This time, picked IS the pool (4 items). 
         // We just need to shuffle their names and find the index of the correct name.
-        const options = picked.map(p => p.substance.chem_name_kor);
+        const options = picked.map(p => getName(p));
 
         // Shuffle options
         for (let i = options.length - 1; i > 0; i--) {
