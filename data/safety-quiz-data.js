@@ -1,15 +1,32 @@
 (function () {
+    /**
+     * [스마트 과학실 안전 퀴즈 고정 문항 풀]
+     * 
+     * 새로운 문제를 추가할 때는 아래 양식에 맞게 객체를 배열에 추가해주세요.
+     * 기본 양식: { q: "질문", options: ["보기1", "보기2", "보기3", "보기4"], correct: 정답인덱스(0~3) }
+     * 
+     * [섹션 수동 지정 방법]
+     * 기본적으로 시스템이 문항의 단어를 분석하여 적절한 섹션으로 자동 분류합니다.
+     * 특정 섹션으로 100% 확실하게 지정하고 싶다면 아래와 같이 'section' 속성을 추가해 주세요.
+     * 사용할 수 있는 섹션명 (오타, 띄어쓰기 주의):
+     * 1. "실험실 기본 안전 및 보호구"
+     * 2. "화학물질 취급 및 폐기물 처리"
+     * 3. "응급 대처 및 화재 예방"
+     * 4. "GHS 및 MSDS의 이해"
+     * 
+     * 예시: { q: "질문", options: [...], correct: 0, section: "응급 대처 및 화재 예방" }
+     */
     const FIXED_POOL = [
-        { q: "GHS01 그림문자가 의미하는 것은?", options: ["폭발성", "인화성", "산화성", "독성"], correct: 0 },
-        { q: "GHS02 그림문자가 의미하는 것은?", options: ["폭발성", "인화성", "산화성", "부식성"], correct: 1 },
-        { q: "GHS03 그림문자가 의미하는 것은?", options: ["인화성", "산화성", "고압가스", "부식성"], correct: 1 },
-        { q: "GHS04 그림문자가 의미하는 것은?", options: ["산화성", "고압가스", "부식성", "독성"], correct: 1 },
-        { q: "GHS05 그림문자가 의미하는 것은?", options: ["부식성", "독성", "감탄사", "건강유해성"], correct: 0 },
-        { q: "GHS06 그림문자가 의미하는 것은?", options: ["부식성", "급성 독성", "감탄사", "환경유해성"], correct: 1 },
-        { q: "GHS07 그림문자가 의미하는 것은?", options: ["독성", "피부 자극성/감탄사", "건강유해성", "환경유해성"], correct: 1 },
-        { q: "GHS08 그림문자가 의미하는 것은?", options: ["독성", "감탄사", "건강유해성(발암성 등)", "환경유해성"], correct: 2 },
-        { q: "GHS09 그림문자가 의미하는 것은?", options: ["건강유해성", "환경유해성", "물 보존성", "산소 부족"], correct: 1 },
-        { q: "인화성 액체를 보관할 때 가장 적절한 장소는?", options: ["직사광선이 드는 창가", "환기가 잘 되는 서늘한 곳", "가열 기구 바로 옆", "밀폐된 두꺼운 상자"], correct: 1 },
+        { q: "GHS01 그림문자가 의미하는 것은?", options: ["폭발성", "인화성", "산화성", "독성"], correct: 0, section: "GHS 및 MSDS의 이해" },
+        { q: "GHS02 그림문자가 의미하는 것은?", options: ["폭발성", "인화성", "산화성", "부식성"], correct: 1, section: "GHS 및 MSDS의 이해" },
+        { q: "GHS03 그림문자가 의미하는 것은?", options: ["인화성", "산화성", "고압가스", "부식성"], correct: 1, section: "GHS 및 MSDS의 이해" },
+        { q: "GHS04 그림문자가 의미하는 것은?", options: ["산화성", "고압가스", "부식성", "독성"], correct: 1, section: "GHS 및 MSDS의 이해" },
+        { q: "GHS05 그림문자가 의미하는 것은?", options: ["부식성", "독성", "감탄사", "건강유해성"], correct: 0, section: "GHS 및 MSDS의 이해" },
+        { q: "GHS06 그림문자가 의미하는 것은?", options: ["부식성", "급성 독성", "감탄사", "환경유해성"], correct: 1, section: "GHS 및 MSDS의 이해" },
+        { q: "GHS07 그림문자가 의미하는 것은?", options: ["독성", "피부 자극성/감탄사", "건강유해성", "환경유해성"], correct: 1, section: "GHS 및 MSDS의 이해" },
+        { q: "GHS08 그림문자가 의미하는 것은?", options: ["독성", "감탄사", "건강유해성(발암성 등)", "환경유해성"], correct: 2, section: "GHS 및 MSDS의 이해" },
+        { q: "GHS09 그림문자가 의미하는 것은?", options: ["건강유해성", "환경유해성", "물 보존성", "산소 부족"], correct: 1, section: "GHS 및 MSDS의 이해" },
+        { q: "인화성 액체를 보관할 때 가장 적절한 장소는?", options: ["직사광선이 드는 창가", "환기가 잘 되는 서늘한 곳", "가열 기구 바로 옆", "밀폐된 두꺼운 상자"], correct: 1, section: "화학물질 취급 및 폐기물 처리" },
         { q: "강산(Strong Acid)이 피부에 묻었을 때 가장 먼저 해야 할 조치는?", options: ["중화제를 바른다", "흐르는 물에 20분 이상 씻는다", "수건으로 닦아낸다", "비누로 문지른다"], correct: 1 },
         { q: "눈에 화학물질이 들어갔을 때 안구 세척기를 사용하는 올바른 시간은?", options: ["1분 이내", "5분", "15분 이상", "마를 때까지"], correct: 2 },
         { q: "유기 용제(에탄올, 아세톤 등) 사용 시 주의사항으로 틀린 것은?", options: ["환기를 충분히 한다", "화기 엄금", "증기를 직접 흡입하지 않는다", "밀폐된 공간에서 장시간 사용한다"], correct: 3 },
@@ -116,6 +133,7 @@
         const correctIndex = pool.indexOf(correctAnswer);
 
         return {
+            section: "스마트 과학실 화학물질 식별",
             q: questionText,
             options: pool,
             correct: correctIndex
@@ -452,6 +470,7 @@
         const correctIndex = options.indexOf(correctName);
 
         return {
+            section: "스마트 과학실 화학물질 식별",
             q: "다음 중 분자량이 가장 큰(무거운) 물질은 무엇입니까?",
             options: options,
             correct: correctIndex
@@ -473,13 +492,34 @@
 
     /**
      * Shuffles the options of a fixed question object.
-     * @param {Object} original - { q, options, correct }
+     * @param {Object} original - { q, options, correct, section }
      */
     function randomizeFixedQuestion(original) {
         const correctVal = original.options[original.correct];
         const wrongs = original.options.filter((_, i) => i !== original.correct);
-        return createRandomizedQuestion(original.q, correctVal, wrongs);
+        const randQ = createRandomizedQuestion(original.q, correctVal, wrongs);
+        randQ.section = original.section; // 원래 섹션 유지
+        return randQ;
     }
+
+    // FIXED_POOL을 4개의 섹션으로 자동 분류
+    const classifyFixedPool = () => {
+        FIXED_POOL.forEach(q => {
+            if (q.section) return; // 수동으로 섹션을 지정해 둔 경우 자동 분류 생략
+            
+            const text = q.q + " " + q.options.join(" ");
+            if (text.includes("GHS") || text.includes("MSDS") || text.includes("물질안전보건자료") || text.includes("신호어") || text.includes("CAS") || text.includes("NFPA")) {
+                q.section = "GHS 및 MSDS의 이해";
+            } else if (text.includes("응급") || text.includes("안구 세척기") || text.includes("비상 샤워기") || text.includes("소화기") || text.includes("화재") || text.includes("신고") || text.includes("구토") || text.includes("119") || text.includes("화기 엄금") || text.includes("소방 담요")) {
+                q.section = "응급 대처 및 화재 예방";
+            } else if (text.includes("폐액") || text.includes("폐수") || text.includes("버릴") || text.includes("버려도") || text.includes("폐기물") || text.includes("보관") || text.includes("덜어") || text.includes("유기 용제") || text.includes("시약장") || text.includes("싱크대") || text.includes("개수대") || text.includes("흄 후드") || text.includes("환풍기") || text.includes("환기")) {
+                q.section = "화학물질 취급 및 폐기물 처리";
+            } else {
+                q.section = "실험실 기본 안전 및 보호구";
+            }
+        });
+    };
+    classifyFixedPool();
 
     globalThis.App = globalThis.App || {};
     globalThis.App.SafetyQuizData = {

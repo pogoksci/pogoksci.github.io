@@ -279,10 +279,18 @@
             return [];
         }
 
-        const TOTAL_QUESTIONS = 20;
+        const SECTIONS = [
+            "실험실 기본 안전 및 보호구",
+            "화학물질 취급 및 폐기물 처리",
+            "응급 대처 및 화재 예방",
+            "GHS 및 MSDS의 이해",
+            "스마트 과학실 화학물질 식별"
+        ];
+        
         const finalQuestions = [];
+        const dynamicQuestions = [];
 
-        // 1. Try to get safe quantity of Dynamic Questions (Max 10)
+        // 1. Try to get Dynamic Questions
         try {
             const { data: invData } = await App.supabase
                 .from('Inventory')
@@ -318,37 +326,19 @@
 
             if (invData && invData.length > 0) {
                 const invCopy = [...invData];
-                // Decide how many dynamic questions to use (max 10, but not more than available items)
-                const dynamicCount = Math.min(10, invCopy.length);
-
-                // Inject ONE Mass Comparison Question if possible
-                let massQuestionAdded = false;
+                
                 const massQ = App.SafetyQuizData.getMassComparisonQuestion(invCopy);
                 if (massQ) {
-                    finalQuestions.push(massQ);
-                    massQuestionAdded = true;
+                    dynamicQuestions.push(massQ);
                 }
 
-                // Fill remaining slots with Item-based questions
-                const loopLimit = massQuestionAdded ? dynamicCount - 1 : dynamicCount;
-
-                for (let i = 0; i < loopLimit; i++) {
+                while (dynamicQuestions.length < 5 && invCopy.length > 0) {
                     const idx = Math.floor(Math.random() * invCopy.length);
-                    // Use standard item
-                    const item = invCopy[idx];
-                    // Note: We don't splice here to keep 'invCopy' full for distractor generation if needed, 
-                    // but to avoid duplicate questions about same item, we should splice?
-                    // getDynamicTemplates needs 'allItems' for distractors.
-                    // Let's splice to pick the main item, but pass original 'invData' as context for distractors.
-
-                    invCopy.splice(idx, 1);
-
-                    // Get templates
+                    const item = invCopy.splice(idx, 1)[0];
                     const types = App.SafetyQuizData.getDynamicTemplates(item, invData);
                     if (types.length > 0) {
-                        // Select one template randomly
                         const qData = types[Math.floor(Math.random() * types.length)];
-                        finalQuestions.push(qData);
+                        dynamicQuestions.push(qData);
                     }
                 }
             }
@@ -356,26 +346,48 @@
             console.error("Dynamic question fetch failed, falling back to fixed pool", e);
         }
 
-        // 2. Fill the rest from FIXED_POOL
-        const needed = TOTAL_QUESTIONS - finalQuestions.length;
-        const fixedPoolCopy = [...App.SafetyQuizData.FIXED_POOL];
-
-        // Ensure we don't crash if pool is smaller than needed (though unlikely with ~40 items)
-        const countToPick = Math.min(needed, fixedPoolCopy.length);
-
-        for (let i = 0; i < countToPick; i++) {
-            const idx = Math.floor(Math.random() * fixedPoolCopy.length);
-            const rawQ = fixedPoolCopy.splice(idx, 1)[0];
-            // Randomize options for fixed questions too
-            finalQuestions.push(App.SafetyQuizData.randomizeFixedQuestion(rawQ));
+        // Fill dynamic if not 5
+        if (dynamicQuestions.length < 5) {
+            const fallbacks = App.SafetyQuizData.getFallbackDynamicQuestions();
+            while (dynamicQuestions.length < 5 && fallbacks.length > 0) {
+                dynamicQuestions.push(fallbacks.pop());
+            }
         }
+        
+        const sectionQuestions = {
+            "스마트 과학실 화학물질 식별": dynamicQuestions.slice(0, 5)
+        };
 
-        // 3. Shuffle (Optional, but good for mixing dynamic and fixed)
-        // Simple Fisher-Yates shuffle
-        for (let i = finalQuestions.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [finalQuestions[i], finalQuestions[j]] = [finalQuestions[j], finalQuestions[i]];
-        }
+        const fixedBySection = {
+            "실험실 기본 안전 및 보호구": [],
+            "화학물질 취급 및 폐기물 처리": [],
+            "응급 대처 및 화재 예방": [],
+            "GHS 및 MSDS의 이해": []
+        };
+        
+        App.SafetyQuizData.FIXED_POOL.forEach(q => {
+            if (fixedBySection[q.section]) {
+                fixedBySection[q.section].push(q);
+            } else {
+                fixedBySection["실험실 기본 안전 및 보호구"].push(q);
+            }
+        });
+
+        SECTIONS.slice(0, 4).forEach(sec => {
+            const pool = [...fixedBySection[sec]];
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+            
+            const picked = pool.slice(0, 5).map(q => App.SafetyQuizData.randomizeFixedQuestion(q));
+            sectionQuestions[sec] = picked;
+        });
+
+        // Merge all into finalQuestions sequentially
+        SECTIONS.forEach(sec => {
+            finalQuestions.push(...sectionQuestions[sec]);
+        });
 
         return finalQuestions;
     }
@@ -391,9 +403,14 @@
         }
 
         const q = QUIZ_STATE.questions[step];
+        const sectionIndex = Math.floor(step / 5) + 1;
+        
         root.innerHTML = `
             <div class="quiz-container">
                 <div class="quiz-progress"><div class="quiz-progress-inner" style="width:${(step / total) * 100}%"></div></div>
+                <div class="quiz-section-badge" style="display:inline-block; padding:4px 12px; background:#e0f2fe; color:#0284c7; border-radius:12px; font-size:13px; font-weight:bold; margin-bottom:12px;">
+                    [Section ${sectionIndex}/5] ${q.section || '스마트 과학실 안전 퀴즈'}
+                </div>
                 <div class="quiz-question-box">
                     <div class="quiz-question-text">${step + 1}. ${q.q}</div>
                     <div class="quiz-options">
