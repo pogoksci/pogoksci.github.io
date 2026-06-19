@@ -716,23 +716,42 @@
                         if (delError) throw delError;
                     }
 
-                    const rowsToUpsert = Array.from(uiMap.values()).map(row => {
-                        if (!row.id) {
+                    const rowsToUpdate = [];
+                    const rowsToInsert = [];
+                    
+                    Array.from(uiMap.values()).forEach(row => {
+                        if (row.id) {
+                            rowsToUpdate.push(row);
+                        } else {
                             const { id, ...rest } = row;
-                            return rest;
+                            rowsToInsert.push(rest);
                         }
-                        return row;
                     });
 
-                    if (rowsToUpsert.length > 0) {
-                        console.log("📤 Syncing (Upsert):", rowsToUpsert);
-                        // Default to Primary Key (id) by removing explicit onConflict
-                        const { error: upsertError } = await supabase.from('lab_usage_log')
-                            .upsert(rowsToUpsert);
+                    if (rowsToUpdate.length > 0) {
+                        console.log("📤 Syncing (Update existing):", rowsToUpdate);
+                        const { error: updateError } = await supabase.from('lab_usage_log').upsert(rowsToUpdate, { onConflict: 'id' });
+                        if (updateError) {
+                            console.error("❌ Sync (Update) failed:", updateError);
+                            throw new Error("기존 데이터 업데이트 중 오류(Update): " + updateError.message);
+                        }
+                    }
+                    
+                    if (rowsToInsert.length > 0) {
+                        console.log("📤 Syncing (Insert new):", rowsToInsert);
+                        
+                        // [DB 시퀀스 꼬임 방지 로직] 수동으로 가장 큰 ID를 찾아 +1 한 값을 부여
+                        const { data: maxIdData } = await supabase.from('lab_usage_log').select('id').order('id', { ascending: false }).limit(1);
+                        let nextId = (maxIdData && maxIdData.length > 0) ? parseInt(maxIdData[0].id) + 1 : 1;
+                        
+                        rowsToInsert.forEach(row => {
+                            row.id = nextId++;
+                        });
 
-                        if (upsertError) {
-                            console.error("❌ Sync (Upsert) failed:", upsertError);
-                            throw upsertError;
+                        const { error: insertError } = await supabase.from('lab_usage_log').insert(rowsToInsert);
+                        if (insertError) {
+                            console.error("❌ Sync (Insert) failed:", insertError);
+                            throw new Error("새로운 데이터 추가 중 오류(Insert): " + insertError.message);
                         }
                     }
 
@@ -741,7 +760,7 @@
 
                 } catch (err) {
                     console.error("Perfect Sync failed:", err);
-                    alert('저장 중 오류가 발생했습니다: ' + (err.message || JSON.stringify(err)));
+                    alert('저장 중 오류가 발생했습니다:\n' + (err.message || JSON.stringify(err)));
                 } finally {
                     isSaving = false;
                 }
