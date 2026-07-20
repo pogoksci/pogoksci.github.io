@@ -1,0 +1,43 @@
+name: Prevent Supabase Pause
+
+on:
+  schedule:
+    # Run at 00:00 UTC every day
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Database
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          # 1. Check if secrets are set
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Error: Secrets SUPABASE_URL and/or SUPABASE_ANON_KEY are not set."
+            exit 1
+          fi
+
+          # 2. Normalize URL (remove trailing slash)
+          CLEAN_URL=$(echo "$SUPABASE_URL" | sed 's/\/*$//')
+          echo "Pinging Supabase at $CLEAN_URL..."
+          
+          # 3. Send request and capture both body and status code
+          response_file=$(mktemp)
+          http_code=$(curl -s -w "%{http_code}" -o "$response_file" \
+            -X GET "$CLEAN_URL/rest/v1/experiment_kit?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          
+          response_body=$(cat "$response_file")
+          
+          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+            echo "Successfully pinged Supabase (HTTP $http_code)"
+          else
+            echo "Failed to ping Supabase (HTTP $http_code)"
+            echo "Response Body: $response_body"
+            exit 1
+          fi

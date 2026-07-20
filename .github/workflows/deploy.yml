@@ -1,0 +1,56 @@
+name: Deploy SciManager to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Check Secrets 🔍
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "::error::SUPABASE_URL secret is NOT set!"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+            echo "::error::SUPABASE_ANON_KEY secret is NOT set!"
+            exit 1
+          fi
+
+      - name: Inject Supabase Config (Python) 🐍
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          python3 -c "
+          import os
+          with open('js/supabaseClient.template.js', 'r', encoding='utf-8') as f: content = f.read()
+          content = content.replace('%%SUPABASE_URL%%', os.environ['SUPABASE_URL'])
+          content = content.replace('%%SUPABASE_ANON_KEY%%', os.environ['SUPABASE_ANON_KEY'])
+          with open('js/supabaseClient.js', 'w', encoding='utf-8') as f: f.write(content)
+          "
+
+      - name: Prepare Deployment Folder 📦
+        run: |
+          mkdir deploy_dist
+          rsync -av --progress --exclude='.github' --exclude='supabase' --exclude='deploy_dist' . deploy_dist/
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          token: ${{ secrets.DEPLOY_TOKEN }}
+          repository-name: pogoksci/pogoksci.github.io
+          branch: main
+          folder: deploy_dist
+          clean: true
+          single-commit: true
+          clean-exclude: |
+            .github
