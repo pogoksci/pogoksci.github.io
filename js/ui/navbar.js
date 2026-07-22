@@ -420,7 +420,7 @@
       dbResetBtn.style.display = (role === 'admin') ? 'flex' : 'none'; // flex for correct alignment
     }
     if (menuDataSync) {
-      menuDataSync.style.display = (role === 'admin') ? 'flex' : 'none'; // flex for correct alignment
+      menuDataSync.style.display = ['admin', 'teacher'].includes(role) ? 'flex' : 'none'; // Admin, Teacher 모두 표시
     }
 
     // 3. 기록 및 예약 (Lablog): Admin, Teacher만 보임

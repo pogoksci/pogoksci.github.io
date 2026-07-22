@@ -60,6 +60,7 @@
 
     function renderBaseLayout(container) {
         const isTeacher = App.Auth && typeof App.Auth.canWrite === 'function' && App.Auth.canWrite();
+        const enableSafetyStats = false; // 임시 블라인드 처리 (추후 true 변경 시 재활성화)
 
         container.innerHTML = `
             <div class="safety-main-container">
@@ -73,7 +74,7 @@
                     <button class="nav-tab" data-target="manual-section">매뉴얼/서식</button>
                     <button class="nav-tab" data-target="ghs-section">GHS 기호</button>
                     <button class="nav-tab" data-target="quiz-section">안전 퀴즈 & 인증</button>
-                    ${isTeacher ? '<button class="nav-tab" data-target="stats-section">안전 통계 분석</button>' : ''}
+                    ${(isTeacher && enableSafetyStats) ? '<button class="nav-tab" data-target="stats-section">안전 통계 분석</button>' : ''}
                 </div>
 
                 <div class="safety-content-scroll-area">
@@ -94,7 +95,7 @@
                         <div id="certificate-area" class="certificate-preview"></div>
                     </div>
 
-                    ${isTeacher ? `
+                    ${(isTeacher && enableSafetyStats) ? `
                     <div id="stats-section" class="tab-content" style="display:none;">
                         <div class="settings-section" style="padding: 10px 0;">
                             <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">

@@ -2130,7 +2130,23 @@ ${propText}
         let prepItems = "";
         let stepsHtml = "";
 
-        const finalStepHtml = `<li>제조 완료된 <b>${prepVolUnitStr} 용액</b> 중 실험에 필요한 목표 부피 <b style="color: #0056b3;">${requestedVolUnit}</b>를 메스시린더 또는 피펫으로 정확히 취하여 <b>실험 비커(또는 보관 용기)</b>에 담아 사용합니다.<br><span style="color: #666; font-size: 10.5px;">(※ 남은 용액은 라벨 부착 후 준비실에 보관하거나 과학실 폐액 처리 규정에 따라 처리합니다.)</span></li>`;
+        let finalStepNote = "";
+        let finalStepText = "";
+
+        if (prepVolmL < targetVolmL) {
+          finalStepText = `제조 완료된 <b>${prepVolUnitStr} 용액 전체</b>를 메스시린더 또는 피펫으로 취하여 <b>실험 비커(또는 보관 용기)</b>에 담아 사용합니다.`;
+          finalStepNote = `<span style="color: #c92a2a; font-size: 10.5px; font-weight: bold;">(⚠️ 총 목표 부피 ${requestedVolUnit} 중 ${prepVolUnitStr}가 조제되었으며, 남은 용액은 0 mL입니다. 더 필요한 경우 동일 조제를 추가 진행하세요.)</span>`;
+        } else if (prepVolmL === targetVolmL) {
+          finalStepText = `제조 완료된 <b>${prepVolUnitStr} 용액 전체</b>를 메스시린더 또는 피펫으로 취하여 <b>실험 비커(또는 보관 용기)</b>에 담아 사용합니다.`;
+          finalStepNote = `<span style="color: #666; font-size: 10.5px;">(※ 필요 용량 ${requestedVolUnit} 전량이 취출되어 남은 용액은 0 mL입니다.)</span>`;
+        } else {
+          const remVolmL = prepVolmL - targetVolmL;
+          const remVolStr = remVolmL >= 1000 ? `${(remVolmL / 1000).toFixed(1)} L` : `${remVolmL} mL`;
+          finalStepText = `제조 완료된 <b>${prepVolUnitStr} 용액</b> 중 실험에 필요한 목표 부피 <b style="color: #0056b3;">${requestedVolUnit}</b>를 메스시린더 또는 피펫으로 정확히 취하여 <b>실험 비커(또는 보관 용기)</b>에 담아 사용합니다.`;
+          finalStepNote = `<span style="color: #666; font-size: 10.5px;">(※ 사용 후 남은 용액 <b>${remVolStr}</b>는 라벨 부착 후 준비실에 보관하거나 과학실 폐액 처리 규정에 따라 처리합니다.)</span>`;
+        }
+
+        const finalStepHtml = `<li>${finalStepText}<br>${finalStepNote}</li>`;
 
         if (isExactMatch) {
           prepItems = `소분용기 (또는 메스시린더/실험비커), 피펫 (또는 피펫 펌프), 보호장갑`;
@@ -2202,6 +2218,38 @@ ${propText}
           `.replace(/\n\s*/g, "");
         }
 
+        let guidanceChoiceBoxHtml = "";
+        if (prepVolmL < targetVolmL) {
+          const repeatCount = Math.ceil(targetVolmL / prepVolmL);
+          const totalReqVolNum = (calculatedReqVolmL * repeatCount);
+          const totalReqMassNum = (calculatedReqMassg * repeatCount);
+          const totalReqVolStr = totalReqVolNum < 1 ? totalReqVolNum.toFixed(2) : totalReqVolNum.toFixed(1);
+          const totalReqMassStr = totalReqMassNum.toFixed(3);
+          const totalAmtStr = isLiquidDilution ? `원액 약 <b>${totalReqVolStr} mL</b>` : `시약 약 <b>${totalReqMassStr} g</b>`;
+          const accumulatedVolStr = (prepVolmL * repeatCount >= 1000) ? `${(prepVolmL * repeatCount / 1000).toFixed(1)} L` : `${prepVolmL * repeatCount} mL`;
+
+          guidanceChoiceBoxHtml = `
+            <div style="margin-top: 8px; padding: 10px; background: #fff9db; border: 1px solid #fab005; border-radius: 8px; font-size: 11px; line-height: 1.6; color: #212529;">
+              <div style="font-weight: bold; color: #f59f00; font-size: 11.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">help</span>
+                <span>💡 부피플라스크 규격(${prepVolUnitStr}) 선택에 따른 조제 맞춤 안내 (목표 ${requestedVolUnit})</span>
+              </div>
+              <div style="color: #495057;">원래 요청하신 부피(<b>${requestedVolUnit}</b>)보다 작은 <b>${prepVolUnitStr} 부피플라스크</b>를 선택하셨습니다. 조제 목적에 맞춰 아래 2가지 선택지 중 하나를 선택하세요:</div>
+              
+              <div style="margin-top: 6px; padding: 6px 8px; background: #ffffff; border-radius: 6px; border: 1px solid #ffe066;">
+                🔹 <b>선택지 A [총 목표량 ${requestedVolUnit} 제조가 반드시 필요한 경우]</b>:<br>
+                아래 1회(<b>${prepVolUnitStr}</b>) 레시피대로 <b style="color: #d9480f;">총 ${repeatCount}회 반복 조제</b>(${prepVolUnitStr} × ${repeatCount}회 = ${accumulatedVolStr})하여 1 L 비커 또는 보관 용기에 모아 사용하세요.<br>
+                <span style="color: #495057; font-size: 10.5px;">(※ ${repeatCount}회 전체 조제 시 총 필요 원료: ${totalAmtStr})</span>
+              </div>
+              
+              <div style="margin-top: 5px; padding: 6px 8px; background: #ffffff; border-radius: 6px; border: 1px solid #ffe066;">
+                🔹 <b>선택지 B [${prepVolUnitStr} 분량만 새로 만들어 사용할 경우]</b>:<br>
+                아래 <b>${prepVolUnitStr} 기준 1회 레시피</b>대로만 조제하여 <b>${prepVolUnitStr}</b> 용액을 전량 사용하세요.
+              </div>
+            </div>
+          `.replace(/\n\s*/g, "");
+        }
+
         recipeBoxHtml = `
           <div style="background: #eef9ff; border: 1px solid #b6e4ff; border-radius: 8px; padding: 10px; margin-top: 8px;">
             <div style="font-weight: bold; color: #004085; font-size: 12.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
@@ -2210,12 +2258,13 @@ ${propText}
             </div>
             <div style="font-size: 11.5px; color: #333; line-height: 1.5; background: white; padding: 8px; border-radius: 6px; border: 1px solid #d0e7ff;">
               <div>• <b>준비물:</b> ${prepItems}</div>
-              <div>• <b>필요 시약/원액 양:</b> <b style="color: #d9480f; font-size: 12.5px;">${reqDisplayStr}</b></div>
+              <div>• <b>필요 시약/원액 양 (1회 조제 기준):</b> <b style="color: #d9480f; font-size: 12.5px;">${reqDisplayStr}</b></div>
               <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cce5ff;">
                 <div style="font-weight: bold; color: #0056b3; margin-bottom: 2px;">🧪 상세 조제 순서:</div>
                 ${stepsHtml}
               </div>
               ${flaskChipsHtml}
+              ${guidanceChoiceBoxHtml}
             </div>
           </div>
         `;
