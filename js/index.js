@@ -51,6 +51,7 @@
     "./js/pages/lunch-lab-view.js",
     "./js/pages/safety-edu.js?v=20251227",
     "./js/pages/lab-manual.js?v=20251227",
+    "./js/pages/emergency-manual.js?v=20251227",
     "./js/ui/chatbot.js",
   ];
   const componentModules = [

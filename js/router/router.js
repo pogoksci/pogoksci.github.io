@@ -32,6 +32,7 @@
     export: "pages/export.html",
     safetyEdu: "pages/safety-edu.html",
     labManual: "pages/lab-manual.html",
+    emergencyManual: "pages/emergency-manual.html",
   };
 
   let currentState = null;
@@ -79,6 +80,9 @@
         break;
       case "labManual":
         if (App?.LabManual?.init) await App.LabManual.init();
+        break;
+      case "emergencyManual":
+        if (App?.EmergencyManual?.init) await App.EmergencyManual.init();
         break;
       case "labTimetable":
         if (App?.LabTimetable?.init) await App.LabTimetable.init();

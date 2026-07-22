@@ -288,6 +288,16 @@
       });
     }
 
+    const menuEmergency = document.getElementById("menu-emergency");
+    if (menuEmergency) {
+      menuEmergency.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        await App.Router.go("emergencyManual");
+        closeStartMenu();
+      });
+    }
+
     const menuHome = document.getElementById("menu-home");
     if (menuHome) {
       menuHome.addEventListener("click", (e) => {
