@@ -5,10 +5,10 @@
 ![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Mobile-orange.svg)
 ![Database](https://img.shields.io/badge/database-Supabase%20%28PostgreSQL%29-emerald.svg)
 
-> ****는 초·중·고등학교 과학실의 **시약장 재고 관리, 화학물질(MSDS/CAS) 조회,
-> 실재고 기반 스마트 용액 조제 계산기, 대화형 AI 챗봇, 교구·실험키트 관리, 폐액
-> 관리, 점심 자율 실험실 예약**을 하나로 통합한 차세대 스마트 과학실 종합 관리
-> 플랫폼입니다.
+> **SciManager **는 초·중·고등학교 과학실의 **시약장 재고 관리,
+> 화학물질(MSDS/CAS) 조회, 실재고 기반 스마트 용액 조제 계산기, 대화형 AI 챗봇,
+> 교구·실험키트 관리, 폐액 관리, 점심 자율 실험실 예약**을 하나로 통합한 스마트
+> 과학실 종합 관리 플랫폼입니다.
 
 ---
 
