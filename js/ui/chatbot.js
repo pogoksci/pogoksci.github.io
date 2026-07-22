@@ -62,9 +62,15 @@
                 <div class="chatbot-status" id="chatbot-status-text">하이브리드 모드</div>
               </div>
             </div>
-            <button id="chatbot-close-btn" title="닫기">
-              <span class="material-symbols-outlined">close</span>
-            </button>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button id="chatbot-reset-btn" title="AI 챗봇 대화 내용 및 검색 상태 초기화" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(0, 0, 0, 0.15); color: #333; cursor: pointer; display: flex; align-items: center; gap: 3px; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; transition: all 0.2s;">
+                <span class="material-symbols-outlined" style="font-size: 15px; color: #00a0b2;">restart_alt</span>
+                초기화
+              </button>
+              <button id="chatbot-close-btn" title="닫기">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
           </div>
           <div class="chatbot-messages" id="chatbot-messages-container"></div>
           <div class="chatbot-input-area">
@@ -80,6 +86,7 @@
       // 이벤트 바인딩
       document.getElementById("chatbot-toggle-btn").onclick = () => this.togglePanel();
       document.getElementById("chatbot-close-btn").onclick = () => this.togglePanel(false);
+      document.getElementById("chatbot-reset-btn").onclick = () => this.resetChat();
       document.getElementById("chatbot-send-btn").onclick = () => this.handleSend();
 
       const input = document.getElementById("chatbot-input");
@@ -92,6 +99,24 @@
       // 초기 안내 메시지 렌더링
       this.renderWelcome();
       this.updateStatus();
+    },
+
+    resetChat: function () {
+      this.selectedSubstance = null;
+      this.lastDateRange = null;
+
+      const container = document.getElementById("chatbot-messages-container");
+      if (container) {
+        container.innerHTML = "";
+      }
+
+      const input = document.getElementById("chatbot-input");
+      if (input) {
+        input.value = "";
+        input.placeholder = "무엇을 도와드릴까요?";
+      }
+
+      this.renderWelcome();
     },
 
     // ------------------------------------------------------------
@@ -299,14 +324,10 @@
       const isWasteStatsQuery = (query.includes("폐수") || query.includes("폐액") || query.includes("버린")) && 
                                 (query.includes("발생") || query.includes("통계") || query.includes("얼마나") || query.includes("양") || dateMatches.length > 0 || query.includes("기간"));
 
-      // 다른 시약 검색 요청 시 상태 초기화
+      // 챗봇 대화 및 검색 상태 초기화 요청 시
       if (isResetQuery) {
-        this.selectedSubstance = null;
-        const inputEl = document.getElementById("chatbot-input");
-        if (inputEl) {
-          inputEl.placeholder = "무엇을 도와드릴까요?";
-        }
-        return `🔄 검색 상태가 초기화되었습니다. 궁금하신 약품, 교구, 설비의 이름을 입력해 주세요.`;
+        this.resetChat();
+        return null;
       }
 
       // --- 폐수 통계 질의 처리 ---
@@ -579,12 +600,6 @@
                 }
               }
 
-              reportHtml += `
-                </div>
-              </div>
-              <div class="chatbot-chips-container" style="margin-top: 10px;">
-                <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
-              </div>`;
               return reportHtml;
             }
           }
@@ -601,7 +616,6 @@
 <div class="chatbot-chips-container" style="margin-top: 10px;">
   <button class="chatbot-chip" onclick="App.Chatbot.askPreset('화학정원 실험')">🧪 화학정원 실험</button>
   <button class="chatbot-chip" onclick="App.Chatbot.askPreset('앙금 생성 실험')">🧪 앙금 생성 실험</button>
-  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
 </div>`;
       }
 
@@ -743,8 +757,8 @@
         }
       }
 
-      // 시약 매칭 성공 시 컨텍스트 업데이트, 실패하고 맥락 참조 단어가 없으면 이전 컨텍스트 초기화
-      const isContextQuery = query.includes("이 시약") || query.includes("이 물질") || query.includes("해당 시약") || query.includes("이거") || query.includes("그거");
+      // 시약 매칭 성공 시 컨텍스트 업데이트, 실패하고 맥락 참조 단어 또는 속성 질의가 없으면 이전 컨텍스트 초기화
+      const isContextQuery = isMwQuery || isMsdsQuery || isPropQuery || query.includes("이 시약") || query.includes("이 물질") || query.includes("해당 시약") || query.includes("이거") || query.includes("그거");
       if (foundSubstance) {
         this.selectedSubstance = foundSubstance;
       } else if (!isContextQuery) {
@@ -752,6 +766,11 @@
       }
 
       const substance = this.selectedSubstance;
+
+      // 시약이 선택되지 않은 상태에서 속성 버튼(분자량/위험성/특성) 클릭 시 안내
+      if (!substance && (isMwQuery || isMsdsQuery || isPropQuery)) {
+        return `💡 시약이 먼저 선택되어야 합니다. 궁금하신 시약의 이름(예: **염산**, **수산화나트륨**, **에탄올**)을 먼저 입력해 주세요.`;
+      }
 
       // --- 농도 변환 레시피 질의 처리 ---
       const concMatch = query.match(/([0-9.]+)\s*(M|mM|%|N)/i);
@@ -2269,9 +2288,7 @@
               ${toolListHtml}
             </div>
           </div>
-          <div class="chatbot-chips-container" style="margin-top: 10px; display: flex; gap: 5px;">
-            <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 검색</button>
-          </div>`;
+`;
         }
 
         if (isLocationQuery) {
@@ -2286,10 +2303,7 @@
 
 💡 <b>확인 사항:</b>
 - 시약/교구명이 올바르게 입력되었는지 확인해 주세요.
-- 과학실 재고 목록에 해당 품목이 등록되어 있는지 확인해 주세요.
-<div class="chatbot-chips-container" style="margin-top: 10px; display: flex; gap: 5px;">
-  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 검색</button>
-</div>`;
+- 과학실 재고 목록에 해당 품목이 등록되어 있는지 확인해 주세요.`;
           }
 
           return `🔍 <b>보관 위치 조회 가이드</b>
@@ -2303,7 +2317,6 @@
           <div class="chatbot-chips-container" style="margin-top: 10px; display: flex; gap: 5px;">
             <button class="chatbot-chip" onclick="App.Chatbot.askPreset('수산화 나트륨 위치')">🧪 수산화 나트륨 위치</button>
             <button class="chatbot-chip" onclick="App.Chatbot.askPreset('현미경')">🧩 현미경</button>
-            <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 검색</button>
           </div>`;
         }
 
@@ -2569,7 +2582,6 @@
           <div class="chatbot-chips-container" style="margin-top: 10px; display: flex; gap: 5px;">
             <button class="chatbot-chip" onclick="App.Chatbot.askPreset('위험성')">⚠️ 위험성(MSDS)</button>
             <button class="chatbot-chip" onclick="App.Chatbot.askPreset('물리적 특성')">🌡️ 물리적 특성</button>
-            <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 검색</button>
           </div>`.replace(/\n\s*/g, "");
         } else {
           return `🔍 <b>${chemName}</b> (CAS: ${casRn})의 화학물질 정보는 등록되어 있으나, 현재 과학실 내에 **보관된 시약병(재고)이 없습니다.**
@@ -2579,7 +2591,6 @@
 <div class="chatbot-chips-container" style="margin-top: 10px; display: flex; gap: 5px;">
   <button class="chatbot-chip" onclick="App.Chatbot.askPreset('위험성')">⚠️ 위험성(MSDS)</button>
   <button class="chatbot-chip" onclick="App.Chatbot.askPreset('분자량')">⚖️ 분자량</button>
-  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 검색</button>
 </div>`;
         }
       }
@@ -2594,7 +2605,6 @@
   <button class="chatbot-chip" onclick="App.Chatbot.askPreset('위험성')">⚠️ 위험성(MSDS)</button>
   <button class="chatbot-chip" onclick="App.Chatbot.askPreset('물리적 특성')">🌡️ 물리적 특성</button>
   <button class="chatbot-chip chip-filled" onclick="App.Chatbot.goToDetail(${substance.id})">상세 이동</button>
-  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
 </div>`;
       }
 
@@ -2617,6 +2627,32 @@
         let msds2Text = msdsData?.content || "등록된 MSDS 2번(유해성·위험성) 정보가 없습니다.";
         msds2Text = msds2Text.replace(/;;;/g, "\n").replace(/\|\|\|/g, " - ");
 
+        const ghsDescriptions = {
+          "01": "폭발성",
+          "02": "인화성",
+          "03": "산화성",
+          "04": "고압 가스",
+          "05": "부식성",
+          "06": "급성 독성",
+          "07": "경고/자극성",
+          "08": "건강 유해성",
+          "09": "환경 유해성"
+        };
+
+        // GHS 파일명 간의 줄바꿈(\n)을 공백으로 변경하여 나란히 표기
+        msds2Text = msds2Text.replace(/(GHS\d+\.gif)\s*[\r\n]+\s*/gi, "$1 ");
+        msds2Text = msds2Text.replace(/(GHS\d+\.gif)\s*[\r\n]+\s*/gi, "$1 ");
+
+        msds2Text = msds2Text.replace(/GHS(\d+)\.gif/gi, (m, p1) => {
+          const num = p1.padStart(2, "0");
+          const imgUrl = `https://hazmat.nfa.go.kr/design/images/contents/ghs-icon${num}.gif`;
+          const label = ghsDescriptions[num] || `GHS${num}`;
+          return `<span style="display: inline-flex; align-items: center; gap: 4px; background: #ffffff; border: 1px solid #ffc9c9; border-radius: 6px; padding: 2px 6px; margin: 2px 4px 2px 0; font-size: 11.5px; font-weight: bold; color: #d6336c; box-shadow: 0 1px 3px rgba(0,0,0,0.05); vertical-align: middle; white-space: nowrap;">
+            <img src="${imgUrl}" alt="${label}" style="width: 22px; height: 22px; vertical-align: middle; object-fit: contain;" onerror="this.onerror=null; this.style.display='none';">
+            ${label}
+          </span>`;
+        });
+
         let hazardText = "";
         if (hazardData && hazardData.length > 0) {
           hazardText = "\n\n⚠️ <b>법적 규제/고시 정보:</b>\n" + hazardData.map(h => `- **${h.sbstnClsfTypeNm}**: ${h.contInfo}`).join("\n");
@@ -2630,7 +2666,6 @@ ${msds2Text}${hazardText}
   <button class="chatbot-chip" onclick="App.Chatbot.askPreset('분자량')">⚖️ 분자량</button>
   <button class="chatbot-chip" onclick="App.Chatbot.askPreset('물리적 특성')">🌡️ 물리적 특성</button>
   <button class="chatbot-chip chip-filled" onclick="App.Chatbot.goToDetail(${substance.id})">상세 이동</button>
-  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
 </div>`;
       }
 
@@ -2666,7 +2701,6 @@ ${propText}
   <button class="chatbot-chip" onclick="App.Chatbot.askPreset('분자량')">⚖️ 분자량</button>
   <button class="chatbot-chip" onclick="App.Chatbot.askPreset('위험성')">⚠️ 위험성(MSDS)</button>
   <button class="chatbot-chip chip-filled" onclick="App.Chatbot.goToDetail(${substance.id})">상세 이동</button>
-  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 시약 검색</button>
 </div>`;
       }
 
@@ -2700,9 +2734,6 @@ ${propText}
             <button class="chatbot-chem-btn" style="flex: 1; padding: 6px 0; font-size: 11px; font-weight: bold; border-radius: 6px; border: 1px solid #00a0b2; background: transparent; color: #00a0b2; cursor: pointer; text-align: center;" onclick="App.Chatbot.askPreset('특성')">물리<br>특성</button>
             <button class="chatbot-chem-btn btn-filled" style="flex: 1; padding: 6px 0; font-size: 11px; font-weight: bold; border-radius: 6px; border: 1px solid #00a0b2; background: #00a0b2; color: #ffffff; cursor: pointer; text-align: center;" onclick="App.Chatbot.goToDetail(${substance.id})">상세<br>이동</button>
           </div>
-        </div>
-        <div class="chatbot-chips-container" style="margin-top: 10px; display: flex; gap: 5px;">
-          <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 검색</button>
         </div>
       `.replace(/\n\s*/g, "");
       return summaryCardHtml;
