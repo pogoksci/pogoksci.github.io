@@ -50,7 +50,7 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           token: ${{ secrets.DEPLOY_TOKEN }}
-          repository-name: ggomcode/ggomsci
+          repository-name: ${{ github.repository }}
           branch: gh-pages
           folder: deploy_dist
           clean: true
