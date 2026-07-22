@@ -493,36 +493,40 @@
       if (user) {
         // 로그인 상태
         const name = user.email ? user.email.split('@')[0] : 'User';
-        userIdEl.textContent = name;
-        userIdEl.style.fontWeight = 'bold';
+        const roleLabel = role === 'teacher' ? '교사' : (role === 'admin' ? '관리자' : (role === 'student' ? '학생' : ''));
+        userIdEl.innerHTML = `<span style="font-weight: bold; color: #333; white-space: nowrap;">${name}</span> ${roleLabel ? `<span style="font-size: 11px; background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 10px; margin-left: 4px; font-weight: 500; white-space: nowrap;">${roleLabel}</span>` : ''}`;
 
-        // 아이콘: 로그아웃
-        actionIcon.textContent = "logout"; // Material Symbol 'logout'
+        actionIcon.innerHTML = `
+          <div class="auth-btn-pill auth-btn-logout">
+            <span>로그아웃</span>
+            <span class="material-symbols-outlined" style="font-size: 15px;">logout</span>
+          </div>
+        `;
 
-        // 클릭 동작: 로그아웃 (아이콘 클릭 시에만)
-        actionIcon.onclick = (e) => {
+        // 카드 전체 클릭 동작: 로그아웃 확인
+        footer.onclick = (e) => {
           e.preventDefault();
-          e.stopPropagation(); // 버블링 방지
           if (confirm(`${name}님, 로그아웃 하시겠습니까?`)) {
             App.Auth.logout();
             closeStartMenu();
           }
         };
-        // Footer 전체 클릭 방지
-        footer.onclick = null;
-        footer.style.cursor = 'default';
+        footer.style.cursor = 'pointer';
+        footer.title = "클릭하여 로그아웃";
       } else {
-        // 게스트 상태
-        userIdEl.textContent = "Guest";
-        userIdEl.style.fontWeight = 'normal';
+        // 게스트 상태 (로그인 전)
+        userIdEl.innerHTML = `<span style="font-weight: 600; color: #444; white-space: nowrap;">Guest</span>`;
 
-        // 아이콘: 로그인 (login 아이콘)
-        actionIcon.textContent = "login";
+        actionIcon.innerHTML = `
+          <div class="auth-btn-pill auth-btn-login">
+            <span>로그인</span>
+            <span class="material-symbols-outlined" style="font-size: 15px;">login</span>
+          </div>
+        `;
 
-        // 클릭 동작: 로그인 페이지 이동 (아이콘 클릭 시에만)
-        actionIcon.onclick = (e) => {
+        // 카드 전체 클릭 동작: 카드의 어느 곳을 눌러도 로그인 페이지로 이동!
+        footer.onclick = (e) => {
           e.preventDefault();
-          e.stopPropagation();
 
           // ✅ 현재 페이지 정보 저장 (로그인 후 복귀를 위해)
           const current = App.Router.getCurrentState ? App.Router.getCurrentState() : null;
@@ -540,9 +544,8 @@
           }
           closeStartMenu();
         };
-        // Footer 전체 클릭 방지
-        footer.onclick = null;
-        footer.style.cursor = 'default';
+        footer.style.cursor = 'pointer';
+        footer.title = "클릭하여 로그인하기";
       }
     }
 

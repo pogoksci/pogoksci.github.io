@@ -897,16 +897,65 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  margin-top: 5px;
+  gap: 8px;
+  padding: 10px 14px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  margin-top: 10px;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: all 0.2s ease;
+  user-select: none;
 }
 
 .menu-footer:hover {
-  background-color: rgba(0, 166, 173, 0.1);
+  background-color: #e6f7ff;
+  border-color: #00a0b2;
+  box-shadow: 0 2px 8px rgba(0, 160, 178, 0.15);
+}
+
+.menu-footer:active {
+  transform: scale(0.98);
+}
+
+.user-id {
+  white-space: nowrap;
+}
+
+.auth-btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.auth-btn-login {
+  background: linear-gradient(135deg, #00a0b2, #00838f);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 160, 178, 0.35);
+}
+
+.auth-btn-login:hover {
+  background: linear-gradient(135deg, #00838f, #006064);
+  box-shadow: 0 3px 8px rgba(0, 160, 178, 0.5);
+}
+
+.auth-btn-logout {
+  background: #f1f3f5;
+  color: #495057;
+  border: 1px solid #ced4da;
+}
+
+.auth-btn-logout:hover {
+  background: #e9ecef;
+  color: #d9534f;
+  border-color: #d9534f;
 }
 
 .user-icon {
@@ -8160,6 +8209,96 @@ input[type="text"].date-input-month-day {
 
 .btn-login:hover {
   background-color: #008c9e;
+}
+
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .login-input {
+  padding-right: 44px;
+}
+
+.toggle-pw-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #777;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: color 0.2s, background-color 0.2s;
+  touch-action: manipulation;
+}
+
+.toggle-pw-btn:hover {
+  color: #00a0b2;
+  background-color: #f0f0f0;
+}
+
+/* 📱 모바일 가상 키보드 가림 방지 최적화 CSS */
+@media (max-width: 600px) {
+  .login-container {
+    max-width: 360px;
+    width: 92%;
+    margin: 15px auto 30px auto !important;
+    padding: 24px 20px !important;
+    border-radius: 16px;
+  }
+
+  .login-logo {
+    width: 56px !important;
+    height: auto;
+    margin-bottom: 12px !important;
+    transition: all 0.2s ease;
+  }
+
+  .login-title {
+    font-size: 20px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .form-group-left, .form-group-left-20 {
+    margin-bottom: 12px !important;
+  }
+
+  .form-group-left label, .form-group-left-20 label {
+    margin-bottom: 4px !important;
+    font-size: 13px !important;
+  }
+
+  .login-input {
+    height: 44px !important;
+    font-size: 15px !important;
+  }
+
+  .btn-login {
+    height: 46px !important;
+    font-size: 15px !important;
+    margin-top: 6px !important;
+  }
+
+  /* 키보드가 올라와 포커스된 상태일 때 슬림화 처리 (비밀번호 가림 완전 방지) */
+  .login-container.keyboard-open {
+    margin-top: 5px !important;
+    padding-top: 14px !important;
+  }
+
+  .login-container.keyboard-open .login-logo {
+    display: none !important; /* 포커스 시 로고 숨김으로 비밀번호 및 버튼 시야 100% 확보 */
+  }
+
+  .login-container.keyboard-open .login-title {
+    font-size: 16px !important;
+    margin-bottom: 8px !important;
+  }
 }
 
 .error-msg {

@@ -295,9 +295,23 @@
       const isWasteQuery = tokens.some(t => wasteKeywords.some(k => t.includes(k)));
       const isLocationQuery = tokens.some(t => locationKeywords.some(k => t.includes(k)));
 
-      // 구입요청/소모임박 키워드
       const lowStockKeywords = ["구입", "구매", "소모", "부족", "주문", "살 거", "구입요청"];
       const isLowStockQuery = tokens.some(t => lowStockKeywords.some(k => t.includes(k)));
+
+      // 🆕 1. 대화형 농도/몰농도 계산 키워드 감지 (예: "염산 1M 1L", "0.1M 수산화나트륨 500mL")
+      const concMatchCheck = query.match(/(\d+(?:\.\d+)?)\s*(?:M|몰|%|mM|N)/i);
+      const volMatchCheck = query.match(/(\d+(?:\.\d+)?)\s*(?:mL|L|밀리리터|리터)/i);
+      const concCalcKeywords = ["농도", "몰농도", "만들", "제조", "희석", "녹여", "녹이", "용액", "molar", "몰"];
+      const isConcCalcQuery = (concMatchCheck && volMatchCheck) || (concMatchCheck && concCalcKeywords.some(k => query.includes(k))) || (volMatchCheck && (query.includes("만들") || query.includes("제조") || query.includes("희석")));
+
+      // 🆕 2. 교구/설비 점검 & 세척/유지보수 매뉴얼 감지
+      const maintKeywords = ["점검", "청소", "세척", "주기", "매뉴얼", "유지보수", "고장", "보관법", "관리법", "관리", "수평", "필터"];
+      const equipNames = ["현미경", "흄후드", "전자저울", "저울", "mbl", "기주공명", "알코올램프", "알코올 램프", "하치장", "피펫"];
+      const isMaintenanceQuery = maintKeywords.some(k => query.includes(k)) || (equipNames.some(e => query.toLowerCase().includes(e)) && (query.includes("어떻게") || query.includes("방법") || query.includes("주기") || query.includes("점검") || query.includes("청소") || query.includes("관리")));
+
+      // 🆕 3. 교육과정 / 단원별 키트 및 시약 매칭 감지
+      const curriKeywords = ["교육과정", "단원", "중1", "중2", "중3", "고등", "통합과학", "물리학", "화학", "생명과학", "지구과학", "융합과학", "교과서"];
+      const isCurriculumQuery = curriKeywords.some(k => query.includes(k)) && (query.includes("실험") || query.includes("목록") || query.includes("시약") || query.includes("키트") || query.includes("단원") || query.includes("과정"));
 
       // 폐수 통계용 날짜 패턴 매칭
       const dateMatches = [];
@@ -328,6 +342,24 @@
       if (isResetQuery) {
         this.resetChat();
         return null;
+      }
+
+      // 🆕 농도/몰농도 대화형 계산기 실행
+      if (isConcCalcQuery) {
+        const concAns = await this.handleConcCalcQuery(query);
+        if (concAns) return concAns;
+      }
+
+      // 🆕 교구/설비 점검 및 유지보수 매뉴얼 실행
+      if (isMaintenanceQuery) {
+        const maintAns = await this.handleMaintenanceQuery(query);
+        if (maintAns) return maintAns;
+      }
+
+      // 🆕 교육과정/실험 교구·키트 매칭 실행
+      if (isCurriculumQuery) {
+        const curriAns = await this.handleCurriculumQuery(query);
+        if (curriAns) return curriAns;
       }
 
       // --- 폐수 통계 질의 처리 ---
@@ -642,45 +674,64 @@
         "nh3": "암모니아"
       };
 
-      const spaceAliasMap = {
-        "탄산칼슘": "탄산 칼슘",
-        "탄산 칼슘": "탄산칼슘",
-        "수산화나트륨": "수산화 나트륨",
-        "수산화 나트륨": "수산화나트륨",
-        "질산은": "질산 은",
-        "질산 은": "질산은",
-        "황산구리": "황산 구리",
-        "황산 구리": "황산구리",
-        "과산화수소": "과산화 수소",
-        "과산화 수소": "과산화수소",
-        "메틸알코올": "메틸 알코올",
-        "메틸 알코올": "메틸알코올",
-        "황산마그네슘": "황산 마그네슘",
-        "황산 마그네슘": "황산마그네슘",
-        "과망간산칼륨": "과망간산 칼륨",
-        "과망간산 칼륨": "과망간산칼륨",
-        "탄산나트륨": "탄산 나트륨",
-        "탄산 나트륨": "탄산나트륨",
-        "탄산수소나트륨": "탄산수소 나트륨",
-        "탄산수소 나트륨": "탄산수소나트륨",
-        "수산화칼슘": "수산화 칼슘",
-        "수산화 칼슘": "수산화칼슘",
-        "수산화칼륨": "수산화 칼륨",
-        "수산화 칼륨": "수산화칼륨",
-        "수산화암모늄": "수산화 암모늄",
-        "수산화 암모늄": "수산화암모늄",
-        "염화나트륨": "염화 나트륨",
-        "염화 나트륨": "염화나트륨"
-      };
-
       const buildSearchTerms = (token) => {
         const terms = [token];
-        const lower = token.toLowerCase();
-        if (spaceAliasMap[token]) terms.push(spaceAliasMap[token]);
-        if (formulaMap[lower] && !terms.includes(formulaMap[lower])) terms.push(formulaMap[lower]);
         const noSpace = token.replace(/\s+/g, "");
-        if (noSpace.length >= 2 && !terms.includes(noSpace)) terms.push(noSpace);
+        if (noSpace.length >= 2 && !terms.includes(noSpace)) {
+          terms.push(noSpace);
+        }
+        const lower = token.toLowerCase();
+        if (formulaMap[lower] && !terms.includes(formulaMap[lower])) {
+          terms.push(formulaMap[lower]);
+        }
         return terms;
+      };
+
+      const fetchCandidateSubstance = async (st) => {
+        const noSpace = st.replace(/\s+/g, "");
+
+        // A. 정확히 일치하는 화학물질 (.eq 및 _mod 컬럼 공백 제거 일치) 최우선
+        const { data: exactList } = await supabase
+          .from("Substance")
+          .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
+          .or(`chem_name_kor.eq.${st},chem_name_kor_mod.eq.${noSpace},substance_name.eq.${st},substance_name_mod.eq.${noSpace},molecular_formula.eq.${st},molecular_formula_mod.eq.${st}`)
+          .limit(1);
+
+        if (exactList && exactList.length > 0) return exactList[0];
+
+        // B. 단어 시작 일치 (`st%` 및 `_mod` 컬럼 공백 제거 시작 일치)
+        const { data: prefixList } = await supabase
+          .from("Substance")
+          .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
+          .or(`chem_name_kor.ilike.${st}%,chem_name_kor_mod.ilike.${noSpace}%,substance_name.ilike.${st}%,substance_name_mod.ilike.${noSpace}%`)
+          .limit(10);
+
+        if (prefixList && prefixList.length > 0) {
+          prefixList.sort((a, b) => {
+            const nameA = a.chem_name_kor_mod || a.chem_name_kor || "";
+            const nameB = b.chem_name_kor_mod || b.chem_name_kor || "";
+            return nameA.length - nameB.length;
+          });
+          return prefixList[0];
+        }
+
+        // C. 부분 일치 (`%st%` 및 `_mod` 최단 이름 정렬)
+        const { data: partialList } = await supabase
+          .from("Substance")
+          .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
+          .or(`chem_name_kor.ilike.%${st}%,chem_name_kor_mod.ilike.%${noSpace}%,substance_name.ilike.%${st}%,substance_name_mod.ilike.%${noSpace}%,molecular_formula.ilike.%${st}%,molecular_formula_mod.ilike.%${st}%`)
+          .limit(10);
+
+        if (partialList && partialList.length > 0) {
+          partialList.sort((a, b) => {
+            const nameA = a.chem_name_kor_mod || a.chem_name_kor || "";
+            const nameB = b.chem_name_kor_mod || b.chem_name_kor || "";
+            return nameA.length - nameB.length;
+          });
+          return partialList[0];
+        }
+
+        return null;
       };
 
       // 1단계: 원본 토큰 및 띄어쓰기/화학식 변형 검색
@@ -690,16 +741,8 @@
         const searchTerms = buildSearchTerms(token);
 
         for (const st of searchTerms) {
-          const { data } = await supabase
-            .from("Substance")
-            .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
-            .or(`chem_name_kor.ilike.%${st}%,chem_name_kor_mod.ilike.%${st}%,substance_name.ilike.%${st}%,substance_name_mod.ilike.%${st}%,molecular_formula.ilike.%${st}%,molecular_formula_mod.ilike.%${st}%`)
-            .limit(1);
-
-          if (data && data.length > 0) {
-            foundSubstance = data[0];
-            break;
-          }
+          foundSubstance = await fetchCandidateSubstance(st);
+          if (foundSubstance) break;
         }
         if (foundSubstance) break;
       }
@@ -715,16 +758,8 @@
           const searchTerms = buildSearchTerms(stripped);
 
           for (const st of searchTerms) {
-            const { data } = await supabase
-              .from("Substance")
-              .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
-              .or(`chem_name_kor.ilike.%${st}%,chem_name_kor_mod.ilike.%${st}%,substance_name.ilike.%${st}%,substance_name_mod.ilike.%${st}%,molecular_formula.ilike.%${st}%,molecular_formula_mod.ilike.%${st}%`)
-              .limit(1);
-
-            if (data && data.length > 0) {
-              foundSubstance = data[0];
-              break;
-            }
+            foundSubstance = await fetchCandidateSubstance(st);
+            if (foundSubstance) break;
           }
           if (foundSubstance) break;
         }
@@ -778,1445 +813,10 @@
       const makeKeywords = ["만들", "필요", "조제", "희석", "제조", "배합", "레시피"];
       const isMakeQuery = tokens.some(t => makeKeywords.some(k => t.includes(k))) || (concMatch && volMatch);
 
-      if (!substance && isMakeQuery && (concMatch || volMatch)) {
-        const targetToken = tokens.find(t => !makeKeywords.some(k => t.includes(k)) && !t.match(/^[0-9.]+(M|mM|%|N|mL|L|l)$/i)) || query;
-        return `❌ **조제 불가능 (시약 정보 없음)**\n\n과학실 DB에서 **${targetToken}** 시약 정보나 재고를 찾을 수 없습니다. 시약명이 올바른지 또는 시약 재고가 등록되어 있는지 확인해 주세요.`;
+      if (isMakeQuery && (concMatch || volMatch)) {
+        return await this.handleConcCalcQuery(query);
       }
 
-      if (substance && isMakeQuery && (concMatch || volMatch)) {
-        const chemName = substance.chem_name_kor_mod || substance.chem_name_kor || substance.substance_name_mod || substance.substance_name;
-        
-        let targetVol = 500; // default 500mL
-        if (volMatch) {
-          const val = parseFloat(volMatch[1]);
-          const unit = volMatch[2].toLowerCase();
-          if (unit === 'l') {
-            targetVol = val * 1000;
-          } else {
-            targetVol = val;
-          }
-        }
-        
-        let targetConc = 0.1; // default 0.1
-        let targetUnit = "M";
-        if (concMatch) {
-          targetConc = parseFloat(concMatch[1]);
-          targetUnit = concMatch[2].toUpperCase();
-        }
-
-        // 1. Fetch active inventory items for this substance
-        const { data: invItems, error: invErr } = await supabase
-          .from("Inventory")
-          .select(`
-            id, current_amount, initial_amount, unit, concentration_value, concentration_unit, state,
-            Cabinet ( cabinet_name, area_id:lab_rooms!fk_cabinet_lab_rooms ( room_name ) ),
-            Substance ( id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_mass, Properties ( name, property ) )
-          `)
-          .eq("substance_id", substance.id)
-          .gt("current_amount", 0);
-
-        if (invErr) {
-          console.error("Inventory fetch error for recipe:", invErr);
-          return "❌ 재고 정보를 확인하는 도중 오류가 발생했습니다.";
-        }
-
-        if (!invItems || invItems.length === 0) {
-          return `❌ 현재 과학실 내에 **${chemName}**의 재고가 한 병도 존재하지 않아 조제 레시피를 계산할 수 없습니다.`;
-        }
-
-        const extractDensity = (item) => {
-          const props = item.Substance?.Properties || [];
-          const densityProp = props.find(p => p.name && p.name.toLowerCase().includes("density"));
-          if (!densityProp) return null;
-          const m = densityProp.property.match(/([0-9.]+)\s*g\/cm3|([0-9.]+)\s*g\/mL|([0-9.]+)/i);
-          return m ? parseFloat(m[1] || m[2] || m[3]) : null;
-        };
-
-        const chemDefaults = {
-          "인산": {
-            "mw": 98,
-            "density": 1.685,
-            "defaultConc": 85,
-            "defaultUnit": "%"
-          },
-          "C.I. 염기성 보라색 010": {
-            "mw": 479.01,
-            "density": 1.3,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "황산": {
-            "mw": 98.08,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "암모니아 용액": {
-            "mw": 35.05,
-            "density": 0.907,
-            "defaultConc": 25,
-            "defaultUnit": "%"
-          },
-          "암모니아수": {
-            "mw": 35.05,
-            "density": 0.907,
-            "defaultConc": 25,
-            "defaultUnit": "%"
-          },
-          "감초 추출물": {
-            "mw": 0,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "C.I. pigment red 179": {
-            "mw": 177.16,
-            "density": 1.61,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "루미놀 용액": {
-            "mw": 177.16,
-            "density": 1.61,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "디클로로메탄": {
-            "mw": 84.93,
-            "density": 1.3255,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화수소": {
-            "mw": 36.46,
-            "density": 1.19,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염산": {
-            "mw": 36.46,
-            "density": 1.18,
-            "defaultConc": 37,
-            "defaultUnit": "%"
-          },
-          "D-리모넨(D-LIMONENE)": {
-            "mw": 136.23,
-            "density": 0.8402,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "D-리모넨": {
-            "mw": 136.23,
-            "density": 0.8402,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "P-아미노페놀": {
-            "mw": 109.13,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "헤모글로빈": {
-            "mw": 0,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "황산 마그네슘": {
-            "mw": 122.38,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "메틸 알코올": {
-            "mw": 32.04,
-            "density": 0.81,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "칼륨 페로시안화물 트리수화물(POTASSIUM FERROCYANIDE TRIHYDRATE)": {
-            "mw": 422.39,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "칼륨 페로시안화물 트리수화물": {
-            "mw": 422.39,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "페로시안화 칼륨 3수화물": {
-            "mw": 422.39,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "Magnesium": {
-            "mw": 24.31,
-            "density": 1.738,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "마그네슘": {
-            "mw": 24.31,
-            "density": 1.738,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "질산칼륨": {
-            "mw": 102.11,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "질산 칼륨": {
-            "mw": 102.11,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "과산화수소": {
-            "mw": 34.01,
-            "density": 1.11,
-            "defaultConc": 30,
-            "defaultUnit": "%"
-          },
-          "글리세롤": {
-            "mw": 92.09,
-            "density": 1.2613,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "말론 산": {
-            "mw": 104.06,
-            "density": 1.6,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "스트론튬 염화물, 헥사수화물(STRONTIUM CHLORIDE, HEXAHYDRATE)": {
-            "mw": 266.61,
-            "density": 1.95,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "스트론튬 염화물, 헥사수화물": {
-            "mw": 266.61,
-            "density": 1.95,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 스트론튬 6수화물": {
-            "mw": 266.61,
-            "density": 1.95,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "붕소산 사나트륨염(십수화물)": {
-            "mw": 381.37,
-            "density": 1.73,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "붕소산 사나트륨염": {
-            "mw": 381.37,
-            "density": 1.73,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "붕사": {
-            "mw": 381.37,
-            "density": 1.73,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "규산나트륨(SODIUM SILICATE)": {
-            "mw": 122.06,
-            "density": 1.4,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "규산나트륨": {
-            "mw": 122.06,
-            "density": 1.4,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "규산 나트륨": {
-            "mw": 122.06,
-            "density": 1.4,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화마그네슘": {
-            "mw": 40.3,
-            "density": 3.58,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 마그네슘, 헥사하이드레이트": {
-            "mw": 203.3,
-            "density": 1.56,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 마그네슘 6수화물": {
-            "mw": 203.3,
-            "density": 1.56,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "질산 은": {
-            "mw": 170.88,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "요오드": {
-            "mw": 253.81,
-            "density": 4.9,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "아이오딘 용액": {
-            "mw": 253.81,
-            "density": 4.9,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "젖산 칼슘 5수화물": {
-            "mw": 310.31,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "코발트 염화물, 헥사수화물(COBALT CHLORIDE, HEXAHYDRATE)": {
-            "mw": 237.93,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "코발트 염화물, 헥사수화물": {
-            "mw": 237.93,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 코발트 6수화물": {
-            "mw": 237.93,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "수산화나트륨": {
-            "mw": 40,
-            "density": 2.13,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "수산화 나트륨": {
-            "mw": 40,
-            "density": 2.13,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "수산화 칼슘": {
-            "mw": 74.09,
-            "density": 2.24,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "질산 니켈, 헥사히드레이트(NICKEL NITRATE, HEXAHYDRATE)": {
-            "mw": 292.81,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "질산 니켈, 헥사히드레이트": {
-            "mw": 292.81,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "질산 니켈 6수화물": {
-            "mw": 292.81,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "질산암모늄": {
-            "mw": 80.04,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "질산 암모늄": {
-            "mw": 80.04,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "구연산 나트륨(SODIUM CITRATE)": {
-            "mw": 297.12,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "구연산 나트륨": {
-            "mw": 297.12,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "구연산 나트륨 2수화물": {
-            "mw": 297.12,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "에탄올": {
-            "mw": 46.07,
-            "density": 0.789,
-            "defaultConc": 99,
-            "defaultUnit": "%"
-          },
-          "질산 구리(II) 삼수화물": {
-            "mw": 243.62,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "질산 구리 삼수화물": {
-            "mw": 243.62,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "페놀 레드": {
-            "mw": 354.38,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "요오드화 칼륨": {
-            "mw": 166,
-            "density": 3.13,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "아이오딘화 칼륨": {
-            "mw": 166,
-            "density": 3.13,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "시트르산 모노수화물(CITRIC ACID MONOHYDRATE)": {
-            "mw": 210.14,
-            "density": 1.5,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "시트르산 모노수화물": {
-            "mw": 210.14,
-            "density": 1.5,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 나트륨(SODIUM CHLORIDE)": {
-            "mw": 58.44,
-            "density": 2.165,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 나트륨": {
-            "mw": 58.44,
-            "density": 2.165,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "사프라닌 O": {
-            "mw": 350.85,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "아이오딘화 나트륨(요오드화 나트륨)(SODIUM IODIDE)": {
-            "mw": 149.89,
-            "density": 3.67,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "아이오딘화 나트륨": {
-            "mw": 149.89,
-            "density": 3.67,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "황산암모늄": {
-            "mw": 132.14,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "황산 암모늄": {
-            "mw": 132.14,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "무수초산": {
-            "mw": 102.09,
-            "density": 1.082,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "무수 아세트산": {
-            "mw": 102.09,
-            "density": 1.05,
-            "defaultConc": 99.5,
-            "defaultUnit": "%"
-          },
-          "이소프로필 알코올": {
-            "mw": 60.1,
-            "density": 0.78505,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "이산화 망간": {
-            "mw": 86.94,
-            "density": 5,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 리튬(LITHIUM CHLORIDE)": {
-            "mw": 42.39,
-            "density": 2.07,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 리튬": {
-            "mw": 42.39,
-            "density": 2.07,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "알루미늄 암모늄 황산염 도데카수화물": {
-            "mw": 456.35,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "백반": {
-            "mw": 456.35,
-            "density": 1.64,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "C.I. 염기성 청색 009": {
-            "mw": 319.85,
-            "density": 1.31,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "메틸렌 블루": {
-            "mw": 319.85,
-            "density": 1.31,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "질산나트륨": {
-            "mw": 86,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "질산 나트륨": {
-            "mw": 86,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "브로모티몰 청색": {
-            "mw": 624.38,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "BTB 용액": {
-            "mw": 624.38,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "톨루이딘 블루 O": {
-            "mw": 305.83,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "탄소": {
-            "mw": 12.01,
-            "density": 1.8,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "바륨 수산화물, 옥타수화물(BARIUM HYDROXIDE, OCTAHYDRATE)": {
-            "mw": 315.46,
-            "density": 2.18,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "바륨 수산화물, 옥타수화물": {
-            "mw": 315.46,
-            "density": 2.18,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "수산화 바륨 8수화물": {
-            "mw": 315.46,
-            "density": 2.18,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "티몰프탈레인": {
-            "mw": 430.54,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "수산화 칼륨": {
-            "mw": 56.11,
-            "density": 2.044,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화 제I구리": {
-            "mw": 143.09,
-            "density": 6,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화 구리(I)": {
-            "mw": 143.09,
-            "density": 6,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화 구리": {
-            "mw": 79.55,
-            "density": 6.315,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "구리": {
-            "mw": 63.55,
-            "density": 8.94,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "페놀프탈레인": {
-            "mw": 318.32,
-            "density": 1.277,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "요오드산 칼륨": {
-            "mw": 215.01,
-            "density": 3.98,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "아이오딘산 칼륨": {
-            "mw": 215.01,
-            "density": 3.98,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "한천": {
-            "mw": 0,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "알긴산 나트륨(SODIUM ALGINATE)": {
-            "mw": 0,
-            "density": 1.25,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "알긴산 나트륨": {
-            "mw": 0,
-            "density": 1.25,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "전분": {
-            "mw": 0,
-            "density": 0.119,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "녹말": {
-            "mw": 0,
-            "density": 0.119,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "황산 제1철, 칠수화물(FERROUS SULFATE, HEPTAHYDRATE)": {
-            "mw": 280.03,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "황산 제1철, 칠수화물": {
-            "mw": 280.03,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "황산 제1철 7수화물": {
-            "mw": 280.03,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "Potassium chromate": {
-            "mw": 196.21,
-            "density": 2.73,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "크롬산 칼륨": {
-            "mw": 196.21,
-            "density": 2.73,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "철": {
-            "mw": 55.85,
-            "density": 7.86,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "GENTIAN VIOLET": {
-            "mw": 407.98,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "크리스탈 바이올렛": {
-            "mw": 407.98,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "황산 나트륨": {
-            "mw": 144.06,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "황산 나트륨 무수물": {
-            "mw": 144.06,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "이탄산 나트륨(SODIUM BICARBONATE)": {
-            "mw": 85.01,
-            "density": 2.159,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "이탄산 나트륨": {
-            "mw": 85.01,
-            "density": 2.159,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "탄산 수소 나트륨": {
-            "mw": 85.01,
-            "density": 2.159,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 제II구리, 디히드레이트(CUPRIC CHLORIDE, DIHYDRATE)": {
-            "mw": 170.48,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 제II구리, 디히드레이트": {
-            "mw": 170.48,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 구리(II) 2수화물": {
-            "mw": 170.48,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 구리 2수화물": {
-            "mw": 170.48,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "2-하이드록시-5-((3-나이트로페닐)아조)벤조 산 모노나트륨 염(2-HYDROXY-5-((3-NITROPHEN...": {
-            "mw": 310.22,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "2-하이드록시-5-벤조 산 모노나트륨 염(2-HYDROXY-5-((3-NITROPHEN...": {
-            "mw": 310.22,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "알리자린 옐로우": {
-            "mw": 310.22,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 제2철, 헥사히드레이트": {
-            "mw": 270.3,
-            "density": 1.339,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 철(II) 6수화물": {
-            "mw": 270.3,
-            "density": 1.339,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 철 6수화물": {
-            "mw": 270.3,
-            "density": 1.339,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "탄산 칼슘": {
-            "mw": 102.1,
-            "density": 2.8,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "티몰 블루": {
-            "mw": 466.59,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "Potassium dichromate": {
-            "mw": 296.2,
-            "density": 2.676,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "중크롬산 칼륨": {
-            "mw": 296.2,
-            "density": 2.676,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "Aluminum": {
-            "mw": 26.98,
-            "density": 2.7,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "알루미늄": {
-            "mw": 26.98,
-            "density": 2.7,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화칼슘": {
-            "mw": 56.08,
-            "density": 3.3,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화 칼슘": {
-            "mw": 56.08,
-            "density": 3.3,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "나트륨 옥살산염": {
-            "mw": 136.01,
-            "density": 2.34,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "브로민화물 표준용액 브로민화물 표준용액 (1 mg/ml 브로민화물)(BROMIDE STANDARD SOLUTION (1 mg/ml BROMIDE))": {
-            "mw": 119,
-            "density": 2.75,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "브로민화물 표준용액 브로민화물 표준용액": {
-            "mw": 119,
-            "density": 2.75,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "브로민화 칼륨": {
-            "mw": 119,
-            "density": 2.75,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "아망가니즈 황산염 모노수화물": {
-            "mw": 171.03,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "황산 망간 모노수화물": {
-            "mw": 171.03,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "티오황산 나트륨 펜타수화물(SODIUM THIOSULFATE PENTAHYDRATE)": {
-            "mw": 250.2,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "티오황산 나트륨 펜타수화물": {
-            "mw": 250.2,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "티오황산 나트륨 5수화물": {
-            "mw": 250.2,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "황산 칼륨": {
-            "mw": 176.28,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "이산화티타늄": {
-            "mw": 79.87,
-            "density": 4.23,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "소디움 비설파이트": {
-            "mw": 105.07,
-            "density": 1.48,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "아황산수소 나트륨": {
-            "mw": 105.07,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "황산 아연, 헵타수화물": {
-            "mw": 289.58,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "황산 아연 7수화물": {
-            "mw": 289.58,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "브로민산 칼륨(브롬산 칼륨)(POTASSIUM BROMATE)": {
-            "mw": 168.01,
-            "density": 3.34,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "브로민산 칼륨": {
-            "mw": 168.01,
-            "density": 3.34,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화제1철-제1철(FERRIC-FERROUS OXIDE)": {
-            "mw": 231.54,
-            "density": 5.1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화제1철-제1철": {
-            "mw": 231.54,
-            "density": 5.1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화 철(II),(III), Black": {
-            "mw": 231.54,
-            "density": 5.1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화 철, Black": {
-            "mw": 231.54,
-            "density": 5.1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "싸이오사이안산 칼륨": {
-            "mw": 98.19,
-            "density": 1.956,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "티오시안산 칼륨": {
-            "mw": 98.19,
-            "density": 1.956,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "인디고 카르민(INDIGO CARMINE)": {
-            "mw": 468.37,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "인디고 카르민": {
-            "mw": 468.37,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "인디고 카민": {
-            "mw": 468.37,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "덱스트로스": {
-            "mw": 180.16,
-            "density": 1.544,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "포도당": {
-            "mw": 180.16,
-            "density": 1.544,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "초산": {
-            "mw": 60.05,
-            "density": 1.0446,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "아세트산": {
-            "mw": 60.05,
-            "density": 1.05,
-            "defaultConc": 99.5,
-            "defaultUnit": "%"
-          },
-          "살리실산": {
-            "mw": 138.12,
-            "density": 1.443,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "과망간산칼륨": {
-            "mw": 159.04,
-            "density": 2.7,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "과망간산 칼륨": {
-            "mw": 159.04,
-            "density": 2.7,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "메틸 적색": {
-            "mw": 269.3,
-            "density": 1.31,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "메틸 레드": {
-            "mw": 269.3,
-            "density": 1.31,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "브이엠 및 피 나프타": {
-            "mw": 0,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "석유 에테르": {
-            "mw": 0,
-            "density": 1,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "메틸 오렌지(METHYL ORANGE)": {
-            "mw": 328.34,
-            "density": 1.473,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "메틸 오렌지": {
-            "mw": 328.34,
-            "density": 1.473,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화철": {
-            "mw": 159.69,
-            "density": 5.24,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화 철(III), Red": {
-            "mw": 159.69,
-            "density": 5.24,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화 철, Red": {
-            "mw": 159.69,
-            "density": 5.24,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 칼슘(CALCIUM CHLORIDE)": {
-            "mw": 110.98,
-            "density": 2.152,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "염화 칼슘": {
-            "mw": 110.98,
-            "density": 2.152,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "나트륨 아세트산, 트리수화물(SODIUM ACETATE, TRIHYDRATE)": {
-            "mw": 137.09,
-            "density": 1.05,
-            "defaultConc": 99.5,
-            "defaultUnit": "%"
-          },
-          "나트륨 아세트산, 트리수화물": {
-            "mw": 137.09,
-            "density": 1.05,
-            "defaultConc": 99.5,
-            "defaultUnit": "%"
-          },
-          "아세트산 나트륨 3수화물": {
-            "mw": 137.09,
-            "density": 1.05,
-            "defaultConc": 99.5,
-            "defaultUnit": "%"
-          },
-          "아세톤": {
-            "mw": 58.08,
-            "density": 0.79,
-            "defaultConc": 99.5,
-            "defaultUnit": "%"
-          },
-          "질산 납(Ⅱ)": {
-            "mw": 333.24,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "질산 납": {
-            "mw": 333.24,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "질산 납(II)": {
-            "mw": 333.24,
-            "density": 1.42,
-            "defaultConc": 70,
-            "defaultUnit": "%"
-          },
-          "황산 구리(II), 오수화물": {
-            "mw": 251.7,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "황산 구리, 오수화물": {
-            "mw": 251.7,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "황산 구리(II) 5수화물": {
-            "mw": 251.7,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "황산 구리 5수화물": {
-            "mw": 251.7,
-            "density": 1.84,
-            "defaultConc": 98,
-            "defaultUnit": "%"
-          },
-          "산화 제II구리(CUPRIC OXIDE)": {
-            "mw": 79.55,
-            "density": 6.315,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화 제II구리": {
-            "mw": 79.55,
-            "density": 6.315,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "산화 구리(II)": {
-            "mw": 79.55,
-            "density": 6.315,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "Zinc": {
-            "mw": 65.4,
-            "density": 7.14,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          },
-          "아연": {
-            "mw": 65.4,
-            "density": 7.14,
-            "defaultConc": 100,
-            "defaultUnit": "%"
-          }
-        };
-
-        const defaultData = Object.keys(chemDefaults).find(k => chemName.includes(k)) ? chemDefaults[Object.keys(chemDefaults).find(k => chemName.includes(k))] : null;
-        const mw = (defaultData && defaultData.mw) ? defaultData.mw : (parseFloat(substance.molecular_mass) || 0);
-
-        let bestCandidate = null;
-        let candidateType = null;
-        let candidateConcM = 0;
-
-        const solids = invItems.filter(item => {
-          const state = (item.state || "").trim();
-          return ["고체", "파우더", "가루", "Solid", "Powder"].some(s => state.includes(s));
-        });
-
-        if (solids.length > 0) {
-          solids.sort((a, b) => Number(b.current_amount || 0) - Number(a.current_amount || 0));
-          bestCandidate = solids[0];
-          candidateType = 'solid';
-        } else {
-          const liquids = [];
-          for (const item of invItems) {
-            const currentConcVal = parseFloat(item.concentration_value) || 0;
-            const currentUnit = item.concentration_unit || "%";
-            const density = extractDensity(item) || (defaultData ? defaultData.density : 1.0);
-
-            let sourceM = 0;
-            if (currentUnit === "M") {
-              sourceM = currentConcVal;
-            } else if (currentUnit === "%") {
-              if (mw) {
-                const calculationMw = (chemName.includes("암모니아") || chemName.includes("ammonia")) ? 17.03 : mw;
-                sourceM = (currentConcVal * 10 * density) / calculationMw;
-              } else {
-                sourceM = 0;
-              }
-            } else if (currentUnit === "N") {
-              sourceM = currentConcVal;
-            }
-
-            liquids.push({ item, sourceM, currentConcVal, currentUnit, density });
-          }
-
-          let destM = 0;
-          if (targetUnit === "M") {
-            destM = targetConc;
-          } else if (targetUnit === "mM") {
-            destM = targetConc / 1000;
-          } else if (targetUnit === "%") {
-            if (mw) {
-              const calculationMw = (chemName.includes("암모니아") || chemName.includes("ammonia")) ? 17.03 : mw;
-              destM = (targetConc * 10 * 1.0) / calculationMw;
-            }
-          }
-
-          const validLiquids = liquids.filter(liq => {
-            if (targetUnit === "%" && liq.currentUnit === "%") {
-              return liq.currentConcVal >= targetConc;
-            }
-            return liq.sourceM >= destM;
-          });
-
-          if (validLiquids.length > 0) {
-            validLiquids.sort((a, b) => b.sourceM - a.sourceM);
-            bestCandidate = validLiquids[0].item;
-            candidateType = 'liquid';
-            candidateConcM = validLiquids[0].sourceM;
-          }
-        }
-
-        if (!bestCandidate) {
-          const stockList = invItems.map(i => {
-            const val = i.concentration_value;
-            const unit = i.concentration_unit;
-            const state = i.state || "";
-            if (val === null || val === undefined || val === "null" || val === "" || !unit || unit === "null") {
-              return `농도 미표시 시약 (${state})`;
-            }
-            return `${val}${unit} ${state}`;
-          }).join(', ');
-
-          return `❌ **조제 불가능 (농도 부족 / 재고 없음)**
-현재 과학실 내에 보유한 **${chemName}** 재고(${stockList}) 중 목표 농도(${targetConc}${targetUnit})보다 농도가 높은 액체 시약이나 고체 시약이 없어 조제 레시피를 계산할 수 없습니다.`;
-        }
-
-        let requiredAmount = 0;
-        let stepsHtml = "";
-        let prepHtml = "";
-        const isAcid = (chemName || "").includes("산");
-        const candidateName = bestCandidate.edited_name_kor || bestCandidate.Substance?.chem_name_kor_mod || chemName;
-        const currentConcStr = `${bestCandidate.concentration_value || ''}${bestCandidate.concentration_unit || ''}`;
-        const area = bestCandidate.Cabinet?.area_id?.room_name || "";
-        const cabinetName = bestCandidate.Cabinet?.cabinet_name || "";
-        const locationStr = `${area} 『${cabinetName}』`.trim() || "위치 미지정";
-
-        if (candidateType === 'solid') {
-          let purity = 1.0;
-          if (bestCandidate.concentration_unit === "%" && bestCandidate.concentration_value) {
-            purity = parseFloat(bestCandidate.concentration_value) / 100;
-          }
-
-          if (targetUnit === "M" || targetUnit === "mM") {
-            if (!mw) {
-              return `❌ 분자량(MW) 정보가 존재하지 않아 몰농도 레시피를 계산할 수 없습니다.`;
-            }
-            let targetM = targetConc;
-            if (targetUnit === "mM") targetM = targetConc / 1000;
-            const volL = targetVol / 1000;
-            requiredAmount = (targetM * volL * mw) / purity;
-          } else if (targetUnit === "%") {
-            requiredAmount = (targetVol * (targetConc / 100)) / purity;
-          }
-
-          prepHtml = `
-            <li><strong>사용할 시약:</strong> ${candidateName} (고체, No.${bestCandidate.id})</li>
-            <li><strong>보관 위치:</strong> ${locationStr}</li>
-            <li><strong>필요 시약 질량:</strong> <b style="color: #007bff;">${requiredAmount.toFixed(2)} g</b></li>
-            <li><strong>필요 준비물:</strong> 전자저울, 약포지, 약숟가락, ${targetVol}mL 부피 플라스크, 씻기병(증류수), 비커</li>
-          `;
-
-          stepsHtml = `
-            <ol style="margin: 0; padding-left: 20px; line-height: 1.6; font-size: 12px; color: #495057;">
-              <li>전자저울에 약포지를 올리고 영점을 맞춥니다.</li>
-              <li><strong>${candidateName} ${requiredAmount.toFixed(2)}g</strong>을 정확히 계량하여 비커에 넣습니다.</li>
-              <li>증류수를 적당량(약 ${Math.floor(targetVol / 2)}mL) 부어 유리 막대로 저어 완전히 녹입니다. ${isAcid ? "<br><span style='color: #d6336c; font-weight: bold;'>※ 주의: 용해 시 발열 반응이 발생할 수 있으니 안전에 주의하십시오.</span>" : ""}</li>
-              <li>녹인 용액을 <strong>${targetVol}mL 부피 플라스크</strong>에 조심스럽게 옮겨 담습니다.</li>
-              <li>비커를 증류수로 2~3회 깨끗이 헹구어 플라스크에 같이 부어줍니다.</li>
-              <li>표시선까지 증류수를 정확히 채우고 마개를 닫은 후, 위아래로 흔들어 균일하게 섞어 줍니다.</li>
-            </ol>
-          `;
-        } else {
-          const currentUnit = bestCandidate.concentration_unit || "%";
-          const currentConcVal = parseFloat(bestCandidate.concentration_value) || 0;
-
-          if (targetUnit === "%" && currentUnit === "%") {
-            requiredAmount = (targetVol * targetConc) / currentConcVal;
-          } else {
-            let destM = 0;
-            if (targetUnit === "M") {
-              destM = targetConc;
-            } else if (targetUnit === "mM") {
-              destM = targetConc / 1000;
-            } else if (targetUnit === "%") {
-              if (mw) {
-                destM = (targetConc * 10 * 1.0) / mw;
-              }
-            }
-            requiredAmount = (destM * targetVol) / candidateConcM;
-          }
-
-          const waterVol = (targetVol - requiredAmount).toFixed(1);
-
-          prepHtml = `
-            <li><strong>사용할 시약:</strong> ${candidateName} (액체 ${currentConcStr}, No.${bestCandidate.id})</li>
-            <li><strong>보관 위치:</strong> ${locationStr}</li>
-            <li><strong>필요 원액 부피:</strong> <b style="color: #d6336c;">${requiredAmount.toFixed(2)} mL</b></li>
-            <li><strong>필요 준비물:</strong> 피펫, 피펫 펌프, ${targetVol}mL 부피 플라스크, 증류수</li>
-          `;
-
-          if (isAcid) {
-            stepsHtml = `
-              <ol style="margin: 0; padding-left: 20px; line-height: 1.6; font-size: 12px; color: #495057;">
-                <li><strong>${targetVol}mL 부피 플라스크</strong>에 증류수를 미리 약 ${(targetVol / 3).toFixed(0)}mL 정도 채워 둡니다. <br><span style="color: #d6336c; font-weight: bold;">(※ 중요: 발열 반응 방지를 위해 항상 물에 산을 첨가해야 합니다!)</span></li>
-                <li>피펫을 사용하여 <strong>${candidateName} 원액 ${requiredAmount.toFixed(2)}mL</strong>를 정밀하게 취합니다.</li>
-                <li>플라스크 벽면을 따라 원액을 아주 천천히 흘려 넣어 줍니다.</li>
-                <li>부피 플라스크의 표시선까지 나머지 증류수를 조심스럽게 마저 채웁니다.</li>
-                <li>마개를 꼭 닫고 플라스크를 천천히 뒤집어 가며 완전히 섞어 줍니다.</li>
-              </ol>
-            `;
-          } else {
-            stepsHtml = `
-              <ol style="margin: 0; padding-left: 20px; line-height: 1.6; font-size: 12px; color: #495057;">
-                <li><strong>${targetVol}mL 부피 플라스크</strong>에 피펫을 이용하여 <strong>${candidateName} 원액 ${requiredAmount.toFixed(2)}mL</strong>를 넣습니다.</li>
-                <li>표시선까지 증류수를 채워 줍니다. (약 ${waterVol}mL 소요)</li>
-                <li>마개를 닫고 가볍게 흔들어 균일하게 섞어 줍니다.</li>
-              </ol>
-            `;
-          }
-        }
-
-        let stockWarning = "";
-        const currentStock = parseFloat(bestCandidate.current_amount) || 0;
-        const needed = requiredAmount;
-        if (needed > currentStock) {
-          stockWarning = `
-            <div style="background: #fff5f5; border: 1px solid #ffa8a8; padding: 10px; border-radius: 6px; color: #e03131; font-weight: bold; font-size: 12px; margin-top: 10px;">
-              ⚠️ [재고 부족 경고] 현재 보유 중인 재고량(${currentStock}${bestCandidate.unit || 'mL'})이 제조에 필요한 양(${needed.toFixed(2)}${bestCandidate.unit || 'mL'})보다 적습니다.
-            </div>
-          `;
-        }
-
-        return `🧪 **${chemName} ${targetConc}${targetUnit} ${volMatch ? volMatch[1] + volMatch[2] : '500mL'} 조제 레시피**
-` + `
-<div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px; margin-top: 10px;">
-  <strong style="color: #495057; font-size: 13px;">📋 준비 단계</strong>
-  <ul style="margin: 6px 0 0; padding-left: 20px; line-height: 1.5; font-size: 12px; color: #495057;">
-    ${prepHtml}
-  </ul>
-  ${stockWarning}
-</div>
-
-<div style="background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px; margin-top: 10px;">
-  <strong style="color: #0984e3; font-size: 13px;">⚙️ 조제 순서 (레시피)</strong>
-  <div style="margin-top: 8px;">
-    ${stepsHtml}
-  </div>
-</div>
-`.replace(/\n\s*/g, "");
-      }
 
       // 1.5. DB에서 교구/설비 매칭 찾기 (화학물질 매칭 실패 시)
       let foundTools = null;
@@ -2722,7 +1322,6 @@ ${propText}
             </div>
             <div class="chatbot-chem-subtitle" style="font-size: 11px; color: #666; margin: 0; padding: 0; line-height: 1.2; text-align: left;">${substance.substance_name || ""}</div>
           </div>
-          <div class="chatbot-chem-grid" style="display: grid; grid-template-columns: 80px 1fr; row-gap: 4px; font-size: 12.5px;">
             <div class="chatbot-chem-label" style="color: #777; font-weight: 500;">분자식</div>
             <div class="chatbot-chem-val" style="color: #333;">${formula}</div>
             <div class="chatbot-chem-label" style="color: #777; font-weight: 500;">분자량</div>
@@ -2740,7 +1339,6 @@ ${propText}
     },
 
     goToDetail: function (substanceId) {
-      // Substance ID를 통해 Inventory 테이블의 레코드 ID를 찾아 이동합니다.
       const supabase = getSupabase();
       if (!supabase) return;
 
@@ -2751,7 +1349,7 @@ ${propText}
         .limit(1)
         .then(({ data }) => {
           if (data && data.length > 0) {
-            this.togglePanel(false); // 챗봇 패널 닫기
+            this.togglePanel(false);
             if (getApp().Router?.go) {
               getApp().Router.go("inventoryDetail", { id: data[0].id });
             } else {
@@ -2765,13 +1363,181 @@ ${propText}
     },
 
     goToInventoryDetail: function (inventoryId) {
-      this.togglePanel(false); // 챗봇 패널 닫기
+      this.togglePanel(false);
       if (getApp().Router?.go) {
         getApp().Router.go("inventoryDetail", { id: inventoryId });
       } else {
         localStorage.setItem("selected_inventory_id", inventoryId);
         location.reload();
       }
+    },
+
+    // ------------------------------------------------------------
+    // 🧪 동적 DB Cross-Reference 시약 검색 엔진 (하드코딩 맵 전면 제거)
+    // ------------------------------------------------------------
+    findSubstanceByName: async function (query) {
+      const supabase = getSupabase();
+      if (!supabase) return null;
+
+      const cleanText = query.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ").trim();
+      const tokens = cleanText.split(/\s+/).filter(t => t.length >= 1);
+
+      // 계층별 동적 DB Cross-Reference 검색 함수 (공백 불일치 자동 흡수 알고리즘 적용)
+      const querySubstanceCandidate = async (st) => {
+        if (!st || st.length < 1) return null;
+        const noSpace = st.replace(/\s+/g, "");
+        // 띄어쓰기 임의 포함 대응용 와일드카드 패턴 (예: "탄산칼슘" -> "%탄%산%칼%슘%")
+        const syllableWildcard = noSpace.length >= 2 ? `%${noSpace.split("").join("%")}%` : `%${noSpace}%`;
+
+        // 1. Substance 테이블 직접 검색
+        // A. 정확히 일치 (.eq 및 _mod 공백 정제 컬럼)
+        const { data: exactList } = await supabase
+          .from("Substance")
+          .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
+          .or(`chem_name_kor.eq.${st},chem_name_kor_mod.eq.${noSpace},substance_name.eq.${st},substance_name_mod.eq.${noSpace},molecular_formula.eq.${st},molecular_formula_mod.eq.${st}`)
+          .limit(1);
+
+        if (exactList && exactList.length > 0) {
+          return exactList[0];
+        }
+
+        // B. 단어 시작 일치 (st% 및 _mod 컬럼 공백 정제 시작 일치)
+        const { data: prefixList } = await supabase
+          .from("Substance")
+          .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
+          .or(`chem_name_kor.ilike.${st}%,chem_name_kor_mod.ilike.${noSpace}%,substance_name.ilike.${st}%,substance_name_mod.ilike.${noSpace}%`)
+          .limit(10);
+
+        if (prefixList && prefixList.length > 0) {
+          prefixList.sort((a, b) => {
+            const nameA = a.chem_name_kor_mod || a.chem_name_kor || "";
+            const nameB = b.chem_name_kor_mod || b.chem_name_kor || "";
+            return nameA.length - nameB.length;
+          });
+          return prefixList[0];
+        }
+
+        // C. 부분 일치 (%st% 및 음절 와일드카드 %탄%산%칼%슘%)
+        const { data: partialList } = await supabase
+          .from("Substance")
+          .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
+          .or(`chem_name_kor.ilike.%${st}%,chem_name_kor_mod.ilike.%${noSpace}%,chem_name_kor.ilike.${syllableWildcard},substance_name.ilike.%${st}%,substance_name_mod.ilike.%${noSpace}%,molecular_formula.ilike.%${st}%,molecular_formula_mod.ilike.%${st}%`)
+          .limit(10);
+
+        if (partialList && partialList.length > 0) {
+          partialList.sort((a, b) => {
+            const nameA = a.chem_name_kor_mod || a.chem_name_kor || "";
+            const nameB = b.chem_name_kor_mod || b.chem_name_kor || "";
+            return nameA.length - nameB.length;
+          });
+          return partialList[0];
+        }
+
+        // 2. Synonyms 테이블 대조 (synonyms_name, synonyms_eng) - 띄어쓰기 무시 대조
+        try {
+          const { data: synList } = await supabase
+            .from("Synonyms")
+            .select(`
+              substance_id, synonyms_name, synonyms_eng,
+              Substance ( id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass )
+            `)
+            .or(`synonyms_name.ilike.%${st}%,synonyms_name.ilike.${syllableWildcard},synonyms_eng.ilike.%${st}%,synonyms_eng.ilike.${syllableWildcard}`)
+            .limit(10);
+
+          if (synList && synList.length > 0) {
+            // JS 인메모리 공백 제거 정밀 대조
+            const matchedSyn = synList.find(s => {
+              if (!s.Substance) return false;
+              const synNameClean = (s.synonyms_name || "").replace(/\s+/g, "");
+              const synEngClean = (s.synonyms_eng || "").replace(/\s+/g, "").toLowerCase();
+              return synNameClean.includes(noSpace) || noSpace.includes(synNameClean) || synEngClean.includes(noSpace.toLowerCase());
+            });
+            if (matchedSyn?.Substance) return matchedSyn.Substance;
+            if (synList[0]?.Substance) return synList[0].Substance;
+          }
+        } catch (e) {
+          console.warn("Synonyms lookup warning:", e);
+        }
+
+        // 3. SubstanceRef 테이블 대조 (chem_name_kor_ref, substance_name_ref) - 띄어쓰기 무시 대조
+        try {
+          const { data: refList } = await supabase
+            .from("SubstanceRef")
+            .select(`
+              cas_rn, chem_name_kor_ref, substance_name_ref,
+              Substance ( id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass )
+            `)
+            .or(`chem_name_kor_ref.ilike.%${st}%,chem_name_kor_ref.ilike.${syllableWildcard},substance_name_ref.ilike.%${st}%,substance_name_ref.ilike.${syllableWildcard}`)
+            .limit(10);
+
+          if (refList && refList.length > 0) {
+            const matchedRef = refList.find(r => {
+              if (!r.Substance) return false;
+              const refKorClean = (r.chem_name_kor_ref || "").replace(/\s+/g, "");
+              const refEngClean = (r.substance_name_ref || "").replace(/\s+/g, "").toLowerCase();
+              return refKorClean.includes(noSpace) || noSpace.includes(refKorClean) || refEngClean.includes(noSpace.toLowerCase());
+            });
+            if (matchedRef?.Substance) return matchedRef.Substance;
+            if (refList[0]?.Substance) return refList[0].Substance;
+
+            const casItem = refList.find(r => r.cas_rn);
+            if (casItem?.cas_rn) {
+              const { data: casSub } = await supabase
+                .from("Substance")
+                .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
+                .eq("cas_rn", casItem.cas_rn.trim())
+                .limit(1);
+              if (casSub && casSub.length > 0) return casSub[0];
+            }
+          }
+        } catch (e) {
+          console.warn("SubstanceRef lookup warning:", e);
+        }
+
+        // 4. Inventory 테이블 대조 (edited_name_kor) - 띄어쓰기 무시 대조
+        try {
+          const { data: invMatches } = await supabase
+            .from("Inventory")
+            .select(`
+              edited_name_kor, substance_id,
+              Substance ( id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass )
+            `)
+            .or(`edited_name_kor.ilike.%${st}%,edited_name_kor.ilike.${syllableWildcard}`)
+            .limit(10);
+
+          if (invMatches && invMatches.length > 0) {
+            const matchedInv = invMatches.find(i => {
+              if (!i.Substance) return false;
+              const invNameClean = (i.edited_name_kor || "").replace(/\s+/g, "");
+              return invNameClean.includes(noSpace) || noSpace.includes(invNameClean);
+            });
+            if (matchedInv?.Substance) return matchedInv.Substance;
+            if (invMatches[0]?.Substance) return invMatches[0].Substance;
+          }
+        } catch (e) {
+          console.warn("Inventory edited_name_kor lookup warning:", e);
+        }
+
+        return null;
+      };
+
+      // 토큰 탐색 (1단계: 원본 토큰 -> 2단계: 조사/접사 제거 토큰)
+      for (const token of tokens) {
+        if (token.length < 2 && !/[a-zA-Z]/.test(token)) continue;
+        const matched = await querySubstanceCandidate(token);
+        if (matched) return matched;
+      }
+
+      for (const token of tokens) {
+        if (token.length < 2) continue;
+        const stripped = token.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란|학교에|학교에서|과학실에)$/, "");
+        if (stripped.length < 2 || stripped === token) continue;
+
+        const matched = await querySubstanceCandidate(stripped);
+        if (matched) return matched;
+      }
+
+      return null;
     },
 
     // ------------------------------------------------------------
@@ -2790,6 +1556,7 @@ ${propText}
 4. 답변은 간결하고 가독성이 좋게 마크다운 문법(굵게, 글머리표)을 적극 활용해줘.`;
 
       const provider = this.provider || "gemini";
+      const modelName = this.model || "gpt-4o-mini";
 
       if (provider === "gemini") {
         try {
@@ -2800,14 +1567,8 @@ ${propText}
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              contents: [
-                {
-                  parts: [{ text: prompt }]
-                }
-              ],
-              systemInstruction: {
-                parts: [{ text: systemInstruction }]
-              }
+              contents: [{ parts: [{ text: prompt }] }],
+              systemInstruction: { parts: [{ text: systemInstruction }] }
             })
           });
 
@@ -2832,10 +1593,7 @@ ${propText}
 - 네트워크 연결 상태를 확인해 주세요.`;
         }
       } else {
-        // OpenAI 및 Custom OpenAI 호환 API (Claude, OpenRouter, Ollama 등)
         let endpoint = "https://api.openai.com/v1/chat/completions";
-        const modelName = this.model || "gpt-4o-mini";
-
         if (provider === "custom") {
           let baseUrl = this.apiUrl ? this.apiUrl.trim() : "";
           if (!baseUrl) {
@@ -2883,6 +1641,736 @@ ${propText}
 - API Key와 설정(Base URL, 모델명 등)을 다시 확인해 주세요.`;
         }
       }
+    },
+
+    handleConcCalcQuery: async function (query) {
+      let concValue = null;
+      let concType = "M";
+      let volValue = 1.0;
+      let volUnit = "1 L";
+
+      const concMatch = query.match(/(\d+(?:\.\d+)?)\s*(M|몰|%)/i);
+      if (concMatch) {
+        concValue = parseFloat(concMatch[1]);
+        if (concMatch[2] === "%") concType = "%";
+      }
+
+      const volMatch = query.match(/(\d+(?:\.\d+)?)\s*(mL|L|밀리리터|리터)/i);
+      if (volMatch) {
+        const val = parseFloat(volMatch[1]);
+        const unit = volMatch[2].toLowerCase();
+        if (unit === "ml" || unit === "밀리리터") {
+          volValue = val / 1000;
+          volUnit = `${val} mL`;
+        } else {
+          volValue = val;
+          volUnit = `${val} L`;
+        }
+      }
+
+      let matchedSubstance = await this.findSubstanceByName(query);
+      if (matchedSubstance) {
+        this.selectedSubstance = matchedSubstance;
+      } else {
+        matchedSubstance = this.selectedSubstance;
+      }
+
+      if (!matchedSubstance) {
+        return `🧪 **몰농도 용액 제조 계산기 가이드**
+- **입력 용량**: ${volUnit}
+- **목표 농도**: ${concValue ? concValue + concType : "미지정 (예: 0.1M)"}
+
+약품명(예: 수산화나트륨, NaOH, 염산 등)을 함께 입력해 주시면 시약장에 등록된 시약병을 자동 검색하여 최적의 희석/조제 레시피를 계산해 드립니다!
+*예시: "염산 1M 10mL", "0.1M 수산화나트륨 500mL"*`;
+      }
+
+      const chemName = matchedSubstance.chem_name_kor || matchedSubstance.substance_name || "지정 시약";
+      const rawFormula = matchedSubstance.molecular_formula_mod || matchedSubstance.molecular_formula || "";
+      const formula = rawFormula ? `(${rawFormula})` : "";
+      const mw = parseFloat(matchedSubstance.molecular_mass);
+
+      if (!mw || isNaN(mw)) {
+        return `🧪 **[${chemName} ${formula}] 용액 제조 안내**
+데이터베이스에 분자량(MW) 정보가 등록되어 있지 않아 계산이 어렵습니다. MSDS 또는 시약 라벨의 분자량을 확인해 주세요.`;
+      }
+
+      if (!concValue) concValue = 0.1;
+      const targetVolmL = volValue * 1000;
+      const pureMassNeeded = concValue * volValue * mw; // 100% 순수 기준 (g)
+
+      // 📦 1단계: DB Inventory (시약장)에서 해당 시약 관련 시약병 전체 검색 (4단계 안전 폴백 쿼리)
+      let invList = [];
+      const supabase = getSupabase();
+      if (matchedSubstance && supabase) {
+        try {
+          let allInv = null;
+
+          // 1차 시도: Cabinet 및 lab_rooms 전체 관계 조인 (Inventory 위치 상세 필드 포함)
+          const res1 = await supabase
+            .from("Inventory")
+            .select(`
+              id, current_amount, unit, concentration_value, concentration_unit, status, edited_name_kor, substance_id,
+              door_vertical, door_horizontal, internal_shelf_level, storage_column,
+              Substance ( id, chem_name_kor, chem_name_kor_mod, substance_name, molecular_formula, cas_rn ),
+              Cabinet ( cabinet_name, door_horizontal_count, area_id:lab_rooms!fk_cabinet_lab_rooms ( room_name ) )
+            `);
+
+          if (!res1.error && res1.data && res1.data.length > 0) {
+            allInv = res1.data;
+          } else {
+            // 2차 시도: Cabinet 및 lab_rooms 기본 조인
+            const res2 = await supabase
+              .from("Inventory")
+              .select(`
+                id, current_amount, unit, concentration_value, concentration_unit, status, edited_name_kor, substance_id,
+                door_vertical, door_horizontal, internal_shelf_level, storage_column,
+                Substance ( id, chem_name_kor, chem_name_kor_mod, substance_name, molecular_formula, cas_rn ),
+                Cabinet ( cabinet_name, area_id:lab_rooms ( room_name ) )
+              `);
+
+            if (!res2.error && res2.data && res2.data.length > 0) {
+              allInv = res2.data;
+            } else {
+              // 3차 시도: Substance 조인만 수행
+              const res3 = await supabase
+                .from("Inventory")
+                .select(`
+                  id, current_amount, unit, concentration_value, concentration_unit, status, edited_name_kor, substance_id,
+                  door_vertical, door_horizontal, internal_shelf_level, storage_column,
+                  Substance ( id, chem_name_kor, chem_name_kor_mod, substance_name, molecular_formula, cas_rn )
+                `);
+
+              if (!res3.error && res3.data && res3.data.length > 0) {
+                allInv = res3.data;
+              } else {
+                // 4차 시도: Inventory 단일 테이블 최후의 최소 조인
+                const res4 = await supabase
+                  .from("Inventory")
+                  .select("id, current_amount, unit, concentration_value, concentration_unit, status, edited_name_kor, substance_id, door_vertical, door_horizontal, internal_shelf_level, storage_column");
+                allInv = res4.data || [];
+              }
+            }
+          }
+
+          if (allInv && allInv.length > 0) {
+            const targetCas = (matchedSubstance.cas_rn || "").trim();
+            const targetSubId = matchedSubstance.id;
+            const targetKor = (chemName || "").replace(/\s+/g, "");
+            const targetEng = (matchedSubstance.substance_name || "").toLowerCase();
+            const isTargetHcl = targetKor.includes("염산") || targetKor.includes("염화수소") || targetEng.includes("hydrochloric") || query.includes("염산");
+            const isTargetNaoh = targetKor.includes("수산화나트륨") || targetKor.includes("가성소다") || query.includes("수산화나트륨");
+            const isTargetH2so4 = targetKor.includes("황산") || query.includes("황산");
+            const isTargetHno3 = targetKor.includes("질산") || query.includes("질산");
+            const isTargetCh3cooh = targetKor.includes("아세트산") || query.includes("빙초산") || query.includes("아세트산");
+            const isTargetH2o2 = targetKor.includes("과산화수소") || query.includes("과산화수소");
+
+            invList = allInv.filter(inv => {
+              // 🛑 0. 전량소진/소진/폐기 상태이거나 잔여 수량이 0 이하인 시약병은 목록에서 제외
+              const invStatus = String(inv.status || "").replace(/\s+/g, "");
+              if (invStatus === "전량소진" || invStatus.includes("소진") || invStatus.includes("폐기") || invStatus.includes("삭제")) {
+                return false;
+              }
+              if (inv.current_amount !== null && inv.current_amount !== undefined && inv.current_amount !== "" && parseFloat(inv.current_amount) <= 0) {
+                return false;
+              }
+
+              // 1. substance_id 및 CAS 번호 일치 대조
+              if (targetSubId && (inv.substance_id === targetSubId || inv.Substance?.id === targetSubId)) return true;
+              if (targetCas && inv.Substance?.cas_rn && inv.Substance.cas_rn.trim() === targetCas) return true;
+
+              // 2. 시약 명칭 매칭
+              const invName = (inv.edited_name_kor || inv.Substance?.chem_name_kor_mod || inv.Substance?.chem_name_kor || "").replace(/\s+/g, "");
+              if (invName && targetKor && (invName.includes(targetKor) || targetKor.includes(invName))) return true;
+
+              // 3. 특수 시약 이명 확장 매칭
+              if (isTargetHcl && (invName.includes("염산") || invName.includes("염화수소") || invName.includes("HCl"))) return true;
+              if (isTargetNaoh && (invName.includes("수산화나트륨") || invName.includes("가성소다") || invName.includes("NaOH"))) return true;
+              if (isTargetH2so4 && (invName.includes("황산") || invName.includes("H2SO4"))) return true;
+              if (isTargetHno3 && (invName.includes("질산") || invName.includes("HNO3"))) return true;
+              if (isTargetCh3cooh && (invName.includes("아세트산") || invName.includes("빙초산") || invName.includes("CH3COOH"))) return true;
+              if (isTargetH2o2 && (invName.includes("과산화수소") || invName.includes("H2O2"))) return true;
+
+              return false;
+            });
+          }
+        } catch (invErr) {
+          console.error("Inventory lookup error in chatbot conc calc:", invErr);
+        }
+      }
+
+      // 📦 2단계: 각 보유 시약병별 가용성 평가 및 최적 시약병 선정 (우선순위 부여)
+      const inventoryEvaluations = [];
+
+      if (invList && invList.length > 0) {
+        invList.forEach((inv, index) => {
+          const roomName = inv.Cabinet?.area_id?.room_name || "";
+          const cabName = inv.Cabinet?.cabinet_name || "시약장";
+          let mainLocStr = roomName ? `${roomName} > ${cabName}` : cabName;
+
+          const detailLocParts = [];
+          if (inv.door_vertical) detailLocParts.push(`${inv.door_vertical}층문`);
+          if (inv.internal_shelf_level) detailLocParts.push(`${inv.internal_shelf_level}단`);
+          if (inv.storage_column) detailLocParts.push(`${inv.storage_column}열`);
+
+          const locStr = detailLocParts.length > 0 ? `${mainLocStr} (${detailLocParts.join(" ")})` : mainLocStr;
+          const bottleName = inv.edited_name_kor || chemName;
+          const amtStr = `${inv.current_amount || '-'}${inv.unit || "g"}`;
+
+          let rawConcVal = (inv.concentration_value != null && inv.concentration_value !== "") ? parseFloat(inv.concentration_value) : null;
+          let concUnit = (inv.concentration_unit || "").toUpperCase();
+
+          if (rawConcVal == null || isNaN(rawConcVal)) {
+            const titleConcMatch = (bottleName || "").match(/(\d+(?:\.\d+)?)\s*(%|M|몰|N|노르말)/i);
+            if (titleConcMatch) {
+              rawConcVal = parseFloat(titleConcMatch[1]);
+              const rawU = titleConcMatch[2].toUpperCase();
+              concUnit = (rawU === "몰") ? "M" : ((rawU === "노르말") ? "N" : rawU);
+            }
+          }
+
+          const concStr = (rawConcVal != null && !isNaN(rawConcVal)) ? `${rawConcVal}${concUnit}` : "농도/순도 미지정";
+
+          let valence = 1;
+          if (chemName.includes("황산") || chemName.includes("H2SO4") || chemName.includes("탄산") || chemName.includes("수산화칼슘")) {
+            valence = 2;
+          } else if (chemName.includes("인산")) {
+            valence = 3;
+          }
+
+          let bottleMolarity = null;
+          if (concUnit === "M" || concUnit === "몰") {
+            bottleMolarity = rawConcVal;
+          } else if (concUnit === "N" || concUnit === "노르말") {
+            bottleMolarity = rawConcVal / valence;
+          } else if (concUnit === "%" || rawConcVal != null) {
+            const perc = (rawConcVal && rawConcVal > 0) ? rawConcVal : 100;
+            const isAcidOrBaseLiquid = (chemName.includes("염산") || chemName.includes("염화수소") || chemName.includes("황산") || chemName.includes("질산") || chemName.includes("아세트산") || chemName.includes("빙초산") || chemName.includes("과산화수소"));
+
+            if (isAcidOrBaseLiquid && perc >= 5) {
+              let d = 1.15;
+              if (chemName.includes("염산") || chemName.includes("염화수소")) d = 1.19;
+              else if (chemName.includes("황산")) d = 1.84;
+              else if (chemName.includes("질산")) d = 1.42;
+              else if (chemName.includes("아세트산") || chemName.includes("빙초산")) d = 1.05;
+              else if (chemName.includes("과산화수소")) d = 1.11;
+
+              bottleMolarity = (perc * 10 * d) / mw;
+            }
+          }
+
+          let priority = 99;
+          let isFeasible = true;
+          let methodTitle = "";
+          let methodDetail = "";
+          let reqVolmL = 0;
+          let reqMassg = 0;
+          let badgeColor = "#2b8a3e";
+          let badgeText = "제조 가능";
+
+          if (concType === "M") {
+            if (bottleMolarity != null && !isNaN(bottleMolarity)) {
+              if (Math.abs(bottleMolarity - concValue) < 0.01) {
+                priority = 1;
+                const matchTag = (concUnit === "N") ? `${rawConcVal}N = ${bottleMolarity.toFixed(1)}M` : `${rawConcVal}M`;
+                methodTitle = `동일 농도 보유 (${matchTag})`;
+                methodDetail = `이 시약병(${rawConcVal}${concUnit})은 목표 농도(${concValue}M)와 일치하므로 희석/제조 없이 소분하여 즉시 사용합니다.`;
+                badgeText = "즉시 사용";
+                badgeColor = "#2b8a3e";
+              } else if (bottleMolarity > concValue) {
+                priority = 2;
+                reqVolmL = (concValue * targetVolmL) / bottleMolarity;
+                const concDisplay = (concUnit === "%") ? `${rawConcVal}% (약 ${bottleMolarity.toFixed(2)}M)` : `${rawConcVal}${concUnit}`;
+                methodTitle = `고농도 용액 희석 (${concDisplay} → ${concValue}M)`;
+                methodDetail = `보유 원액 <b>${reqVolmL < 1 ? reqVolmL.toFixed(2) : reqVolmL.toFixed(1)} mL</b>를 취해 정제수 ${volUnit}로 희석`;
+                badgeText = "희석 가능";
+                badgeColor = "#0056b3";
+              } else {
+                priority = 99;
+                isFeasible = false;
+                badgeColor = "#d9534f";
+                badgeText = "희석 불가";
+                methodTitle = `농도 부족 (${bottleMolarity.toFixed(2)}M < ${concValue}M)`;
+                methodDetail = `보유 용액 농도(약 ${bottleMolarity.toFixed(2)}M)가 목표 농도(${concValue}M)보다 낮아 희석 조제가 불가능합니다.`;
+              }
+            } else {
+              priority = 3;
+              const perc = (rawConcVal && rawConcVal > 0 && concUnit === "%") ? rawConcVal : 100;
+              reqMassg = pureMassNeeded / (perc / 100);
+              methodTitle = `시약 칭량 용해 (${perc}% 순도)`;
+              methodDetail = `순도 ${perc}% 반영 시약 <b>${reqMassg.toFixed(3)} g</b>을 칭량하여 정제수 ${volUnit}에 용해`;
+              badgeText = "칭량 가능";
+              badgeColor = "#e67e22";
+            }
+          } else {
+            reqMassg = (concValue * targetVolmL) / 100;
+            priority = 3;
+            methodTitle = `% 용액 칭량 제조`;
+            methodDetail = `시약 <b>${reqMassg.toFixed(2)} g</b>을 칭량하여 정제수 ${(targetVolmL - reqMassg).toFixed(0)} mL에 용해`;
+          }
+
+          inventoryEvaluations.push({
+            index: index + 1,
+            id: inv.id,
+            bottleName,
+            locStr,
+            amtStr,
+            concStr,
+            rawConcVal,
+            concUnit,
+            bottleMolarity,
+            priority,
+            isFeasible,
+            badgeColor,
+            badgeText,
+            methodTitle,
+            methodDetail,
+            reqVolmL,
+            reqMassg
+          });
+        });
+      }
+
+      // 📦 3단계: 최적 추천 시약병(Top Bottle) 선정
+      let topBottle = null;
+      if (inventoryEvaluations.length > 0) {
+        inventoryEvaluations.sort((a, b) => a.priority - b.priority);
+        if (inventoryEvaluations[0].isFeasible) {
+          topBottle = inventoryEvaluations[0];
+        }
+      }
+
+      const flaskSizes = [50, 100, 200, 250, 500, 1000];
+      let defaultFlaskVolmL = flaskSizes.find(s => s >= targetVolmL) || 50;
+
+      const cardId = `conc-calc-card-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
+      if (!this.cardStates) this.cardStates = {};
+      this.cardStates[cardId] = {
+        chemName,
+        formula,
+        mw,
+        concValue,
+        concType,
+        targetVolmL,
+        requestedVolUnit: volUnit,
+        pureMassNeeded,
+        inventoryEvaluations,
+        selectedBottleId: topBottle ? topBottle.id : null,
+        selectedFlaskVolmL: defaultFlaskVolmL
+      };
+
+      const cardBodyHtml = this.renderConcCalcCardBody(cardId);
+      return `<div id="${cardId}" style="background: #ffffff; border: 1px solid #d0e7ff; border-radius: 10px; padding: 12px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">${cardBodyHtml}</div>`;
+    },
+
+    // 🔄 시약병 동적 선택 이벤트 핸들러
+    switchConcBottle: function (cardId, bottleId) {
+      if (!this.cardStates) this.cardStates = {};
+      const state = this.cardStates[cardId];
+      if (!state) return;
+
+      state.selectedBottleId = bottleId;
+      const container = document.getElementById(cardId);
+      if (container) {
+        container.innerHTML = this.renderConcCalcCardBody(cardId);
+      }
+    },
+
+    // 🔄 부피플라스크 규격 동적 선택 이벤트 핸들러
+    switchConcFlask: function (cardId, flaskSize) {
+      if (!this.cardStates) this.cardStates = {};
+      const state = this.cardStates[cardId];
+      if (!state) return;
+
+      state.selectedFlaskVolmL = flaskSize;
+      const container = document.getElementById(cardId);
+      if (container) {
+        container.innerHTML = this.renderConcCalcCardBody(cardId);
+      }
+    },
+
+    // 📋 농도 계산 카드 동적 HTML 렌더링 엔진
+    renderConcCalcCardBody: function (cardId) {
+      const state = this.cardStates ? this.cardStates[cardId] : null;
+      if (!state) return "";
+
+      const { chemName, formula, mw, concValue, concType, targetVolmL, requestedVolUnit, pureMassNeeded, inventoryEvaluations, selectedFlaskVolmL } = state;
+
+      // 🧪 1단계: 선택된 부피플라스크 규격(prepVolmL)에 따른 각 시약병 잔여 재고 가용성 실시간 동적 재평가
+      const prepVolmL = selectedFlaskVolmL || targetVolmL;
+      const prepVolL = prepVolmL / 1000;
+      const prepVolUnitStr = prepVolmL >= 1000 ? `${(prepVolmL / 1000).toFixed(0)} L` : `${prepVolmL} mL`;
+
+      inventoryEvaluations.forEach(item => {
+        // 잔여 수량 숫자 파싱
+        let stockAmt = parseFloat((item.amtStr || "").replace(/[^0-9.]/g, ""));
+        if (isNaN(stockAmt) || stockAmt <= 0) stockAmt = 99999; // 미기록 시 기본 통과
+
+        let reqVol = 0;
+        let reqMass = 0;
+
+        if (concType === "M") {
+          if (item.priority === 1) { // 동일 농도 소분
+            reqVol = prepVolmL;
+          } else if (item.bottleMolarity && item.bottleMolarity > concValue) { // 고농도 희석
+            reqVol = (concValue * prepVolmL) / item.bottleMolarity;
+          } else { // 고체 칭량
+            const perc = (item.rawConcVal && item.rawConcVal > 0 && item.concUnit === "%") ? item.rawConcVal : 100;
+            reqMass = (concValue * prepVolL * mw) / (perc / 100);
+          }
+        } else {
+          reqMass = (concValue * prepVolmL) / 100;
+        }
+
+        const isStockOk = reqVol > 0 ? (reqVol <= stockAmt) : (reqMass <= stockAmt);
+
+        if (!isStockOk) {
+          item.dynamicFeasible = false;
+          item.dynamicBadgeText = "재고 부족";
+          item.dynamicBadgeColor = "#d9534f";
+          const neededStr = reqVol > 0 ? `${reqVol < 1 ? reqVol.toFixed(2) : reqVol.toFixed(1)}mL` : `${reqMass.toFixed(2)}g`;
+          item.dynamicReason = `(필요 ${neededStr} > 보유 ${item.amtStr})`;
+        } else {
+          item.dynamicFeasible = item.isFeasible;
+          item.dynamicBadgeText = item.badgeText;
+          item.dynamicBadgeColor = item.badgeColor;
+          item.dynamicReason = "";
+        }
+      });
+
+      // 🧪 2단계: 가용성(dynamicFeasible)을 만족하는 최적 시약병 자동 결정
+      let topBottle = inventoryEvaluations.find(b => b.id === state.selectedBottleId && b.dynamicFeasible);
+
+      // 만약 선택된 시약병이 용량 초과로 불가능해진 경우, 가용한 다른 시약병으로 자동 전환
+      if (!topBottle) {
+        topBottle = inventoryEvaluations.find(b => b.dynamicFeasible);
+        if (topBottle) {
+          state.selectedBottleId = topBottle.id;
+        }
+      }
+
+      const isExactMatch = topBottle ? topBottle.priority === 1 : false;
+
+      // 📦 3단계: 시약장 전체 보유 재고 현황 HTML (전체 시약병 박스 클릭 버튼화)
+      let evalItemsHtml = "";
+      if (inventoryEvaluations.length > 0) {
+        inventoryEvaluations.forEach(item => {
+          const isSelected = topBottle && item.id === topBottle.id;
+          const isSelectable = item.dynamicFeasible;
+
+          let badgeHtml = "";
+          if (isSelected) {
+            badgeHtml = `<span style="background: #0056b3; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10.5px; font-weight: bold;">🎯 선택됨</span>`;
+          } else {
+            badgeHtml = `<span style="background: ${item.dynamicBadgeColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10.5px; font-weight: bold;">${item.dynamicBadgeText}</span>`;
+          }
+
+          const clickHandler = isSelectable ? `onclick="App.Chatbot.switchConcBottle('${cardId}', ${item.id})"` : '';
+          const boxBg = isSelected ? '#f0f9ff' : (isSelectable ? 'white' : '#fff5f5');
+          const boxBorder = isSelected ? '2px solid #1971c2' : (isSelectable ? '1px solid #ced4da' : '1px solid #ffc9c9');
+          const cursorStyle = isSelectable ? 'cursor: pointer;' : 'cursor: not-allowed;';
+
+          evalItemsHtml += `
+            <div ${clickHandler} style="background: ${boxBg}; border: ${boxBorder}; border-radius: 8px; padding: 8px 10px; margin-top: 5px; ${cursorStyle} transition: all 0.15s ease-in-out;" onmouseover="if(${isSelectable && !isSelected}){this.style.background='#e7f5ff';this.style.borderColor='#74c0fc';}" onmouseout="if(${isSelectable && !isSelected}){this.style.background='white';this.style.borderColor='#ced4da';}">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: bold; color: ${isSelected ? '#0056b3' : (isSelectable ? '#333' : '#c92a2a')}; font-size: 11.5px;">
+                  ${isSelected ? '⭐ ' : ''}시약병 #${item.id}: ${item.bottleName}
+                </span>
+                ${badgeHtml}
+              </div>
+              <div style="color: #555; font-size: 10.5px; margin-top: 4px;">
+                📍 <b>위치:</b> ${item.locStr} (잔여: <b>${item.amtStr}</b>, 농도: <b>${item.concStr}</b>)
+                ${item.dynamicReason ? `<span style="color: #c92a2a; margin-left: 4px; font-weight: bold;">${item.dynamicReason}</span>` : ''}
+              </div>
+            </div>
+          `.replace(/\n\s*/g, "");
+        });
+      }
+
+      const evalBoxHtml = inventoryEvaluations.length > 0 ? `
+        <div style="margin-top: 8px; padding: 8px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px;">
+          <div style="font-weight: bold; color: #495057; font-size: 11.5px; margin-bottom: 2px; display: flex; align-items: center; gap: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 15px;">inventory_2</span>
+            <span>📦 시약장 전체 보유 재고 현황 (${inventoryEvaluations.length}개 병 검색됨)</span>
+          </div>
+          <div style="font-size: 10px; color: #0056b3; margin-bottom: 4px;">💡 시약병 박스를 클릭하시면 해당 시약병 레시피로 실시간 전환됩니다.</div>
+          ${evalItemsHtml}
+        </div>
+      `.replace(/\n\s*/g, "") : "";
+
+      // 📋 2단계: 선택된 시약병 및 부피플라스크 기반 레시피 재계산 및 렌더링
+      let recipeTitleHtml = "";
+      let recipeBoxHtml = "";
+
+      if (topBottle && topBottle.isFeasible) {
+        const isLiquidDilution = topBottle.priority === 2 || (topBottle.bottleMolarity && topBottle.bottleMolarity > concValue);
+
+        let calculatedReqVolmL = 0;
+        let calculatedReqMassg = 0;
+
+        if (concType === "M") {
+          if (isExactMatch) {
+            calculatedReqVolmL = prepVolmL;
+          } else if (isLiquidDilution && topBottle.bottleMolarity) {
+            calculatedReqVolmL = (concValue * prepVolmL) / topBottle.bottleMolarity;
+          } else {
+            const perc = (topBottle.rawConcVal && topBottle.rawConcVal > 0 && topBottle.concUnit === "%") ? topBottle.rawConcVal : 100;
+            calculatedReqMassg = (concValue * prepVolL * mw) / (perc / 100);
+          }
+        } else {
+          calculatedReqMassg = (concValue * prepVolmL) / 100;
+        }
+
+        const volDisplayStr = calculatedReqVolmL < 1 ? calculatedReqVolmL.toFixed(2) : calculatedReqVolmL.toFixed(1);
+        const massDisplayStr = calculatedReqMassg.toFixed(3);
+        const initialWatermL = Math.max(3, Math.round(prepVolmL * 0.5));
+
+        const isAcidOrBase = (chemName.includes("염산") || chemName.includes("염화수소") || chemName.includes("황산") || chemName.includes("질산") || chemName.includes("수산화나트륨") || chemName.includes("아세트산"));
+
+        let prepItems = "";
+        let stepsHtml = "";
+
+        const finalStepHtml = `<li>제조 완료된 <b>${prepVolUnitStr} 용액</b> 중 실험에 필요한 목표 부피 <b style="color: #0056b3;">${requestedVolUnit}</b>를 메스시린더 또는 피펫으로 정확히 취하여 <b>실험 비커(또는 보관 용기)</b>에 담아 사용합니다.<br><span style="color: #666; font-size: 10.5px;">(※ 남은 용액은 라벨 부착 후 준비실에 보관하거나 과학실 폐액 처리 규정에 따라 처리합니다.)</span></li>`;
+
+        if (isExactMatch) {
+          prepItems = `소분용기 (또는 메스시린더/실험비커), 피펫 (또는 피펫 펌프), 보호장갑`;
+          stepsHtml = `
+            <ol style="margin: 4px 0 0 16px; padding: 0; line-height: 1.65; color: #222;">
+              <li>시약장 위치 <b>[${topBottle.locStr}]</b>에서 목표 농도와 일치하는 보유 시약병 <b>[${topBottle.bottleName}]</b>을 꺼냅니다.</li>
+              <li>피펫 또는 메스시린더를 사용하여 별도의 증류수 희석이나 저울 칭량 과정 없이 필요한 목표 부피 <b>${requestedVolUnit}</b>를 실험 비커(또는 소분용기)에 깔끔히 담습니다.</li>
+              <li>추가 물 희석이나 제조 절차 없이 실험에 즉시 사용합니다.</li>
+            </ol>
+          `;
+        } else if (isLiquidDilution) {
+          prepItems = `피펫, 피펫 펌프, <b>${prepVolUnitStr} 부피플라스크</b>, 메스시린더/실험비커, 증류수(정제수), 보안경, 보호장갑`;
+          stepsHtml = `
+            <ol style="margin: 4px 0 0 16px; padding: 0; line-height: 1.65; color: #222;">
+              <li><b>${prepVolUnitStr} 부피플라스크</b>에 증류수를 미리 약 <b>${initialWatermL} mL</b> 정도 채웁니다.<br>
+                  ${isAcidOrBase ? '<span style="color: #c92a2a; font-weight: bold;">(⚠️ 중요: 산/염기를 다룰 때는 항상 물에 원액을 천천히 가해야 안전합니다!)</span>' : ''}
+              </li>
+              <li>피펫과 피펫 펌프를 사용하여 보유 시약병 <b>[${topBottle.bottleName}]</b>에서 <b>원액 ${volDisplayStr} mL</b>를 정확히 취합니다.</li>
+              <li>플라스크 벽면을 따라 원액 <b>${volDisplayStr} mL</b>를 천천히 흘려 넣습니다.</li>
+              <li>부피플라스크의 <b>표시선(${prepVolUnitStr})</b>까지 나머지 증류수를 조심스럽게 채웁니다.</li>
+              <li>마개를 닫고 위아래로 2~3회 뒤집으며 잘 섞은 후 시약병에 라벨 <b>[${chemName}, ${concValue}${concType}, 제조일자, 제조자]</b>을 부착합니다.</li>
+              ${finalStepHtml}
+            </ol>
+          `;
+        } else {
+          prepItems = `전자저울, 유량지/비커, 약숟가락, <b>${prepVolUnitStr} 부피플라스크</b>, 메스시린더/실험비커, 증류수(정제수), 보안경, 보호장갑`;
+          stepsHtml = `
+            <ol style="margin: 4px 0 0 16px; padding: 0; line-height: 1.65; color: #222;">
+              <li>전자저울에 유량지 또는 비커를 올리고 <b>영점(TARE/ZERO)</b>을 맞춥니다.</li>
+              <li>보유 시약 <b>[${topBottle.bottleName}]</b>에서 시약 <b>${massDisplayStr} g</b>을 정확하게 칭량합니다.</li>
+              <li><b>${prepVolUnitStr} 부피플라스크</b>에 증류수 약 <b>${initialWatermL} mL</b>를 채운 후 칭량한 시약을 넣어 완전히 용해시킵니다.</li>
+              <li>최종 <b>표선(${prepVolUnitStr})</b>까지 증류수를 채우고 흔들어 잘 섞어줍니다.</li>
+              <li>시약병에 라벨 <b>[${chemName}, ${concValue}${concType}, 제조일자, 제조자]</b>을 부착합니다.</li>
+              ${finalStepHtml}
+            </ol>
+          `;
+        }
+
+        recipeTitleHtml = `🎯 <b>선택된 시약병:</b> <span style="color: #0056b3; font-weight: bold;">${topBottle.bottleName}</span> (위치: ${topBottle.locStr})`;
+
+        const reqDisplayStr = isExactMatch
+          ? `${topBottle.bottleName} ${prepVolUnitStr} (희석 없이 즉시 소분 사용)`
+          : (isLiquidDilution ? `${topBottle.bottleName} ${volDisplayStr} mL` : `${topBottle.bottleName} ${massDisplayStr} g`);
+
+        // 🧪 부피플라스크 규격 선택 칩 (50, 100, 200, 250, 500, 1000 mL)
+        const flaskOptions = [50, 100, 200, 250, 500, 1000];
+        let flaskChipsHtml = "";
+        if (!isExactMatch) {
+          flaskChipsHtml = `
+            <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #b6e4ff;">
+              <div style="font-weight: bold; color: #0056b3; font-size: 11px; margin-bottom: 4px;">
+                🧪 보유 부피플라스크 규격 선택 (현재: <b>${prepVolUnitStr} 플라스크 기준</b>):
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                ${flaskOptions.map(sz => {
+                  const active = (selectedFlaskVolmL === sz);
+                  const szLabel = sz >= 1000 ? "1000mL (1L)" : `${sz}mL`;
+                  return `
+                    <button onclick="App.Chatbot.switchConcFlask('${cardId}', ${sz})" style="background: ${active ? '#0056b3' : '#ffffff'}; color: ${active ? '#ffffff' : '#0056b3'}; border: 1px solid #0056b3; padding: 2px 7px; border-radius: 12px; font-size: 10.5px; font-weight: bold; cursor: pointer; transition: all 0.15s;" onmouseover="if(!${active})this.style.background='#e7f5ff'" onmouseout="if(!${active})this.style.background='#ffffff'">
+                      ${active ? '✓ ' : ''}${szLabel}
+                    </button>
+                  `;
+                }).join("")}
+              </div>
+              <div style="font-size: 10px; color: #666; margin-top: 4px;">
+                💡 50mL 이하 규격 부피플라스크가 과학실에 없는 경우, 보유 중인 플라스크 용량 버튼을 누르시면 해당 용량 맞춤 레시피로 실시간 재계산됩니다.
+              </div>
+            </div>
+          `.replace(/\n\s*/g, "");
+        }
+
+        recipeBoxHtml = `
+          <div style="background: #eef9ff; border: 1px solid #b6e4ff; border-radius: 8px; padding: 10px; margin-top: 8px;">
+            <div style="font-weight: bold; color: #004085; font-size: 12.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+              <span class="material-symbols-outlined" style="font-size: 16px; color: #0056b3;">receipt_long</span>
+              <span>📋 맞춤 제조 레시피 (${topBottle.methodTitle} - ${prepVolUnitStr} 기준)</span>
+            </div>
+            <div style="font-size: 11.5px; color: #333; line-height: 1.5; background: white; padding: 8px; border-radius: 6px; border: 1px solid #d0e7ff;">
+              <div>• <b>준비물:</b> ${prepItems}</div>
+              <div>• <b>필요 시약/원액 양:</b> <b style="color: #d9480f; font-size: 12.5px;">${reqDisplayStr}</b></div>
+              <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cce5ff;">
+                <div style="font-weight: bold; color: #0056b3; margin-bottom: 2px;">🧪 상세 조제 순서:</div>
+                ${stepsHtml}
+              </div>
+              ${flaskChipsHtml}
+            </div>
+          </div>
+        `;
+      } else {
+        recipeTitleHtml = `⚠️ <b>사용 가능한 보유 재고가 없습니다.</b>`;
+        recipeBoxHtml = `
+          <div style="background: #fff5f5; border: 1px solid #ffc9c9; border-radius: 8px; padding: 10px; margin-top: 8px; color: #c92a2a; font-size: 11.5px;">
+            ⚠️ 현재 시약장에 사용 가능한 <b>${chemName}</b> 재고가 등록되어 있지 않거나 희석 가능한 시약병이 없습니다.
+          </div>
+        `;
+      }
+
+      return `
+        <div style="font-weight: bold; color: #0d47a1; font-size: 13.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px dashed #b6e4ff; padding-bottom: 6px;">
+          <span class="material-symbols-outlined" style="font-size: 18px; color: #0056b3;">science</span>
+          <span>${chemName} ${formula} ${concValue}${concType} ${requestedVolUnit} 맞춤 조제 계산</span>
+        </div>
+        ${evalBoxHtml}
+        <div style="margin-top: 10px; font-size: 11.5px; color: #495057; line-height: 1.4;">
+          ${recipeTitleHtml}
+        </div>
+        ${recipeBoxHtml}
+        <div style="margin-top: 10px; font-size: 11px; color: #c92a2a; background: #fff5f5; padding: 6px 8px; border-radius: 6px; border: 1px solid #ffc9c9;">
+          ⚠️ <b>안전 수칙:</b> 강산/강염기 조제 시 보호장갑과 보안경을 착용하고, 산은 항상 물에 원액을 천천히 가해야 합니다.
+        </div>
+      `.replace(/\n\s*/g, "");
+    },
+
+    handleMaintenanceQuery: async function (query) {
+      const q = query.toLowerCase();
+
+      if (q.includes("현미경")) {
+        return `
+          <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px; font-size: 12px;">
+            <div style="font-weight: bold; color: #2b8a3e; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+              <span class="material-symbols-outlined" style="font-size: 16px;">biotech</span>
+              <span>생물/실체 현미경 점검 & 세척 매뉴얼</span>
+            </div>
+            <ul style="margin: 0; padding-left: 16px; line-height: 1.6; color: #333;">
+              <li><b>렌즈 세척:</b> 대물/접안렌즈는 <b>70% 이소프로필 알코올</b> 또는 전용 렌즈클리너를 렌즈 페이퍼에 살짝 묻혀 원을 그리듯 안에서 밖으로 부드럽게 닦습니다. (일반 휴지/직물 사용 금지)</li>
+              <li><b>점검 주기:</b> 사용 후 매회 먼지 제거, <b>6개월 주기</b> 초점 조절 라챗 및 재물대 이동 상태 점검.</li>
+              <li><b>보관 수칙:</b> 사용 후 배율이 가장 낮은 <b>4배(가장 짧은) 대물렌즈</b>를 중앙에 맞추고 재물대를 최대로 내린 뒤 먼지 방지 커버를 씌워 보관합니다.</li>
+            </ul>
+          </div>
+        `.replace(/\n\s*/g, "");
+      }
+
+      if (q.includes("흄후드") || q.includes("후드")) {
+        return `
+          <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px; font-size: 12px;">
+            <div style="font-weight: bold; color: #d9480f; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+              <span class="material-symbols-outlined" style="font-size: 16px;">air</span>
+              <span>흄후드(Fume Hood) 안전 점검 매뉴얼</span>
+            </div>
+            <ul style="margin: 0; padding-left: 16px; line-height: 1.6; color: #333;">
+              <li><b>제어 풍속 기준:</b> 개구면 제어풍속이 <b>0.4 m/s 이상</b> 유지되는지 풍속계로 정기 측정합니다.</li>
+              <li><b>필터 교체 주기:</b> 활성탄/HEPA 필터는 사용 빈도에 따라 <b>6개월~1년 주기</b>로 정기 교체합니다.</li>
+              <li><b>작업 수칙:</b> 섀시(글래스 창)는 <b>15~20cm 이하</b>로 유지하고, 유해물질 작업은 후드 안쪽 15cm 깊숙이에서 진행합니다.</li>
+            </ul>
+          </div>
+        `.replace(/\n\s*/g, "");
+      }
+
+      if (q.includes("저울") || q.includes("전자저울")) {
+        return `
+          <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px; font-size: 12px;">
+            <div style="font-weight: bold; color: #15aabf; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+              <span class="material-symbols-outlined" style="font-size: 16px;">scale</span>
+              <span>정밀 전자저울 점검 & 영점 교정 매뉴얼</span>
+            </div>
+            <ul style="margin: 0; padding-left: 16px; line-height: 1.6; color: #333;">
+              <li><b>수평계 확인:</b> 저울 바닥의 기포 수평계가 중앙에 오도록 발판을 조절합니다.</li>
+              <li><b>영점 조절(Tare):</b> 시약지나 용기를 얹은 후 <b>[TARE/ZERO]</b> 버튼을 눌러 0.000g으로 맞춥니다.</li>
+              <li><b>청소 수칙:</b> 칭량 팬에 시약 가루가 쏟아진 경우 즉시 전용 부드러운 솔로 쓸어내고 알코올 솜으로 닦습니다.</li>
+              <li><b>보관:</b> 직사광선과 진동을 피하고 바람막이 유리를 항상 닫아둡니다.</li>
+            </ul>
+          </div>
+        `.replace(/\n\s*/g, "");
+      }
+
+      return `
+        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px; font-size: 12px;">
+          <div style="font-weight: bold; color: #5c7cfa; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 16px;">build</span>
+            <span>학교 과학실 대표 교구/설비 관리 수칙</span>
+          </div>
+          <div style="line-height: 1.6; color: #333;">
+            • <b>현미경:</b> 70% 이소프로필 알코올 렌즈 세척, 4배 대물렌즈 원위치 보관<br>
+            • <b>흄후드:</b> 제어풍속 0.4m/s 이상 확인, 6~12개월 필터 교체<br>
+            • <b>전자저울:</b> 수평계 확인, 사용 전 TARE 영점 교정, 진동 방지<br>
+            • <b>MBL 센서:</b> 센서 전극 수용액 세척 후 건조, 배터리 방전 방지 보관
+          </div>
+        </div>
+      `.replace(/\n\s*/g, "");
+    },
+
+    handleCurriculumQuery: async function (query) {
+      const supabase = getSupabase();
+
+      let targetCat = null;
+      if (query.includes("물리")) targetCat = "물리학";
+      else if (query.includes("화학")) targetCat = "화학";
+      else if (query.includes("생명") || query.includes("생물")) targetCat = "생명과학";
+      else if (query.includes("지구")) targetCat = "지구과학";
+      else if (query.includes("융합")) targetCat = "융합과학";
+
+      const { data: toolsList, error } = await supabase
+        .from("tools")
+        .select("id, tools_name, kit_class, location, quantity")
+        .limit(100);
+
+      if (error || !toolsList) {
+        return "❌ 교구/키트 정보를 불러오지 못했습니다.";
+      }
+
+      let filteredTools = toolsList;
+      if (targetCat) {
+        filteredTools = toolsList.filter(t => t.kit_class && t.kit_class.includes(targetCat));
+      }
+
+      if (filteredTools.length === 0) {
+        return `🔬 **${targetCat || "교육과정"} 관련 키트/교구 조회 결과**\n해당하는 등록 교구가 존재하지 않습니다.`;
+      }
+
+      let rowsHtml = "";
+      filteredTools.slice(0, 8).forEach(t => {
+        rowsHtml += `
+          <tr style="border-bottom: 1px solid #eee; background: white;">
+            <td style="padding: 6px 8px; font-weight: bold; color: #333;">${t.tools_name}</td>
+            <td style="padding: 6px 8px; color: #0d47a1;">${t.kit_class || "-"}</td>
+            <td style="padding: 6px 8px; text-align: center;">${t.quantity || 1}개</td>
+          </tr>
+        `.replace(/\n\s*/g, "");
+      });
+
+      return `
+        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px; font-size: 12px;">
+          <div style="font-weight: bold; color: #0d47a1; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 16px;">school</span>
+            <span>${targetCat ? targetCat + ' 과목' : '교육과정 실험'} 관련 교구/키트 목록 (${filteredTools.length}건)</span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 11px; border: 1px solid #dee2e6;">
+            <thead>
+              <tr style="background: #e3f2fd; color: #0d47a1; font-weight: bold;">
+                <th style="padding: 6px 8px; text-align: left;">교구/키트 명</th>
+                <th style="padding: 6px 8px; text-align: left;">과목 분류</th>
+                <th style="padding: 6px 8px; text-align: center;">수량</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
+      `.replace(/\n\s*/g, "");
     }
   };
 
