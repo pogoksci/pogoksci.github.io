@@ -1379,8 +1379,35 @@ ${propText}
       const supabase = getSupabase();
       if (!supabase) return null;
 
-      const cleanText = query.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ").trim();
-      const tokens = cleanText.split(/\s+/).filter(t => t.length >= 1);
+      // 1. 단 단위 및 농도 패턴(0.1M, 500mL, 1L, 36% 등) 정규화 및 분리
+      // 온점(.)이 숫자 내 소수점일 경우 마침표로 오인하여 띄어쓰기 분리되지 않도록 보호
+      const cleanText = query.replace(/[?,/#!$%\^&\*;:{}=\-_`~()]/g, " ").trim();
+      const rawTokens = cleanText.split(/\s+/).filter(t => t.length >= 1);
+
+      // 숫자, 몰농도(M), 부피(mL/L), 질량(g), 퍼센트(%) 등 수치/단위 토큰 제외 필터링
+      const isUnitOrQuantityToken = (t) => {
+        if (/^\d+(\.\d+)?(m|l|ml|g|kg|molar|%|n|몰|노르말|밀리리터|리터|그램)?$/i.test(t)) return true;
+        if (/^(\d+(\.\d+)?)+(m|l|ml|g|kg|몰|노르말|밀리리터|리터|그램|%)+$/i.test(t)) return true;
+        if (/^(m|l|ml|g|kg|몰|노르말|밀리리터|리터|그램|%)$/i.test(t)) return true;
+        return false;
+      };
+
+      const tokens = rawTokens.filter(t => !isUnitOrQuantityToken(t));
+
+      // 🧪 2. 화학식(Formula) 우선 탐색 (예: NaOH, HCl, KBr, H2SO4)
+      for (const token of tokens) {
+        if (/^[A-Za-z0-9]{2,}$/.test(token)) {
+          const { data: formulaSub } = await supabase
+            .from("Substance")
+            .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
+            .or(`molecular_formula.eq.${token},molecular_formula_mod.eq.${token}`)
+            .limit(1);
+
+          if (formulaSub && formulaSub.length > 0) {
+            return formulaSub[0];
+          }
+        }
+      }
 
       // 계층별 동적 DB Cross-Reference 검색 함수 (공백 불일치 자동 흡수 알고리즘 적용)
       const querySubstanceCandidate = async (st) => {
@@ -1522,13 +1549,14 @@ ${propText}
       };
 
       // 토큰 탐색 (1단계: 원본 토큰 -> 2단계: 조사/접사 제거 토큰)
-      for (const token of tokens) {
+      const targetTokens = tokens.length > 0 ? tokens : rawTokens;
+      for (const token of targetTokens) {
         if (token.length < 2 && !/[a-zA-Z]/.test(token)) continue;
         const matched = await querySubstanceCandidate(token);
         if (matched) return matched;
       }
 
-      for (const token of tokens) {
+      for (const token of targetTokens) {
         if (token.length < 2) continue;
         const stripped = token.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란|학교에|학교에서|과학실에)$/, "");
         if (stripped.length < 2 || stripped === token) continue;
@@ -1792,6 +1820,29 @@ ${propText}
 
               return false;
             });
+
+            // 🎯 순수 시약 우선 필터링: 원래 요청 시약("수산화나트륨", "NaOH", "염산" 등)의 직접 시약병이 재고에 존재할 경우,
+            // "뷰렛 용액", "페일링 용액" 등 2차 혼합 용액 시약병은 목록에서 자동 제외
+            if (invList && invList.length > 0) {
+              const directMatches = invList.filter(inv => {
+                const invName = (inv.edited_name_kor || inv.Substance?.chem_name_kor_mod || inv.Substance?.chem_name_kor || "").replace(/\s+/g, "");
+                const isDirectKor = targetKor && (invName.includes(targetKor) || targetKor.includes(invName));
+                const isDirectHcl = isTargetHcl && (invName.includes("염산") || invName.includes("염화수소") || invName.includes("HCl"));
+                const isDirectNaoh = isTargetNaoh && (invName.includes("수산화나트륨") || invName.includes("가성소다") || invName.includes("NaOH"));
+                const isDirectH2so4 = isTargetH2so4 && (invName.includes("황산") || invName.includes("H2SO4"));
+                const isDirectHno3 = isTargetHno3 && (invName.includes("질산") || invName.includes("HNO3"));
+                const isDirectCh3cooh = isTargetCh3cooh && (invName.includes("아세트산") || invName.includes("빙초산") || invName.includes("CH3COOH"));
+                const isDirectH2o2 = isTargetH2o2 && (invName.includes("과산화수소") || invName.includes("H2O2"));
+
+                const isMixture = invName.includes("뷰렛") || invName.includes("페일링") || invName.includes("펠링") || invName.includes("베네딕트") || invName.includes("네슬러") || invName.includes("루골");
+
+                return (isDirectKor || isDirectHcl || isDirectNaoh || isDirectH2so4 || isDirectHno3 || isDirectCh3cooh || isDirectH2o2) && !isMixture;
+              });
+
+              if (directMatches.length > 0) {
+                invList = directMatches;
+              }
+            }
           }
         } catch (invErr) {
           console.error("Inventory lookup error in chatbot conc calc:", invErr);
@@ -1842,20 +1893,17 @@ ${propText}
             bottleMolarity = rawConcVal;
           } else if (concUnit === "N" || concUnit === "노르말") {
             bottleMolarity = rawConcVal / valence;
-          } else if (concUnit === "%" || rawConcVal != null) {
+          } else if (concUnit === "%") {
             const perc = (rawConcVal && rawConcVal > 0) ? rawConcVal : 100;
-            const isAcidOrBaseLiquid = (chemName.includes("염산") || chemName.includes("염화수소") || chemName.includes("황산") || chemName.includes("질산") || chemName.includes("아세트산") || chemName.includes("빙초산") || chemName.includes("과산화수소"));
+            let d = 1.05;
+            if (chemName.includes("염산") || chemName.includes("염화수소")) d = 1.19;
+            else if (chemName.includes("황산")) d = 1.84;
+            else if (chemName.includes("질산")) d = 1.42;
+            else if (chemName.includes("수산화나트륨") || chemName.includes("NaOH")) d = 1.11;
+            else if (chemName.includes("아세트산") || chemName.includes("빙초산")) d = 1.05;
+            else if (chemName.includes("과산화수소")) d = 1.11;
 
-            if (isAcidOrBaseLiquid && perc >= 5) {
-              let d = 1.15;
-              if (chemName.includes("염산") || chemName.includes("염화수소")) d = 1.19;
-              else if (chemName.includes("황산")) d = 1.84;
-              else if (chemName.includes("질산")) d = 1.42;
-              else if (chemName.includes("아세트산") || chemName.includes("빙초산")) d = 1.05;
-              else if (chemName.includes("과산화수소")) d = 1.11;
-
-              bottleMolarity = (perc * 10 * d) / mw;
-            }
+            bottleMolarity = (perc * 10 * d) / mw;
           }
 
           let priority = 99;
@@ -1868,44 +1916,65 @@ ${propText}
           let badgeText = "제조 가능";
 
           if (concType === "M") {
-            if (bottleMolarity != null && !isNaN(bottleMolarity)) {
-              if (Math.abs(bottleMolarity - concValue) < 0.01) {
+            const isExactConc = bottleMolarity != null && !isNaN(bottleMolarity) && Math.abs(bottleMolarity - concValue) < 0.01;
+            
+            // 시약병 수량 단위(mL/L vs g/kg) 및 농도 단위(%/M/N)에 따른 고체 vs 액체 수용액 구분
+            const invUnitLower = (inv.unit || "").toLowerCase();
+            const isLiquidBottle = invUnitLower === "ml" || invUnitLower === "l" || invUnitLower === "밀리리터" || invUnitLower === "리터" || concUnit === "%" || concUnit === "M" || concUnit === "N";
+            const isSolidReagent = !isLiquidBottle;
+
+            if (isExactConc) {
+              // 1순위: 요구 농도와 완벽히 동일한 농도의 용액 (단, 필요 용량 이상 보유 시에만)
+              const stockAmt = (inv.current_amount != null && inv.current_amount !== "") ? parseFloat(inv.current_amount) : 99999;
+              if (stockAmt >= targetVolmL) {
                 priority = 1;
-                const matchTag = (concUnit === "N") ? `${rawConcVal}N = ${bottleMolarity.toFixed(1)}M` : `${rawConcVal}M`;
+                const matchTag = (concUnit === "N") ? `${rawConcVal}N = ${bottleMolarity.toFixed(1)}M` : `${rawConcVal}${concUnit}`;
                 methodTitle = `동일 농도 보유 (${matchTag})`;
                 methodDetail = `이 시약병(${rawConcVal}${concUnit})은 목표 농도(${concValue}M)와 일치하므로 희석/제조 없이 소분하여 즉시 사용합니다.`;
                 badgeText = "즉시 사용";
                 badgeColor = "#2b8a3e";
-              } else if (bottleMolarity > concValue) {
-                priority = 2;
-                reqVolmL = (concValue * targetVolmL) / bottleMolarity;
-                const concDisplay = (concUnit === "%") ? `${rawConcVal}% (약 ${bottleMolarity.toFixed(2)}M)` : `${rawConcVal}${concUnit}`;
-                methodTitle = `고농도 용액 희석 (${concDisplay} → ${concValue}M)`;
-                methodDetail = `보유 원액 <b>${reqVolmL < 1 ? reqVolmL.toFixed(2) : reqVolmL.toFixed(1)} mL</b>를 취해 정제수 ${volUnit}로 희석`;
-                badgeText = "희석 가능";
-                badgeColor = "#0056b3";
               } else {
                 priority = 99;
                 isFeasible = false;
                 badgeColor = "#d9534f";
-                badgeText = "희석 불가";
-                methodTitle = `농도 부족 (${bottleMolarity.toFixed(2)}M < ${concValue}M)`;
-                methodDetail = `보유 용액 농도(약 ${bottleMolarity.toFixed(2)}M)가 목표 농도(${concValue}M)보다 낮아 희석 조제가 불가능합니다.`;
+                badgeText = "재고 부족";
+                methodTitle = `동일 농도이나 재고 부족 (${stockAmt}mL < 필요 ${targetVolmL}mL)`;
+                methodDetail = `목표 농도(${concValue}M)와 동일하나 보유 잔여량(${stockAmt}mL)이 필요 용량(${targetVolmL}mL)보다 부족하여 고체 시료로 신규 제조합니다.`;
               }
-            } else {
-              priority = 3;
+            } else if (isSolidReagent) {
+              // 2순위: 순수 고체 시료 칭량 용해 (동일 농도가 없거나 부족할 때 최우선 제조 방식)
+              priority = 2;
               const perc = (rawConcVal && rawConcVal > 0 && concUnit === "%") ? rawConcVal : 100;
               reqMassg = pureMassNeeded / (perc / 100);
-              methodTitle = `시약 칭량 용해 (${perc}% 순도)`;
+              methodTitle = `고체 시약 칭량 용해 (추천 조제 방식)`;
               methodDetail = `순도 ${perc}% 반영 시약 <b>${reqMassg.toFixed(3)} g</b>을 칭량하여 정제수 ${volUnit}에 용해`;
               badgeText = "칭량 가능";
               badgeColor = "#e67e22";
+            } else if (isLiquidBottle && bottleMolarity != null && bottleMolarity > concValue) {
+              // 3순위: 고농도 수용액 희석 조제 (고체 시료가 없을 때 수용액 희석 사용)
+              priority = 3;
+              reqVolmL = (concValue * targetVolmL) / bottleMolarity;
+              const concDisplay = (concUnit === "%") ? `${rawConcVal}% (약 ${bottleMolarity.toFixed(2)}M)` : `${rawConcVal}${concUnit}`;
+              methodTitle = `고농도 용액 희석 (${concDisplay} → ${concValue}M)`;
+              methodDetail = `보유 원액 <b>${reqVolmL < 1 ? reqVolmL.toFixed(2) : reqVolmL.toFixed(1)} mL</b>를 취해 정제수 ${volUnit}로 희석`;
+              badgeText = "희석 가능";
+              badgeColor = "#0056b3";
+            } else {
+              priority = 99;
+              isFeasible = false;
+              badgeColor = "#d9534f";
+              badgeText = "희석 불가";
+              const currMDisplay = bottleMolarity != null ? `약 ${bottleMolarity.toFixed(2)}M` : `${rawConcVal}${concUnit}`;
+              methodTitle = `농도 부족 (${currMDisplay} < ${concValue}M)`;
+              methodDetail = `보유 용액 농도(${currMDisplay})가 목표 농도(${concValue}M)보다 낮아 희석 조제가 불가능합니다.`;
             }
           } else {
             reqMassg = (concValue * targetVolmL) / 100;
-            priority = 3;
+            priority = 2;
             methodTitle = `% 용액 칭량 제조`;
             methodDetail = `시약 <b>${reqMassg.toFixed(2)} g</b>을 칭량하여 정제수 ${(targetVolmL - reqMassg).toFixed(0)} mL에 용해`;
+            badgeText = "칭량 가능";
+            badgeColor = "#e67e22";
           }
 
           inventoryEvaluations.push({
@@ -2103,7 +2172,9 @@ ${propText}
       let recipeBoxHtml = "";
 
       if (topBottle && topBottle.isFeasible) {
-        const isLiquidDilution = topBottle.priority === 2 || (topBottle.bottleMolarity && topBottle.bottleMolarity > concValue);
+        const isExactMatch = topBottle ? topBottle.priority === 1 : false;
+        const isSolidWeighing = topBottle ? topBottle.priority === 2 : false;
+        const isLiquidDilution = topBottle ? topBottle.priority === 3 : false;
 
         let calculatedReqVolmL = 0;
         let calculatedReqMassg = 0;
