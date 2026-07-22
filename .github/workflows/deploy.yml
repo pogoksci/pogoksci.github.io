@@ -35,8 +35,8 @@ jobs:
           url = os.environ.get('SUPABASE_URL', '').strip().strip('\"').strip(\"'\")
           key = os.environ.get('SUPABASE_ANON_KEY', '').strip().strip('\"').strip(\"'\")
           with open('js/supabaseClient.template.js', 'r', encoding='utf-8') as f: content = f.read()
-          content = content.replace('%%SUPABASE_URL%%', json.dumps(url))
-          content = content.replace('%%SUPABASE_ANON_KEY%%', json.dumps(key))
+          content = content.replace('\"%%SUPABASE_URL%%\"', json.dumps(url))
+          content = content.replace('\"%%SUPABASE_ANON_KEY%%\"', json.dumps(key))
           with open('js/supabaseClient.js', 'w', encoding='utf-8') as f: f.write(content)
           "
 
