@@ -48,7 +48,7 @@ jobs:
         with:
           token: ${{ secrets.DEPLOY_TOKEN }}
           repository-name: ggomcode/ggomsci
-          branch: main
+          branch: gh-pages
           folder: deploy_dist
           clean: true
           single-commit: true
