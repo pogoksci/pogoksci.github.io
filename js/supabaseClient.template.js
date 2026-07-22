@@ -2,8 +2,8 @@
 // /js/supabaseClient.js (Template)
 // ================================================================
 (function () {
-  const SUPABASE_URL = "%%SUPABASE_URL%%";
-  const SUPABASE_ANON_KEY = "%%SUPABASE_ANON_KEY%%";
+  const SUPABASE_URL = %%SUPABASE_URL%%;
+  const SUPABASE_ANON_KEY = %%SUPABASE_ANON_KEY%%;
 
   const APP_CONFIG = {
     APPNAME: "SciManager",
