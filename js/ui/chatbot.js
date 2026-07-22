@@ -608,34 +608,41 @@
       // 1. DB에서 가장 적합한 화학물질 매칭 찾기
       let foundSubstance = null;
 
-      // 1단계: 원본 토큰 그대로 검색 (예: "질산은" 같이 마지막 글자가 조사와 혼동될 수 있는 고유 명칭 우선 대응)
+      const formulaMap = {
+        "naoh": "수산화나트륨",
+        "hcl": "염산",
+        "h2so4": "황산",
+        "hno3": "질산",
+        "ch3cooh": "아세트산",
+        "nacl": "염화나트륨",
+        "kmno4": "과망간산칼륨",
+        "h2o2": "과산화수소",
+        "cuso4": "황산구리",
+        "agno3": "질산은",
+        "nahco3": "탄산수소나트륨",
+        "na2co3": "탄산나트륨",
+        "caco3": "탄산칼슘",
+        "ca(oh)2": "수산화칼슘",
+        "koh": "수산화칼륨",
+        "nh4oh": "수산화암모늄",
+        "nh3": "암모니아"
+      };
+
+      // 1단계: 원본 토큰 그대로 또는 화학식 매핑 검색
       for (const token of tokens) {
         if (token.length < 2) continue; // 1글자는 스킵
 
-        const { data } = await supabase
-          .from("Substance")
-          .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
-          .or(`chem_name_kor.ilike.%${token}%,chem_name_kor_mod.ilike.%${token}%,substance_name.ilike.%${token}%,substance_name_mod.ilike.%${token}%`)
-          .limit(1);
-
-        if (data && data.length > 0) {
-          foundSubstance = data[0];
-          break;
+        const searchTerms = [token];
+        const lower = token.toLowerCase();
+        if (formulaMap[lower] && formulaMap[lower] !== token) {
+          searchTerms.push(formulaMap[lower]);
         }
-      }
 
-      // 2단계: 1단계 실패 시 한국어 조사/접사(의, 은, 는, 이, 가, 을, 를 등)를 제거하여 검색 (예: "아세톤의" -> "아세톤" 검색)
-      if (!foundSubstance) {
-        for (const token of tokens) {
-          if (token.length < 2) continue;
-
-          const stripped = token.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란)$/, "");
-          if (stripped.length < 2 || stripped === token) continue; // 이미 검색했거나 2글자 미만인 경우 스킵
-
+        for (const st of searchTerms) {
           const { data } = await supabase
             .from("Substance")
             .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
-            .or(`chem_name_kor.ilike.%${stripped}%,chem_name_kor_mod.ilike.%${stripped}%,substance_name.ilike.%${stripped}%,substance_name_mod.ilike.%${stripped}%`)
+            .or(`chem_name_kor.ilike.%${st}%,chem_name_kor_mod.ilike.%${st}%,substance_name.ilike.%${st}%,substance_name_mod.ilike.%${st}%,molecular_formula.ilike.%${st}%,molecular_formula_mod.ilike.%${st}%`)
             .limit(1);
 
           if (data && data.length > 0) {
@@ -643,11 +650,45 @@
             break;
           }
         }
+        if (foundSubstance) break;
       }
 
-      // 시약 매칭 성공 시 해당 시약을 현재 컨텍스트로 유지
+      // 2단계: 1단계 실패 시 한국어 조사/접사 제거 후 검색
+      if (!foundSubstance) {
+        for (const token of tokens) {
+          if (token.length < 2) continue;
+
+          const stripped = token.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란)$/, "");
+          if (stripped.length < 2 || stripped === token) continue;
+
+          const searchTerms = [stripped];
+          const lower = stripped.toLowerCase();
+          if (formulaMap[lower] && formulaMap[lower] !== stripped) {
+            searchTerms.push(formulaMap[lower]);
+          }
+
+          for (const st of searchTerms) {
+            const { data } = await supabase
+              .from("Substance")
+              .select("id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass")
+              .or(`chem_name_kor.ilike.%${st}%,chem_name_kor_mod.ilike.%${st}%,substance_name.ilike.%${st}%,substance_name_mod.ilike.%${st}%,molecular_formula.ilike.%${st}%,molecular_formula_mod.ilike.%${st}%`)
+              .limit(1);
+
+            if (data && data.length > 0) {
+              foundSubstance = data[0];
+              break;
+            }
+          }
+          if (foundSubstance) break;
+        }
+      }
+
+      // 시약 매칭 성공 시 컨텍스트 업데이트, 실패하고 맥락 참조 단어가 없으면 이전 컨텍스트 초기화
+      const isContextQuery = query.includes("이 시약") || query.includes("이 물질") || query.includes("해당 시약") || query.includes("이거") || query.includes("그거");
       if (foundSubstance) {
         this.selectedSubstance = foundSubstance;
+      } else if (!isContextQuery) {
+        this.selectedSubstance = null;
       }
 
       const substance = this.selectedSubstance;
@@ -657,6 +698,11 @@
       const volMatch = query.match(/([0-9.]+)\s*(mL|L|l)/i);
       const makeKeywords = ["만들", "필요", "조제", "희석", "제조", "배합", "레시피"];
       const isMakeQuery = tokens.some(t => makeKeywords.some(k => t.includes(k))) || (concMatch && volMatch);
+
+      if (!substance && isMakeQuery && (concMatch || volMatch)) {
+        const targetToken = tokens.find(t => !makeKeywords.some(k => t.includes(k)) && !t.match(/^[0-9.]+(M|mM|%|N|mL|L|l)$/i)) || query;
+        return `❌ **조제 불가능 (시약 정보 없음)**\n\n과학실 DB에서 **${targetToken}** 시약 정보나 재고를 찾을 수 없습니다. 시약명이 올바른지 또는 시약 재고가 등록되어 있는지 확인해 주세요.`;
+      }
 
       if (substance && isMakeQuery && (concMatch || volMatch)) {
         const chemName = substance.chem_name_kor_mod || substance.chem_name_kor || substance.substance_name_mod || substance.substance_name;
