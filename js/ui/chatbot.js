@@ -2238,13 +2238,13 @@ ${propText}
               
               <div style="margin-top: 6px; padding: 6px 8px; background: #ffffff; border-radius: 6px; border: 1px solid #ffe066;">
                 🔹 <b>선택지 A [총 목표량 ${requestedVolUnit} 제조가 반드시 필요한 경우]</b>:<br>
-                아래 1회(<b>${prepVolUnitStr}</b>) 레시피대로 <b style="color: #d9480f;">총 ${repeatCount}회 반복 조제</b>(${prepVolUnitStr} × ${repeatCount}회 = ${accumulatedVolStr})하여 1 L 비커 또는 보관 용기에 모아 사용하세요.<br>
+                위 1회(<b>${prepVolUnitStr}</b>) 레시피대로 <b style="color: #d9480f;">총 ${repeatCount}회 반복 조제</b>(${prepVolUnitStr} × ${repeatCount}회 = ${accumulatedVolStr})하여 1 L 비커 또는 보관 용기에 모아 사용하세요.<br>
                 <span style="color: #495057; font-size: 10.5px;">(※ ${repeatCount}회 전체 조제 시 총 필요 원료: ${totalAmtStr})</span>
               </div>
               
               <div style="margin-top: 5px; padding: 6px 8px; background: #ffffff; border-radius: 6px; border: 1px solid #ffe066;">
                 🔹 <b>선택지 B [${prepVolUnitStr} 분량만 새로 만들어 사용할 경우]</b>:<br>
-                아래 <b>${prepVolUnitStr} 기준 1회 레시피</b>대로만 조제하여 <b>${prepVolUnitStr}</b> 용액을 전량 사용하세요.
+                위 <b>${prepVolUnitStr} 기준 1회 레시피</b>대로만 조제하여 <b>${prepVolUnitStr}</b> 용액을 전량 사용하세요.
               </div>
             </div>
           `.replace(/\n\s*/g, "");
