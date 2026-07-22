@@ -628,15 +628,52 @@
         "nh3": "암모니아"
       };
 
-      // 1단계: 원본 토큰 그대로 또는 화학식 매핑 검색
+      const spaceAliasMap = {
+        "탄산칼슘": "탄산 칼슘",
+        "탄산 칼슘": "탄산칼슘",
+        "수산화나트륨": "수산화 나트륨",
+        "수산화 나트륨": "수산화나트륨",
+        "질산은": "질산 은",
+        "질산 은": "질산은",
+        "황산구리": "황산 구리",
+        "황산 구리": "황산구리",
+        "과산화수소": "과산화 수소",
+        "과산화 수소": "과산화수소",
+        "메틸알코올": "메틸 알코올",
+        "메틸 알코올": "메틸알코올",
+        "황산마그네슘": "황산 마그네슘",
+        "황산 마그네슘": "황산마그네슘",
+        "과망간산칼륨": "과망간산 칼륨",
+        "과망간산 칼륨": "과망간산칼륨",
+        "탄산나트륨": "탄산 나트륨",
+        "탄산 나트륨": "탄산나트륨",
+        "탄산수소나트륨": "탄산수소 나트륨",
+        "탄산수소 나트륨": "탄산수소나트륨",
+        "수산화칼슘": "수산화 칼슘",
+        "수산화 칼슘": "수산화칼슘",
+        "수산화칼륨": "수산화 칼륨",
+        "수산화 칼륨": "수산화칼륨",
+        "수산화암모늄": "수산화 암모늄",
+        "수산화 암모늄": "수산화암모늄",
+        "염화나트륨": "염화 나트륨",
+        "염화 나트륨": "염화나트륨"
+      };
+
+      const buildSearchTerms = (token) => {
+        const terms = [token];
+        const lower = token.toLowerCase();
+        if (spaceAliasMap[token]) terms.push(spaceAliasMap[token]);
+        if (formulaMap[lower] && !terms.includes(formulaMap[lower])) terms.push(formulaMap[lower]);
+        const noSpace = token.replace(/\s+/g, "");
+        if (noSpace.length >= 2 && !terms.includes(noSpace)) terms.push(noSpace);
+        return terms;
+      };
+
+      // 1단계: 원본 토큰 및 띄어쓰기/화학식 변형 검색
       for (const token of tokens) {
         if (token.length < 2) continue; // 1글자는 스킵
 
-        const searchTerms = [token];
-        const lower = token.toLowerCase();
-        if (formulaMap[lower] && formulaMap[lower] !== token) {
-          searchTerms.push(formulaMap[lower]);
-        }
+        const searchTerms = buildSearchTerms(token);
 
         for (const st of searchTerms) {
           const { data } = await supabase
@@ -658,14 +695,10 @@
         for (const token of tokens) {
           if (token.length < 2) continue;
 
-          const stripped = token.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란)$/, "");
+          const stripped = token.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란|학교에|학교에서|과학실에)$/, "");
           if (stripped.length < 2 || stripped === token) continue;
 
-          const searchTerms = [stripped];
-          const lower = stripped.toLowerCase();
-          if (formulaMap[lower] && formulaMap[lower] !== stripped) {
-            searchTerms.push(formulaMap[lower]);
-          }
+          const searchTerms = buildSearchTerms(stripped);
 
           for (const st of searchTerms) {
             const { data } = await supabase
@@ -676,6 +709,33 @@
 
             if (data && data.length > 0) {
               foundSubstance = data[0];
+              break;
+            }
+          }
+          if (foundSubstance) break;
+        }
+      }
+
+      // 3단계: Substance에서 못 찾았을 경우 Inventory 직접 검색 (사용자가 수동 등록한 시약명 대응)
+      if (!foundSubstance) {
+        for (const token of tokens) {
+          if (token.length < 2) continue;
+          const stripped = token.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란|학교에|학교에서|과학실에)$/, "");
+          const searchTerms = buildSearchTerms(stripped.length >= 2 ? stripped : token);
+
+          for (const st of searchTerms) {
+            const { data: invMatches } = await supabase
+              .from("Inventory")
+              .select("id, substance_id, edited_name_kor, Substance ( id, chem_name_kor, chem_name_kor_mod, substance_name, substance_name_mod, molecular_formula, molecular_formula_mod, cas_rn, molecular_mass )")
+              .ilike("edited_name_kor", `%${st}%`)
+              .limit(1);
+
+            if (invMatches && invMatches.length > 0) {
+              foundSubstance = invMatches[0].Substance || {
+                id: invMatches[0].substance_id,
+                chem_name_kor: invMatches[0].edited_name_kor,
+                substance_name: invMatches[0].edited_name_kor
+              };
               break;
             }
           }
@@ -2215,6 +2275,23 @@
         }
 
         if (isLocationQuery) {
+          const targetToken = tokens.find(t => {
+            const clean = t.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란|학교에|학교에서|과학실에)$/, "");
+            return !locationKeywords.some(k => k.includes(clean) || clean.includes(k)) && clean.length >= 2;
+          });
+
+          if (targetToken) {
+            const cleanTarget = targetToken.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란|학교에|학교에서|과학실에)$/, "");
+            return `❌ **[${cleanTarget}]** 약품, 교구 또는 설비 정보를 과학실 DB(재고)에서 찾을 수 없습니다.
+
+💡 <b>확인 사항:</b>
+- 시약/교구명이 올바르게 입력되었는지 확인해 주세요.
+- 과학실 재고 목록에 해당 품목이 등록되어 있는지 확인해 주세요.
+<div class="chatbot-chips-container" style="margin-top: 10px; display: flex; gap: 5px;">
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('다른 시약 검색')">🔄 다른 검색</button>
+</div>`;
+          }
+
           return `🔍 <b>보관 위치 조회 가이드</b>
           <div style="font-size:12.5px; color:#495057; line-height:1.5; padding:8px 0;">
             찾고자 하는 **약품, 교구, 또는 설비의 이름**을 함께 입력해 주세요.<br>
