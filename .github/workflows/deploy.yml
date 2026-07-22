@@ -42,6 +42,7 @@ jobs:
         run: |
           mkdir deploy_dist
           rsync -av --progress --exclude='.github' --exclude='supabase' --exclude='deploy_dist' . deploy_dist/
+          rm -f deploy_dist/.gitignore
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
