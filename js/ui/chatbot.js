@@ -259,7 +259,8 @@
       } catch (err) {
         console.error("Chatbot Error:", err);
         this.hideTyping();
-        this.appendMessage("❌ 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.", "bot");
+        await this.saveUnansweredQuery(text);
+        this.appendMessage("❌ 오류가 발생했습니다. 해당 질문은 미답변/요청 질문 목록에 자동 등록되었습니다.", "bot");
       }
     },
 
@@ -804,7 +805,8 @@
 
       // 시약이 선택되지 않은 상태에서 속성 버튼(분자량/위험성/특성) 클릭 시 안내
       if (!substance && (isMwQuery || isMsdsQuery || isPropQuery)) {
-        return `💡 시약이 먼저 선택되어야 합니다. 궁금하신 시약의 이름(예: **염산**, **수산화나트륨**, **에탄올**)을 먼저 입력해 주세요.`;
+        await this.saveUnansweredQuery(query);
+        return `💡 시약이 먼저 선택되어야 합니다. 궁금하신 시약의 이름(예: **염산**, **수산화나트륨**, **에탄올**)을 먼저 입력해 주세요.<br><br><span style="font-size:11.5px; color:#888;">📝 요청하신 질문(<b>"${this.escapeHtml(query)}"</b>)은 <b>[미답변/요청 질문 목록]</b>에 자동 등록되었습니다.</span>`;
       }
 
       // --- 농도 변환 레시피 질의 처리 ---
@@ -899,11 +901,13 @@
 
           if (targetToken) {
             const cleanTarget = targetToken.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란|학교에|학교에서|과학실에)$/, "");
+            await this.saveUnansweredQuery(query);
             return `❌ **[${cleanTarget}]** 약품, 교구 또는 설비 정보를 과학실 DB(재고)에서 찾을 수 없습니다.
 
 💡 <b>확인 사항:</b>
 - 시약/교구명이 올바르게 입력되었는지 확인해 주세요.
-- 과학실 재고 목록에 해당 품목이 등록되어 있는지 확인해 주세요.`;
+- 과학실 재고 목록에 해당 품목이 등록되어 있는지 확인해 주세요.<br>
+<span style="font-size:11.5px; color:#888;">📝 해당 질문(<b>"${this.escapeHtml(query)}"</b>)은 관리자 검토를 위해 <b>[미답변/요청 질문 목록]</b>에 자동 등록되었습니다.</span>`;
           }
 
           return `🔍 <b>보관 위치 조회 가이드</b>
@@ -960,19 +964,16 @@
           </div>`;
         }
 
+        // local DB에서 미매칭된 모든 질문을 [미답변/요청 질문 목록]에 자동 기록
+        await this.saveUnansweredQuery(query);
+
         if (this.apiKey) {
-          return await this.callAI(query);
+          const aiResponse = await this.callAI(query);
+          return aiResponse + `<div class="chatbot-chips-container" style="margin-top: 10px;">
+            <span style="font-size: 11px; color: #888;">💡 과학실 DB 미등록 항목으로 <b>[미답변/요청 질문 목록]</b>에 자동 기록되었습니다.</span>
+          </div>`;
         } else {
-          // DB에 미답변 질문 저장
-          const supabase = getSupabase();
-          if (supabase) {
-            supabase.from("chatbot_unanswered")
-              .insert([{ query: query }])
-              .then(({ error }) => {
-                if (error) console.error("Failed to save unanswered query:", error);
-              });
-          }
-          return `죄송합니다. 현재는 답변드릴 수 없습니다. 질문하신 내용을 검토하여 추후 답변 가능하도록 기능개선을 위해 노력하겠습니다.`;
+          return `죄송합니다. 현재 과학실 DB에 답변 정보가 등록되어 있지 않습니다.<br><br>📝 질문하신 내용(<b>"${this.escapeHtml(query)}"</b>)은 관리자 검토를 위해 <b>[미답변/요청 질문 목록]</b>에 자동 등록되었습니다. 추후 답변 가능하도록 기능을 개선하겠습니다.`;
         }
       }
 
@@ -1573,7 +1574,8 @@ ${propText}
     // ------------------------------------------------------------
     callAI: async function (prompt) {
       if (!this.apiKey) {
-        return "❌ API Key가 설정되어 있지 않습니다.";
+        await this.saveUnansweredQuery(prompt);
+        return `❌ API Key가 설정되어 있지 않습니다.<br><span style="font-size:11.5px; color:#888;">📝 요청하신 질문(<b>"${this.escapeHtml(prompt)}"</b>)은 <b>[미답변/요청 질문 목록]</b>에 자동 등록되었습니다.</span>`;
       }
 
       const systemInstruction = `너는 중고등학교 과학실 시약 및 안전 관리 프로그램 'SciManager'의 친절한 인공지능 비서(Chatbot)야. 
@@ -1608,24 +1610,28 @@ ${propText}
           const json = await response.json();
           const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
           if (!rawText) {
-            return "🤖 AI 비서가 답변을 구성하지 못했습니다. 질문을 바르게 입력해 주세요.";
+            await this.saveUnansweredQuery(prompt);
+            return `🤖 AI 비서가 답변을 구성하지 못했습니다. 질문을 바르게 입력해 주세요.<br><span style="font-size:11.5px; color:#888;">📝 해당 질문은 <b>[미답변/요청 질문 목록]</b>에 자동 등록되었습니다.</span>`;
           }
 
           return rawText.trim();
         } catch (err) {
           console.error("Gemini API Error:", err);
+          await this.saveUnansweredQuery(prompt);
           return `🤖 Gemini API 호출 중 오류가 발생했습니다.
           
 ⚠️ **원인 예시:**
 - 입력된 **Gemini API Key**가 만료되었거나 올바르지 않습니다.
-- 네트워크 연결 상태를 확인해 주세요.`;
+- 네트워크 연결 상태를 확인해 주세요.
+<br><span style="font-size:11.5px; color:#888;">📝 해당 질문은 <b>[미답변/요청 질문 목록]</b>에 자동 등록되었습니다.</span>`;
         }
       } else {
         let endpoint = "https://api.openai.com/v1/chat/completions";
         if (provider === "custom") {
           let baseUrl = this.apiUrl ? this.apiUrl.trim() : "";
           if (!baseUrl) {
-            return "❌ 커스텀 API Base URL이 설정되어 있지 않습니다. 설정에서 확인해 주세요.";
+            await this.saveUnansweredQuery(prompt);
+            return `❌ 커스텀 API Base URL이 설정되어 있지 않습니다. 설정에서 확인해 주세요.<br><span style="font-size:11.5px; color:#888;">📝 해당 질문은 <b>[미답변/요청 질문 목록]</b>에 자동 등록되었습니다.</span>`;
           }
           if (baseUrl.endsWith("/")) {
             baseUrl = baseUrl.slice(0, -1);
@@ -1657,16 +1663,19 @@ ${propText}
           const json = await response.json();
           const rawText = json.choices?.[0]?.message?.content;
           if (!rawText) {
-            return `🤖 AI (${provider.toUpperCase()}) 비서가 답변을 구성하지 못했습니다.`;
+            await this.saveUnansweredQuery(prompt);
+            return `🤖 AI (${provider.toUpperCase()}) 비서가 답변을 구성하지 못했습니다.<br><span style="font-size:11.5px; color:#888;">📝 해당 질문은 <b>[미답변/요청 질문 목록]</b>에 자동 등록되었습니다.</span>`;
           }
 
           return rawText.trim();
         } catch (err) {
           console.error("OpenAI Compatible API Error:", err);
+          await this.saveUnansweredQuery(prompt);
           return `🤖 AI (${provider.toUpperCase()}) 호출 중 오류가 발생했습니다.
           
 ⚠️ **상세 에러:** ${err.message}
-- API Key와 설정(Base URL, 모델명 등)을 다시 확인해 주세요.`;
+- API Key와 설정(Base URL, 모델명 등)을 다시 확인해 주세요.
+<br><span style="font-size:11.5px; color:#888;">📝 해당 질문은 <b>[미답변/요청 질문 목록]</b>에 자동 등록되었습니다.</span>`;
         }
       }
     },
@@ -2457,7 +2466,8 @@ ${propText}
       }
 
       if (filteredTools.length === 0) {
-        return `🔬 **${targetCat || "교육과정"} 관련 키트/교구 조회 결과**\n해당하는 등록 교구가 존재하지 않습니다.`;
+        await this.saveUnansweredQuery(query);
+        return `🔬 **${targetCat || "교육과정"} 관련 키트/교구 조회 결과**\n해당하는 등록 교구가 존재하지 않습니다.<br><span style="font-size:11.5px; color:#888;">📝 요청하신 질문(<b>"${this.escapeHtml(query)}"</b>)은 <b>[미답변/요청 질문 목록]</b>에 자동 등록되었습니다.</span>`;
       }
 
       let rowsHtml = "";
@@ -2491,6 +2501,66 @@ ${propText}
           </table>
         </div>
       `.replace(/\n\s*/g, "");
+    },
+
+    // ------------------------------------------------------------
+    // 7️⃣ 미답변/요청 질문 저장 헬퍼
+    // ------------------------------------------------------------
+    escapeHtml: function (str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    },
+
+    saveUnansweredQuery: async function (queryText) {
+      if (!queryText || queryText.trim().length < 2) return false;
+      const cleanQuery = queryText.trim();
+      const supabase = getSupabase();
+      if (!supabase) {
+        console.warn("Supabase not connected. Cannot save unanswered query.");
+        return false;
+      }
+
+      try {
+        // 최근 동일 질문 중복 저장 방지 (최대 1개 확인)
+        const { data: existing } = await supabase
+          .from("chatbot_unanswered")
+          .select("id")
+          .eq("query", cleanQuery)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          console.log("Already registered in chatbot_unanswered:", cleanQuery);
+          return true;
+        }
+
+        const { error } = await supabase
+          .from("chatbot_unanswered")
+          .insert([{ query: cleanQuery }]);
+
+        if (error) {
+          console.error("Failed to save unanswered query:", error);
+          return false;
+        }
+        console.log("Successfully saved unanswered query:", cleanQuery);
+        return true;
+      } catch (err) {
+        console.error("Error saving unanswered query:", err);
+        return false;
+      }
+    },
+
+    registerUnanswered: async function (queryText) {
+      const ok = await this.saveUnansweredQuery(queryText);
+      if (ok) {
+        alert(`"${queryText}" 내용이 미답변/요청 질문 목록에 등록되었습니다.`);
+      } else {
+        alert("등록에 실패했거나 이미 등록된 질문입니다.");
+      }
     }
   };
 

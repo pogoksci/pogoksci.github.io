@@ -333,7 +333,7 @@
                     dynamicQuestions.push(massQ);
                 }
 
-                while (dynamicQuestions.length < 5 && invCopy.length > 0) {
+                while (dynamicQuestions.length < 4 && invCopy.length > 0) {
                     const idx = Math.floor(Math.random() * invCopy.length);
                     const item = invCopy.splice(idx, 1)[0];
                     const types = App.SafetyQuizData.getDynamicTemplates(item, invData);
@@ -347,16 +347,16 @@
             console.error("Dynamic question fetch failed, falling back to fixed pool", e);
         }
 
-        // Fill dynamic if not 5
-        if (dynamicQuestions.length < 5) {
+        // Fill dynamic if not 4
+        if (dynamicQuestions.length < 4) {
             const fallbacks = App.SafetyQuizData.getFallbackDynamicQuestions();
-            while (dynamicQuestions.length < 5 && fallbacks.length > 0) {
+            while (dynamicQuestions.length < 4 && fallbacks.length > 0) {
                 dynamicQuestions.push(fallbacks.pop());
             }
         }
         
         const sectionQuestions = {
-            "스마트 과학실 화학물질 식별": dynamicQuestions.slice(0, 5)
+            "스마트 과학실 화학물질 식별": dynamicQuestions.slice(0, 4)
         };
 
         const fixedBySection = {
@@ -381,7 +381,7 @@
                 [pool[i], pool[j]] = [pool[j], pool[i]];
             }
             
-            const picked = pool.slice(0, 5).map(q => App.SafetyQuizData.randomizeFixedQuestion(q));
+            const picked = pool.slice(0, 4).map(q => App.SafetyQuizData.randomizeFixedQuestion(q));
             sectionQuestions[sec] = picked;
         });
 
@@ -404,7 +404,7 @@
         }
 
         const q = QUIZ_STATE.questions[step];
-        const sectionIndex = Math.floor(step / 5) + 1;
+        const sectionIndex = Math.floor(step / 4) + 1;
         
         root.innerHTML = `
             <div class="quiz-container">
