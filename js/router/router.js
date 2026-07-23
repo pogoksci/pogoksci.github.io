@@ -194,6 +194,22 @@
     }
   });
 
+  function checkDeepLink() {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const route = urlParams.get('route') || urlParams.get('view');
+      const id = urlParams.get('id');
+
+      if (route && routes[route]) {
+        go(route, { id: id }, { skipPush: true });
+        return true;
+      }
+    } catch (e) {
+      console.error("Deep link parse error:", e);
+    }
+    return false;
+  }
+
   globalThis.App = globalThis.App || {};
-  globalThis.App.Router = { go, routes, getCurrentState: () => currentState };
+  globalThis.App.Router = { go, routes, checkDeepLink, getCurrentState: () => currentState };
 })();

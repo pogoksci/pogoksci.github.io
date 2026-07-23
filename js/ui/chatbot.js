@@ -17,15 +17,19 @@
 
     formatToolLocation: function (loc) {
       if (!loc) return "위치 미지정";
-      if (typeof loc === 'string') return loc;
+      let parsed = loc;
+      if (typeof loc === 'string' && loc.trim().startsWith('{')) {
+        try { parsed = JSON.parse(loc); } catch (e) { }
+      }
+      if (typeof parsed !== 'object' || parsed === null) return String(loc);
 
       const parts = [];
-      if (loc.area_name) parts.push(loc.area_name);
-      if (loc.cabinet_name) parts.push(loc.cabinet_name);
-      if (loc.door_vertical) parts.push(`${loc.door_vertical}층`);
-      if (loc.door_horizontal) parts.push(`${loc.door_horizontal}번`);
-      if (loc.internal_shelf_level) parts.push(`${loc.internal_shelf_level}단`);
-      if (loc.storage_column) parts.push(`${loc.storage_column}열`);
+      if (parsed.area_name) parts.push(parsed.area_name);
+      if (parsed.cabinet_name) parts.push(parsed.cabinet_name);
+      if (parsed.door_vertical) parts.push(`${parsed.door_vertical}층`);
+      if (parsed.door_horizontal) parts.push(`${parsed.door_horizontal}번`);
+      if (parsed.internal_shelf_level) parts.push(`${parsed.internal_shelf_level}단`);
+      if (parsed.storage_column) parts.push(`${parsed.storage_column}열`);
 
       return parts.join(" > ") || "위치 미지정";
     },
@@ -335,15 +339,30 @@
         dateMatches.push(`${y}-${m}-${d}`);
       }
 
-      // 폐수 통계 의도 판별
-      const isWasteStatsQuery = (query.includes("폐수") || query.includes("폐액") || query.includes("버린")) && 
-                                (query.includes("발생") || query.includes("통계") || query.includes("얼마나") || query.includes("양") || dateMatches.length > 0 || query.includes("기간"));
+      // 폐수 통계 및 보유량 의도 판별
+      const wasteKeywordsList = ["폐수", "폐액", "버린", "배출"];
+      const wasteStatKeywords = ["발생", "통계", "얼마나", "양", "량", "보유량", "잔여량", "보유", "현황", "현재", "기간", "누적", "총량", "얼마"];
+      const isWasteStatsQuery = wasteKeywordsList.some(k => query.includes(k)) && 
+                                (wasteStatKeywords.some(k => query.includes(k)) || dateMatches.length > 0);
+
+      // 🆕 실험 키트 전체 목록 & 수량 질의 감지
+      const isKitListQuery = (query.includes("키트") || query.includes("실험키트") || query.includes("실험 세트")) &&
+        (query.includes("몇") || query.includes("종류") || query.includes("목록") || query.includes("개수") || query.includes("얼마나") || query.includes("전체") || query.includes("리스트") || query.includes("있어") || query.includes("있나요") || query.includes("뭐 있"));
+
+      if (isKitListQuery) {
+        const kitListAns = await this.handleKitListQuery(query);
+        if (kitListAns) return kitListAns;
+      }
 
       // 챗봇 대화 및 검색 상태 초기화 요청 시
       if (isResetQuery) {
         this.resetChat();
         return null;
       }
+
+      // 🆕 0. 스마트 과학실 안전 퀴즈 매칭 엔진 실행 (FIXED_POOL 117문항 100% 오프라인 탐색)
+      const quizAns = this.handleSafetyQuizQuery(query);
+      if (quizAns) return quizAns;
 
       // 🆕 농도/몰농도 대화형 계산기 실행
       if (isConcCalcQuery) {
@@ -419,11 +438,21 @@
         if (targetClass) {
           const filtered = wasteLogs.filter(log => log.classification === targetClass);
           const sum = filtered.reduce((acc, log) => acc + Number(log.amount || 0), 0);
+          const kgVal = (sum / 1000).toFixed(2);
 
-          return `📊 **폐수 발생량 통계 결과**
-- **조회 기간:** ${startDate} ~ ${endDate}
-- **폐수 종류:** ${targetClass}
-- **총 발생량:** <b>${sum.toLocaleString()} g</b> (${(sum / 1000).toFixed(2)} kg)`.replace(/\n\s*/g, "");
+          return `
+            <div style="background: #ffffff; border: 1.5px solid #ef4444; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);">
+              <div style="font-weight: bold; font-size: 13px; color: #dc2626; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+                <span>🧪 <b>${targetClass} 폐수</b> 누적 보유/발생량 현황</span>
+              </div>
+              <div style="font-size: 12px; color: #475569; line-height: 1.6; background: #fff5f5; padding: 10px; border-radius: 8px; border: 1px solid #fecaca;">
+                - <b>조회 기간:</b> ${startDate} ~ ${endDate}<br>
+                - <b>폐수 성상:</b> ${targetClass}성 폐액<br>
+                - <b>총 누적량:</b> <b style="color: #dc2626; font-size: 14px;">${sum.toLocaleString()} g</b> (${kgVal} kg)
+              </div>
+            </div>
+          `.replace(/\n\s*/g, "");
         } else {
           const sums = { "산": 0, "알칼리": 0, "유기물": 0, "무기물": 0, "기타": 0 };
           let totalSum = 0;
@@ -546,96 +575,283 @@
       }
 
       // --- 실험 준비물 매칭 (아이디어 2) ---
-      if (isMatchingQuery) {
-        // 교구/실험 검색 키워드 추출
-        let cleanSubject = query;
-        const removeWords = ["실험", "준비물", "준비", "키트", "알려줘", "보여줘", "알려주세요", "보여주세요", "있어?", "있나요?", "체크", "조회"];
-        removeWords.forEach(w => {
-          cleanSubject = cleanSubject.replace(new RegExp(w, "g"), "");
-        });
-        cleanSubject = cleanSubject.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ").trim();
+      if (isMatchingQuery && !isKitListQuery) {
+        // 1. 질의 토큰화 (특수문자 및 불용어 제거)
+        const stopwords = new Set(["실험", "준비물", "준비", "키트", "알려줘", "보여줘", "알려주세요", "보여주세요", "있어", "있나요", "체크", "조회", "만들기", "반응", "장치", "원리"]);
+        const cleanText = query.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ").trim();
+        const queryTokens = cleanText.split(/\s+/).filter(t => t.length >= 1 && !stopwords.has(t));
 
-        if (cleanSubject.length >= 2) {
-          const { data: matchedKits, error: kitErr } = await supabase
-            .from('experiment_kit')
-            .select('*')
-            .ilike('kit_name', `%${cleanSubject}%`)
-            .limit(1);
+        let cleanSubject = queryTokens.join(" ");
+        if (cleanSubject.length < 2) {
+          cleanSubject = cleanText.replace(/실험|준비물|알려줘|보여줘/g, "").trim();
+        }
 
-          if (!kitErr && matchedKits && matchedKits.length > 0) {
-            const kit = matchedKits[0];
-            const casList = (kit.kit_cas || "").split(',').map(s => s.trim().replace(/"/g, '')).filter(s => s);
+        // 1차: experiment_kit 전체 스마트 토큰 매칭
+        const { data: allKits } = await supabase.from('experiment_kit').select('*');
+        let bestKit = null;
+        let maxKitScore = 0;
 
-            // Fetch inventory items to match
-            const { data: invItems, error: invErr } = await supabase
-              .from('Inventory')
-              .select(`
-                id, current_amount, unit, edited_name_kor,
-                Substance ( id, chem_name_kor, chem_name_kor_mod, cas_rn ),
-                Cabinet ( cabinet_name, area_id:lab_rooms!fk_cabinet_lab_rooms ( room_name ) )
-              `);
+        if (allKits && allKits.length > 0) {
+          allKits.forEach(kit => {
+            const kitName = (kit.kit_name || "").toLowerCase();
+            let score = 0;
+            if (cleanSubject && kitName.includes(cleanSubject.toLowerCase())) score += 50;
+            queryTokens.forEach(t => {
+              const lowerT = t.toLowerCase();
+              if (kitName.includes(lowerT)) score += (lowerT.length >= 3 ? 20 : 15);
+            });
+            if (score > maxKitScore) {
+              maxKitScore = score;
+              bestKit = kit;
+            }
+          });
+        }
 
-            if (!invErr && invItems) {
-              const matchingInventories = invItems.filter(item => {
-                const itemCas = item.Substance?.cas_rn;
-                if (!itemCas) return false;
-                return casList.some(cas => itemCas.includes(cas) || cas.includes(itemCas));
-              });
+        if (bestKit && maxKitScore >= 15) {
+          const kit = bestKit;
+          const casList = (kit.kit_cas || "").split(',').map(s => s.trim().replace(/"/g, '')).filter(s => s);
 
-              let reportHtml = `🧪 <b>${kit.kit_name}</b> 실험 준비물 매칭 결과입니다.
-              <div class="chatbot-matching-card">
-                <div class="chatbot-matching-header">
-                  <div class="chatbot-matching-title">${kit.kit_name}</div>
-                  <span class="matching-badge badge-instock">${casList.length}종 약품</span>
+          // If no chemical CAS is required for this kit (e.g. physics / principle kits)
+          if (casList.length === 0) {
+            // 1. user_kits (우리 학교 등록 키트 DB)에서 위치 및 수량 조망 탐색
+            const cleanKitName = kit.kit_name.replace(/만들기|실험|키트|[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ").trim();
+            const { data: userKitsData } = await supabase
+              .from('user_kits')
+              .select('*')
+              .or(`kit_name.ilike.%${kit.kit_name}%,kit_name.ilike.%${cleanKitName}%`)
+              .limit(5);
+
+            let kitLocationInfoHtml = "";
+
+            if (userKitsData && userKitsData.length > 0) {
+              kitLocationInfoHtml = `
+                <div style="margin-top: 10px; font-size: 12px; color: #334155;">
+                  <b style="color:#0284c7;">📦 우리 학교 키트 보관 위치 & 보유 수량:</b>
+                  <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11px; border: 1px solid #cbd5e1; background: #ffffff;">
+                    <thead>
+                      <tr style="background: #e0f2fe; color: #0369a1; font-weight: bold;">
+                        <th style="padding: 5px 8px; text-align: left;">키트명</th>
+                        <th style="padding: 5px 8px; text-align: left;">보관 위치</th>
+                        <th style="padding: 5px 8px; text-align: center;">수량 / 사양</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${userKitsData.map(uk => `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                          <td style="padding: 5px 8px; font-weight: bold; color: #1e293b;">${uk.kit_name}</td>
+                          <td style="padding: 5px 8px; color: #0284c7;">${this.formatToolLocation(uk.location)}</td>
+                          <td style="padding: 5px 8px; text-align: center; color: #16a34a; font-weight: bold;">${uk.quantity || uk.stock || 1}개 ${uk.kit_person ? `(${uk.kit_person}인용)` : ''}</td>
+                        </tr>
+                      `.replace(/\n\s*/g, "")).join('')}
+                    </tbody>
+                  </table>
                 </div>
-                <div class="chatbot-matching-grid">`;
+              `;
+            } else {
+              // 2. user_kits에 없으면 tools (교구) DB 탐색
+              const { data: allTools } = await supabase.from('tools').select('*');
+              let matchedTools = [];
 
-              for (const cas of casList) {
-                const items = matchingInventories.filter(item => item.Substance?.cas_rn?.includes(cas) || cas.includes(item.Substance?.cas_rn));
-                const isAvailable = items.length > 0;
+              if (allTools && allTools.length > 0) {
+                const kitNameLower = kit.kit_name.toLowerCase();
+                const kitTokens = cleanKitName.split(/\s+/).filter(t => t.length >= 1);
+                const searchTokens = Array.from(new Set([...queryTokens, ...kitTokens]));
+                const scoredTools = [];
 
-                // Fetch name from substance or default
-                let displayName = cas;
-                if (isAvailable) {
-                  displayName = items[0].edited_name_kor || items[0].Substance?.chem_name_kor_mod || items[0].Substance?.chem_name_kor || cas;
-                } else {
-                  // Attempt a fallback lookup in kit_chemicals to get the Korean name
-                  const { data: directKitChem } = await supabase
-                    .from('kit_chemicals')
-                    .select('name_ko')
-                    .eq('cas_no', cas)
-                    .maybeSingle();
-                  if (directKitChem && directKitChem.name_ko) {
-                    displayName = directKitChem.name_ko;
+                allTools.forEach(t => {
+                  const toolName = (t.tools_name || "").toLowerCase();
+                  let score = 0;
+                  if (toolName && (kitNameLower.includes(toolName) || toolName.includes(kitNameLower) || toolName.includes(cleanKitName.toLowerCase()))) score += 50;
+                  searchTokens.forEach(tok => {
+                    const lowerTok = tok.toLowerCase();
+                    if (lowerTok.length >= 2 && toolName.includes(lowerTok)) {
+                      score += 20;
+                    }
+                  });
+                  if (score >= 20) {
+                    scoredTools.push({ tool: t, score });
                   }
-                }
+                });
+                scoredTools.sort((a, b) => b.score - a.score);
+                matchedTools = scoredTools.slice(0, 5).map(st => st.tool);
+              }
 
-                if (isAvailable) {
-                  const totalQty = items.reduce((acc, curr) => acc + (curr.current_amount || 0), 0);
-                  const unit = items[0].unit || "개";
-                  const loc = items[0].Cabinet ? `${items[0].Cabinet.area_id?.room_name || ""} 『${items[0].Cabinet.cabinet_name}』` : "위치 미확인";
-                  reportHtml += `
-                  <div class="chatbot-matching-item">
-                    <span class="chatbot-matching-name">🧪 ${displayName}</span>
-                    <div class="chatbot-matching-status">
-                      <span style="font-size:11px; color:#666;">${loc} (${totalQty}${unit})</span>
-                      <span class="matching-badge badge-instock">보유</span>
-                    </div>
-                  </div>`;
-                } else {
-                  reportHtml += `
-                  <div class="chatbot-matching-item">
-                    <span class="chatbot-matching-name" style="color:#888;">🧪 ${displayName}</span>
-                    <div class="chatbot-matching-status">
-                      <span class="matching-badge badge-outofstock">재고없음</span>
-                    </div>
-                  </div>`;
+              if (matchedTools && matchedTools.length > 0) {
+                kitLocationInfoHtml = `
+                  <div style="margin-top: 10px; font-size: 12px; color: #334155;">
+                    <b style="color:#0284c7;">🔬 연관 교구 보관 위치 & 보유 수량:</b>
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11px; border: 1px solid #cbd5e1; background: #ffffff;">
+                      <thead>
+                        <tr style="background: #e0f2fe; color: #0369a1; font-weight: bold;">
+                          <th style="padding: 5px 8px; text-align: left;">교구/장비명</th>
+                          <th style="padding: 5px 8px; text-align: left;">보관 위치</th>
+                          <th style="padding: 5px 8px; text-align: center;">수량</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${matchedTools.map(t => `
+                          <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 5px 8px; font-weight: bold; color: #1e293b;">${t.tools_name}</td>
+                            <td style="padding: 5px 8px; color: #0284c7;">${this.formatToolLocation(t.location)}</td>
+                            <td style="padding: 5px 8px; text-align: center; color: #16a34a; font-weight: bold;">${t.quantity || t.stock || 1}개</td>
+                          </tr>
+                        `.replace(/\n\s*/g, "")).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                `;
+              } else {
+                kitLocationInfoHtml = `
+                  <div style="margin-top: 8px; font-size: 11px; color: #64748b; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e1; line-height: 1.4;">
+                    📍 <b>보관 위치 미등록 안내:</b><br>
+                    표준 실험 카탈로그에는 등록되어 있으나, 우리 학교 [실험 키트] DB에 보관 위치가 아직 설정되지 않은 품목입니다. 상단 <b>[실험 키트]</b> 메뉴의 [키트 등록] 버튼을 통해 보관 장소 및 보유 수량을 등록하실 수 있습니다.
+                  </div>
+                `;
+              }
+            }
+
+            return `
+              <div style="background: #ffffff; border: 1.5px solid #38bdf8; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);">
+                <div style="font-weight: bold; font-size: 13px; color: #0284c7; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+                  <span class="material-symbols-outlined" style="font-size: 18px;">science</span>
+                  <span>🔬 <b>${kit.kit_name}</b> 실험 키트 정보</span>
+                </div>
+                <div style="font-size: 12px; color: #475569; line-height: 1.5; background: #f0f9ff; padding: 8px 10px; border-radius: 8px; border: 1px solid #bae6fd;">
+                  ℹ️ 본 키트는 별도의 소모성 화학약품(CAS)이 소요되지 않는 <b>물리/원리 체험형 실습 키트</b>입니다.
+                  ${toolInfoHtml}
+                </div>
+              </div>
+            `.replace(/\n\s*/g, "");
+          }
+
+          // Fetch inventory items to match
+          const { data: invItems, error: invErr } = await supabase
+            .from('Inventory')
+            .select(`
+              id, current_amount, unit, edited_name_kor,
+              Substance ( id, chem_name_kor, chem_name_kor_mod, cas_rn ),
+              Cabinet ( cabinet_name, area_id:lab_rooms!fk_cabinet_lab_rooms ( room_name ) )
+            `);
+
+          if (!invErr && invItems) {
+            const matchingInventories = invItems.filter(item => {
+              const itemCas = item.Substance?.cas_rn;
+              if (!itemCas) return false;
+              return casList.some(cas => itemCas.includes(cas) || cas.includes(itemCas));
+            });
+
+            const kitLocationHeader = await this.getKitLocationCardHtml(kit.kit_name, queryTokens);
+
+            let reportHtml = `🧪 <b>${kit.kit_name}</b> 실험 키트 정보 및 준비물 매칭 결과입니다.
+            ${kitLocationHeader}
+            <div class="chatbot-matching-card">
+              <div class="chatbot-matching-header">
+                <div class="chatbot-matching-title">🧪 소요 약품 재고 현황 및 보관 위치</div>
+                <span class="matching-badge badge-instock">${casList.length}종 약품</span>
+              </div>
+              <div class="chatbot-matching-grid">`;
+
+            for (const cas of casList) {
+              const items = matchingInventories.filter(item => item.Substance?.cas_rn?.includes(cas) || cas.includes(item.Substance?.cas_rn));
+              const isAvailable = items.length > 0;
+
+              // Fetch name from substance or default
+              let displayName = cas;
+              if (isAvailable) {
+                displayName = items[0].edited_name_kor || items[0].Substance?.chem_name_kor_mod || items[0].Substance?.chem_name_kor || cas;
+              } else {
+                // Attempt a fallback lookup in kit_chemicals to get the Korean name
+                const { data: directKitChem } = await supabase
+                  .from('kit_chemicals')
+                  .select('name_ko')
+                  .eq('cas_no', cas)
+                  .maybeSingle();
+                if (directKitChem && directKitChem.name_ko) {
+                  displayName = directKitChem.name_ko;
                 }
               }
 
-              return reportHtml;
+              if (isAvailable) {
+                const totalQty = items.reduce((acc, curr) => acc + (curr.current_amount || 0), 0);
+                const unit = items[0].unit || "개";
+                const loc = items[0].Cabinet ? `${items[0].Cabinet.area_id?.room_name || ""} 『${items[0].Cabinet.cabinet_name}』` : "위치 미확인";
+                reportHtml += `
+                <div class="chatbot-matching-item">
+                  <span class="chatbot-matching-name">🧪 ${displayName}</span>
+                  <div class="chatbot-matching-status">
+                    <span style="font-size:11px; color:#666;">${loc} (${totalQty}${unit})</span>
+                    <span class="matching-badge badge-instock">보유</span>
+                  </div>
+                </div>`;
+              } else {
+                reportHtml += `
+                <div class="chatbot-matching-item">
+                  <span class="chatbot-matching-name" style="color:#888;">🧪 ${displayName}</span>
+                  <div class="chatbot-matching-status">
+                    <span class="matching-badge badge-outofstock">재고없음</span>
+                  </div>
+                </div>`;
+              }
             }
+
+            return reportHtml;
           }
+        }
+
+        // 2차 Fallback check in tools table (스마트 토큰 매칭)
+        const { data: allTools } = await supabase.from('tools').select('*');
+        let matchedTools = [];
+
+        if (allTools && allTools.length > 0) {
+          const scoredTools = [];
+          allTools.forEach(t => {
+            const toolName = (t.tools_name || "").toLowerCase();
+            let score = 0;
+            if (cleanSubject && toolName.includes(cleanSubject.toLowerCase())) score += 50;
+            queryTokens.forEach(tok => {
+              const lowerTok = tok.toLowerCase();
+              if (toolName.includes(lowerTok)) score += (lowerTok.length >= 3 ? 20 : 15);
+            });
+            if (score >= 15) {
+              scoredTools.push({ tool: t, score });
+            }
+          });
+          scoredTools.sort((a, b) => b.score - a.score);
+          matchedTools = scoredTools.slice(0, 5).map(st => st.tool);
+        }
+
+        if (matchedTools.length > 0) {
+          let toolRowsHtml = "";
+          matchedTools.forEach(t => {
+            toolRowsHtml += `
+              <tr style="border-bottom: 1px solid #eee; background: white;">
+                <td style="padding: 6px 8px; font-weight: bold; color: #333;">${t.tools_name}</td>
+                <td style="padding: 6px 8px; color: #0d47a1;">${t.location || "위치 미지정"}</td>
+                <td style="padding: 6px 8px; text-align: center; color: #15803d; font-weight: bold;">${t.quantity || 1}개</td>
+              </tr>
+            `.replace(/\n\s*/g, "");
+          });
+
+          return `
+            <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 10px; padding: 12px; font-size: 12px;">
+              <div style="font-weight: bold; color: #0d47a1; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">build</span>
+                <span>🔬 <b>${cleanSubject || query}</b> 관련 교구/키트 검색 결과 (${matchedTools.length}건)</span>
+              </div>
+              <table style="width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 11px; border: 1px solid #dee2e6;">
+                <thead>
+                  <tr style="background: #e3f2fd; color: #0d47a1; font-weight: bold;">
+                    <th style="padding: 6px 8px; text-align: left;">교구/키트 명</th>
+                    <th style="padding: 6px 8px; text-align: left;">보관 위치</th>
+                    <th style="padding: 6px 8px; text-align: center;">보유 수량</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${toolRowsHtml}
+                </tbody>
+              </table>
+            </div>
+          `.replace(/\n\s*/g, "");
         }
 
         // Fallback: If no matching kit found
@@ -647,8 +863,9 @@
 - <기체 발생 장치>
 - <달고나 만들기>
 <div class="chatbot-chips-container" style="margin-top: 10px;">
-  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('화학정원 실험')">🧪 화학정원 실험</button>
-  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('앙금 생성 실험')">🧪 앙금 생성 실험</button>
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('화학정원 준비물')">🧪 화학정원 실험</button>
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('앙금 생성 반응 준비물')">🧪 앙금 생성 실험</button>
+  <button class="chatbot-chip" onclick="App.Chatbot.askPreset('실험 키트 종류')">📦 키트 전체 목록</button>
 </div>`;
       }
 
@@ -820,46 +1037,275 @@
       }
 
 
-      // 1.5. DB에서 교구/설비 매칭 찾기 (화학물질 매칭 실패 시)
+      // 1.5. DB에서 실험 키트, 교구, 설비/시약장 매칭 순차 탐색 (화학물질 매칭 실패 시)
+      let foundKits = null;
       let foundTools = null;
-      if (!substance) {
-        for (const token of tokens) {
-          if (token.length < 2) continue;
-          const { data } = await supabase
-            .from("tools")
-            .select("*")
-            .or(`tools_name.ilike.%${token}%,tools_category.ilike.%${token}%`)
-            .limit(5);
+      let foundCabinets = null;
 
-          if (data && data.length > 0) {
-            foundTools = data;
+      if (!substance) {
+        const cleanQ = query.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ").trim();
+        const searchKeywords = Array.from(new Set([
+          cleanQ,
+          cleanQ.replace(/\s+/g, ""),
+          ...tokens.filter(t => t.length >= 2),
+          ...tokens.map(t => t.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란)$/, "")).filter(t => t.length >= 2)
+        ]));
+
+        // A. 실험 키트 (experiment_kit) 조망 탐색
+        for (const kw of searchKeywords) {
+          const { data: kitData } = await supabase
+            .from("experiment_kit")
+            .select("*")
+            .ilike("kit_name", `%${kw}%`)
+            .limit(3);
+
+          if (kitData && kitData.length > 0) {
+            foundKits = kitData;
             break;
           }
         }
 
-        if (!foundTools) {
-          for (const token of tokens) {
-            if (token.length < 2) continue;
-            const stripped = token.replace(/(의|은|는|이|가|을|를|과|와|도|으로|로|에|에서|이란|이란것|란)$/, "");
-            if (stripped.length < 2 || stripped === token) continue;
+        // B. 교구/장비 (tools) 조망 탐색
+        if (!foundKits) {
+          const { data: allTools } = await supabase.from("tools").select("*");
+          if (allTools && allTools.length > 0) {
+            const scoredTools = [];
+            allTools.forEach(t => {
+              const nameLower = (t.tools_name || "").toLowerCase();
+              const catLower = (t.tools_category || "").toLowerCase();
+              const classLower = (t.kit_class || "").toLowerCase();
+              let score = 0;
 
-            const { data } = await supabase
-              .from("tools")
-              .select("*")
-              .or(`tools_name.ilike.%${stripped}%,tools_category.ilike.%${stripped}%`)
+              searchKeywords.forEach(kw => {
+                const lowerKw = kw.toLowerCase();
+                if (lowerKw.length >= 2) {
+                  if (nameLower.includes(lowerKw)) score += 30;
+                  if (catLower.includes(lowerKw)) score += 15;
+                  if (classLower.includes(lowerKw)) score += 15;
+                }
+              });
+
+              if (score >= 15) {
+                scoredTools.push({ tool: t, score });
+              }
+            });
+
+            if (scoredTools.length > 0) {
+              scoredTools.sort((a, b) => b.score - a.score);
+              foundTools = scoredTools.slice(0, 5).map(st => st.tool);
+            }
+          }
+        }
+
+        // C. 보관장/설비 (Cabinet) 조망 탐색
+        if (!foundKits && !foundTools) {
+          for (const kw of searchKeywords) {
+            const { data: cabData } = await supabase
+              .from("Cabinet")
+              .select("id, cabinet_name, area_id:lab_rooms!fk_cabinet_lab_rooms(room_name)")
+              .ilike("cabinet_name", `%${kw}%`)
               .limit(5);
 
-            if (data && data.length > 0) {
-              foundTools = data;
+            if (cabData && cabData.length > 0) {
+              foundCabinets = cabData;
               break;
             }
           }
         }
       }
- 
-      // 2. 물질 매칭 실패 시 -> 긴급/폐기 일반 대처 혹은 AI Fallback
+
+      // 2. 물질 매칭 실패 시 -> 키트, 교구, 설비 매칭 결과 또는 긴급/폐기 일반 대처 혹은 AI Fallback
       if (!substance) {
-        if (foundTools) {
+        // [A] 실험 키트 검색 성공 시
+        if (foundKits && foundKits.length > 0) {
+          const targetKit = foundKits[0];
+          const casList = (targetKit.kit_cas || "").split(',').map(s => s.trim().replace(/"/g, '')).filter(s => s);
+
+          if (casList.length > 0) {
+            const { data: invItems } = await supabase
+              .from('Inventory')
+              .select(`
+                id, current_amount, unit, edited_name_kor,
+                Substance ( id, chem_name_kor, chem_name_kor_mod, cas_rn ),
+                Cabinet ( cabinet_name, area_id:lab_rooms!fk_cabinet_lab_rooms ( room_name ) )
+              `);
+
+            if (invItems) {
+              const matchingInventories = invItems.filter(item => {
+                const itemCas = item.Substance?.cas_rn;
+                if (!itemCas) return false;
+                return casList.some(cas => itemCas.includes(cas) || cas.includes(itemCas));
+              });
+
+              const kitLocationHeader = await this.getKitLocationCardHtml(targetKit.kit_name, tokens);
+
+              let reportHtml = `🧪 <b>${targetKit.kit_name}</b> 실험 키트 정보 및 준비물 매칭 결과입니다.
+              ${kitLocationHeader}
+              <div class="chatbot-matching-card">
+                <div class="chatbot-matching-header">
+                  <div class="chatbot-matching-title">🧪 소요 약품 재고 현황 및 보관 위치</div>
+                  <span class="matching-badge badge-instock">${casList.length}종 약품</span>
+                </div>
+                <div class="chatbot-matching-grid">`;
+
+              for (const cas of casList) {
+                const items = matchingInventories.filter(item => item.Substance?.cas_rn?.includes(cas) || cas.includes(item.Substance?.cas_rn));
+                const isAvailable = items.length > 0;
+
+                let displayName = cas;
+                if (isAvailable) {
+                  displayName = items[0].edited_name_kor || items[0].Substance?.chem_name_kor_mod || items[0].Substance?.chem_name_kor || cas;
+                } else {
+                  const { data: directKitChem } = await supabase
+                    .from('kit_chemicals')
+                    .select('name_ko')
+                    .eq('cas_no', cas)
+                    .maybeSingle();
+                  if (directKitChem && directKitChem.name_ko) {
+                    displayName = directKitChem.name_ko;
+                  }
+                }
+
+                if (isAvailable) {
+                  const totalQty = items.reduce((acc, curr) => acc + (curr.current_amount || 0), 0);
+                  const unit = items[0].unit || "개";
+                  const loc = items[0].Cabinet ? `${items[0].Cabinet.area_id?.room_name || ""} 『${items[0].Cabinet.cabinet_name}』` : "위치 미확인";
+                  reportHtml += `
+                  <div class="chatbot-matching-item">
+                    <span class="chatbot-matching-name">🧪 ${displayName}</span>
+                    <div class="chatbot-matching-status">
+                      <span style="font-size:11px; color:#666;">${loc} (${totalQty}${unit})</span>
+                      <span class="matching-badge badge-instock">보유</span>
+                    </div>
+                  </div>`;
+                } else {
+                  reportHtml += `
+                  <div class="chatbot-matching-item">
+                    <span class="chatbot-matching-name" style="color:#888;">🧪 ${displayName}</span>
+                    <div class="chatbot-matching-status">
+                      <span class="matching-badge badge-outofstock">재고없음</span>
+                    </div>
+                  </div>`;
+                }
+              }
+              return reportHtml;
+            }
+          } else {
+            // 1. user_kits (우리 학교 등록 키트 DB)에서 위치 및 수량 조망 탐색
+            const cleanKitName = targetKit.kit_name.replace(/만들기|실험|키트|[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ").trim();
+            const { data: userKitsData } = await supabase
+              .from('user_kits')
+              .select('*')
+              .or(`kit_name.ilike.%${targetKit.kit_name}%,kit_name.ilike.%${cleanKitName}%`)
+              .limit(5);
+
+            let kitLocationInfoHtml = "";
+
+            if (userKitsData && userKitsData.length > 0) {
+              kitLocationInfoHtml = `
+                <div style="margin-top: 10px; font-size: 12px; color: #334155;">
+                  <b style="color:#0284c7;">📦 우리 학교 키트 보관 위치 & 보유 수량:</b>
+                  <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11px; border: 1px solid #cbd5e1; background: #ffffff;">
+                    <thead>
+                      <tr style="background: #e0f2fe; color: #0369a1; font-weight: bold;">
+                        <th style="padding: 5px 8px; text-align: left;">키트명</th>
+                        <th style="padding: 5px 8px; text-align: left;">보관 위치</th>
+                        <th style="padding: 5px 8px; text-align: center;">수량 / 사양</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${userKitsData.map(uk => `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                          <td style="padding: 5px 8px; font-weight: bold; color: #1e293b;">${uk.kit_name}</td>
+                          <td style="padding: 5px 8px; color: #0284c7;">${this.formatToolLocation(uk.location)}</td>
+                          <td style="padding: 5px 8px; text-align: center; color: #16a34a; font-weight: bold;">${uk.quantity || uk.stock || 1}개 ${uk.kit_person ? `(${uk.kit_person}인용)` : ''}</td>
+                        </tr>
+                      `.replace(/\n\s*/g, "")).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              `;
+            } else {
+              // 2. user_kits에 없으면 tools (교구) DB 탐색
+              const { data: allTools } = await supabase.from('tools').select('*');
+              let matchedTools = [];
+
+              if (allTools && allTools.length > 0) {
+                const kitNameLower = targetKit.kit_name.toLowerCase();
+                const kitTokens = cleanKitName.split(/\s+/).filter(t => t.length >= 1);
+                const searchTokens = Array.from(new Set([...tokens, ...kitTokens]));
+                const scoredTools = [];
+
+                allTools.forEach(t => {
+                  const toolName = (t.tools_name || "").toLowerCase();
+                  const toolCat = (t.tools_category || "").toLowerCase();
+                  let score = 0;
+                  if (toolName && (kitNameLower.includes(toolName) || toolName.includes(kitNameLower) || toolName.includes(cleanKitName.toLowerCase()))) score += 50;
+                  searchTokens.forEach(tok => {
+                    const lowerTok = tok.toLowerCase();
+                    if (lowerTok.length >= 2 && (toolName.includes(lowerTok) || toolCat.includes(lowerTok))) {
+                      score += 20;
+                    }
+                  });
+                  if (score >= 20) {
+                    scoredTools.push({ tool: t, score });
+                  }
+                });
+                scoredTools.sort((a, b) => b.score - a.score);
+                matchedTools = scoredTools.slice(0, 5).map(st => st.tool);
+              }
+
+              if (matchedTools && matchedTools.length > 0) {
+                kitLocationInfoHtml = `
+                  <div style="margin-top: 10px; font-size: 12px; color: #334155;">
+                    <b style="color:#0284c7;">🔬 연관 교구 보관 위치 & 보유 수량:</b>
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11px; border: 1px solid #cbd5e1; background: #ffffff;">
+                      <thead>
+                        <tr style="background: #e0f2fe; color: #0369a1; font-weight: bold;">
+                          <th style="padding: 5px 8px; text-align: left;">교구/장비명</th>
+                          <th style="padding: 5px 8px; text-align: left;">보관 위치</th>
+                          <th style="padding: 5px 8px; text-align: center;">수량</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${matchedTools.map(t => `
+                          <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 5px 8px; font-weight: bold; color: #1e293b;">${t.tools_name}</td>
+                            <td style="padding: 5px 8px; color: #0284c7;">${this.formatToolLocation(t.location)}</td>
+                            <td style="padding: 5px 8px; text-align: center; color: #16a34a; font-weight: bold;">${t.quantity || t.stock || 1}개</td>
+                          </tr>
+                        `.replace(/\n\s*/g, "")).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                `;
+              } else {
+                kitLocationInfoHtml = `
+                  <div style="margin-top: 8px; font-size: 11px; color: #64748b; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e1; line-height: 1.4;">
+                    📍 <b>보관 위치 미등록 안내:</b><br>
+                    표준 실험 카탈로그에는 등록되어 있으나, 우리 학교 [실험 키트] DB에 보관 위치가 아직 설정되지 않은 품목입니다. 상단 <b>[실험 키트]</b> 메뉴의 [키트 등록] 버튼을 통해 보관 장소 및 보유 수량을 등록하실 수 있습니다.
+                  </div>
+                `;
+              }
+            }
+
+            return `
+              <div style="background: #ffffff; border: 1.5px solid #38bdf8; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);">
+                <div style="font-weight: bold; font-size: 13px; color: #0284c7; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+                  <span class="material-symbols-outlined" style="font-size: 18px;">science</span>
+                  <span>🔬 <b>${targetKit.kit_name}</b> 실험 키트 정보</span>
+                </div>
+                <div style="font-size: 12px; color: #475569; line-height: 1.5; background: #f0f9ff; padding: 8px 10px; border-radius: 8px; border: 1px solid #bae6fd;">
+                  ℹ️ 본 키트는 별도의 소모성 화학약품(CAS)이 소요되지 않는 <b>물리/원리 체험형 실습 키트</b>입니다.
+                  ${kitLocationInfoHtml}
+                </div>
+              </div>
+            `.replace(/\n\s*/g, "");
+          }
+        }
+
+        // [B] 교구/장비 검색 성공 시
+        if (foundTools && foundTools.length > 0) {
           let toolListHtml = "";
           foundTools.forEach(t => {
             const locStr = this.formatToolLocation(t.location);
@@ -869,10 +1315,10 @@
             toolListHtml += `
               <div class="chatbot-matching-item" style="padding: 8px 0; border-bottom: 1px dashed #eee; display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                  <span class="chatbot-matching-name" style="font-weight: bold; color: #111;">🧩 [${t.tools_section || '교구'}${categoryText}] ${t.tools_name}</span>
-                  <div style="font-size: 12px; color: #555; margin-top: 4px; line-height: 1.4;">
-                    📍 <b>위치:</b> ${locStr}<br>
-                    📦 <b>보유 수량:</b> ${t.stock || 0}개
+                  <span class="chatbot-matching-name" style="font-weight: bold; color: #0284c7;">🧩 [${t.tools_section || '교구'}${categoryText}] ${t.tools_name}</span>
+                  <div style="font-size: 12px; color: #475569; margin-top: 4px; line-height: 1.4;">
+                    📍 <b>보관 위치:</b> ${locStr}<br>
+                    📦 <b>보유 수량:</b> ${t.quantity || t.stock || 1}개
                   </div>
                 </div>
                 <span style="font-size: 11px; color: #888; white-space: nowrap; margin-left: 8px;">${displayNo}</span>
@@ -880,17 +1326,37 @@
             `;
           });
 
-          return `🔍 <b>교구/설비</b> 검색 결과입니다.
-          <div class="chatbot-matching-card" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 12px; margin-top: 8px;">
-            <div class="chatbot-matching-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dee2e6; padding-bottom: 8px; margin-bottom: 8px;">
-              <div class="chatbot-matching-title" style="font-weight: bold; color: #495057;">교구/설비 보관 위치</div>
-              <span class="matching-badge badge-instock" style="background: #e9ecef; color: #495057; font-size: 11px; padding: 2px 6px; border-radius: 4px;">${foundTools.length}건 매칭</span>
+          return `🔍 <b>교구/장비</b> 탐색 결과입니다.
+          <div class="chatbot-matching-card" style="background: #ffffff; border: 1.5px solid #38bdf8; border-radius: 10px; padding: 12px; margin-top: 8px; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);">
+            <div class="chatbot-matching-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0f2fe; padding-bottom: 8px; margin-bottom: 8px;">
+              <div class="chatbot-matching-title" style="font-weight: bold; color: #0369a1;">🔬 교구/장비 보관 위치 현황</div>
+              <span class="matching-badge badge-instock" style="background: #e0f2fe; color: #0369a1; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight:bold;">${foundTools.length}건 매칭</span>
             </div>
             <div class="chatbot-matching-grid" style="display: flex; flex-direction: column;">
               ${toolListHtml}
             </div>
           </div>
 `;
+        }
+
+        // [C] 시약장/설비 검색 성공 시
+        if (foundCabinets && foundCabinets.length > 0) {
+          let cabListHtml = "";
+          foundCabinets.forEach(c => {
+            const roomName = c.area_id?.room_name || "과학실";
+            cabListHtml += `
+              <div style="padding: 6px 0; border-bottom: 1px dashed #e2e8f0; font-size: 12px;">
+                <b>🏢 ${roomName}</b> 『<b>${c.cabinet_name}</b>』
+              </div>
+            `;
+          });
+
+          return `🏛️ <b>시약장/설비</b> 보관 장소 탐색 결과입니다.
+          <div style="background: #ffffff; border: 1.5px solid #38bdf8; border-radius: 10px; padding: 12px; margin-top: 8px; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);">
+            <div style="font-weight: bold; color: #0284c7; margin-bottom: 6px;">📍 설비 및 보관 장소 위치</div>
+            ${cabListHtml}
+          </div>
+          `;
         }
 
         if (isLocationQuery) {
@@ -1350,13 +1816,7 @@ ${propText}
         .limit(1)
         .then(({ data }) => {
           if (data && data.length > 0) {
-            this.togglePanel(false);
-            if (getApp().Router?.go) {
-              getApp().Router.go("inventoryDetail", { id: data[0].id });
-            } else {
-              localStorage.setItem("selected_inventory_id", data[0].id);
-              location.reload();
-            }
+            this.goToInventoryDetail(data[0].id);
           } else {
             alert("해당 물질의 등록된 재고(시약병)가 없습니다.");
           }
@@ -1364,12 +1824,11 @@ ${propText}
     },
 
     goToInventoryDetail: function (inventoryId) {
-      this.togglePanel(false);
-      if (getApp().Router?.go) {
-        getApp().Router.go("inventoryDetail", { id: inventoryId });
-      } else {
-        localStorage.setItem("selected_inventory_id", inventoryId);
-        location.reload();
+      localStorage.setItem("selected_inventory_id", inventoryId);
+      const targetUrl = `./index.html?route=inventoryDetail&id=${inventoryId}`;
+      const newWin = window.open(targetUrl, '_blank');
+      if (!newWin) {
+        alert("팝업이 차단되었습니다. 브라우저 설정에서 팝업 허용 후 다시 시도해 주세요.");
       }
     },
 
@@ -2067,6 +2526,106 @@ ${propText}
       }
     },
 
+    // 📋 키트 보관 위치 & 수량 카드 공통 렌더링 헬퍼
+    getKitLocationCardHtml: async function (targetKitName, tokens = []) {
+      const supabase = getSupabase();
+      if (!supabase) return "";
+
+      const cleanKitName = targetKitName.replace(/만들기|실험|키트|[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ").trim();
+      const { data: userKitsData } = await supabase
+        .from('user_kits')
+        .select('*')
+        .or(`kit_name.ilike.%${targetKitName}%,kit_name.ilike.%${cleanKitName}%`)
+        .limit(5);
+
+      if (userKitsData && userKitsData.length > 0) {
+        return `
+          <div style="margin-bottom: 10px; font-size: 12px; color: #334155;">
+            <b style="color:#0284c7;">📦 우리 학교 키트 보관 위치 & 보유 수량:</b>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11px; border: 1px solid #cbd5e1; background: #ffffff;">
+              <thead>
+                <tr style="background: #e0f2fe; color: #0369a1; font-weight: bold;">
+                  <th style="padding: 5px 8px; text-align: left;">키트명</th>
+                  <th style="padding: 5px 8px; text-align: left;">보관 위치</th>
+                  <th style="padding: 5px 8px; text-align: center;">수량 / 사양</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${userKitsData.map(uk => `
+                  <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 5px 8px; font-weight: bold; color: #1e293b;">${uk.kit_name}</td>
+                    <td style="padding: 5px 8px; color: #0284c7;">${this.formatToolLocation(uk.location)}</td>
+                    <td style="padding: 5px 8px; text-align: center; color: #16a34a; font-weight: bold;">${uk.quantity || uk.stock || 1}개 ${uk.kit_person ? `(${uk.kit_person}인용)` : ''}</td>
+                  </tr>
+                `.replace(/\n\s*/g, "")).join('')}
+              </tbody>
+            </table>
+          </div>
+        `.replace(/\n\s*/g, "");
+      }
+
+      // user_kits에 없는 경우 tools DB 탐색
+      const { data: allTools } = await supabase.from('tools').select('*');
+      if (allTools && allTools.length > 0) {
+        const kitNameLower = targetKitName.toLowerCase();
+        const kitTokens = cleanKitName.split(/\s+/).filter(t => t.length >= 1);
+        const searchTokens = Array.from(new Set([...tokens, ...kitTokens]));
+        const scoredTools = [];
+
+        allTools.forEach(t => {
+          const toolName = (t.tools_name || "").toLowerCase();
+          const toolCat = (t.tools_category || "").toLowerCase();
+          let score = 0;
+          if (toolName && (kitNameLower.includes(toolName) || toolName.includes(kitNameLower) || toolName.includes(cleanKitName.toLowerCase()))) score += 50;
+          searchTokens.forEach(tok => {
+            const lowerTok = tok.toLowerCase();
+            if (lowerTok.length >= 2 && (toolName.includes(lowerTok) || toolCat.includes(lowerTok))) {
+              score += 20;
+            }
+          });
+          if (score >= 20) {
+            scoredTools.push({ tool: t, score });
+          }
+        });
+
+        if (scoredTools.length > 0) {
+          scoredTools.sort((a, b) => b.score - a.score);
+          const matchedTools = scoredTools.slice(0, 5).map(st => st.tool);
+
+          return `
+            <div style="margin-bottom: 10px; font-size: 12px; color: #334155;">
+              <b style="color:#0284c7;">🔬 연관 교구 보관 위치 & 보유 수량:</b>
+              <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11px; border: 1px solid #cbd5e1; background: #ffffff;">
+                <thead>
+                  <tr style="background: #e0f2fe; color: #0369a1; font-weight: bold;">
+                    <th style="padding: 5px 8px; text-align: left;">교구/장비명</th>
+                    <th style="padding: 5px 8px; text-align: left;">보관 위치</th>
+                    <th style="padding: 5px 8px; text-align: center;">수량</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${matchedTools.map(t => `
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 5px 8px; font-weight: bold; color: #1e293b;">${t.tools_name}</td>
+                      <td style="padding: 5px 8px; color: #0284c7;">${this.formatToolLocation(t.location)}</td>
+                      <td style="padding: 5px 8px; text-align: center; color: #16a34a; font-weight: bold;">${t.quantity || t.stock || 1}개</td>
+                    </tr>
+                  `.replace(/\n\s*/g, "")).join('')}
+                </tbody>
+              </table>
+            </div>
+          `.replace(/\n\s*/g, "");
+        }
+      }
+
+      return `
+        <div style="margin-bottom: 8px; font-size: 11px; color: #64748b; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e1; line-height: 1.4;">
+          📍 <b>보관 위치 미등록 안내:</b><br>
+          표준 카탈로그에는 등록되어 있으나, 우리 학교 [실험 키트] DB에 보관 위치가 아직 설정되지 않은 품목입니다. 상단 <b>[실험 키트]</b> 메뉴의 [키트 등록] 버튼을 통해 위치와 수량을 등록하실 수 있습니다.
+        </div>
+      `.replace(/\n\s*/g, "");
+    },
+
     // 📋 농도 계산 카드 동적 HTML 렌더링 엔진
     renderConcCalcCardBody: function (cardId) {
       const state = this.cardStates ? this.cardStates[cardId] : null;
@@ -2499,6 +3058,218 @@ ${propText}
               ${rowsHtml}
             </tbody>
           </table>
+        </div>
+      `.replace(/\n\s*/g, "");
+    },
+
+    // ------------------------------------------------------------
+    // 6️⃣.4️⃣ 🆕 스마트 과학실 전체 키트 목록 & 수량 조회 엔진
+    // ------------------------------------------------------------
+    handleKitListQuery: async function (query) {
+      const supabase = getSupabase();
+      if (!supabase) return "❌ 데이터베이스 연결 실패";
+
+      // 1. 과목(분야) 지정 여부 판별
+      let targetSubject = null;
+      if (query.includes("화학")) targetSubject = "화학";
+      else if (query.includes("물리")) targetSubject = "물리";
+      else if (query.includes("생물") || query.includes("생명")) targetSubject = "생명";
+      else if (query.includes("지구")) targetSubject = "지구";
+      else if (query.includes("융합")) targetSubject = "융합";
+
+      // 2. experiment_kit 카탈로그
+      const { data: kitList } = await supabase
+        .from('experiment_kit')
+        .select('id, kit_name, kit_cas')
+        .order('id', { ascending: true });
+
+      // 3. tools (교구 DB)
+      let toolsQuery = supabase.from('tools').select('id, tools_name, kit_class, location, quantity');
+      if (targetSubject) {
+        toolsQuery = toolsQuery.ilike('kit_class', `%${targetSubject}%`);
+      }
+      const { data: toolsList } = await toolsQuery.limit(50);
+
+      // 4. user_kits (우리 학교 등록 키트 DB)
+      let userKitsQuery = supabase.from('user_kits').select('*');
+      if (targetSubject) {
+        userKitsQuery = userKitsQuery.ilike('kit_class', `%${targetSubject}%`);
+      }
+      const { data: userKitsList } = await userKitsQuery;
+
+      let kits = kitList || [];
+
+      // 과목 필터가 적용된 경우 experiment_kit 목록도 과목에 맞게 필터링
+      if (targetSubject) {
+        kits = kits.filter(k => {
+          const inUserKits = (userKitsList || []).some(uk => uk.kit_name.includes(k.kit_name) || k.kit_name.includes(uk.kit_name));
+          const inTools = (toolsList || []).some(t => t.tools_name.includes(k.kit_name) || k.kit_name.includes(t.tools_name));
+          const nameMatch = k.kit_name.includes(targetSubject);
+          return inUserKits || inTools || nameMatch;
+        });
+      }
+
+      const toolsKits = (toolsList || []).filter(t => t.kit_class && (t.kit_class.includes('키트') || t.kit_class.includes('실험')));
+
+      let chipBtnsHtml = "";
+      kits.forEach(k => {
+        chipBtnsHtml += `<button class="chatbot-chip" style="background:#f0f9ff; border:1px solid #7dd3fc; color:#0369a1; padding:5px 10px; border-radius:15px; font-size:12px; cursor:pointer;" onclick="App.Chatbot.askPreset('${k.kit_name} 준비물')">🧪 ${k.kit_name}</button>`;
+      });
+
+      toolsKits.forEach(t => {
+        if (!kits.some(k => k.kit_name.includes(t.tools_name) || t.tools_name.includes(k.kit_name))) {
+          chipBtnsHtml += `<button class="chatbot-chip" style="background:#f0fdf4; border:1px solid #86efac; color:#15803d; padding:5px 10px; border-radius:15px; font-size:12px; cursor:pointer;" onclick="App.Chatbot.askPreset('${t.tools_name}')">🔬 ${t.tools_name}</button>`;
+        }
+      });
+
+      const totalCount = kits.length + toolsKits.length;
+      const titleText = targetSubject ? `🧪 <b>${targetSubject}</b> 분야 등록 실험 키트 목록 (총 ${totalCount}종)` : `🧪 스마트 과학실 전체 등록 실험 키트 목록 (총 ${totalCount}종)`;
+
+      if (totalCount === 0) {
+        return `🧪 <b>${targetSubject || '등록된'}</b> 분야에 등록된 실험 키트 정보가 없습니다.`;
+      }
+
+      return `
+        <div style="background: #ffffff; border: 1.5px solid #38bdf8; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);">
+          <div style="font-weight: bold; font-size: 13px; color: #0284c7; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+            <span class="material-symbols-outlined" style="font-size: 18px;">science</span>
+            <span>${titleText}</span>
+          </div>
+          <div style="font-size: 12px; color: #475569; margin-bottom: 10px; line-height: 1.5;">
+            아래 키트 이름을 클릭하시면 보관 위치 및 소요 약품 현황을 준비물 카드에서 즉시 안내해 드립니다!
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+            ${chipBtnsHtml}
+          </div>
+        </div>
+      `.replace(/\n\s*/g, "");
+    },
+
+    // ------------------------------------------------------------
+    // 6️⃣.5️⃣ 🆕 스마트 과학실 안전 퀴즈 100% 로컬 매칭 엔진
+    // ------------------------------------------------------------
+    handleSafetyQuizQuery: function (query) {
+      if (!query || typeof query !== "string") return null;
+      const cleanQ = query.trim();
+      const lowerQ = cleanQ.toLowerCase();
+
+      const quizData = globalThis.App?.SafetyQuizData;
+      if (!quizData || !quizData.FIXED_POOL || quizData.FIXED_POOL.length === 0) {
+        return null;
+      }
+
+      const pool = quizData.FIXED_POOL;
+
+      // 1. Explicit Quiz Help Trigger Check
+      const explicitQuizTriggers = ["퀴즈", "안전퀴즈", "퀴즈정답", "퀴즈힌트", "퀴즈문제"];
+      const isExplicitQuizHelp = explicitQuizTriggers.some(t => lowerQ.replace(/\s+/g, "").includes(t)) && cleanQ.length <= 15;
+
+      // 2. Stopwords and token extraction
+      const stopwords = new Set([
+        "무엇인가요", "어떻게", "옳은", "틀린", "것은", "가장", "어떤", "있는", "대한",
+        "중", "등", "이", "가", "은", "는", "을", "를", "에", "의", "와", "과",
+        "무엇", "있나", "있나요", "하나", "하나요", "해야", "합니까", "입니까", "말인가", "말인가요"
+      ]);
+
+      const cleanText = lowerQ.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ").trim();
+      const qTokens = cleanText.split(/\s+/).filter(t => t.length >= 2 && !stopwords.has(t));
+
+      let bestItem = null;
+      let maxScore = 0;
+
+      pool.forEach(item => {
+        const itemQ = (item.q || "").toLowerCase();
+        const itemCleanQ = itemQ.replace(/[?.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ").trim();
+        const correctOpt = (item.options[item.correct] || "").toLowerCase();
+        const allOpts = item.options.map(o => (o || "").toLowerCase()).join(" ");
+
+        let score = 0;
+
+        qTokens.forEach(t => {
+          if (itemCleanQ.includes(t)) score += t.length >= 3 ? 15 : 10;
+          if (correctOpt.includes(t)) score += 8;
+          else if (allOpts.includes(t)) score += 3;
+        });
+
+        if (cleanText.length >= 5 && itemCleanQ.includes(cleanText)) score += 40;
+
+        const specialTerms = [
+          "ghs01", "ghs02", "ghs03", "ghs04", "ghs05", "ghs06", "ghs07", "ghs08", "ghs09",
+          "ghs", "msds", "nfpa", "btb", "pass", "수은", "아세톤", "에탄올", "황산", "염산", "질산",
+          "페놀", "알코올램프", "안구세척기", "보안경", "실험복", "신호어"
+        ];
+        specialTerms.forEach(term => {
+          if (lowerQ.includes(term) && itemQ.includes(term)) score += 20;
+        });
+
+        if (score > maxScore) {
+          maxScore = score;
+          bestItem = item;
+        }
+      });
+
+      // 3. Dynamic Threshold depending on whether query looks like reagent location search
+      const isLocationReq = ["위치", "어디", "어딨", "장소", "보관"].some(k => lowerQ.includes(k)) &&
+        !["퀴즈", "문제", "정답", "의미", "조치", "수칙", "ghs", "pass", "nfpa"].some(k => lowerQ.includes(k));
+
+      const threshold = isLocationReq ? 40 : 20;
+
+      if (!bestItem || maxScore < threshold) {
+        if (isExplicitQuizHelp) {
+          return `
+            <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px; font-size: 12.5px; color: #0369a1; line-height: 1.6;">
+              <div style="font-weight: bold; font-size: 13.5px; margin-bottom: 6px; color: #0284c7; display: flex; align-items: center; gap: 5px;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">quiz</span>
+                <span>🧪 스마트 과학실 안전 퀴즈 탐구 도우미</span>
+              </div>
+              <div>퀴즈를 풀다가 잘 모르는 문제의 <b>핵심 단어나 문장 일부</b>를 입력해 보세요!<br>
+              (예: <i>"GHS01", "강산 피부에 묻었을 때", "수은 쏟았을 때", "소화기 PASS", "폐액 버리기"</i> 등)</div>
+              <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px;">
+                <button onclick="App.Chatbot.askPreset('GHS01 그림문자')" style="padding: 4px 8px; font-size: 11px; background: white; border: 1px solid #7dd3fc; border-radius: 12px; color: #0369a1; cursor: pointer;">GHS01 폭발성</button>
+                <button onclick="App.Chatbot.askPreset('강산 피부에 묻었을 때')" style="padding: 4px 8px; font-size: 11px; background: white; border: 1px solid #7dd3fc; border-radius: 12px; color: #0369a1; cursor: pointer;">강산 피부 노출</button>
+                <button onclick="App.Chatbot.askPreset('소화기 PASS')" style="padding: 4px 8px; font-size: 11px; background: white; border: 1px solid #7dd3fc; border-radius: 12px; color: #0369a1; cursor: pointer;">소화기 PASS</button>
+                <button onclick="App.Chatbot.askPreset('수은 바닥에 쏟아졌을 때')" style="padding: 4px 8px; font-size: 11px; background: white; border: 1px solid #7dd3fc; border-radius: 12px; color: #0369a1; cursor: pointer;">수은 누출 사고</button>
+              </div>
+            </div>
+          `.replace(/\n\s*/g, "");
+        }
+        return null;
+      }
+
+      // 4. Render Quiz Solution Card
+      const correctIdx = bestItem.correct;
+      const correctText = bestItem.options[correctIdx];
+
+      const optionsHtml = bestItem.options.map((opt, i) => {
+        const isCorrect = i === correctIdx;
+        const style = isCorrect
+          ? "background: #dcfce7; border: 1px solid #86efac; color: #166534; font-weight: bold;"
+          : "background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b;";
+        const icon = isCorrect ? "check_circle" : "radio_button_unchecked";
+        return `
+          <div style="padding: 6px 10px; margin-top: 4px; border-radius: 6px; font-size: 12px; display: flex; align-items: center; gap: 6px; ${style}">
+            <span class="material-symbols-outlined" style="font-size: 15px;">${icon}</span>
+            <span>${i + 1}. ${opt}</span>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <div style="background: #ffffff; border: 1.5px solid #38bdf8; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);">
+          <div style="font-weight: bold; font-size: 11.5px; color: #0284c7; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
+            <span>[스마트 과학실 안전 퀴즈 정답 안내] · ${bestItem.section || "안전 퀴즈"}</span>
+          </div>
+          <div style="font-weight: bold; font-size: 13px; color: #1e293b; margin-bottom: 8px; line-height: 1.4;">
+            ❓ ${bestItem.q}
+          </div>
+          <div style="margin-bottom: 10px;">
+            ${optionsHtml}
+          </div>
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #15803d; line-height: 1.5;">
+            💡 <b>정답 및 핵심 수칙:</b> <span style="color: #166534; font-weight: bold;">${correctText}</span><br>
+            <span style="font-size: 11.5px; color: #166534;">(실험 전 안전 보호구 착용 및 올바른 대처 수칙을 항상 준수해 주세요!)</span>
+          </div>
         </div>
       `.replace(/\n\s*/g, "");
     },

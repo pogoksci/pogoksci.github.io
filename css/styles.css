@@ -8640,9 +8640,13 @@ input[type="text"].date-input-month-day {
     display: none !important;
   }
 
-  .certificate-preview,
-  .certificate-preview * {
-    visibility: visible;
+  body:not(.usage-print-body):not(.waste-print-body) .certificate-preview,
+  body:not(.usage-print-body):not(.waste-print-body) .certificate-preview *,
+  body:not(.usage-print-body):not(.waste-print-body) .cert-container,
+  body:not(.usage-print-body):not(.waste-print-body) .cert-container * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .certificate-preview {
@@ -8656,6 +8660,7 @@ input[type="text"].date-input-month-day {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
+    z-index: 99999 !important;
   }
 
   .cert-container {
@@ -8696,5 +8701,160 @@ input[type="text"].date-input-month-day {
     bottom: 7mm !important;
     border: 0.5mm solid #ae946d !important;
     visibility: visible !important;
+  }
+}
+
+/* =================================================================
+   과학실 안전 보텀시트(모바일) & 팝오버 카드(PC) 반응형 디자인
+   ================================================================= */
+.safety-sheet-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  z-index: 9998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.safety-sheet-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 💻 PC/데스크톱 (기본: 768px 이상) -> 하단 버튼 위 팝오버 카드 */
+.safety-sheet-popup {
+  position: fixed;
+  bottom: 65px;
+  left: 70px;
+  width: 320px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px) scale(0.98);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.safety-sheet-popup.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.safety-sheet-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.safety-sheet-handle {
+  display: none;
+  width: 36px;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 2px;
+  margin-bottom: 8px;
+}
+
+.safety-sheet-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.safety-sheet-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.safety-sheet-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.safety-sheet-item:hover,
+.safety-sheet-item:active {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+  transform: translateX(2px);
+}
+
+.sheet-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #e0f2fe;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sheet-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.sheet-desc {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* 📱 모바일 (767px 이하) -> 하단 보텀시트 자동 전환 */
+@media (max-width: 767px) {
+  .safety-sheet-popup {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.2);
+    transform: translateY(100%);
+    padding: 12px 16px 24px 16px;
+  }
+
+  .safety-sheet-popup.open {
+    transform: translateY(0);
+  }
+
+  .safety-sheet-handle {
+    display: block;
+  }
+
+  .safety-sheet-backdrop {
+    display: block;
   }
 }

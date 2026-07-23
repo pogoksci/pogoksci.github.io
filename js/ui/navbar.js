@@ -298,6 +298,19 @@
       });
     }
 
+    const menuSafetyQuiz = document.getElementById("menu-safety-quiz");
+    if (menuSafetyQuiz) {
+      menuSafetyQuiz.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        closeStartMenu();
+        await App.Router.go("safetyEdu");
+        if (typeof App.SafetyEdu?.switchTab === "function") {
+          App.SafetyEdu.switchTab("quiz-section");
+        }
+      });
+    }
+
     const menuHome = document.getElementById("menu-home");
     if (menuHome) {
       menuHome.addEventListener("click", (e) => {
@@ -561,9 +574,107 @@
 
   }
 
+  // ---- 안전 보텀시트 / 팝오버 메뉴 제어 ----
+  function setupSafetySheetToggle() {
+    const navSafetyBtn = document.getElementById("nav-safety");
+    const safetySheet = document.getElementById("safety-sheet-popup");
+    const safetyBackdrop = document.getElementById("safety-sheet-backdrop");
+    const startMenu = document.getElementById("start-menu");
+
+    if (!navSafetyBtn || !safetySheet) return;
+
+    function openSafetySheet() {
+      if (startMenu) startMenu.classList.remove("open");
+      safetySheet.classList.add("open");
+      if (safetyBackdrop) safetyBackdrop.classList.add("open");
+      navSafetyBtn.classList.add("active");
+    }
+
+    function closeSafetySheet() {
+      safetySheet.classList.remove("open");
+      if (safetyBackdrop) safetyBackdrop.classList.remove("open");
+      navSafetyBtn.classList.remove("active");
+    }
+
+    navSafetyBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (safetySheet.classList.contains("open")) {
+        closeSafetySheet();
+      } else {
+        openSafetySheet();
+      }
+    });
+
+    if (safetyBackdrop) {
+      safetyBackdrop.addEventListener("click", closeSafetySheet);
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!safetySheet.contains(e.target) && !navSafetyBtn.contains(e.target)) {
+        closeSafetySheet();
+      }
+    });
+
+    // 1) 과학실 안전 교육
+    const sheetEdu = document.getElementById("sheet-safety-edu");
+    if (sheetEdu) {
+      sheetEdu.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        closeSafetySheet();
+        await App.Router.go("safetyEdu");
+        setActive("nav-safety");
+      });
+    }
+
+    // 2) 과학실 사용 설명서
+    const sheetManual = document.getElementById("sheet-lab-manual");
+    if (sheetManual) {
+      sheetManual.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        closeSafetySheet();
+        await App.Router.go("safetyEdu");
+        if (typeof App.SafetyEdu?.switchTab === "function") {
+          App.SafetyEdu.switchTab("manual-section");
+        }
+        setActive("nav-safety");
+      });
+    }
+
+    // 3) 비상시 대처 요령
+    const sheetEmergency = document.getElementById("sheet-emergency");
+    if (sheetEmergency) {
+      sheetEmergency.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        closeSafetySheet();
+        await App.Router.go("emergencyManual");
+        setActive("nav-safety");
+      });
+    }
+
+    // 4) 스마트 과학실 안전 퀴즈
+    const sheetQuiz = document.getElementById("sheet-safety-quiz");
+    if (sheetQuiz) {
+      sheetQuiz.addEventListener("click", async (e) => {
+        e.preventDefault();
+        document.body.classList.remove("home-active");
+        closeSafetySheet();
+        await App.Router.go("safetyEdu");
+        if (typeof App.SafetyEdu?.switchTab === "function") {
+          App.SafetyEdu.switchTab("quiz-section");
+        }
+        setActive("nav-safety");
+      });
+    }
+  }
+
   // ---- 초기화 ----
   function setup() {
     setupStartMenuToggle();
+    setupSafetySheetToggle(); // ✅ 과학실 안전 보텀시트/팝오버 토글
     setupExactIdLinks(); // ✅ 단일 바인딩 (정확 ID)
     console.log("✅ Navbar.setup() 완료 — 정확 ID 바인딩/Start 메뉴 토글");
 
